@@ -1,22 +1,24 @@
 /**
- * PickupChecker poller — runs on the Hetzner host (systemd), full mode.
+ * PickupChecker poller — runs on the VPS host (Linode or Hetzner, systemd), full mode.
  *
  *  • every CADENCE_SEC (20) a sweep: 33 anchors × 2 part batches = 66 requests, concurrency 8
- *  • egress "ipv6": each request binds a fresh random address inside IPV6_PREFIX (/64) that was
- *    routed to this host (AnyIP) — Apple counts per /128, so the per-IP budget never bites
+ *  • egress "ipv6": each request binds a fresh random address inside IPV6_PREFIX (/64 or /56) that
+ *    was routed to this host (AnyIP) — Apple counts per /128, so the per-IP budget never bites
  *  • adaptive: 541 share > 25% ⇒ pause 60 s and alert; 100% ⇒ switch to "vercel" egress
  *  • heartbeat after every sweep (the Vercel watchdog alerts when it stops)
  *
- *  Env: DATABASE_URL, RESEND_API_KEY, IPV6_PREFIX (e.g. 2a01:4f8:1c1b:abcd::/64), SITE_URL,
+ *  Env: DATABASE_URL, RESEND_API_KEY, IPV6_PREFIX (e.g. 2600:3c0a:e000:1b::/56, or "auto" = read
+ *       IPV6_PREFIX_FILE written by anyip.sh, else derive the /64 of the first global address), SITE_URL,
  *       POLLER_TOKEN (for the vercel egress fallback), CADENCE_SEC, CONCURRENCY, HOST_LABEL
  */
 import "dotenv/config";
 import os from "node:os";
-import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { Agent, fetch as undiciFetch } from "undici";
 import { runSweep, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
 import { expireStale } from "../src/lib/stock/ingest";
 import { recordError, errorMessage } from "../src/lib/errors";
+import { prefixFromInterfaces, randomAddressIn } from "./ipv6";
 import type { FetchLike } from "../src/lib/apple/client";
 import { notifyOwner } from "../src/lib/mail/owner";
 
@@ -27,42 +29,31 @@ const PREFIX = resolvePrefix(process.env.IPV6_PREFIX ?? "");
 const SITE = process.env.SITE_URL ?? "https://pickupchecker.com";
 const POLLER_TOKEN = process.env.POLLER_TOKEN ?? "";
 
-/** IPV6_PREFIX=auto → derive the /64 from the first global IPv6 address on any interface. */
+/**
+ * IPV6_PREFIX=auto → the prefix anyip.sh routed to lo (IPV6_PREFIX_FILE, default
+ * /opt/pickupchecker/ipv6-prefix; on Linode that is the routed /56 or /64, which is NOT on any
+ * interface), else derive the /64 from the first global IPv6 address on any interface (Hetzner).
+ */
 function resolvePrefix(v: string): string {
   if (v !== "auto") return v;
-  for (const list of Object.values(os.networkInterfaces())) {
-    for (const i of list ?? []) {
-      if (i.family === "IPv6" && !i.internal && !i.address.startsWith("fe80") && !i.address.startsWith("fc") && !i.address.startsWith("fd")) {
-        const hextets = expandV6(i.address).split(":").slice(0, 4);
-        return `${hextets.join(":")}::/64`;
-      }
-    }
+  const file = process.env.IPV6_PREFIX_FILE ?? "/opt/pickupchecker/ipv6-prefix";
+  try {
+    const s = readFileSync(file, "utf8").trim();
+    if (/^[0-9a-f:]+\/\d{1,3}$/i.test(s)) return s;
+  } catch {
+    /* no file: fall through to interface discovery */
   }
-  console.warn("[poller] IPV6_PREFIX=auto but no global IPv6 address found");
-  return "";
-}
-function expandV6(a: string): string {
-  const [head, tail = ""] = a.split("::");
-  const h = head ? head.split(":") : []; const t = tail ? tail.split(":") : [];
-  const fill = Array(8 - h.length - t.length).fill("0");
-  return [...h, ...fill, ...t].map((x) => x.padStart(4, "0")).join(":");
+  const p = prefixFromInterfaces(os.networkInterfaces());
+  if (!p) console.warn("[poller] IPV6_PREFIX=auto but no routed prefix file and no global IPv6 address found");
+  return p;
 }
 
 /* ---------------- egress: ipv6 rotate ---------------- */
 
-function randomAddressIn(prefix: string): string {
-  // prefix like "2a01:4f8:1c1b:abcd::/64" → first 4 hextets + 4 random hextets
-  const base = prefix.split("/")[0].replace(/::$/, "");
-  const head = base.split(":").filter(Boolean).slice(0, 4);
-  while (head.length < 4) head.push("0");
-  const tail: string[] = Array.from({ length: 4 }, () => randomBytes(2).toString("hex").replace(/^0+/, "") || "0");
-  // avoid the subnet-router anycast address (::0)
-  if (tail.join("") === "0000") tail[3] = "1";
-  return `${head.join(":")}:${tail.join(":")}`;
-}
-
 function fetchBoundTo(localAddress: string): FetchLike {
-  const agent = new Agent({ connect: { localAddress, family: 6, timeout: 10_000 }, keepAliveTimeout: 1_000 });
+  // `localAddress` must be a top-level Agent/Client option: inside `connect` undici ignores it and the
+  // socket silently uses the interface's primary address (verified on the Linode host, undici 8.12).
+  const agent = new Agent({ localAddress, connect: { family: 6, timeout: 10_000 }, keepAliveTimeout: 1_000 });
   return async (url, init) => {
     const res = await undiciFetch(url, { headers: init.headers, signal: init.signal, dispatcher: agent });
     return { status: res.status, text: () => res.text() };

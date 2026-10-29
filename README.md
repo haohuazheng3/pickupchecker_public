@@ -8,7 +8,7 @@ Live at <https://pickupchecker.com>. Independent service, not affiliated with Ap
 
 ## How it works
 
-* `poller/` — a Node process (Hetzner host, systemd) that asks apple.com's pickup availability for
+* `poller/` — a Node process (Linode host, systemd) that asks apple.com's pickup availability for
   33 anchor ZIP codes × 2 part batches every 20 seconds (66 requests per sweep), binding a fresh
   IPv6 source address inside the host's /64 for every request (Apple throttles per address).
 * `src/lib/stock/` — the shared engine: parse → diff against the last state → `restock` / `soldout`
@@ -36,7 +36,8 @@ npm test                     # vitest
 per minute — fine for a smoke test, not for production. On the host it runs as a systemd service.
 
 Deployment: GitHub Actions builds and uploads a prebuilt output to Vercel (`.github/workflows/deploy.yml`);
-the host is provisioned with `infra/hetzner/provision.sh`.
+the host is provisioned with `infra/linode/provision.sh` (Linode, routed /56) — `infra/hetzner/provision.sh` is the
+equivalent for a Hetzner /64 host.
 
 ## License
 

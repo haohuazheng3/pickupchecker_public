@@ -8,7 +8,7 @@ users:
   - name: poller
     system: true
     shell: /usr/sbin/nologin
-    home: /opt/pickupchecker
+    homedir: /opt/pickupchecker
 write_files:
   - path: /etc/sysctl.d/90-anyip.conf
     content: |
@@ -47,7 +47,7 @@ write_files:
       User=poller
       WorkingDirectory=/opt/pickupchecker/app
       EnvironmentFile=/opt/pickupchecker/poller.env
-      ExecStart=/usr/bin/node --import tsx poller/main.ts
+      ExecStart=/usr/local/bin/node --import tsx poller/main.ts
       Restart=always
       RestartSec=5
       LimitNOFILE=65536
@@ -116,17 +116,21 @@ write_files:
       set -euo pipefail
       cd /opt/pickupchecker/app
       git fetch -q origin main && git reset -q --hard origin/main
-      npm ci --no-audit --no-fund --omit=dev --ignore-scripts >/dev/null
-      npm install --no-save --no-audit --no-fund tsx >/dev/null
+      /usr/local/bin/npm ci --no-audit --no-fund --omit=dev --ignore-scripts >/dev/null
+      /usr/local/bin/npm install --no-save --no-audit --no-fund tsx >/dev/null
       chown -R poller:poller /opt/pickupchecker/app
       systemctl restart pickupchecker-poller
 runcmd:
   - sysctl --system
-  - curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
-  - apt-get install -y nodejs
+  # Node 24 from the official tarball (the NodeSource apt script silently left Ubuntu's nodejs 18 without npm).
+  - curl -fsSL -o /tmp/node.tar.xz https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.xz
+  - echo "fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6  /tmp/node.tar.xz" | sha256sum -c -
+  - tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 --no-same-owner && rm -f /tmp/node.tar.xz
   - ufw default deny incoming && ufw default allow outgoing && ufw allow OpenSSH && ufw --force enable
   - mkdir -p /opt/pickupchecker && chown -R poller:poller /opt/pickupchecker
   - chmod 700 /root/.ssh
+  # update.sh runs as root on a tree owned by poller: tell git that is fine
+  - git config --global --add safe.directory /opt/pickupchecker/app
   - git clone --depth 1 -b main git@github.com:haohuazheng3/pickupchecker_private.git /opt/pickupchecker/app
   - chown poller:poller /opt/pickupchecker/poller.env && chmod 0600 /opt/pickupchecker/poller.env
   - systemctl daemon-reload

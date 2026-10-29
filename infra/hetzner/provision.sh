@@ -12,7 +12,7 @@
 # (/opt/pickupchecker/anyip.sh) and the poller reads IPV6_PREFIX=auto from its own interface.
 # Optional: SSH_KEY_ID (Hetzner ssh key id) to be able to log in; NAME/TYPE/LOC positional args.
 set -euo pipefail
-NAME="${1:-pickupchecker-poller}"; TYPE="${2:-cx23}"; LOC="${3:-ash}"
+NAME="${1:-pickupchecker-poller}"; TYPE="${2:-cx23}"; LOC="${3:-hel1}"  # CX line is EU-only (US locations sell CPX at ~3x the price)
 : "${HCLOUD_TOKEN:?}" "${DATABASE_URL:?}" "${RESEND_API_KEY:?}" "${POLLER_TOKEN:?}"
 REPO="${REPO:-haohuazheng3/pickupchecker_private}"
 MAIL_WORKER_URL="${MAIL_WORKER_URL:-}"; MAIL_WORKER_TOKEN="${MAIL_WORKER_TOKEN:-}"
