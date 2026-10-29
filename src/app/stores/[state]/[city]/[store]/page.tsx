@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { STORES, MODELS, DEFAULT_MODEL, modelByKey, citySlug, stateSlug, stateCodeOf, storePath, cityPath, statePath, storeTimeZone, storesNear } from "@/lib/apple/catalog";
+import { STORES, MODELS, DEFAULT_MODEL, modelByKey, citySlug, stateSlug, stateCodeOf, storePath, cityPath, statePath, storeTimeZone } from "@/lib/apple/catalog";
+import { nearestStores, nearbyCities, neighborStates, cityRef, cityLabel } from "@/lib/seo/links";
+import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
+import { BrowseModels } from "@/components/seo/Browse";
 import { storesStock, restockFeed, restockStats } from "@/lib/stock/queries";
 import { StockByModel } from "@/components/stores/StockByModel";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
@@ -44,8 +47,13 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
     storesStock([s.storeNumber]), restockFeed({ storeNumber: s.storeNumber, kind: "all", limit: 30 }), restockStats([s.storeNumber], tz, 30), restockStats([s.storeNumber], tz, 30, DEFAULT_MODEL),
   ]);
   const summary = stock.get(s.storeNumber);
-  const nearby = storesNear(s.lat, s.lng, 30).filter((n) => n.storeNumber !== s.storeNumber).slice(0, 6);
+  const nearby = nearestStores(s, 6);
   const nearbyStock = await storesStock(nearby.map((n) => n.storeNumber));
+  const sameCity = STORES.filter((x) => x.state === s.state && x.city === s.city && x.storeNumber !== s.storeNumber);
+  const sameState = STORES.filter((x) => x.state === s.state && x.city !== s.city).sort((a, b) => a.city.localeCompare(b.city)).slice(0, 14);
+  const here = cityRef(s.state, s.city);
+  const cities = nearbyCities(s.lat, s.lng, { exclude: here, limit: 8 });
+  const neighbors = neighborStates(s.state);
   const duo = modelByKey(DEFAULT_MODEL)!;
   const code = stateCodeOf(s);
   const ld = {
@@ -56,7 +64,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
   return (
     <div className="mx-auto max-w-6xl px-4 pt-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <nav className="text-sm text-ink-3" aria-label="Breadcrumb"><Link href="/stores" className="hover:text-ink">Stores</Link> / <Link href={statePath(s.state)} className="hover:text-ink">{s.state}</Link> / <Link href={cityPath(s.state, s.city)} className="hover:text-ink">{s.city}</Link> / {s.name}</nav>
+      <Breadcrumbs items={[{ href: "/stores", label: "Apple Stores" }, { href: statePath(s.state), label: s.state }, { href: cityPath(s.state, s.city), label: s.city }, { label: `Apple ${s.name}` }]} />
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="display text-3xl sm:text-5xl">Apple {s.name}</h1>
@@ -112,6 +120,15 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
           )}
         </aside>
       </div>
+
+      <RelatedBlock title={`Around Apple ${s.name}`}>
+        {sameCity.length > 0 && <LinkRow title={`Other Apple Stores in ${s.city}`} links={sameCity.map((x) => ({ href: storePath(x), label: x.name }))} more={{ href: cityPath(s.state, s.city), label: `${s.city} page` }} />}
+        {cities.length > 0 && <LinkRow title="Nearby cities with Apple Stores" links={cities.map((c) => ({ href: c.href, label: cityLabel(c), meta: `${Math.round(c.distance)} mi` }))} />}
+        <LinkRow title={`More Apple Stores in ${s.state}`} links={sameState.map((x) => ({ href: storePath(x), label: `${x.name} · ${x.city}` }))} more={{ href: statePath(s.state), label: `All of ${s.state}` }} />
+        {neighbors.length > 0 && <LinkRow title="Neighboring states" links={neighbors.map((n) => ({ href: n.href, label: n.name, meta: String(n.count) }))} />}
+        <BrowseModels />
+        <LinkRow title="Restock logs" links={[{ href: `/restocks?model=all&state=${stateSlug(s.state)}`, label: `${s.state} restocks` }, { href: "/restocks", label: "All US restocks" }, { href: `/map?state=${stateCodeOf(s)}&model=${DEFAULT_MODEL}`, label: `${s.state} on the map` }]} />
+      </RelatedBlock>
       <p className="mt-8 text-xs text-ink-3">Availability is what apple.com shows for in-store pickup at this store, as of the last check. {MODELS.map((m) => m.name).join(", ")} are tracked; Apple, iPhone and Apple Store are trademarks of Apple Inc.</p>
     </div>
   );

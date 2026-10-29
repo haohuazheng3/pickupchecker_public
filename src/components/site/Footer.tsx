@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { topStates } from "@/lib/seo/links";
 
 export function Footer() {
   return (
     <footer className="mx-auto mt-24 w-full max-w-6xl px-4 pb-10">
       <div className="pane px-6 py-8 sm:px-8">
-        <div className="grid gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="grid gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div>
             <Logo />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-3">
@@ -33,6 +34,13 @@ export function Footer() {
               <li><Link href="/about" className="hover:text-ink">About</Link></li>
               <li><Link href="/blog" className="hover:text-ink">Blog</Link></li>
               <li><Link href="/contact" className="hover:text-ink">Contact</Link></li>
+            </ul>
+          </div>
+          <div className="text-sm">
+            <div className="eyebrow mb-3">Stores by state</div>
+            <ul className="space-y-2 text-ink-2">
+              {topStates(8).map((s) => <li key={s.slug}><Link href={s.href} className="hover:text-ink">{s.name}</Link></li>)}
+              <li><Link href="/stores" className="hover:text-ink">All states & cities →</Link></li>
             </ul>
           </div>
           <div className="text-sm">

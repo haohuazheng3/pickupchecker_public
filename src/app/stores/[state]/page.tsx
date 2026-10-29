@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { STORES, MODELS, DEFAULT_MODEL, statesWithStores, citiesWithStores, storePath, cityPath, storeTimeZone } from "@/lib/apple/catalog";
+import { neighborStates } from "@/lib/seo/links";
+import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
+import { BrowseModels, BrowseStates } from "@/components/seo/Browse";
 import { storesStock, restockFeed, restockStats, restockCounts } from "@/lib/stock/queries";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
@@ -34,13 +37,15 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
   const tz = storeTimeZone(stores[0]);
   const [stock, feed, stats, counts] = await Promise.all([storesStock(numbers), restockFeed({ state: s.name, limit: 12 }), restockStats(numbers, tz, 30), restockCounts({ state: s.name })]);
   const duoStores = stores.filter((x) => (stock.get(x.storeNumber)?.perModel[DEFAULT_MODEL].available ?? 0) > 0);
+  const neighbors = neighborStates(s.name);
   return (
     <div className="mx-auto max-w-6xl px-4 pt-8">
-      <nav className="text-sm text-ink-3" aria-label="Breadcrumb"><Link href="/stores" className="hover:text-ink">Stores</Link> / {s.name}</nav>
+      <Breadcrumbs items={[{ href: "/stores", label: "Apple Stores" }, { label: s.name }]} />
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="display text-3xl sm:text-5xl">Apple Stores in {s.name}</h1>
           <p className="mt-2 text-ink-2">{stores.length} store{stores.length > 1 ? "s" : ""} in {cities.length} cit{cities.length > 1 ? "ies" : "y"} · <b className="text-ink">{duoStores.length}</b> with an iPhone Duo for pickup right now · {counts.day} restock{counts.day === 1 ? "" : "s"} in 24 h.</p>
+          <div className="mt-3 flex flex-wrap gap-1.5">{cities.map((c) => <Link key={c.slug} href={cityPath(c.state, c.name)} className="chip px-3 py-1.5 text-xs">{c.name}<span className="text-ink-3"> · {c.stores.length}</span></Link>)}</div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/map?state=${s.code}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>
@@ -80,6 +85,13 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
           <RestockFeed rows={feed} showModel emptyText={`No restock recorded in ${s.name} yet.`} />
         </section>
       </div>
+
+      <RelatedBlock title={`Beyond ${s.name}`}>
+        {neighbors.length > 0 && <LinkRow title="Neighboring states" links={neighbors.map((n) => ({ href: n.href, label: n.name, meta: String(n.count) }))} />}
+        <BrowseModels />
+        <LinkRow title="Restock logs" links={[{ href: `/restocks?model=all&state=${s.slug}`, label: `${s.name} restocks` }, { href: "/restocks", label: "All US restocks" }, { href: `/map?state=${s.code}&model=${DEFAULT_MODEL}`, label: `${s.name} on the map` }]} />
+        <BrowseStates current={s.name} />
+      </RelatedBlock>
     </div>
   );
 }

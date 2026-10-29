@@ -5,6 +5,8 @@ import { restockFeed, restockCounts, stockByStore } from "@/lib/stock/queries";
 import { WizardServer } from "@/components/wizard/WizardServer";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { Dot, timeAgo } from "@/components/stock/StatusBits";
+import { BrowseModels, BrowsePopular } from "@/components/seo/Browse";
+import { RelatedBlock } from "@/components/seo/Related";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +72,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </div>
         ))}
       </section>
+
+      <RelatedBlock title="Browse stock by place">
+        <BrowsePopular />
+        <BrowseModels />
+      </RelatedBlock>
 
       <section className="mt-16">
         <h2 className="display text-2xl sm:text-3xl">Questions</h2>

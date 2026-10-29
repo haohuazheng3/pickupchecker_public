@@ -3,6 +3,8 @@ import Link from "next/link";
 import { MODELS, DEFAULT_MODEL, modelByKey, statesWithStores, type ModelKey } from "@/lib/apple/catalog";
 import { restockFeed, restockCounts } from "@/lib/stock/queries";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
+import { BrowseModels, BrowseStates } from "@/components/seo/Browse";
+import { RelatedBlock } from "@/components/seo/Related";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -59,6 +61,10 @@ export default async function Restocks({ searchParams }: PageProps<"/restocks">)
         <Link href={`/map${model ? `?model=${model}` : ""}`} className="btn btn-ghost btn-sm">Live map</Link>
         <Link href={`/?model=${model ?? DEFAULT_MODEL}#notify`} className="btn btn-primary btn-sm">Get alerts · free</Link>
       </div>
+      <RelatedBlock title="Browse restocks by place">
+        <BrowseStates current={state} title="Restock pages by state" />
+        <BrowseModels current={model} />
+      </RelatedBlock>
     </div>
   );
 }

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { STORES, MODELS, DEFAULT_MODEL, modelByKey, citiesWithStores, cityBySlug, stateSlug, storePath, statePath, cityPath, storeTimeZone } from "@/lib/apple/catalog";
+import { STORES, MODELS, DEFAULT_MODEL, modelByKey, citiesWithStores, cityBySlug, stateSlug, storePath, statePath, cityPath, storeTimeZone, STATE_CODES } from "@/lib/apple/catalog";
+import { nearbyCities, neighborStates, cityRef, cityLabel, nearestStores } from "@/lib/seo/links";
+import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
+import { BrowseModels } from "@/components/seo/Browse";
 import { storesStock, restockFeed, restockStats, restockCounts } from "@/lib/stock/queries";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
@@ -38,9 +41,13 @@ export default async function CityPage({ params }: PageProps<"/stores/[state]/[c
   const [stock, feed, stats, counts] = await Promise.all([storesStock(numbers), restockFeed({ state: c.state, city: c.name, limit: 12 }), restockStats(numbers, tz, 30), restockCounts({ state: c.state, city: c.name })]);
   const duo = modelByKey(DEFAULT_MODEL)!;
   const siblings = citiesWithStores().filter((x) => x.state === c.state && x.slug !== c.slug);
+  const me = cityRef(c.state, c.name);
+  const near = me ? nearbyCities(me.lat, me.lng, { exclude: me, limit: 8 }) : [];
+  const nearStores = nearestStores(c.stores[0], 6, { excludeCity: true });
+  const neighbors = neighborStates(c.state);
   return (
     <div className="mx-auto max-w-6xl px-4 pt-8">
-      <nav className="text-sm text-ink-3" aria-label="Breadcrumb"><Link href="/stores" className="hover:text-ink">Stores</Link> / <Link href={statePath(c.state)} className="hover:text-ink">{c.state}</Link> / {c.name}</nav>
+      <Breadcrumbs items={[{ href: "/stores", label: "Apple Stores" }, { href: statePath(c.state), label: c.state }, { label: c.name }]} />
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="display text-3xl sm:text-5xl">Apple Stores in {c.name}, {c.state}</h1>
@@ -78,12 +85,14 @@ export default async function CityPage({ params }: PageProps<"/stores/[state]/[c
         </section>
       </div>
 
-      {siblings.length > 0 && (
-        <section className="mt-8">
-          <div className="eyebrow">Other cities in {c.state}</div>
-          <div className="mt-2 flex flex-wrap gap-2">{siblings.map((x) => <Link key={x.slug} href={cityPath(x.state, x.name)} className="chip px-3 py-1.5 text-xs">{x.name} · {x.stores.length}</Link>)}</div>
-        </section>
-      )}
+      <RelatedBlock title={`Around ${c.name}`}>
+        {near.length > 0 && <LinkRow title="Nearby cities with Apple Stores" links={near.map((x) => ({ href: x.href, label: cityLabel(x), meta: `${Math.round(x.distance)} mi` }))} />}
+        {nearStores.length > 0 && <LinkRow title={`Closest stores outside ${c.name}`} links={nearStores.map((x) => ({ href: storePath(x), label: `${x.name} · ${x.city}`, meta: `${Math.round(x.distance)} mi` }))} />}
+        {siblings.length > 0 && <LinkRow title={`Other cities in ${c.state}`} links={siblings.map((x) => ({ href: cityPath(x.state, x.name), label: x.name, meta: String(x.stores.length) }))} more={{ href: statePath(c.state), label: `All of ${c.state}` }} />}
+        {neighbors.length > 0 && <LinkRow title="Neighboring states" links={neighbors.map((n) => ({ href: n.href, label: n.name, meta: String(n.count) }))} />}
+        <BrowseModels />
+        <LinkRow title="Restock logs" links={[{ href: `/restocks?model=all&state=${c.stateSlug}`, label: `${c.state} restocks` }, { href: "/restocks", label: "All US restocks" }, { href: `/map?state=${STATE_CODES[c.state] ?? ""}&model=${DEFAULT_MODEL}`, label: `${c.state} on the map` }]} />
+      </RelatedBlock>
       <p className="mt-8 text-xs text-ink-3">{duo.name} first: it is the configuration most people are hunting; 18 Pro and 18 Pro Max stock is shown alongside.</p>
     </div>
   );

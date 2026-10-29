@@ -13,7 +13,7 @@ import type { MapSnapshot } from "@/lib/stock/queries";
 import { timeAgo } from "@/components/stock/StatusBits";
 import { MAP_STYLE as STYLE, MAP_WORKER_URL as WORKER_URL } from "@/lib/map";
 
-export interface MapStore { n: string; name: string; city: string; state: string; code: string; path: string; lat: number; lng: number }
+export interface MapStore { n: string; name: string; city: string; state: string; code: string; path: string; cityHref: string; stateHref: string; lat: number; lng: number }
 export interface MapFocus { model: ModelKey | "all"; store?: string; stores?: string[]; stateCode?: string }
 
 type Bounds = [[number, number], [number, number]];
@@ -283,7 +283,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
                   <Link href={sel.path} className="btn btn-primary btn-sm">Open store page →</Link>
                   <Link href={`/?model=${modelMeta?.key ?? "duo"}&store=${sel.n}#notify`} className="btn btn-ghost btn-sm">Alert me here</Link>
                 </div>
-                <p className="mt-2 text-xs text-ink-3">The store page has restock times, history, hours and nearby stores.</p>
+                <p className="mt-2 text-xs text-ink-3">The store page has restock times, history, hours and nearby stores. Also: <Link href={sel.cityHref} className="underline hover:text-ink">{sel.city}</Link> · <Link href={sel.stateHref} className="underline hover:text-ink">{sel.state}</Link>.</p>
               </>
             ) : (
               <>
@@ -312,7 +312,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
             <tbody className="divide-y divide-line">
               {stats.states.map((s) => (
                 <tr key={s.code} className="cursor-pointer hover:bg-white/4" onClick={() => focusState(s.code)}>
-                  <td className="py-2 pr-3"><span className="font-mono text-xs text-ink-3">{s.code}</span> {s.name}</td>
+                  <td className="py-2 pr-3"><span className="font-mono text-xs text-ink-3">{s.code}</span> {s.name} <Link href={stores.find((x) => x.code === s.code)?.stateHref ?? "/stores"} className="ml-1 text-xs text-ink-3 underline hover:text-ink" onClick={(e) => e.stopPropagation()}>page</Link></td>
                   <td className="py-2 pr-3 text-ink-2">{s.stores}</td>
                   <td className={`py-2 pr-3 ${s.withStock ? "text-accent" : "text-ink-3"}`}>{s.withStock}</td>
                   <td className="py-2 pr-3 text-ink-2">{s.configs}</td>

@@ -5,6 +5,8 @@ import { Suspense } from "react";
 import { MODELS, modelBySlug, storagesFor, colorsFor, type ModelKey } from "@/lib/apple/catalog";
 import { StockBoard, StockBoardSkeleton } from "@/components/stock/StockBoard";
 import { RecentRestocks } from "@/components/stock/RecentRestocks";
+import { BrowseStates, BrowsePopular } from "@/components/seo/Browse";
+import { LinkRow, RelatedBlock } from "@/components/seo/Related";
 
 export const dynamic = "force-dynamic";
 
@@ -59,13 +61,18 @@ export default async function StockModelPage({ params, searchParams }: PageProps
             <Link href={`/?model=${m.key}#notify`} className="btn btn-primary mt-4 w-full">Get notified · free</Link>
           </div>
           <div className="pane p-5">
-            <div className="eyebrow">Recent restocks</div>
+            <div className="flex items-baseline justify-between gap-3"><div className="eyebrow">Recent restocks</div><Link href={`/restocks?model=${key}`} className="text-xs text-ink-3 hover:text-ink">Full log →</Link></div>
             <Suspense fallback={<div className="skeleton mt-3 h-24" />}>
               <RecentRestocks model={key} />
             </Suspense>
           </div>
         </aside>
       </div>
+      <RelatedBlock title={`${m.name} by place`}>
+        <LinkRow title="This model" links={[{ href: `/restocks?model=${key}`, label: `${m.short} restock log` }, { href: `/map?model=${key}`, label: `${m.short} on the map` }, { href: `/?model=${key}#notify`, label: `${m.short} alert · free` }, ...MODELS.filter((x) => x.key !== key).map((x) => ({ href: `/stock/${x.slug}`, label: `${x.name} stock` }))]} />
+        <BrowseStates />
+        <BrowsePopular states={0} cities={12} />
+      </RelatedBlock>
     </div>
   );
 }

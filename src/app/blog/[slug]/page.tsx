@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { allPosts, postBySlug, renderMarkdown } from "@/lib/blog";
+import { BrowseModels, BrowsePopular } from "@/components/seo/Browse";
+import { RelatedBlock } from "@/components/seo/Related";
 
 export function generateStaticParams() { return allPosts().map((p) => ({ slug: p.slug })); }
 export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): Promise<Metadata> {
@@ -17,6 +19,10 @@ export default async function Post({ params }: PageProps<"/blog/[slug]">) {
       <div className="text-xs text-ink-3">{p.date}</div>
       <h1 className="display mt-1 text-3xl sm:text-5xl">{p.title}</h1>
       <div className="pane prose-site mt-8 p-6 sm:p-8" dangerouslySetInnerHTML={{ __html: renderMarkdown(p.body) }} />
+      <RelatedBlock title="Check stock now">
+        <BrowseModels />
+        <BrowsePopular states={8} cities={8} />
+      </RelatedBlock>
     </div>
   );
 }
