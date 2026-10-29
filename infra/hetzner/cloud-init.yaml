@@ -96,6 +96,18 @@ write_files:
       OnUnitActiveSec=5min
       [Install]
       WantedBy=timers.target
+  - path: /root/.ssh/id_pickupchecker
+    permissions: "0600"
+    encoding: b64
+    content: __DEPLOY_KEY_B64__
+  - path: /root/.ssh/config
+    permissions: "0600"
+    content: |
+      # Read-only deploy key for the private repo (generated per provision by provision.sh).
+      Host github.com
+        IdentityFile /root/.ssh/id_pickupchecker
+        IdentitiesOnly yes
+        StrictHostKeyChecking accept-new
   - path: /opt/pickupchecker/update.sh
     permissions: "0755"
     content: |
@@ -114,7 +126,8 @@ runcmd:
   - apt-get install -y nodejs
   - ufw default deny incoming && ufw default allow outgoing && ufw allow OpenSSH && ufw --force enable
   - mkdir -p /opt/pickupchecker && chown -R poller:poller /opt/pickupchecker
-  - git clone --depth 1 -b main __REPO_URL__ /opt/pickupchecker/app
+  - chmod 700 /root/.ssh
+  - git clone --depth 1 -b main git@github.com:haohuazheng3/pickupchecker_private.git /opt/pickupchecker/app
   - chown poller:poller /opt/pickupchecker/poller.env && chmod 0600 /opt/pickupchecker/poller.env
   - systemctl daemon-reload
   - systemctl enable --now pickupchecker-anyip.service
