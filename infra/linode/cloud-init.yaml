@@ -1,0 +1,163 @@
+#cloud-config
+# PickupChecker poller host (Linode / Akamai Cloud, Ubuntu 24.04). Rendered by provision.sh, which
+# fills the placeholders. provision.sh attaches a routed IPv6 range (/56, or /64) to the Linode right
+# after creation; anyip.sh discovers it through the Metadata service and routes it to lo (AnyIP) so
+# any address inside it can be a source address. The range is routed, so no NDP proxying is needed.
+package_update: true
+package_upgrade: true
+packages: [git, curl, ca-certificates, ufw, fail2ban, unattended-upgrades]
+users:
+  - name: poller
+    system: true
+    shell: /usr/sbin/nologin
+    homedir: /opt/pickupchecker
+write_files:
+  - path: /etc/sysctl.d/90-anyip.conf
+    content: |
+      net.ipv6.ip_nonlocal_bind = 1
+  - path: /opt/pickupchecker/anyip.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # Discover the routed IPv6 range (/56 or /64) that provision.sh attached to this Linode via the
+      # Metadata service, then route the whole range to lo (AnyIP) so any address inside it can be a
+      # source address. Retries for up to 10 minutes in case the range is attached after first boot.
+      set -uo pipefail
+      MD=http://169.254.169.254
+      for i in $(seq 1 60); do
+        tok=$(curl -sf -X PUT "$MD/v1/token" -H "Metadata-Token-Expiry-Seconds: 300" 2>/dev/null) || tok=""
+        if [ -n "$tok" ]; then
+          range=$(curl -sf "$MD/v1/network" -H "Metadata-Token: $tok" -H "Accept: application/json" 2>/dev/null | python3 -c '
+      import json,sys
+      d=json.load(sys.stdin); r=(d.get("ipv6") or {}).get("ranges") or []
+      x=r[0] if r else ""
+      if isinstance(x,dict): x=x.get("range") or x.get("prefix") or ""
+      print(x)' 2>/dev/null) || range=""
+          if [ -n "$range" ]; then
+            ip -6 route replace local "$range" dev lo
+            echo "$range" > /opt/pickupchecker/ipv6-prefix
+            echo "AnyIP: $range -> lo"
+            exit 0
+          fi
+        fi
+        sleep 10
+      done
+      echo "anyip: no routed IPv6 range reported by the Metadata service after 10 min" >&2
+      exit 1
+  - path: /etc/systemd/system/pickupchecker-anyip.service
+    content: |
+      [Unit]
+      Description=Route the Linode's routed IPv6 range to lo so every address is bindable
+      After=network-online.target
+      Wants=network-online.target
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/opt/pickupchecker/anyip.sh
+      [Install]
+      WantedBy=multi-user.target
+  - path: /etc/systemd/system/pickupchecker-poller.service
+    content: |
+      [Unit]
+      Description=PickupChecker poller
+      After=network-online.target pickupchecker-anyip.service
+      Wants=network-online.target
+      Requires=pickupchecker-anyip.service
+      [Service]
+      User=poller
+      WorkingDirectory=/opt/pickupchecker/app
+      EnvironmentFile=/opt/pickupchecker/poller.env
+      ExecStart=/usr/local/bin/node --import tsx poller/main.ts
+      Restart=always
+      RestartSec=5
+      LimitNOFILE=65536
+      [Install]
+      WantedBy=multi-user.target
+  - path: /opt/pickupchecker/poller.env
+    permissions: "0600"
+    owner: root:root
+    content: |
+      NODE_ENV=production
+      DATABASE_URL=__DATABASE_URL__
+      RESEND_API_KEY=__RESEND_API_KEY__
+      ALERTS_FROM=PickupChecker <alerts@pickupchecker.com>
+      SITE_URL=https://pickupchecker.com
+      POLLER_TOKEN=__POLLER_TOKEN__
+      VAPID_PUBLIC_KEY=__VAPID_PUBLIC_KEY__
+      VAPID_PRIVATE_KEY=__VAPID_PRIVATE_KEY__
+      VAPID_SUBJECT=mailto:alerts@pickupchecker.com
+      MAIL_WORKER_URL=__MAIL_WORKER_URL__
+      MAIL_WORKER_TOKEN=__MAIL_WORKER_TOKEN__
+      OWNER_EMAIL=haohuazheng001@gmail.com
+      IPV6_PREFIX=auto
+      CADENCE_SEC=20
+      CONCURRENCY=8
+      HOST_LABEL=linode-1
+  - path: /opt/pickupchecker/probe.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # External health probe of the site, every 5 minutes (systemd timer). The mail worker does the
+      # GET + owner email + down/recovery bookkeeping; this host only triggers it.
+      set -uo pipefail
+      . /opt/pickupchecker/poller.env
+      [ -n "${MAIL_WORKER_URL:-}" ] && [ -n "${MAIL_WORKER_TOKEN:-}" ] || exit 0
+      curl -fsS -m 40 -X POST "${MAIL_WORKER_URL%/}/probe" -H "Authorization: Bearer ${MAIL_WORKER_TOKEN}" >/dev/null || echo "probe trigger failed"
+  - path: /etc/systemd/system/pickupchecker-probe.service
+    content: |
+      [Unit]
+      Description=Trigger the external health probe (mail worker)
+      [Service]
+      Type=oneshot
+      ExecStart=/opt/pickupchecker/probe.sh
+  - path: /etc/systemd/system/pickupchecker-probe.timer
+    content: |
+      [Unit]
+      Description=Run the health probe every 5 minutes
+      [Timer]
+      OnBootSec=3min
+      OnUnitActiveSec=5min
+      [Install]
+      WantedBy=timers.target
+  - path: /root/.ssh/id_pickupchecker
+    permissions: "0600"
+    encoding: b64
+    content: __DEPLOY_KEY_B64__
+  - path: /root/.ssh/config
+    permissions: "0600"
+    content: |
+      # Read-only deploy key for the private repo (generated per provision by provision.sh).
+      Host github.com
+        IdentityFile /root/.ssh/id_pickupchecker
+        IdentitiesOnly yes
+        StrictHostKeyChecking accept-new
+  - path: /opt/pickupchecker/update.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # Pull the latest main and restart the poller (run by root; also used by the first boot).
+      set -euo pipefail
+      cd /opt/pickupchecker/app
+      git fetch -q origin main && git reset -q --hard origin/main
+      /usr/local/bin/npm ci --no-audit --no-fund --omit=dev --ignore-scripts >/dev/null
+      /usr/local/bin/npm install --no-save --no-audit --no-fund tsx >/dev/null
+      chown -R poller:poller /opt/pickupchecker/app
+      systemctl restart pickupchecker-poller
+runcmd:
+  - sysctl --system
+  # Node 24 from the official tarball (the NodeSource apt script silently left Ubuntu's nodejs 18 without npm).
+  - curl -fsSL -o /tmp/node.tar.xz https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.xz
+  - echo "fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6  /tmp/node.tar.xz" | sha256sum -c -
+  - tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 --no-same-owner && rm -f /tmp/node.tar.xz
+  - ufw default deny incoming && ufw default allow outgoing && ufw allow OpenSSH && ufw --force enable
+  - mkdir -p /opt/pickupchecker && chown -R poller:poller /opt/pickupchecker
+  - chmod 700 /root/.ssh
+  # update.sh runs as root on a tree owned by poller: tell git that is fine
+  - git config --global --add safe.directory /opt/pickupchecker/app
+  - git clone --depth 1 -b main git@github.com:haohuazheng3/pickupchecker_private.git /opt/pickupchecker/app
+  - chown poller:poller /opt/pickupchecker/poller.env && chmod 0600 /opt/pickupchecker/poller.env
+  - systemctl daemon-reload
+  - systemctl enable --now pickupchecker-anyip.service
+  - /opt/pickupchecker/update.sh
+  - systemctl enable pickupchecker-poller.service
+  - systemctl enable --now pickupchecker-probe.timer

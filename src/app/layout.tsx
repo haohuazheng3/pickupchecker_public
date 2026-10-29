@@ -1,0 +1,56 @@
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
+import "./globals.css";
+import { Header } from "@/components/site/Header";
+import { Footer } from "@/components/site/Footer";
+import { Analytics } from "@/components/site/Analytics";
+import { PwaBoot } from "@/components/pwa/PwaBoot";
+
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pickupchecker.com";
+const INDEXABLE = process.env.NEXT_PUBLIC_INDEXABLE === "1";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE),
+  title: { default: "PickupChecker — iPhone 18 Pro, Pro Max & Duo in-store pickup alerts", template: "%s · PickupChecker" },
+  description:
+    "Get a notification on your phone the moment an iPhone 18 Pro, iPhone 18 Pro Max or iPhone Duo is available for in-store pickup at any Apple Store in the US. Every store checked around the clock.",
+  applicationName: "PickupChecker",
+  robots: INDEXABLE ? { index: true, follow: true } : { index: false, follow: false },
+  openGraph: { type: "website", siteName: "PickupChecker", url: SITE, images: ["/og.png"] },
+  twitter: { card: "summary_large_image" },
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }, { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "PickupChecker", statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = { themeColor: "#07080c", width: "device-width", initialScale: 1, viewportFit: "cover" };
+
+export default function RootLayout({ children }: LayoutProps<"/">) {
+  return (
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col">
+        <ClerkProvider
+          publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+          appearance={{ variables: { colorPrimary: "#35e38c" } }}
+          signInUrl="/?signin=1"
+          signUpUrl="/?signin=1"
+        >
+          <div className="void-bg" aria-hidden="true" />
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </ClerkProvider>
+        <Analytics />
+        <PwaBoot />
+      </body>
+    </html>
+  );
+}

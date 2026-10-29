@@ -1,0 +1,45 @@
+import { NextResponse } from "next/server";
+import { sql } from "drizzle-orm";
+import { db, hasDatabase } from "@/lib/db";
+import { readState } from "@/lib/stock/sweep";
+import { env } from "@/lib/env";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const HEARTBEAT_STALE_MS = 150_000;
+
+/**
+ * GET /api/health[?shallow=1]
+ *  200 when config + database + poller heartbeat are fine; 503 otherwise, with the reason.
+ *  shallow=1 skips the database (used by frequent external probes so Neon can sleep).
+ */
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const shallow = url.searchParams.get("shallow") === "1";
+  const checks: Record<string, { ok: boolean; detail?: string }> = {};
+  const required = ["DATABASE_URL", "CLERK_SECRET_KEY", "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_MONTHLY", "RESEND_API_KEY", "CRON_SECRET", "POLLER_TOKEN"];
+  const missing = required.filter((k) => !process.env[k]);
+  checks.config = { ok: missing.length === 0, detail: missing.length ? `missing: ${missing.join(", ")}` : undefined };
+
+  if (!shallow && hasDatabase()) {
+    try {
+      const t0 = Date.now();
+      await db().execute(sql`select 1`);
+      checks.database = { ok: true, detail: `${Date.now() - t0} ms` };
+      const hb = await readState<{ at?: string; mode?: string; host?: string; cadenceSec?: number }>("heartbeat");
+      const age = hb ? Date.now() - new Date(hb.value.at ?? hb.updatedAt).getTime() : Infinity;
+      checks.poller = {
+        ok: age < HEARTBEAT_STALE_MS,
+        detail: hb ? `${hb.value.mode ?? "?"} on ${hb.value.host ?? "?"}, ${Math.round(age / 1000)} s ago` : "no heartbeat yet",
+      };
+    } catch (e) {
+      checks.database = { ok: false, detail: e instanceof Error ? e.message : String(e) };
+    }
+  }
+  const ok = Object.values(checks).every((c) => c.ok);
+  return NextResponse.json(
+    { ok, service: "pickupchecker", env: process.env.VERCEL_ENV ?? "local", site: env.siteUrl(), checks, at: new Date().toISOString() },
+    { status: ok ? 200 : 503, headers: { "cache-control": "no-store" } },
+  );
+}
