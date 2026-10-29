@@ -12,8 +12,8 @@ export default function OG() {
         </div>
         Pickup<span style={{ color: "#35e38c" }}>Checker</span>
       </div>
-      <div style={{ fontSize: 68, fontWeight: 700, lineHeight: 1.05, letterSpacing: -2, maxWidth: 1000 }}>Know the second your iPhone is in a store near you.</div>
-      <div style={{ fontSize: 30, color: "#b4b8c6" }}>iPhone 18 Pro - 18 Pro Max - iPhone Duo - every US Apple Store, alerts in seconds</div>
+      <div style={{ fontSize: 68, fontWeight: 700, lineHeight: 1.05, letterSpacing: -2, maxWidth: 1000 }}>Know the second an iPhone Duo is in a store near you.</div>
+      <div style={{ fontSize: 30, color: "#b4b8c6" }}>iPhone Duo - 18 Pro - 18 Pro Max - every US Apple Store, alerts in seconds</div>
     </div>,
     size,
   );

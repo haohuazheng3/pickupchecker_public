@@ -15,9 +15,9 @@ const INDEXABLE = process.env.NEXT_PUBLIC_INDEXABLE === "1";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  title: { default: "PickupChecker — iPhone 18 Pro, Pro Max & Duo in-store pickup alerts", template: "%s · PickupChecker" },
+  title: { default: "PickupChecker — iPhone Duo, 18 Pro & Pro Max in-store pickup alerts", template: "%s · PickupChecker" },
   description:
-    "Get a notification on your phone the moment an iPhone 18 Pro, iPhone 18 Pro Max or iPhone Duo is available for in-store pickup at any Apple Store in the US. Every store checked around the clock.",
+    "Get a notification on your phone the moment an iPhone Duo, iPhone 18 Pro or 18 Pro Max is available for in-store pickup at any Apple Store in the US. Every store checked every 20 seconds; first alert free.",
   applicationName: "PickupChecker",
   robots: INDEXABLE ? { index: true, follow: true } : { index: false, follow: false },
   openGraph: { type: "website", siteName: "PickupChecker", url: SITE, images: ["/og.png"] },
