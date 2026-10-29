@@ -1,8 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isProtected = createRouteMatcher(["/account(.*)", "/checkout/success(.*)"]);
-const isAdmin = createRouteMatcher(["/admin(.*)", "/api/admin(.*)"]);
+const isProtected = createRouteMatcher(["/account", "/account/(.*)", "/checkout/success", "/checkout/success/(.*)"]);
+const isAdmin = createRouteMatcher(["/admin", "/admin/(.*)", "/api/admin/(.*)"]);
 
 /**
  * Clerk session handling for every non-static route. Admin routes 404 for everyone who is not
