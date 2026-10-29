@@ -1,0 +1,123 @@
+#cloud-config
+# PickupChecker poller host (Hetzner Cloud, Ubuntu 24.04). Rendered by provision.sh, which fills
+# the placeholders. Routes the server's whole /64 to lo (AnyIP) so any address can be a source.
+package_update: true
+package_upgrade: true
+packages: [git, curl, ca-certificates, ufw, fail2ban, unattended-upgrades]
+users:
+  - name: poller
+    system: true
+    shell: /usr/sbin/nologin
+    home: /opt/pickupchecker
+write_files:
+  - path: /etc/sysctl.d/90-anyip.conf
+    content: |
+      net.ipv6.ip_nonlocal_bind = 1
+  - path: /opt/pickupchecker/anyip.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # Derive this server's global /64 from its primary IPv6 address and route the whole block to lo
+      # (AnyIP), so any address inside it can be used as a source address.
+      set -euo pipefail
+      addr=$(ip -6 addr show scope global | awk '/inet6/ {print $2; exit}')
+      prefix=$(python3 -c "import ipaddress,sys; print(ipaddress.IPv6Network(sys.argv[1], strict=False).supernet(new_prefix=64))" "$addr")
+      ip -6 route replace local "$prefix" dev lo
+      echo "$prefix" > /opt/pickupchecker/ipv6-prefix
+      echo "AnyIP: $prefix -> lo"
+  - path: /etc/systemd/system/pickupchecker-anyip.service
+    content: |
+      [Unit]
+      Description=Route the IPv6 /64 to lo so every address is bindable
+      After=network-online.target
+      Wants=network-online.target
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/opt/pickupchecker/anyip.sh
+      [Install]
+      WantedBy=multi-user.target
+  - path: /etc/systemd/system/pickupchecker-poller.service
+    content: |
+      [Unit]
+      Description=PickupChecker poller
+      After=network-online.target pickupchecker-anyip.service
+      Wants=network-online.target
+      [Service]
+      User=poller
+      WorkingDirectory=/opt/pickupchecker/app
+      EnvironmentFile=/opt/pickupchecker/poller.env
+      ExecStart=/usr/bin/node --import tsx poller/main.ts
+      Restart=always
+      RestartSec=5
+      LimitNOFILE=65536
+      [Install]
+      WantedBy=multi-user.target
+  - path: /opt/pickupchecker/poller.env
+    permissions: "0600"
+    owner: root:root
+    content: |
+      NODE_ENV=production
+      DATABASE_URL=__DATABASE_URL__
+      RESEND_API_KEY=__RESEND_API_KEY__
+      ALERTS_FROM=PickupChecker <alerts@pickupchecker.com>
+      SITE_URL=https://pickupchecker.com
+      POLLER_TOKEN=__POLLER_TOKEN__
+      MAIL_WORKER_URL=__MAIL_WORKER_URL__
+      MAIL_WORKER_TOKEN=__MAIL_WORKER_TOKEN__
+      OWNER_EMAIL=haohuazheng001@gmail.com
+      IPV6_PREFIX=auto
+      CADENCE_SEC=20
+      CONCURRENCY=8
+      HOST_LABEL=hetzner-1
+  - path: /opt/pickupchecker/probe.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # External health probe of the site, every 5 minutes (systemd timer). The mail worker does the
+      # GET + owner email + down/recovery bookkeeping; this host only triggers it.
+      set -uo pipefail
+      . /opt/pickupchecker/poller.env
+      [ -n "${MAIL_WORKER_URL:-}" ] && [ -n "${MAIL_WORKER_TOKEN:-}" ] || exit 0
+      curl -fsS -m 40 -X POST "${MAIL_WORKER_URL%/}/probe" -H "Authorization: Bearer ${MAIL_WORKER_TOKEN}" >/dev/null || echo "probe trigger failed"
+  - path: /etc/systemd/system/pickupchecker-probe.service
+    content: |
+      [Unit]
+      Description=Trigger the external health probe (mail worker)
+      [Service]
+      Type=oneshot
+      ExecStart=/opt/pickupchecker/probe.sh
+  - path: /etc/systemd/system/pickupchecker-probe.timer
+    content: |
+      [Unit]
+      Description=Run the health probe every 5 minutes
+      [Timer]
+      OnBootSec=3min
+      OnUnitActiveSec=5min
+      [Install]
+      WantedBy=timers.target
+  - path: /opt/pickupchecker/update.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # Pull the latest main and restart the poller (run by root; also used by the first boot).
+      set -euo pipefail
+      cd /opt/pickupchecker/app
+      git fetch -q origin main && git reset -q --hard origin/main
+      npm ci --no-audit --no-fund --omit=dev --ignore-scripts >/dev/null
+      npm install --no-save --no-audit --no-fund tsx >/dev/null
+      chown -R poller:poller /opt/pickupchecker/app
+      systemctl restart pickupchecker-poller
+runcmd:
+  - sysctl --system
+  - curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
+  - apt-get install -y nodejs
+  - ufw default deny incoming && ufw default allow outgoing && ufw allow OpenSSH && ufw --force enable
+  - mkdir -p /opt/pickupchecker && chown -R poller:poller /opt/pickupchecker
+  - git clone --depth 1 -b main __REPO_URL__ /opt/pickupchecker/app
+  - chown poller:poller /opt/pickupchecker/poller.env && chmod 0600 /opt/pickupchecker/poller.env
+  - systemctl daemon-reload
+  - systemctl enable --now pickupchecker-anyip.service
+  - /opt/pickupchecker/update.sh
+  - systemctl enable pickupchecker-poller.service
+  - systemctl enable --now pickupchecker-probe.timer

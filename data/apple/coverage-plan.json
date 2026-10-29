@@ -1,0 +1,629 @@
+[
+ {
+  "anchorStore": "R225",
+  "anchorName": "The Summit",
+  "location": "35243",
+  "covers": [
+   "R006",
+   "R020",
+   "R080",
+   "R123",
+   "R133",
+   "R184",
+   "R225",
+   "R259",
+   "R266",
+   "R324",
+   "R513",
+   "R591"
+  ]
+ },
+ {
+  "anchorStore": "R262",
+  "anchorName": "Anchorage 5th Avenue Mall",
+  "location": "99501",
+  "covers": [
+   "R003",
+   "R044",
+   "R072",
+   "R077",
+   "R090",
+   "R100",
+   "R106",
+   "R134",
+   "R262",
+   "R303",
+   "R339",
+   "R420"
+  ]
+ },
+ {
+  "anchorStore": "R026",
+  "anchorName": "Chandler Fashion Center",
+  "location": "85226",
+  "covers": [
+   "R026",
+   "R031",
+   "R064",
+   "R086",
+   "R161",
+   "R213",
+   "R219",
+   "R247",
+   "R267",
+   "R292",
+   "R297",
+   "R650"
+  ]
+ },
+ {
+  "anchorStore": "R550",
+  "anchorName": "Valley Plaza",
+  "location": "93304",
+  "covers": [
+   "R001",
+   "R023",
+   "R108",
+   "R124",
+   "R148",
+   "R154",
+   "R189",
+   "R199",
+   "R317",
+   "R451",
+   "R462",
+   "R550"
+  ]
+ },
+ {
+  "anchorStore": "R414",
+  "anchorName": "4th Street",
+  "location": "94710",
+  "covers": [
+   "R002",
+   "R014",
+   "R029",
+   "R033",
+   "R057",
+   "R071",
+   "R075",
+   "R099",
+   "R101",
+   "R217",
+   "R231",
+   "R414"
+  ]
+ },
+ {
+  "anchorStore": "R004",
+  "anchorName": "South Coast Plaza",
+  "location": "92626",
+  "covers": [
+   "R004",
+   "R015",
+   "R034",
+   "R050",
+   "R069",
+   "R094",
+   "R122",
+   "R146",
+   "R156",
+   "R300",
+   "R720",
+   "R777"
+  ]
+ },
+ {
+  "anchorStore": "R172",
+  "anchorName": "Twenty Ninth Street",
+  "location": "80301",
+  "covers": [
+   "R030",
+   "R047",
+   "R125",
+   "R130",
+   "R172",
+   "R177",
+   "R182",
+   "R190",
+   "R228",
+   "R338",
+   "R461",
+   "R599"
+  ]
+ },
+ {
+  "anchorStore": "R093",
+  "anchorName": "Danbury Fair Mall",
+  "location": "06810",
+  "covers": [
+   "R013",
+   "R046",
+   "R061",
+   "R068",
+   "R093",
+   "R139",
+   "R202",
+   "R261",
+   "R282",
+   "R327",
+   "R446",
+   "R753"
+  ]
+ },
+ {
+  "anchorStore": "R102",
+  "anchorName": "Christiana Mall",
+  "location": "19702",
+  "covers": [
+   "R065",
+   "R088",
+   "R102",
+   "R142",
+   "R162",
+   "R166",
+   "R168",
+   "R206",
+   "R234",
+   "R281",
+   "R304",
+   "R549"
+  ]
+ },
+ {
+  "anchorStore": "R291",
+  "anchorName": "Altamonte",
+  "location": "32701",
+  "covers": [
+   "R019",
+   "R024",
+   "R053",
+   "R074",
+   "R111",
+   "R127",
+   "R143",
+   "R169",
+   "R185",
+   "R289",
+   "R291",
+   "R615"
+  ]
+ },
+ {
+  "anchorStore": "R035",
+  "anchorName": "Michigan Avenue",
+  "location": "60611",
+  "covers": [
+   "R018",
+   "R035",
+   "R056",
+   "R059",
+   "R089",
+   "R229",
+   "R237",
+   "R257",
+   "R258",
+   "R284",
+   "R348",
+   "R360"
+  ]
+ },
+ {
+  "anchorStore": "R307",
+  "anchorName": "Maine Mall",
+  "location": "04106",
+  "covers": [
+   "R011",
+   "R021",
+   "R027",
+   "R076",
+   "R110",
+   "R137",
+   "R149",
+   "R155",
+   "R307",
+   "R346",
+   "R354",
+   "R631"
+  ]
+ },
+ {
+  "anchorStore": "R763",
+  "anchorName": "Downtown Detroit",
+  "location": "48226",
+  "covers": [
+   "R009",
+   "R041",
+   "R055",
+   "R081",
+   "R132",
+   "R192",
+   "R230",
+   "R299",
+   "R353",
+   "R417",
+   "R616",
+   "R763"
+  ]
+ },
+ {
+  "anchorStore": "R755",
+  "anchorName": "American Dream",
+  "location": "07073",
+  "covers": [
+   "R032",
+   "R095",
+   "R117",
+   "R250",
+   "R251",
+   "R325",
+   "R415",
+   "R582",
+   "R594",
+   "R654",
+   "R715",
+   "R755"
+  ]
+ },
+ {
+  "anchorStore": "R049",
+  "anchorName": "Southpoint",
+  "location": "27713",
+  "covers": [
+   "R049",
+   "R078",
+   "R083",
+   "R116",
+   "R221",
+   "R271",
+   "R293",
+   "R318",
+   "R355",
+   "R598",
+   "R614",
+   "R796"
+  ]
+ },
+ {
+  "anchorStore": "R216",
+  "anchorName": "Domain NORTHSIDE",
+  "location": "78758",
+  "covers": [
+   "R058",
+   "R085",
+   "R126",
+   "R131",
+   "R164",
+   "R204",
+   "R205",
+   "R216",
+   "R290",
+   "R316",
+   "R321",
+   "R437"
+  ]
+ },
+ {
+  "anchorStore": "R190",
+  "anchorName": "Village Pointe",
+  "location": "68118",
+  "covers": [
+   "R007",
+   "R022",
+   "R054",
+   "R062",
+   "R097",
+   "R109",
+   "R114",
+   "R183",
+   "R190",
+   "R229",
+   "R233",
+   "R283"
+  ]
+ },
+ {
+  "anchorStore": "R236",
+  "anchorName": "Fashion Fair",
+  "location": "93710",
+  "covers": [
+   "R002",
+   "R039",
+   "R099",
+   "R101",
+   "R105",
+   "R199",
+   "R236",
+   "R240",
+   "R305",
+   "R322",
+   "R550",
+   "R824"
+  ]
+ },
+ {
+  "anchorStore": "R287",
+  "anchorName": "Georgetown",
+  "location": "20007",
+  "covers": [
+   "R010",
+   "R036",
+   "R084",
+   "R112",
+   "R129",
+   "R142",
+   "R168",
+   "R221",
+   "R271",
+   "R287",
+   "R516",
+   "R598"
+  ]
+ },
+ {
+  "anchorStore": "R087",
+  "anchorName": "Aventura",
+  "location": "33180",
+  "covers": [
+   "R012",
+   "R024",
+   "R074",
+   "R087",
+   "R115",
+   "R127",
+   "R169",
+   "R185",
+   "R214",
+   "R312",
+   "R623",
+   "R752"
+  ]
+ },
+ {
+  "anchorStore": "R191",
+  "anchorName": "Holyoke",
+  "location": "01040",
+  "covers": [
+   "R017",
+   "R025",
+   "R076",
+   "R093",
+   "R167",
+   "R191",
+   "R232",
+   "R346",
+   "R354",
+   "R446",
+   "R613",
+   "R622"
+  ]
+ },
+ {
+  "anchorStore": "R288",
+  "anchorName": "Fritz Farm",
+  "location": "40517",
+  "covers": [
+   "R009",
+   "R028",
+   "R066",
+   "R123",
+   "R133",
+   "R203",
+   "R264",
+   "R288",
+   "R355",
+   "R417",
+   "R513",
+   "R518"
+  ]
+ },
+ {
+  "anchorStore": "R104",
+  "anchorName": "Bridgewater",
+  "location": "08807",
+  "covers": [
+   "R032",
+   "R043",
+   "R067",
+   "R103",
+   "R104",
+   "R138",
+   "R152",
+   "R250",
+   "R325",
+   "R549",
+   "R654",
+   "R755"
+  ]
+ },
+ {
+  "anchorStore": "R016",
+  "anchorName": "Walden Galleria",
+  "location": "14225",
+  "covers": [
+   "R016",
+   "R055",
+   "R081",
+   "R096",
+   "R107",
+   "R140",
+   "R147",
+   "R192",
+   "R281",
+   "R353",
+   "R413",
+   "R763"
+  ]
+ },
+ {
+  "anchorStore": "R286",
+  "anchorName": "The Promenade at Chenal",
+  "location": "72223",
+  "covers": [
+   "R020",
+   "R042",
+   "R062",
+   "R114",
+   "R130",
+   "R144",
+   "R151",
+   "R233",
+   "R283",
+   "R286",
+   "R324",
+   "R746"
+  ]
+ },
+ {
+  "anchorStore": "R294",
+  "anchorName": "Carlsbad",
+  "location": "92009",
+  "covers": [
+   "R004",
+   "R015",
+   "R040",
+   "R069",
+   "R082",
+   "R146",
+   "R156",
+   "R213",
+   "R294",
+   "R297",
+   "R300",
+   "R345"
+  ]
+ },
+ {
+  "anchorStore": "R298",
+  "anchorName": "Roseville",
+  "location": "95678",
+  "covers": [
+   "R014",
+   "R044",
+   "R057",
+   "R070",
+   "R071",
+   "R075",
+   "R101",
+   "R186",
+   "R217",
+   "R298",
+   "R322",
+   "R414"
+  ]
+ },
+ {
+  "anchorStore": "R282",
+  "anchorName": "Greenwich Avenue",
+  "location": "06830",
+  "covers": [
+   "R013",
+   "R046",
+   "R060",
+   "R061",
+   "R068",
+   "R117",
+   "R202",
+   "R261",
+   "R282",
+   "R327",
+   "R612",
+   "R753"
+  ]
+ },
+ {
+  "anchorStore": "R210",
+  "anchorName": "Kahala",
+  "location": "96816",
+  "covers": [
+   "R002",
+   "R029",
+   "R033",
+   "R044",
+   "R071",
+   "R073",
+   "R075",
+   "R099",
+   "R210",
+   "R217",
+   "R231",
+   "R305"
+  ]
+ },
+ {
+  "anchorStore": "R263",
+  "anchorName": "Mall of Louisiana",
+  "location": "70836",
+  "covers": [
+   "R058",
+   "R126",
+   "R164",
+   "R204",
+   "R205",
+   "R225",
+   "R235",
+   "R263",
+   "R286",
+   "R321",
+   "R324",
+   "R437"
+  ]
+ },
+ {
+  "anchorStore": "R086",
+  "anchorName": "La Encantada",
+  "location": "85718",
+  "covers": [
+   "R026",
+   "R031",
+   "R086",
+   "R161",
+   "R177",
+   "R213",
+   "R219",
+   "R247",
+   "R267",
+   "R292",
+   "R297",
+   "R492"
+  ]
+ },
+ {
+  "anchorStore": "R189",
+  "anchorName": "Topanga",
+  "location": "91303",
+  "covers": [
+   "R001",
+   "R023",
+   "R050",
+   "R051",
+   "R108",
+   "R124",
+   "R148",
+   "R154",
+   "R189",
+   "R451",
+   "R462",
+   "R720"
+  ]
+ },
+ {
+  "anchorStore": "R111",
+  "anchorName": "St. Johns Town Center",
+  "location": "32246",
+  "covers": [
+   "R019",
+   "R024",
+   "R053",
+   "R111",
+   "R127",
+   "R143",
+   "R185",
+   "R289",
+   "R291",
+   "R318",
+   "R364",
+   "R615"
+  ]
+ }
+]

@@ -1,0 +1,1885 @@
+[
+ {
+  "storeNumber": "R225",
+  "slug": "thesummit",
+  "name": "The Summit",
+  "city": "Birmingham",
+  "state": "Alabama"
+ },
+ {
+  "storeNumber": "R266",
+  "slug": "bridgestreet",
+  "name": "Bridge Street",
+  "city": "Huntsville",
+  "state": "Alabama"
+ },
+ {
+  "storeNumber": "R262",
+  "slug": "anchorage5thavenuemall",
+  "name": "Anchorage 5th Avenue Mall",
+  "city": "Anchorage",
+  "state": "Alaska"
+ },
+ {
+  "storeNumber": "R026",
+  "slug": "chandlerfashioncenter",
+  "name": "Chandler Fashion Center",
+  "city": "Chandler",
+  "state": "Arizona"
+ },
+ {
+  "storeNumber": "R267",
+  "slug": "santanvillage",
+  "name": "SanTan Village",
+  "city": "Gilbert",
+  "state": "Arizona"
+ },
+ {
+  "storeNumber": "R247",
+  "slug": "arrowhead",
+  "name": "Arrowhead",
+  "city": "Glendale",
+  "state": "Arizona"
+ },
+ {
+  "storeNumber": "R031",
+  "slug": "scottsdalefashionsquare",
+  "name": "Scottsdale Fashion Square",
+  "city": "Scottsdale",
+  "state": "Arizona"
+ },
+ {
+  "storeNumber": "R292",
+  "slug": "scottsdalequarter",
+  "name": "Scottsdale Quarter",
+  "city": "Scottsdale",
+  "state": "Arizona"
+ },
+ {
+  "storeNumber": "R086",
+  "slug": "laencantada",
+  "name": "La Encantada",
+  "city": "Tucson",
+  "state": "Arizona"
+ },
+ {
+  "storeNumber": "R286",
+  "slug": "thepromenadeatchenal",
+  "name": "The Promenade at Chenal",
+  "city": "Little Rock",
+  "state": "Arkansas"
+ },
+ {
+  "storeNumber": "R550",
+  "slug": "valleyplaza",
+  "name": "Valley Plaza",
+  "city": "Bakersfield",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R414",
+  "slug": "4thstreet",
+  "name": "4th Street",
+  "city": "Berkeley",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R156",
+  "slug": "breamall",
+  "name": "Brea Mall",
+  "city": "Brea",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R029",
+  "slug": "burlingame",
+  "name": "Burlingame",
+  "city": "Burlingame",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R189",
+  "slug": "topanga",
+  "name": "Topanga",
+  "city": "Canoga Park",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R294",
+  "slug": "carlsbad",
+  "name": "Carlsbad",
+  "city": "Carlsbad",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R300",
+  "slug": "loscerritos",
+  "name": "Los Cerritos",
+  "city": "Cerritos",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R213",
+  "slug": "otayranch",
+  "name": "Otay Ranch",
+  "city": "Chula Vista",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R071",
+  "slug": "cortemadera",
+  "name": "Corte Madera",
+  "city": "Corte Madera",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R004",
+  "slug": "southcoastplaza",
+  "name": "South Coast Plaza",
+  "city": "Costa Mesa",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R824",
+  "slug": "appleparkvisitorcenter",
+  "name": "Apple Park Visitor Center",
+  "city": "Cupertino",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R057",
+  "slug": "baystreet",
+  "name": "Bay Street",
+  "city": "Emeryville",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R236",
+  "slug": "fashionfair",
+  "name": "Fashion Fair",
+  "city": "Fresno",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R001",
+  "slug": "glendalegalleria",
+  "name": "Glendale Galleria",
+  "city": "Glendale",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R451",
+  "slug": "theamericanaatbrand",
+  "name": "The Americana at Brand",
+  "city": "Glendale",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R146",
+  "slug": "irvinespectrumcenter",
+  "name": "Irvine Spectrum Center",
+  "city": "Irvine",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R050",
+  "slug": "thegrove",
+  "name": "The Grove",
+  "city": "Los Angeles",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R124",
+  "slug": "beverlycenter",
+  "name": "Beverly Center",
+  "city": "Los Angeles",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R720",
+  "slug": "towertheatre",
+  "name": "Tower Theatre",
+  "city": "Los Angeles",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R108",
+  "slug": "centurycity",
+  "name": "Century City",
+  "city": "Los Angeles",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R240",
+  "slug": "losgatos",
+  "name": "Los Gatos",
+  "city": "Los Gatos",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R122",
+  "slug": "manhattanvillage",
+  "name": "Manhattan Village",
+  "city": "Manhattan Beach",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R069",
+  "slug": "missionviejo",
+  "name": "Mission Viejo",
+  "city": "Mission Viejo",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R322",
+  "slug": "vintagefaire",
+  "name": "Vintage Faire",
+  "city": "Modesto",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R305",
+  "slug": "delmonte",
+  "name": "Del Monte",
+  "city": "Monterey",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R015",
+  "slug": "fashionisland",
+  "name": "Fashion Island",
+  "city": "Newport Beach",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R023",
+  "slug": "northridge",
+  "name": "Northridge",
+  "city": "Northridge",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R297",
+  "slug": "elpaseovillage",
+  "name": "El Paseo Village",
+  "city": "Palm Desert",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R002",
+  "slug": "paloalto",
+  "name": "Palo Alto",
+  "city": "Palo Alto",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R099",
+  "slug": "stanfordshoppingcenter",
+  "name": "Stanford Shopping Center",
+  "city": "Palo Alto",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R034",
+  "slug": "pasadena",
+  "name": "Pasadena",
+  "city": "Pasadena",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R101",
+  "slug": "stoneridgemall",
+  "name": "Stoneridge Mall",
+  "city": "Pleasanton",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R094",
+  "slug": "victoriagardens",
+  "name": "Victoria Gardens",
+  "city": "Rancho Cucamonga",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R298",
+  "slug": "roseville",
+  "name": "Roseville",
+  "city": "Roseville",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R070",
+  "slug": "ardenfair",
+  "name": "Arden Fair",
+  "city": "Sacramento",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R040",
+  "slug": "fashionvalley",
+  "name": "Fashion Valley",
+  "city": "San Diego",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R082",
+  "slug": "utc",
+  "name": "UTC",
+  "city": "San Diego",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R033",
+  "slug": "stonestown",
+  "name": "Stonestown",
+  "city": "San Francisco",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R075",
+  "slug": "unionsquare",
+  "name": "Union Square",
+  "city": "San Francisco",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R217",
+  "slug": "chestnutstreet",
+  "name": "Chestnut Street",
+  "city": "San Francisco",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R105",
+  "slug": "oakridge",
+  "name": "Oakridge",
+  "city": "San Jose",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R199",
+  "slug": "higuerastreet",
+  "name": "Higuera Street",
+  "city": "San Luis Obispo",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R231",
+  "slug": "hillsdale",
+  "name": "Hillsdale",
+  "city": "San Mateo",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R317",
+  "slug": "statestreet",
+  "name": "State Street",
+  "city": "Santa Barbara",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R039",
+  "slug": "valleyfair",
+  "name": "Valley Fair",
+  "city": "Santa Clara",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R051",
+  "slug": "thirdstreetpromenade",
+  "name": "Third Street Promenade",
+  "city": "Santa Monica",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R044",
+  "slug": "montgomeryvillage",
+  "name": "Montgomery Village",
+  "city": "Santa Rosa",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R148",
+  "slug": "shermanoaks",
+  "name": "Sherman Oaks",
+  "city": "Sherman Oaks",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R345",
+  "slug": "promenadetemecula",
+  "name": "Promenade Temecula",
+  "city": "Temecula",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R154",
+  "slug": "theoaks",
+  "name": "The Oaks",
+  "city": "Thousand Oaks",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R777",
+  "slug": "delamo",
+  "name": "Del Amo",
+  "city": "Torrance",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R462",
+  "slug": "valenciatowncenter",
+  "name": "Valencia Town Center",
+  "city": "Valencia",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R014",
+  "slug": "broadwayplaza",
+  "name": "Broadway Plaza",
+  "city": "Walnut Creek",
+  "state": "California"
+ },
+ {
+  "storeNumber": "R172",
+  "slug": "twentyninthstreet",
+  "name": "Twenty Ninth Street",
+  "city": "Boulder",
+  "state": "Colorado"
+ },
+ {
+  "storeNumber": "R182",
+  "slug": "flatironcrossing",
+  "name": "FlatIron Crossing",
+  "city": "Broomfield",
+  "state": "Colorado"
+ },
+ {
+  "storeNumber": "R338",
+  "slug": "thepromenadeshopsatbriargate",
+  "name": "The Promenade Shops at Briargate",
+  "city": "Colorado Springs",
+  "state": "Colorado"
+ },
+ {
+  "storeNumber": "R047",
+  "slug": "cherrycreek",
+  "name": "Cherry Creek",
+  "city": "Denver",
+  "state": "Colorado"
+ },
+ {
+  "storeNumber": "R030",
+  "slug": "aspengrove",
+  "name": "Aspen Grove",
+  "city": "Littleton",
+  "state": "Colorado"
+ },
+ {
+  "storeNumber": "R228",
+  "slug": "parkmeadows",
+  "name": "Park Meadows",
+  "city": "Lone Tree",
+  "state": "Colorado"
+ },
+ {
+  "storeNumber": "R093",
+  "slug": "danburyfairmall",
+  "name": "Danbury Fair Mall",
+  "city": "Danbury",
+  "state": "Connecticut"
+ },
+ {
+  "storeNumber": "R025",
+  "slug": "westfarms",
+  "name": "Westfarms",
+  "city": "Farmington",
+  "state": "Connecticut"
+ },
+ {
+  "storeNumber": "R282",
+  "slug": "greenwichavenue",
+  "name": "Greenwich Avenue",
+  "city": "Greenwich",
+  "state": "Connecticut"
+ },
+ {
+  "storeNumber": "R446",
+  "slug": "newhaven",
+  "name": "New Haven",
+  "city": "New Haven",
+  "state": "Connecticut"
+ },
+ {
+  "storeNumber": "R202",
+  "slug": "sonocollection",
+  "name": "SoNo Collection",
+  "city": "Norwalk",
+  "state": "Connecticut"
+ },
+ {
+  "storeNumber": "R613",
+  "slug": "evergreenwalk",
+  "name": "Evergreen Walk",
+  "city": "South Windsor",
+  "state": "Connecticut"
+ },
+ {
+  "storeNumber": "R102",
+  "slug": "christianamall",
+  "name": "Christiana Mall",
+  "city": "Newark",
+  "state": "Delaware"
+ },
+ {
+  "storeNumber": "R287",
+  "slug": "georgetown",
+  "name": "Georgetown",
+  "city": "Washington",
+  "state": "District of Columbia"
+ },
+ {
+  "storeNumber": "R516",
+  "slug": "carnegielibrary",
+  "name": "Carnegie Library",
+  "city": "Washington",
+  "state": "District of Columbia"
+ },
+ {
+  "storeNumber": "R291",
+  "slug": "altamonte",
+  "name": "Altamonte",
+  "city": "Altamonte Springs",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R087",
+  "slug": "aventura",
+  "name": "Aventura",
+  "city": "Aventura",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R074",
+  "slug": "bocaraton",
+  "name": "Boca Raton",
+  "city": "Boca Raton",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R289",
+  "slug": "brandon",
+  "name": "Brandon",
+  "city": "Brandon",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R185",
+  "slug": "coconutpoint",
+  "name": "Coconut Point",
+  "city": "Estero",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R214",
+  "slug": "thegalleria",
+  "name": "The Galleria",
+  "city": "Fort Lauderdale",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R111",
+  "slug": "stjohnstowncenter",
+  "name": "St. Johns Town Center",
+  "city": "Jacksonville",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R312",
+  "slug": "dadeland",
+  "name": "Dadeland",
+  "city": "Miami",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R752",
+  "slug": "miamiworldcenter",
+  "name": "Miami Worldcenter",
+  "city": "Miami",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R623",
+  "slug": "brickellcitycentre",
+  "name": "Brickell City Centre",
+  "city": "Miami",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R012",
+  "slug": "thefalls",
+  "name": "The Falls",
+  "city": "Miami",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R115",
+  "slug": "lincolnroad",
+  "name": "Lincoln Road",
+  "city": "Miami Beach",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R169",
+  "slug": "watersideshops",
+  "name": "Waterside Shops",
+  "city": "Naples",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R143",
+  "slug": "floridamall",
+  "name": "Florida Mall",
+  "city": "Orlando",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R053",
+  "slug": "millenia",
+  "name": "Millenia",
+  "city": "Orlando",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R127",
+  "slug": "thegardensmall",
+  "name": "The Gardens Mall",
+  "city": "Palm Beach Gardens",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R615",
+  "slug": "universitytowncenter",
+  "name": "University Town Center",
+  "city": "Sarasota",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R019",
+  "slug": "internationalplaza",
+  "name": "International Plaza",
+  "city": "Tampa",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R024",
+  "slug": "wellingtongreen",
+  "name": "Wellington Green",
+  "city": "Wellington",
+  "state": "Florida"
+ },
+ {
+  "storeNumber": "R080",
+  "slug": "avalon",
+  "name": "Avalon",
+  "city": "Alpharetta",
+  "state": "Georgia"
+ },
+ {
+  "storeNumber": "R006",
+  "slug": "lenoxsquare",
+  "name": "Lenox Square",
+  "city": "Atlanta",
+  "state": "Georgia"
+ },
+ {
+  "storeNumber": "R184",
+  "slug": "perimeter",
+  "name": "Perimeter",
+  "city": "Atlanta",
+  "state": "Georgia"
+ },
+ {
+  "storeNumber": "R591",
+  "slug": "cumberlandmall",
+  "name": "Cumberland Mall",
+  "city": "Atlanta",
+  "state": "Georgia"
+ },
+ {
+  "storeNumber": "R364",
+  "slug": "augusta",
+  "name": "Augusta",
+  "city": "Augusta",
+  "state": "Georgia"
+ },
+ {
+  "storeNumber": "R259",
+  "slug": "mallofgeorgia",
+  "name": "Mall of Georgia",
+  "city": "Buford",
+  "state": "Georgia"
+ },
+ {
+  "storeNumber": "R210",
+  "slug": "kahala",
+  "name": "Kahala",
+  "city": "Honolulu",
+  "state": "Hawaii"
+ },
+ {
+  "storeNumber": "R073",
+  "slug": "alamoana",
+  "name": "Ala Moana",
+  "city": "Honolulu",
+  "state": "Hawaii"
+ },
+ {
+  "storeNumber": "R303",
+  "slug": "boisetownesquare",
+  "name": "Boise Towne Square",
+  "city": "Boise",
+  "state": "Idaho"
+ },
+ {
+  "storeNumber": "R035",
+  "slug": "michiganavenue",
+  "name": "Michigan Avenue",
+  "city": "Chicago",
+  "state": "Illinois"
+ },
+ {
+  "storeNumber": "R284",
+  "slug": "lincolnpark",
+  "name": "Lincoln Park",
+  "city": "Chicago",
+  "state": "Illinois"
+ },
+ {
+  "storeNumber": "R258",
+  "slug": "deerpark",
+  "name": "Deer Park",
+  "city": "Deer Park",
+  "state": "Illinois"
+ },
+ {
+  "storeNumber": "R348",
+  "slug": "mainplace",
+  "name": "Main Place",
+  "city": "Naperville",
+  "state": "Illinois"
+ },
+ {
+  "storeNumber": "R056",
+  "slug": "oakbrook",
+  "name": "Oakbrook",
+  "city": "Oak Brook",
+  "state": "Illinois"
+ },
+ {
+  "storeNumber": "R237",
+  "slug": "orlandsquaremall",
+  "name": "Orland Square Mall",
+  "city": "Orland Park",
+  "state": "Illinois"
+ },
+ {
+  "storeNumber": "R018",
+  "slug": "woodfield",
+  "name": "Woodfield",
+  "city": "Schaumburg",
+  "state": "Illinois"
+ },
+ {
+  "storeNumber": "R089",
+  "slug": "oldorchard",
+  "name": "Old Orchard",
+  "city": "Skokie",
+  "state": "Illinois"
+ },
+ {
+  "storeNumber": "R066",
+  "slug": "thefashionmallatkeystone",
+  "name": "The Fashion Mall at Keystone",
+  "city": "Indianapolis",
+  "state": "Indiana"
+ },
+ {
+  "storeNumber": "R360",
+  "slug": "universityparkmall",
+  "name": "University Park Mall",
+  "city": "Mishawaka",
+  "state": "Indiana"
+ },
+ {
+  "storeNumber": "R109",
+  "slug": "jordancreek",
+  "name": "Jordan Creek",
+  "city": "West Des Moines",
+  "state": "Iowa"
+ },
+ {
+  "storeNumber": "R283",
+  "slug": "leawood",
+  "name": "Leawood",
+  "city": "Leawood",
+  "state": "Kansas"
+ },
+ {
+  "storeNumber": "R288",
+  "slug": "fritzfarm",
+  "name": "Fritz Farm",
+  "city": "Lexington",
+  "state": "Kentucky"
+ },
+ {
+  "storeNumber": "R264",
+  "slug": "oxmoor",
+  "name": "Oxmoor",
+  "city": "Louisville",
+  "state": "Kentucky"
+ },
+ {
+  "storeNumber": "R263",
+  "slug": "malloflouisiana",
+  "name": "Mall of Louisiana",
+  "city": "Baton Rouge",
+  "state": "Louisiana"
+ },
+ {
+  "storeNumber": "R235",
+  "slug": "lakesideshoppingcenter",
+  "name": "Lakeside Shopping Center",
+  "city": "Metairie",
+  "state": "Louisiana"
+ },
+ {
+  "storeNumber": "R307",
+  "slug": "mainemall",
+  "name": "Maine Mall",
+  "city": "South Portland",
+  "state": "Maine"
+ },
+ {
+  "storeNumber": "R142",
+  "slug": "annapolis",
+  "name": "Annapolis",
+  "city": "Annapolis",
+  "state": "Maryland"
+ },
+ {
+  "storeNumber": "R084",
+  "slug": "montgomerymall",
+  "name": "Montgomery Mall",
+  "city": "Bethesda",
+  "state": "Maryland"
+ },
+ {
+  "storeNumber": "R112",
+  "slug": "bethesdarow",
+  "name": "Bethesda Row",
+  "city": "Bethesda",
+  "state": "Maryland"
+ },
+ {
+  "storeNumber": "R168",
+  "slug": "columbia",
+  "name": "Columbia",
+  "city": "Columbia",
+  "state": "Maryland"
+ },
+ {
+  "storeNumber": "R149",
+  "slug": "boylstonstreet",
+  "name": "Boylston Street",
+  "city": "Boston",
+  "state": "Massachusetts"
+ },
+ {
+  "storeNumber": "R110",
+  "slug": "southshore",
+  "name": "South Shore",
+  "city": "Braintree",
+  "state": "Massachusetts"
+ },
+ {
+  "storeNumber": "R155",
+  "slug": "burlington",
+  "name": "Burlington",
+  "city": "Burlington",
+  "state": "Massachusetts"
+ },
+ {
+  "storeNumber": "R021",
+  "slug": "cambridgeside",
+  "name": "CambridgeSide",
+  "city": "Cambridge",
+  "state": "Massachusetts"
+ },
+ {
+  "storeNumber": "R076",
+  "slug": "chestnuthill",
+  "name": "Chestnut Hill",
+  "city": "Chestnut Hill",
+  "state": "Massachusetts"
+ },
+ {
+  "storeNumber": "R346",
+  "slug": "legacyplace",
+  "name": "Legacy Place",
+  "city": "Dedham",
+  "state": "Massachusetts"
+ },
+ {
+  "storeNumber": "R137",
+  "slug": "derbystreet",
+  "name": "Derby Street",
+  "city": "Hingham",
+  "state": "Massachusetts"
+ },
+ {
+  "storeNumber": "R191",
+  "slug": "holyoke",
+  "name": "Holyoke",
+  "city": "Holyoke",
+  "state": "Massachusetts"
+ },
+ {
+  "storeNumber": "R011",
+  "slug": "marketstreet",
+  "name": "MarketStreet",
+  "city": "Lynnfield",
+  "state": "Massachusetts"
+ },
+ {
+  "storeNumber": "R622",
+  "slug": "theshopsatblackstonevalley",
+  "name": "The Shops at Blackstone Valley",
+  "city": "Millbury",
+  "state": "Massachusetts"
+ },
+ {
+  "storeNumber": "R232",
+  "slug": "natick",
+  "name": "Natick",
+  "city": "Natick",
+  "state": "Massachusetts"
+ },
+ {
+  "storeNumber": "R230",
+  "slug": "briarwood",
+  "name": "Briarwood",
+  "city": "Ann Arbor",
+  "state": "Michigan"
+ },
+ {
+  "storeNumber": "R763",
+  "slug": "downtowndetroit",
+  "name": "Downtown Detroit",
+  "city": "Detroit",
+  "state": "Michigan"
+ },
+ {
+  "storeNumber": "R132",
+  "slug": "woodland",
+  "name": "Woodland",
+  "city": "Grand Rapids",
+  "state": "Michigan"
+ },
+ {
+  "storeNumber": "R616",
+  "slug": "eastwoodtownecenter",
+  "name": "Eastwood Towne Center",
+  "city": "Lansing",
+  "state": "Michigan"
+ },
+ {
+  "storeNumber": "R041",
+  "slug": "twelveoaks",
+  "name": "Twelve Oaks",
+  "city": "Novi",
+  "state": "Michigan"
+ },
+ {
+  "storeNumber": "R055",
+  "slug": "somerset",
+  "name": "Somerset",
+  "city": "Troy",
+  "state": "Michigan"
+ },
+ {
+  "storeNumber": "R007",
+  "slug": "mallofamerica",
+  "name": "Mall of America",
+  "city": "Bloomington",
+  "state": "Minnesota"
+ },
+ {
+  "storeNumber": "R054",
+  "slug": "southdale",
+  "name": "Southdale",
+  "city": "Edina",
+  "state": "Minnesota"
+ },
+ {
+  "storeNumber": "R183",
+  "slug": "ridgedale",
+  "name": "Ridgedale",
+  "city": "Minnetonka",
+  "state": "Minnesota"
+ },
+ {
+  "storeNumber": "R022",
+  "slug": "rosedalecenter",
+  "name": "Rosedale Center",
+  "city": "Roseville",
+  "state": "Minnesota"
+ },
+ {
+  "storeNumber": "R324",
+  "slug": "renaissanceatcolonypark",
+  "name": "Renaissance at Colony Park",
+  "city": "Ridgeland",
+  "state": "Mississippi"
+ },
+ {
+  "storeNumber": "R097",
+  "slug": "countryclubplaza",
+  "name": "Country Club Plaza",
+  "city": "Kansas City",
+  "state": "Missouri"
+ },
+ {
+  "storeNumber": "R114",
+  "slug": "saintlouisgalleria",
+  "name": "Saint Louis Galleria",
+  "city": "Saint Louis",
+  "state": "Missouri"
+ },
+ {
+  "storeNumber": "R062",
+  "slug": "westcounty",
+  "name": "West County",
+  "city": "Saint Louis",
+  "state": "Missouri"
+ },
+ {
+  "storeNumber": "R190",
+  "slug": "villagepointe",
+  "name": "Village Pointe",
+  "city": "Omaha",
+  "state": "Nebraska"
+ },
+ {
+  "storeNumber": "R219",
+  "slug": "townsquare",
+  "name": "Town Square",
+  "city": "Las Vegas",
+  "state": "Nevada"
+ },
+ {
+  "storeNumber": "R161",
+  "slug": "theforumshops",
+  "name": "The Forum Shops",
+  "city": "Las Vegas",
+  "state": "Nevada"
+ },
+ {
+  "storeNumber": "R650",
+  "slug": "summerlin",
+  "name": "Summerlin",
+  "city": "Las Vegas",
+  "state": "Nevada"
+ },
+ {
+  "storeNumber": "R064",
+  "slug": "fashionshow",
+  "name": "Fashion Show",
+  "city": "Las Vegas",
+  "state": "Nevada"
+ },
+ {
+  "storeNumber": "R186",
+  "slug": "shaydensummit",
+  "name": "Shayden Summit",
+  "city": "Reno",
+  "state": "Nevada"
+ },
+ {
+  "storeNumber": "R631",
+  "slug": "themallofnewhampshire",
+  "name": "The Mall of New Hampshire",
+  "city": "Manchester",
+  "state": "New Hampshire"
+ },
+ {
+  "storeNumber": "R354",
+  "slug": "pheasantlane",
+  "name": "Pheasant Lane",
+  "city": "Nashua",
+  "state": "New Hampshire"
+ },
+ {
+  "storeNumber": "R027",
+  "slug": "rockinghampark",
+  "name": "Rockingham Park",
+  "city": "Salem",
+  "state": "New Hampshire"
+ },
+ {
+  "storeNumber": "R104",
+  "slug": "bridgewater",
+  "name": "Bridgewater",
+  "city": "Bridgewater",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R206",
+  "slug": "cherryhill",
+  "name": "Cherry Hill",
+  "city": "Cherry Hill",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R755",
+  "slug": "americandream",
+  "name": "American Dream",
+  "city": "East Rutherford",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R067",
+  "slug": "menlopark",
+  "name": "Menlo Park",
+  "city": "Edison",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R138",
+  "slug": "freeholdracewaymall",
+  "name": "Freehold Raceway Mall",
+  "city": "Freehold",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R549",
+  "slug": "quakerbridge",
+  "name": "Quaker Bridge",
+  "city": "Lawrence Township",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R088",
+  "slug": "sagemore",
+  "name": "Sagemore",
+  "city": "Marlton",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R117",
+  "slug": "gardenstateplaza",
+  "name": "Garden State Plaza",
+  "city": "Paramus",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R103",
+  "slug": "rockaway",
+  "name": "Rockaway",
+  "city": "Rockaway",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R043",
+  "slug": "shorthills",
+  "name": "Short Hills",
+  "city": "Short Hills",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R325",
+  "slug": "willowbrook",
+  "name": "Willowbrook",
+  "city": "Wayne",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R013",
+  "slug": "ticescorner",
+  "name": "Tice&#x27;s Corner",
+  "city": "Woodcliff Lake",
+  "state": "New Jersey"
+ },
+ {
+  "storeNumber": "R177",
+  "slug": "abquptown",
+  "name": "ABQ Uptown",
+  "city": "Albuquerque",
+  "state": "New Mexico"
+ },
+ {
+  "storeNumber": "R017",
+  "slug": "crossgates",
+  "name": "Crossgates",
+  "city": "Albany",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R753",
+  "slug": "themallatbayplaza",
+  "name": "The Mall at Bay Plaza",
+  "city": "Bronx",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R594",
+  "slug": "williamsburg",
+  "name": "Williamsburg",
+  "city": "Brooklyn",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R715",
+  "slug": "downtownbrooklyn",
+  "name": "Downtown Brooklyn",
+  "city": "Brooklyn",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R016",
+  "slug": "waldengalleria",
+  "name": "Walden Galleria",
+  "city": "Buffalo",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R612",
+  "slug": "queenscenter",
+  "name": "Queens Center",
+  "city": "Elmhurst",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R060",
+  "slug": "rooseveltfield",
+  "name": "Roosevelt Field",
+  "city": "Garden City",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R068",
+  "slug": "waltwhitman",
+  "name": "Walt Whitman",
+  "city": "Huntington Station",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R139",
+  "slug": "smithhaven",
+  "name": "Smith Haven",
+  "city": "Lake Grove",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R327",
+  "slug": "manhasset",
+  "name": "Manhasset",
+  "city": "Manhasset",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R046",
+  "slug": "nanuet",
+  "name": "Nanuet",
+  "city": "Nanuet",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R250",
+  "slug": "west14thstreet",
+  "name": "West 14th Street",
+  "city": "New York",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R095",
+  "slug": "fifthavenue",
+  "name": "Fifth Avenue",
+  "city": "New York",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R654",
+  "slug": "worldtradecenter",
+  "name": "World Trade Center",
+  "city": "New York",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R032",
+  "slug": "soho",
+  "name": "SoHo",
+  "city": "New York",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R251",
+  "slug": "upperwestside",
+  "name": "Upper West Side",
+  "city": "New York",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R582",
+  "slug": "uppereastside",
+  "name": "Upper East Side",
+  "city": "New York",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R415",
+  "slug": "grandcentral",
+  "name": "Grand Central",
+  "city": "New York",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R152",
+  "slug": "statenisland",
+  "name": "Staten Island",
+  "city": "Staten Island",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R107",
+  "slug": "syracuse",
+  "name": "Syracuse",
+  "city": "Syracuse",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R140",
+  "slug": "eastview",
+  "name": "Eastview",
+  "city": "Victor",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R061",
+  "slug": "thewestchester",
+  "name": "The Westchester",
+  "city": "White Plains",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R261",
+  "slug": "ridgehill",
+  "name": "Ridge Hill",
+  "city": "Yonkers",
+  "state": "New York"
+ },
+ {
+  "storeNumber": "R083",
+  "slug": "southpark",
+  "name": "SouthPark",
+  "city": "Charlotte",
+  "state": "North Carolina"
+ },
+ {
+  "storeNumber": "R049",
+  "slug": "southpoint",
+  "name": "Southpoint",
+  "city": "Durham",
+  "state": "North Carolina"
+ },
+ {
+  "storeNumber": "R293",
+  "slug": "friendlycenter",
+  "name": "Friendly Center",
+  "city": "Greensboro",
+  "state": "North Carolina"
+ },
+ {
+  "storeNumber": "R796",
+  "slug": "birkdalevillage",
+  "name": "Birkdale Village",
+  "city": "Huntersville",
+  "state": "North Carolina"
+ },
+ {
+  "storeNumber": "R116",
+  "slug": "crabtreevalleymall",
+  "name": "Crabtree Valley Mall",
+  "city": "Raleigh",
+  "state": "North Carolina"
+ },
+ {
+  "storeNumber": "R353",
+  "slug": "summitmall",
+  "name": "Summit Mall",
+  "city": "Akron",
+  "state": "Ohio"
+ },
+ {
+  "storeNumber": "R518",
+  "slug": "thegreene",
+  "name": "The Greene",
+  "city": "Beavercreek",
+  "state": "Ohio"
+ },
+ {
+  "storeNumber": "R028",
+  "slug": "kenwoodtownecentre",
+  "name": "Kenwood Towne Centre",
+  "city": "Cincinnati",
+  "state": "Ohio"
+ },
+ {
+  "storeNumber": "R417",
+  "slug": "polarisfashionplace",
+  "name": "Polaris Fashion Place",
+  "city": "Columbus",
+  "state": "Ohio"
+ },
+ {
+  "storeNumber": "R009",
+  "slug": "eastontowncenter",
+  "name": "Easton Town Center",
+  "city": "Columbus",
+  "state": "Ohio"
+ },
+ {
+  "storeNumber": "R299",
+  "slug": "franklinparkmall",
+  "name": "Franklin Park Mall",
+  "city": "Toledo",
+  "state": "Ohio"
+ },
+ {
+  "storeNumber": "R192",
+  "slug": "crockerpark",
+  "name": "Crocker Park",
+  "city": "Westlake",
+  "state": "Ohio"
+ },
+ {
+  "storeNumber": "R081",
+  "slug": "eton",
+  "name": "Eton",
+  "city": "Woodmere",
+  "state": "Ohio"
+ },
+ {
+  "storeNumber": "R130",
+  "slug": "pennsquare",
+  "name": "Penn Square",
+  "city": "Oklahoma City",
+  "state": "Oklahoma"
+ },
+ {
+  "storeNumber": "R233",
+  "slug": "woodlandhills",
+  "name": "Woodland Hills",
+  "city": "Tulsa",
+  "state": "Oklahoma"
+ },
+ {
+  "storeNumber": "R077",
+  "slug": "pioneerplace",
+  "name": "Pioneer Place",
+  "city": "Portland",
+  "state": "Oregon"
+ },
+ {
+  "storeNumber": "R134",
+  "slug": "bridgeportvillage",
+  "name": "Bridgeport Village",
+  "city": "Tigard",
+  "state": "Oregon"
+ },
+ {
+  "storeNumber": "R090",
+  "slug": "washingtonsquare",
+  "name": "Washington Square",
+  "city": "Tigard",
+  "state": "Oregon"
+ },
+ {
+  "storeNumber": "R166",
+  "slug": "suburbansquare",
+  "name": "Suburban Square",
+  "city": "Ardmore",
+  "state": "Pennsylvania"
+ },
+ {
+  "storeNumber": "R065",
+  "slug": "kingofprussia",
+  "name": "King of Prussia",
+  "city": "King of Prussia",
+  "state": "Pennsylvania"
+ },
+ {
+  "storeNumber": "R304",
+  "slug": "parkcity",
+  "name": "Park City",
+  "city": "Lancaster",
+  "state": "Pennsylvania"
+ },
+ {
+  "storeNumber": "R162",
+  "slug": "walnutstreet",
+  "name": "Walnut Street",
+  "city": "Philadelphia",
+  "state": "Pennsylvania"
+ },
+ {
+  "storeNumber": "R413",
+  "slug": "rosspark",
+  "name": "Ross Park",
+  "city": "Pittsburgh",
+  "state": "Pennsylvania"
+ },
+ {
+  "storeNumber": "R096",
+  "slug": "shadyside",
+  "name": "Shadyside",
+  "city": "Pittsburgh",
+  "state": "Pennsylvania"
+ },
+ {
+  "storeNumber": "R147",
+  "slug": "southhillsvillage",
+  "name": "South Hills Village",
+  "city": "Pittsburgh",
+  "state": "Pennsylvania"
+ },
+ {
+  "storeNumber": "R281",
+  "slug": "lehighvalley",
+  "name": "Lehigh Valley",
+  "city": "Whitehall",
+  "state": "Pennsylvania"
+ },
+ {
+  "storeNumber": "R234",
+  "slug": "willowgrovepark",
+  "name": "Willow Grove Park",
+  "city": "Willow Grove",
+  "state": "Pennsylvania"
+ },
+ {
+  "storeNumber": "R167",
+  "slug": "providenceplace",
+  "name": "Providence Place",
+  "city": "Providence",
+  "state": "Rhode Island"
+ },
+ {
+  "storeNumber": "R318",
+  "slug": "charleston",
+  "name": "Charleston",
+  "city": "Charleston",
+  "state": "South Carolina"
+ },
+ {
+  "storeNumber": "R355",
+  "slug": "haywoodmall",
+  "name": "Haywood Mall",
+  "city": "Greenville",
+  "state": "South Carolina"
+ },
+ {
+  "storeNumber": "R513",
+  "slug": "coolspringsgalleria",
+  "name": "CoolSprings Galleria",
+  "city": "Franklin",
+  "state": "Tennessee"
+ },
+ {
+  "storeNumber": "R020",
+  "slug": "saddlecreek",
+  "name": "Saddle Creek",
+  "city": "Germantown",
+  "state": "Tennessee"
+ },
+ {
+  "storeNumber": "R203",
+  "slug": "westtownmall",
+  "name": "West Town Mall",
+  "city": "Knoxville",
+  "state": "Tennessee"
+ },
+ {
+  "storeNumber": "R123",
+  "slug": "greenhills",
+  "name": "Green Hills",
+  "city": "Nashville",
+  "state": "Tennessee"
+ },
+ {
+  "storeNumber": "R133",
+  "slug": "downtownnashville",
+  "name": "Downtown Nashville",
+  "city": "Nashville",
+  "state": "Tennessee"
+ },
+ {
+  "storeNumber": "R216",
+  "slug": "domainnorthside",
+  "name": "Domain NORTHSIDE",
+  "city": "Austin",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R085",
+  "slug": "bartoncreek",
+  "name": "Barton Creek",
+  "city": "Austin",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R144",
+  "slug": "northparkcenter",
+  "name": "NorthPark Center",
+  "city": "Dallas",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R042",
+  "slug": "knoxstreet",
+  "name": "Knox Street",
+  "city": "Dallas",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R746",
+  "slug": "galleriadallas",
+  "name": "Galleria Dallas",
+  "city": "Dallas",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R492",
+  "slug": "cielovistamall",
+  "name": "Cielo Vista Mall",
+  "city": "El Paso",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R316",
+  "slug": "universityparkvillage",
+  "name": "University Park Village",
+  "city": "Fort Worth",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R204",
+  "slug": "baybrook",
+  "name": "Baybrook",
+  "city": "Friendswood",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R164",
+  "slug": "memorialcity",
+  "name": "Memorial City",
+  "city": "Houston",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R058",
+  "slug": "houstongalleria",
+  "name": "Houston Galleria",
+  "city": "Houston",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R321",
+  "slug": "willowbrookmall",
+  "name": "Willowbrook Mall",
+  "city": "Houston",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R437",
+  "slug": "highlandvillage",
+  "name": "Highland Village",
+  "city": "Houston",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R290",
+  "slug": "northstar",
+  "name": "North Star",
+  "city": "San Antonio",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R131",
+  "slug": "lacantera",
+  "name": "La Cantera",
+  "city": "San Antonio",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R151",
+  "slug": "southlaketownsquare",
+  "name": "Southlake Town Square",
+  "city": "Southlake",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R205",
+  "slug": "firstcolonymall",
+  "name": "First Colony Mall",
+  "city": "Sugar Land",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R126",
+  "slug": "thewoodlands",
+  "name": "The Woodlands",
+  "city": "The Woodlands",
+  "state": "Texas"
+ },
+ {
+  "storeNumber": "R599",
+  "slug": "stationpark",
+  "name": "Station Park",
+  "city": "Farmington",
+  "state": "Utah"
+ },
+ {
+  "storeNumber": "R461",
+  "slug": "fashionplace",
+  "name": "Fashion Place",
+  "city": "Murray",
+  "state": "Utah"
+ },
+ {
+  "storeNumber": "R125",
+  "slug": "citycreekcenter",
+  "name": "City Creek Center",
+  "city": "Salt Lake City",
+  "state": "Utah"
+ },
+ {
+  "storeNumber": "R036",
+  "slug": "clarendon",
+  "name": "Clarendon",
+  "city": "Arlington",
+  "state": "Virginia"
+ },
+ {
+  "storeNumber": "R129",
+  "slug": "pentagoncity",
+  "name": "Pentagon City",
+  "city": "Arlington",
+  "state": "Virginia"
+ },
+ {
+  "storeNumber": "R221",
+  "slug": "fairfaxcorner",
+  "name": "Fairfax Corner",
+  "city": "Fairfax",
+  "state": "Virginia"
+ },
+ {
+  "storeNumber": "R010",
+  "slug": "tysonscorner",
+  "name": "Tysons Corner",
+  "city": "McLean",
+  "state": "Virginia"
+ },
+ {
+  "storeNumber": "R271",
+  "slug": "reston",
+  "name": "Reston",
+  "city": "Reston",
+  "state": "Virginia"
+ },
+ {
+  "storeNumber": "R078",
+  "slug": "shortpumptowncenter",
+  "name": "Short Pump Town Center",
+  "city": "Richmond",
+  "state": "Virginia"
+ },
+ {
+  "storeNumber": "R614",
+  "slug": "lynnhavenmall",
+  "name": "Lynnhaven Mall",
+  "city": "Virginia Beach",
+  "state": "Virginia"
+ },
+ {
+  "storeNumber": "R598",
+  "slug": "stonebridgepotomactowncenter",
+  "name": "Stonebridge Potomac Town Center",
+  "city": "Woodbridge",
+  "state": "Virginia"
+ },
+ {
+  "storeNumber": "R003",
+  "slug": "bellevuesquare",
+  "name": "Bellevue Square",
+  "city": "Bellevue",
+  "state": "Washington"
+ },
+ {
+  "storeNumber": "R100",
+  "slug": "alderwood",
+  "name": "Alderwood",
+  "city": "Lynnwood",
+  "state": "Washington"
+ },
+ {
+  "storeNumber": "R072",
+  "slug": "universityvillage",
+  "name": "University Village",
+  "city": "Seattle",
+  "state": "Washington"
+ },
+ {
+  "storeNumber": "R420",
+  "slug": "riverparksquare",
+  "name": "River Park Square",
+  "city": "Spokane",
+  "state": "Washington"
+ },
+ {
+  "storeNumber": "R339",
+  "slug": "tacomamall",
+  "name": "Tacoma Mall",
+  "city": "Tacoma",
+  "state": "Washington"
+ },
+ {
+  "storeNumber": "R106",
+  "slug": "southcenter",
+  "name": "Southcenter",
+  "city": "Tukwila",
+  "state": "Washington"
+ },
+ {
+  "storeNumber": "R257",
+  "slug": "bayshore",
+  "name": "Bayshore",
+  "city": "Glendale",
+  "state": "Wisconsin"
+ },
+ {
+  "storeNumber": "R229",
+  "slug": "hilldale",
+  "name": "Hilldale",
+  "city": "Madison",
+  "state": "Wisconsin"
+ },
+ {
+  "storeNumber": "R059",
+  "slug": "mayfair",
+  "name": "Mayfair",
+  "city": "Wauwatosa",
+  "state": "Wisconsin"
+ }
+]
