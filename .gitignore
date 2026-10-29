@@ -51,9 +51,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# runtime locks, stamps and logs
+# runtime locks, stamps and logs (root-level only: src/app/admin/(panel)/logs is a route)
 .flow/
-logs/
+/logs/
 *.log
 .runner.lock
 .stamp-*
