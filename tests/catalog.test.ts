@@ -12,7 +12,8 @@ describe("catalog data", () => {
   it("coverage plan reaches every store", () => {
     const covered = new Set(COVERAGE.flatMap((c) => c.covers));
     for (const s of STORES) expect(covered.has(s.storeNumber)).toBe(true);
-    expect(COVERAGE).toHaveLength(33);
+    expect(COVERAGE).toHaveLength(42); // 33 original anchors + 9 added 2026-10-30 for the stores Apple never returned (see docs/delivery)
+    for (const c of COVERAGE) expect(c.covers).toContain(c.anchorStore);
   });
   it("filters by storage and color", () => {
     const s = storagesFor("18-pro");
