@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PART_INDEX, STORE_INDEX, stateSlug, type ModelKey, MODELS } from "@/lib/apple/catalog";
+import { PART_INDEX, STORE_INDEX, storePath, type ModelKey, MODELS } from "@/lib/apple/catalog";
 import { stockByStore } from "@/lib/stock/queries";
 import { Dot, timeAgo } from "./StatusBits";
 
@@ -26,7 +26,7 @@ export async function StockBoard({ model, storage, color, limit = 60 }: { model:
             const items = r.availableParts.map((p) => PART_INDEX.get(p)!).filter(Boolean);
             return (
               <li key={r.storeNumber} className="pane-2 pane-hover p-4">
-                <Link href={`/stores/${stateSlug(s.state)}/${s.slug}`} className="block">
+                <Link href={storePath(s)} className="block">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="font-semibold">Apple {s.name}</div>

@@ -13,6 +13,6 @@ export function buildWizardCatalog(): WizardCatalog {
   return { storages, colors, prices };
 }
 
-export function WizardServer({ initialModel, startSignIn, next }: { initialModel?: ModelKey; startSignIn?: boolean; next?: string }) {
-  return <Wizard catalog={buildWizardCatalog()} initialModel={initialModel} startSignIn={startSignIn} next={next} />;
+export function WizardServer({ initialModel, initialStore, startSignIn, next }: { initialModel?: ModelKey; initialStore?: string; startSignIn?: boolean; next?: string }) {
+  return <Wizard catalog={buildWizardCatalog()} initialModel={initialModel} initialStore={initialStore} startSignIn={startSignIn} next={next} />;
 }

@@ -27,6 +27,16 @@ export function PushSetup({ vapidPublicKey, title = "Phone notifications", compa
   );
 }
 
+/** Shows a sample banner straight from the service worker (no server round trip): proves the OS popup itself works. */
+async function previewLocally() {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification("In stock: iPhone Duo 256GB Black", { body: "Apple Fifth Avenue · New York, NY — Available Today. Tap to reserve on apple.com.", icon: "/icons/icon-192.png", badge: "/icons/badge-96.png", tag: "preview", data: { url: "/account" } });
+  } catch {
+    /* unsupported: the server test still tells the truth */
+  }
+}
+
 function StatusPill({ status }: { status: PushState["status"] }) {
   const map: Record<PushState["status"], [string, string]> = {
     checking: ["Checking…", "bg-white/8 text-ink-3"],
@@ -51,7 +61,7 @@ function Explain({ p }: { p: PushState }) {
     case "needs-signin": return <>Sign in on this device to link its notifications to your alerts.</>;
     case "denied": return <>Notifications are blocked for PickupChecker. {p.platform === "ios" ? <>Open <b>Settings → Notifications → PickupChecker</b> and allow them,</> : <>Allow them in your browser&apos;s site settings for pickupchecker.com,</>} then reload this page.</>;
     case "ready": return <>{p.standalone ? "You're in the app. " : ""}One tap and every restock that matches your alerts lands on this device within seconds. No email to open.</>;
-    case "on": return <>Restocks that match your alerts arrive here within seconds. Add more devices by opening PickupChecker on them.</>;
+    case "on": return <>Restocks that match your alerts arrive here within seconds. <b>Send a test notification</b> goes through our servers and Apple/Google exactly like a real alert — it should pop up within a few seconds (on iPhone, also check the lock screen).</>;
   }
 }
 
@@ -72,7 +82,8 @@ function Actions({ p }: { p: PushState }) {
     case "on":
       return (
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="btn btn-ghost btn-sm" disabled={p.busy} onClick={() => void p.sendTest()}>{spin}Send a test</button>
+          <button type="button" className="btn btn-primary btn-sm" disabled={p.busy} onClick={() => void p.sendTest()}>{spin}Send a test notification</button>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={p.busy} onClick={() => void previewLocally()}>Preview on this device</button>
           <button type="button" className="btn btn-ghost btn-sm" disabled={p.busy} onClick={() => void p.turnOff()}>Turn off</button>
         </div>
       );

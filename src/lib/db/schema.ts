@@ -170,8 +170,10 @@ export const availabilityEvents = pgTable(
     at: ts("at").notNull().defaultNow(),
     sweepId: text("sweep_id"),
     notifiedAt: ts("notified_at"),
+    /** unknown → available: the first time we ever saw the pair, not a real restock (excluded from feeds/stats). */
+    firstSeen: boolean("first_seen").notNull().default(false),
   },
-  (t) => [index("events_at_idx").on(t.at), index("events_part_idx").on(t.partNumber, t.at)],
+  (t) => [index("events_at_idx").on(t.at), index("events_part_idx").on(t.partNumber, t.at), index("events_store_idx").on(t.storeNumber, t.at)],
 );
 
 export const notifications = pgTable(

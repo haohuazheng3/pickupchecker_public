@@ -58,7 +58,7 @@ export default async function Account() {
         <h2 className="text-xl font-semibold">Alerts</h2>
         <WatchList
           watches={watches.map((w) => ({
-            id: w.id, model: w.model, storages: w.storages, colors: w.colors, paused: w.paused, active: w.active, zip: w.zip, radiusMiles: w.radiusMiles,
+            id: w.id, model: w.model, storages: w.storages, colors: w.colors, paused: w.paused, active: w.active, zip: w.zip, radiusMiles: w.radiusMiles, nearMe: !w.zip && w.lat != null,
             storeNames: w.storeNumbers.map((n) => STORE_INDEX.get(n)?.name ?? n), covered: covered.has(w.id), createdAt: w.createdAt.toISOString(),
           }))}
         />

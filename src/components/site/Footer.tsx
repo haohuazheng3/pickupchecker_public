@@ -16,12 +16,12 @@ export function Footer() {
           <div className="text-sm">
             <div className="eyebrow mb-3">Product</div>
             <ul className="space-y-2 text-ink-2">
+              <li><Link href="/stock/iphone-duo" className="hover:text-ink">iPhone Duo stock</Link></li>
               <li><Link href="/stock/iphone-18-pro" className="hover:text-ink">iPhone 18 Pro stock</Link></li>
               <li><Link href="/stock/iphone-18-pro-max" className="hover:text-ink">iPhone 18 Pro Max stock</Link></li>
-              <li><Link href="/stock/iphone-duo" className="hover:text-ink">iPhone Duo stock</Link></li>
+              <li><Link href="/restocks" className="hover:text-ink">Restock log</Link></li>
               <li><Link href="/map" className="hover:text-ink">Live stock map</Link></li>
               <li><Link href="/stores" className="hover:text-ink">Apple Stores by state</Link></li>
-              <li><Link href="/install" className="hover:text-ink">Get the app</Link></li>
               <li><Link href="/pricing" className="hover:text-ink">Pricing</Link></li>
             </ul>
           </div>
@@ -29,6 +29,7 @@ export function Footer() {
             <div className="eyebrow mb-3">Company</div>
             <ul className="space-y-2 text-ink-2">
               <li><Link href="/how-it-works" className="hover:text-ink">How it works</Link></li>
+              <li><Link href="/install" className="hover:text-ink">Get the app</Link></li>
               <li><Link href="/about" className="hover:text-ink">About</Link></li>
               <li><Link href="/blog" className="hover:text-ink">Blog</Link></li>
               <li><Link href="/contact" className="hover:text-ink">Contact</Link></li>

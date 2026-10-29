@@ -41,11 +41,13 @@ export interface CoverageAnchor {
   covers: string[];
 }
 
+/** Duo first everywhere: it is the scarce one and what nearly every visitor is here for. */
 export const MODELS: { key: ModelKey; name: string; short: string; slug: string; blurb: string }[] = [
+  { key: "duo", name: "iPhone Duo", short: "Duo", slug: "iphone-duo", blurb: "The foldable" },
   { key: "18-pro", name: "iPhone 18 Pro", short: "18 Pro", slug: "iphone-18-pro", blurb: "6.3-inch Pro" },
   { key: "18-pro-max", name: "iPhone 18 Pro Max", short: "18 Pro Max", slug: "iphone-18-pro-max", blurb: "6.9-inch Pro" },
-  { key: "duo", name: "iPhone Duo", short: "Duo", slug: "iphone-duo", blurb: "The foldable" },
 ];
+export const DEFAULT_MODEL: ModelKey = "duo";
 
 export function modelKeyFor(modelName: string): ModelKey {
   if (/pro max/i.test(modelName)) return "18-pro-max";
@@ -146,4 +148,55 @@ export function storesNear(lat: number, lng: number, radiusMiles: number): (Stor
   return STORES.map((s) => ({ ...s, distance: distanceMiles(lat, lng, s.lat, s.lng) }))
     .filter((s) => s.distance <= radiusMiles)
     .sort((a, b) => a.distance - b.distance);
+}
+
+/** City slug ("Saint Louis" → "saint-louis"); store slugs come from Apple and never collide (tested). */
+export function citySlug(city: string): string {
+  return city.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+export interface CityEntry { name: string; slug: string; state: string; stateSlug: string; stores: Store[] }
+
+/** Cities with at least one store, grouped per state. */
+export function citiesWithStores(): CityEntry[] {
+  const map = new Map<string, CityEntry>();
+  for (const s of STORES) {
+    const key = `${s.state}|${s.city}`;
+    const e = map.get(key) ?? { name: s.city, slug: citySlug(s.city), state: s.state, stateSlug: stateSlug(s.state), stores: [] };
+    e.stores.push(s);
+    map.set(key, e);
+  }
+  return [...map.values()].sort((a, b) => a.state.localeCompare(b.state) || a.name.localeCompare(b.name));
+}
+
+export function cityBySlug(stateSlugValue: string, slug: string): CityEntry | undefined {
+  return citiesWithStores().find((c) => c.stateSlug === stateSlugValue && c.slug === slug);
+}
+
+/** IANA zone per state for "typical restock time" charts (states that span zones use their larger part). */
+const STATE_TZ: Record<string, string> = {
+  AL: "America/Chicago", AK: "America/Anchorage", AZ: "America/Phoenix", AR: "America/Chicago", CA: "America/Los_Angeles", CO: "America/Denver", CT: "America/New_York",
+  DE: "America/New_York", DC: "America/New_York", FL: "America/New_York", GA: "America/New_York", HI: "Pacific/Honolulu", ID: "America/Boise", IL: "America/Chicago", IN: "America/Indiana/Indianapolis",
+  IA: "America/Chicago", KS: "America/Chicago", KY: "America/New_York", LA: "America/Chicago", ME: "America/New_York", MD: "America/New_York", MA: "America/New_York", MI: "America/Detroit",
+  MN: "America/Chicago", MS: "America/Chicago", MO: "America/Chicago", MT: "America/Denver", NE: "America/Chicago", NV: "America/Los_Angeles", NH: "America/New_York", NJ: "America/New_York",
+  NM: "America/Denver", NY: "America/New_York", NC: "America/New_York", ND: "America/Chicago", OH: "America/New_York", OK: "America/Chicago", OR: "America/Los_Angeles", PA: "America/New_York",
+  RI: "America/New_York", SC: "America/New_York", SD: "America/Chicago", TN: "America/Chicago", TX: "America/Chicago", UT: "America/Denver", VT: "America/New_York", VA: "America/New_York",
+  WA: "America/Los_Angeles", WV: "America/New_York", WI: "America/Chicago", WY: "America/Denver", PR: "America/Puerto_Rico",
+};
+export function storeTimeZone(store: Store): string {
+  return STATE_TZ[stateCodeOf(store)] ?? "America/New_York";
+}
+
+/** Canonical URLs: /stores/{state}/{city}/{store}. City slugs can equal Apple's store slugs, so depth disambiguates. */
+export function statePath(stateName: string): string {
+  return `/stores/${stateSlug(stateName)}`;
+}
+export function cityPath(stateName: string, city: string): string {
+  return `/stores/${stateSlug(stateName)}/${citySlug(city)}`;
+}
+export function storePath(store: Pick<Store, "state" | "city" | "slug">): string {
+  return `/stores/${stateSlug(store.state)}/${citySlug(store.city)}/${store.slug}`;
+}
+export function storeByNumber(n: string): Store | undefined {
+  return STORE_INDEX.get(n);
 }

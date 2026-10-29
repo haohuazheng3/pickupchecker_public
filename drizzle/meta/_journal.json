@@ -29,6 +29,13 @@
       "when": 1793307340713,
       "tag": "0003_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793312405699,
+      "tag": "0004_events_first_seen",
+      "breakpoints": true
     }
   ]
 }

@@ -11,8 +11,9 @@ import { PLANS, type PlanKey } from "@/lib/plans";
 import { track } from "@/lib/track";
 import { StorePicker } from "./StorePicker";
 
-type Step = "model" | "storage" | "color" | "stores" | "email" | "code" | "pay";
-const ORDER: Step[] = ["model", "storage", "color", "stores", "email", "code", "pay"];
+type Step = "model" | "config" | "stores" | "email" | "code" | "pay";
+/** Progress segments: model · configuration · stores · sign-in · done. */
+const STAGE: Record<Step, number> = { model: 0, config: 1, stores: 2, email: 3, code: 3, pay: 4 };
 
 export interface WizardCatalog {
   storages: Record<ModelKey, string[]>;
@@ -25,16 +26,16 @@ function clerkMessage(e: unknown): string {
   return err?.longMessage ?? err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? err?.message ?? "Something went wrong";
 }
 
-export function Wizard({ catalog, initialModel, startSignIn, next }: { catalog: WizardCatalog; initialModel?: ModelKey; startSignIn?: boolean; next?: string }) {
+export function Wizard({ catalog, initialModel, initialStore, startSignIn, next }: { catalog: WizardCatalog; initialModel?: ModelKey; initialStore?: string; startSignIn?: boolean; next?: string }) {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
 
-  const [step, setStep] = useState<Step>(startSignIn ? "email" : initialModel ? "storage" : "model");
+  const [step, setStep] = useState<Step>(startSignIn ? "email" : initialModel ? "config" : "model");
   const [model, setModel] = useState<ModelKey | null>(initialModel ?? null);
   const [storages, setStorages] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>([]);
-  const [stores, setStores] = useState<{ storeNumbers: string[]; zip?: string; radiusMiles?: number }>({ storeNumbers: [] });
+  const [stores, setStores] = useState<{ storeNumbers: string[]; zip?: string; radiusMiles?: number; lat?: number; lng?: number }>({ storeNumbers: initialStore ? [initialStore] : [] });
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [authMode, setAuthMode] = useState<"signin" | "signup" | null>(null);
@@ -47,7 +48,6 @@ export function Wizard({ catalog, initialModel, startSignIn, next }: { catalog: 
 
   useEffect(() => { if (step === "code") codeRef.current?.focus(); }, [step]);
 
-  const idx = ORDER.indexOf(step);
   const modelMeta = MODELS.find((m) => m.key === model);
   const storageOptions = model ? catalog.storages[model] : [];
   const colorOptions = model ? catalog.colors[model] : [];
@@ -58,7 +58,7 @@ export function Wizard({ catalog, initialModel, startSignIn, next }: { catalog: 
     if (!model) throw new Error("Pick a model first");
     const res = await fetch("/api/watches", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model, storages, colors, storeNumbers: stores.storeNumbers, zip: stores.zip, radiusMiles: stores.radiusMiles }),
+      body: JSON.stringify({ model, storages, colors, storeNumbers: stores.storeNumbers, zip: stores.zip || undefined, radiusMiles: stores.radiusMiles, lat: stores.lat, lng: stores.lng }),
     });
     const j = (await res.json()) as { id?: string; covered?: boolean; plan?: { key: PlanKey; limit: number; used: number }; error?: string };
     if (!res.ok || !j.id) throw new Error(j.error ?? "Could not save your alert");
@@ -149,72 +149,65 @@ export function Wizard({ catalog, initialModel, startSignIn, next }: { catalog: 
     if (!modelMeta) return "";
     const s = storages.length ? storages.join(" / ") : "any storage";
     const c = colors.length ? colors.join(" / ") : "any color";
-    const where = stores.storeNumbers.length ? `${stores.storeNumbers.length} store${stores.storeNumbers.length > 1 ? "s" : ""}` : stores.zip ? `within ${stores.radiusMiles ?? 50} mi of ${stores.zip}` : "every US Apple Store";
+    const where = stores.storeNumbers.length ? `${stores.storeNumbers.length} store${stores.storeNumbers.length > 1 ? "s" : ""}` : stores.zip ? `within ${stores.radiusMiles ?? 50} mi of ${stores.zip}` : stores.lat != null ? `within ${stores.radiusMiles ?? 50} mi of you` : "every US Apple Store";
     return `${modelMeta.name} · ${s} · ${c} · ${where}`;
   }, [modelMeta, storages, colors, stores]);
 
   return (
     <div id="notify" className="pane relative overflow-hidden p-5 sm:p-7">
       {/* progress */}
-      <div className="mb-5 flex items-center gap-2" aria-label={`Step ${Math.min(idx + 1, 6)} of 6`}>
-        {ORDER.slice(0, 6).map((s, i) => (
-          <span key={s} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= Math.min(idx, 5) ? "bg-accent" : "bg-white/10"}`} />
+      <div className="mb-5 flex items-center gap-2" aria-label={`Step ${STAGE[step] + 1} of 5`}>
+        {[0, 1, 2, 3, 4].map((i) => (
+          <span key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= STAGE[step] ? "bg-accent" : "bg-white/10"}`} />
         ))}
       </div>
 
       {step === "model" && (
         <section>
-          <h2 className="display text-2xl sm:text-3xl">Which iPhone are you after?</h2>
-          <p className="mt-2 text-ink-2">We check every Apple Store in the US around the clock.</p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <h2 className="display text-2xl sm:text-3xl">Which iPhone?</h2>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {MODELS.map((m) => (
-              <button key={m.key} type="button" onClick={() => { setModel(m.key); setStorages([]); setColors([]); setStep("storage"); track("model_selected", { model: m.key }); }}
-                className="pane-2 pane-hover p-5 text-left">
+              <button key={m.key} type="button" onClick={() => { setModel(m.key); setStorages([]); setColors([]); setStep("config"); track("model_selected", { model: m.key }); }}
+                className={`pane-2 pane-hover p-4 text-left ${m.key === "duo" ? "border-accent/40" : ""}`}>
                 <div className="text-lg font-semibold">{m.name}</div>
                 <div className="mt-1 text-sm text-ink-3">{m.blurb} · from ${catalog.prices[m.key].toLocaleString()}</div>
-                <div className="mt-4 inline-flex items-center gap-1 text-sm text-accent">Choose <span aria-hidden>→</span></div>
               </button>
             ))}
           </div>
         </section>
       )}
 
-      {step === "storage" && model && (
+      {step === "config" && model && (
         <section>
-          <Back onClick={() => setStep("model")} />
-          <h2 className="display text-2xl sm:text-3xl">{modelMeta?.name}: which storage?</h2>
-          <p className="mt-2 text-ink-2">Pick one or more, or leave empty for any.</p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            {[...storageOptions].sort((a, b) => STORAGE_ORDER.indexOf(a) - STORAGE_ORDER.indexOf(b)).map((s) => (
-              <button key={s} type="button" className="chip" aria-pressed={storages.includes(s)} onClick={() => toggle(storages, s, setStorages)}>{s}</button>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="display text-2xl sm:text-3xl">{modelMeta?.name}</h2>
+            <button type="button" className="text-sm text-ink-3 hover:text-ink" onClick={() => setStep("model")}>Change model</button>
+          </div>
+          <p className="mt-1 text-sm text-ink-3">Tap what you&apos;d accept — or just continue for any.</p>
+          <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-3">Storage</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button type="button" className="chip" aria-pressed={storages.length === 0} onClick={() => setStorages([])}>Any</button>
+            {[...storageOptions].sort((a, b) => STORAGE_ORDER.indexOf(a) - STORAGE_ORDER.indexOf(b)).map((v) => (
+              <button key={v} type="button" className="chip" aria-pressed={storages.includes(v)} onClick={() => toggle(storages, v, setStorages)}>{v}</button>
             ))}
           </div>
-          <Next label={storages.length ? "Continue" : "Any storage — continue"} onClick={() => setStep("color")} />
-        </section>
-      )}
-
-      {step === "color" && model && (
-        <section>
-          <Back onClick={() => setStep("storage")} />
-          <h2 className="display text-2xl sm:text-3xl">Which color?</h2>
-          <p className="mt-2 text-ink-2">Pick one or more, or leave empty for any.</p>
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-3">Color</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button type="button" className="chip" aria-pressed={colors.length === 0} onClick={() => setColors([])}>Any</button>
             {colorOptions.map((c) => (
               <button key={c} type="button" className="chip" aria-pressed={colors.includes(c)} onClick={() => toggle(colors, c, setColors)}>
-                <span className="inline-block h-3.5 w-3.5 rounded-full border border-white/20" style={{ background: COLOR_META[c]?.hex ?? "#888" }} aria-hidden />
-                {c}
+                <span className="inline-block h-3 w-3 rounded-full border border-white/20" style={{ background: COLOR_META[c]?.hex ?? "#888" }} aria-hidden />{c}
               </button>
             ))}
           </div>
-          <Next label={colors.length ? "Continue" : "Any color — continue"} onClick={() => setStep("stores")} />
+          <Next label={storages.length || colors.length ? "Continue" : "Any storage, any color — continue"} onClick={() => setStep("stores")} />
         </section>
       )}
 
       {step === "stores" && model && (
         <section>
-          <Back onClick={() => setStep("color")} />
+          <Back onClick={() => setStep("config")} />
           <h2 className="display text-2xl sm:text-3xl">Which stores?</h2>
-          <p className="mt-2 text-ink-2">Enter a ZIP for everything nearby, pick specific stores, or watch the whole country.</p>
           <div className="mt-6"><StorePicker value={stores} onChange={setStores} /></div>
           {error && <Err msg={error} />}
           <Next label={busy ? "Saving…" : "Continue"} busy={busy} onClick={continueFromStores} />

@@ -96,7 +96,7 @@ export async function ingestStores(
   if (transitions.length > 0) {
     const inserted = await d
       .insert(schema.availabilityEvents)
-      .values(transitions.map((t) => ({ storeNumber: t.storeNumber, partNumber: t.partNumber, kind: t.kind, quote: t.quote, at: now, sweepId })))
+      .values(transitions.map((t) => ({ storeNumber: t.storeNumber, partNumber: t.partNumber, kind: t.kind, quote: t.quote, at: now, sweepId, firstSeen: t.firstSeen })))
       .returning({ id: schema.availabilityEvents.id });
     eventIds.push(...inserted.map((r) => r.id));
   }

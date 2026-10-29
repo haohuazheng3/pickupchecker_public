@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Logo } from "./Logo";
 import { AuthNav } from "./AuthNav";
 
-const LINKS: [string, string][] = [["/stock/iphone-18-pro", "Live stock"], ["/map", "Map"], ["/stores", "Stores"], ["/how-it-works", "How it works"], ["/pricing", "Pricing"]];
+const LINKS: [string, string][] = [["/stock/iphone-duo", "Duo stock"], ["/restocks", "Restocks"], ["/map", "Map"], ["/stores", "Stores"], ["/pricing", "Pricing"]];
 
 export function Header() {
   return (

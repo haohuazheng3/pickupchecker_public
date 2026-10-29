@@ -35,7 +35,7 @@ describe("push payload", () => {
     expect(p.title).toBe(`In stock: ${item.model} ${item.storage} ${item.color}`);
     expect(p.body).toContain(`Apple ${store.name}`);
     expect(p.body).toContain("Available Today");
-    expect(p.url).toMatch(/^\/stores\/[a-z-]+\/[a-z0-9-]+\?from=push$/);
+    expect(p.url).toMatch(/^\/stores\/[a-z-]+\/[a-z0-9-]+\/[a-z0-9-]+\?from=push$/); // /stores/{state}/{city}/{store}
     expect(p.tag).toBe("restock-w1");
     expect(JSON.stringify(p).length).toBeLessThan(1000);
   });

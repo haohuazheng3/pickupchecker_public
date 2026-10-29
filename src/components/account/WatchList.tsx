@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { MODELS } from "@/lib/apple/catalog";
 
-export interface WatchView { id: string; model: string; storages: string[]; colors: string[]; paused: boolean; active: boolean; zip: string | null; radiusMiles: number | null; storeNames: string[]; covered: boolean; createdAt: string }
+export interface WatchView { id: string; model: string; storages: string[]; colors: string[]; paused: boolean; active: boolean; zip: string | null; radiusMiles: number | null; nearMe?: boolean; storeNames: string[]; covered: boolean; createdAt: string }
 
 export function WatchList({ watches }: { watches: WatchView[] }) {
   const [items, setItems] = useState(watches);
@@ -25,7 +25,7 @@ export function WatchList({ watches }: { watches: WatchView[] }) {
       {err && <p role="alert" className="text-sm text-bad">{err}</p>}
       {live.map((w) => {
         const m = MODELS.find((x) => x.key === w.model);
-        const where = w.storeNames.length ? w.storeNames.slice(0, 4).join(", ") + (w.storeNames.length > 4 ? ` +${w.storeNames.length - 4}` : "") : w.zip ? `within ${w.radiusMiles ?? 50} mi of ${w.zip}` : "all US stores";
+        const where = w.storeNames.length ? w.storeNames.slice(0, 4).join(", ") + (w.storeNames.length > 4 ? ` +${w.storeNames.length - 4}` : "") : w.zip ? `within ${w.radiusMiles ?? 50} mi of ${w.zip}` : w.nearMe ? `within ${w.radiusMiles ?? 50} mi of your location` : "all US stores";
         return (
           <div key={w.id} className="pane-2 flex flex-wrap items-center justify-between gap-3 p-4">
             <div>

@@ -21,6 +21,9 @@ const Body = z.object({
   storeNumbers: z.array(z.string().regex(/^R\d{3,4}$/)).max(60).default([]),
   zip: z.string().regex(/^\d{5}$/).optional(),
   radiusMiles: z.number().int().min(5).max(500).optional(),
+  /** "Near me": the browser's coordinates (US + territories only). */
+  lat: z.number().min(17).max(72).optional(),
+  lng: z.number().min(-180).max(-64).optional(),
 });
 
 export async function GET() {
@@ -52,7 +55,9 @@ export async function POST(req: Request) {
   }
   if (b.storeNumbers.some((s) => !STORE_INDEX.has(s))) return NextResponse.json({ error: "unknown store" }, { status: 400 });
   let geo: { lat: number; lng: number } | null = null;
-  if (b.zip && b.storeNumbers.length === 0) {
+  if (b.storeNumbers.length === 0 && b.lat != null && b.lng != null) {
+    geo = { lat: b.lat, lng: b.lng };
+  } else if (b.zip && b.storeNumbers.length === 0) {
     geo = await geocodeZip(b.zip);
     if (!geo) return NextResponse.json({ error: "zip not found" }, { status: 400 });
   }
@@ -68,8 +73,8 @@ export async function POST(req: Request) {
     storages: b.storages,
     colors: b.colors,
     storeNumbers: b.storeNumbers,
-    zip: b.zip ?? null,
-    radiusMiles: b.storeNumbers.length ? null : (b.radiusMiles ?? (b.zip ? 50 : null)),
+    zip: geo && !b.zip ? null : (b.zip ?? null),
+    radiusMiles: b.storeNumbers.length ? null : (b.radiusMiles ?? (geo ? 50 : null)),
     lat: geo?.lat ?? null,
     lng: geo?.lng ?? null,
   });

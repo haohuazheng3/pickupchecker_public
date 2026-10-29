@@ -31,3 +31,16 @@ describe("catalog data", () => {
     expect(statesWithStores().find((s) => s.name === "California")?.count).toBeGreaterThan(40);
   });
 });
+
+describe("store and city URLs", () => {
+  it("are unique and nest state → city → store", async () => {
+    const { STORES, citiesWithStores, storePath, cityPath, DEFAULT_MODEL, MODELS } = await import("@/lib/apple/catalog");
+    const paths = new Set(STORES.map((s) => storePath(s)));
+    expect(paths.size).toBe(STORES.length);
+    for (const s of STORES) expect(storePath(s).startsWith(cityPath(s.state, s.city) + "/")).toBe(true);
+    const cities = citiesWithStores();
+    expect(new Set(cities.map((c) => cityPath(c.state, c.name))).size).toBe(cities.length);
+    expect(cities.reduce((n, c) => n + c.stores.length, 0)).toBe(STORES.length);
+    expect(MODELS[0].key).toBe(DEFAULT_MODEL); // Duo first everywhere
+  });
+});

@@ -11,13 +11,12 @@ import type * as maplibregl from "maplibre-gl";
 import { MODELS, PART_INDEX, modelKeyFor, storagesFor, colorsFor, STORAGE_ORDER, COLOR_META, type ModelKey } from "@/lib/apple/catalog";
 import type { MapSnapshot } from "@/lib/stock/queries";
 import { timeAgo } from "@/components/stock/StatusBits";
+import { MAP_STYLE as STYLE, MAP_WORKER_URL as WORKER_URL } from "@/lib/map";
 
-export interface MapStore { n: string; name: string; city: string; state: string; code: string; slug: string; lat: number; lng: number }
+export interface MapStore { n: string; name: string; city: string; state: string; code: string; path: string; lat: number; lng: number }
+export interface MapFocus { model: ModelKey | "all"; store?: string; stores?: string[]; stateCode?: string }
 
 type Bounds = [[number, number], [number, number]];
-const STYLE = process.env.NEXT_PUBLIC_MAP_STYLE_URL || "https://tiles.openfreemap.org/styles/dark";
-/** MapLibre 6 looks for its worker next to the main module; bundlers move that, so we serve a copy (scripts/vendor.mjs). */
-const WORKER_URL = "/vendor/maplibre-gl-worker.mjs";
 const REGIONS: Record<string, Bounds> = {
   "Lower 48": [[-125.5, 24.3], [-66.5, 49.5]],
   Alaska: [[-170, 51], [-130, 72]],
@@ -31,10 +30,17 @@ interface Filter { model: ModelFilter; storage: string; color: string }
 
 interface StoreView extends MapStore { parts: string[]; checked: string | null }
 
-export function StockMap({ stores, initial }: { stores: MapStore[]; initial: MapSnapshot }) {
+function boundsOf(pts: { lat: number; lng: number }[], pad = 0.5): Bounds | null {
+  if (!pts.length) return null;
+  const lngs = pts.map((p) => p.lng), lats = pts.map((p) => p.lat);
+  return [[Math.min(...lngs) - pad, Math.min(...lats) - pad * 0.7], [Math.max(...lngs) + pad, Math.max(...lats) + pad * 0.7]];
+}
+
+export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initial: MapSnapshot; focus: MapFocus }) {
   const [snap, setSnap] = useState<MapSnapshot>(initial);
-  const [filter, setFilter] = useState<Filter>({ model: "all", storage: "", color: "" });
-  const [selected, setSelected] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Filter>({ model: focus.model, storage: "", color: "" });
+  const [selected, setSelected] = useState<string | null>(focus.store ?? null);
+  const [locating, setLocating] = useState(false);
   const [tick, setTick] = useState(0);
   const [ready, setReady] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
@@ -109,7 +115,12 @@ export function StockMap({ stores, initial }: { stores: MapStore[]; initial: Map
       if (cancelled) return;
       libRef.current = lib;
       lib.setWorkerUrl(WORKER_URL);
-      const map = new lib.Map({ container: el, style: STYLE, bounds: REGIONS["Lower 48"], fitBoundsOptions: { padding: 28 }, minZoom: 2, maxZoom: 16, attributionControl: { compact: true } });
+      const focusStore = focus.store ? stores.find((s) => s.n === focus.store) : undefined;
+      const focusBounds = focus.stores?.length ? boundsOf(stores.filter((s) => focus.stores!.includes(s.n)), 0.3) : focus.stateCode ? boundsOf(stores.filter((s) => s.code === focus.stateCode)) : null;
+      const map = new lib.Map({
+        container: el, style: STYLE, minZoom: 2, maxZoom: 16, attributionControl: { compact: true },
+        ...(focusStore ? { center: [focusStore.lng, focusStore.lat] as [number, number], zoom: 11 } : { bounds: focusBounds ?? REGIONS["Lower 48"], fitBoundsOptions: { padding: 40 } }),
+      });
       mapRef.current = map;
       if (process.env.NODE_ENV !== "production") (window as unknown as { __pcMap?: maplibregl.Map }).__pcMap = map;
       map.addControl(new lib.NavigationControl({ showCompass: false }), "top-left");
@@ -131,7 +142,7 @@ export function StockMap({ stores, initial }: { stores: MapStore[]; initial: Map
           const f = e.features?.[0];
           if (!f || f.geometry.type !== "Point") return;
           const p = f.properties as { name: string; city: string; code: string; count: number };
-          popup.setLngLat(f.geometry.coordinates as [number, number]).setHTML(`<b>Apple ${esc(p.name)}</b><span>${esc(p.city)}, ${esc(p.code)} · ${p.count ? `${p.count} in stock` : "none"}</span>`).addTo(map);
+          popup.setLngLat(f.geometry.coordinates as [number, number]).setHTML(`<b>Apple ${esc(p.name)}</b><span>${esc(p.city)}, ${esc(p.code)} · ${p.count ? `${p.count} in stock` : "none"} · click for details</span>`).addTo(map);
         });
         map.on("mouseleave", "dots", () => { map.getCanvas().style.cursor = ""; popup.remove(); });
         map.on("click", "dots", (e: maplibregl.MapLayerMouseEvent) => { const f = e.features?.[0]; if (f) setSelected(String((f.properties as { n: string }).n)); });
@@ -156,6 +167,27 @@ export function StockMap({ stores, initial }: { stores: MapStore[]; initial: Map
     const map = mapRef.current;
     if (s && map) map.flyTo({ center: [s.lng, s.lat], zoom: Math.max(map.getZoom(), 9.5), duration: 900 });
   }, [stores]);
+  const nearMe = useCallback(() => {
+    if (!("geolocation" in navigator)) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        const map = mapRef.current;
+        if (!map) return;
+        const here: [number, number] = [pos.coords.longitude, pos.coords.latitude];
+        const data = { type: "Feature" as const, geometry: { type: "Point" as const, coordinates: here }, properties: {} };
+        if (!map.getSource("me")) {
+          map.addSource("me", { type: "geojson", data });
+          map.addLayer({ id: "me-halo", type: "circle", source: "me", paint: { "circle-radius": 14, "circle-color": "#7cc4ff", "circle-opacity": 0.25 } });
+          map.addLayer({ id: "me", type: "circle", source: "me", paint: { "circle-radius": 6, "circle-color": "#7cc4ff", "circle-stroke-color": "#07080c", "circle-stroke-width": 2 } });
+        } else (map.getSource("me") as maplibregl.GeoJSONSource).setData(data);
+        map.flyTo({ center: here, zoom: 9, duration: 1000 });
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
+    );
+  }, []);
   const focusState = useCallback((code: string) => {
     const pts = stores.filter((s) => s.code === code);
     if (!pts.length) return;
@@ -174,22 +206,22 @@ export function StockMap({ stores, initial }: { stores: MapStore[]; initial: Map
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="display text-3xl sm:text-5xl">Pickup stock map</h1>
-          <p className="mt-2 max-w-2xl text-ink-2">Every US Apple Store, live. Green dots list the {modelMeta ? modelMeta.short : "iPhone 18 Pro, Pro Max or Duo"} for in-store pickup right now; bigger means more configurations.</p>
+          <p className="mt-2 max-w-2xl text-ink-2">Every US Apple Store, live. Green dots list the {modelMeta ? modelMeta.short : "iPhone Duo, 18 Pro or Pro Max"} for in-store pickup right now; bigger means more configurations. Click any dot for the store&apos;s page.</p>
         </div>
         <div className="inline-flex items-center gap-2 text-sm text-ink-3"><span className={`dot ${stats.newest ? "dot-ok dot-live" : "dot-warn"}`} /> {stats.newest ? `Updated ${timeAgo(stats.newest)}` : "Waiting for the first sweep"}</div>
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
-        <button type="button" className="chip" aria-pressed={filter.model === "all"} onClick={() => setFilter({ model: "all", storage: "", color: "" })}>All models</button>
         {MODELS.map((m) => <button key={m.key} type="button" className="chip" aria-pressed={filter.model === m.key} onClick={() => setFilter({ model: m.key, storage: "", color: "" })}>{m.name}</button>)}
+        <button type="button" className="chip" aria-pressed={filter.model === "all"} onClick={() => setFilter({ model: "all", storage: "", color: "" })}>All models</button>
         {modelMeta && (
           <>
             <span className="mx-1 text-ink-3">·</span>
-            <select className="input w-auto py-2.5" value={filter.storage} onChange={(e) => setFilter((f) => ({ ...f, storage: e.target.value }))} aria-label="Storage">
+            <select className="input py-2.5" style={{ width: "auto" }} value={filter.storage} onChange={(e) => setFilter((f) => ({ ...f, storage: e.target.value }))} aria-label="Storage">
               <option value="">Any storage</option>
               {storages.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
-            <select className="input w-auto py-2.5" value={filter.color} onChange={(e) => setFilter((f) => ({ ...f, color: e.target.value }))} aria-label="Color">
+            <select className="input py-2.5" style={{ width: "auto" }} value={filter.color} onChange={(e) => setFilter((f) => ({ ...f, color: e.target.value }))} aria-label="Color">
               <option value="">Any color</option>
               {colors.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -204,6 +236,7 @@ export function StockMap({ stores, initial }: { stores: MapStore[]; initial: Map
           {!ready && !mapError && <div className="absolute inset-0 flex items-center justify-center bg-[#0b0d14] text-sm text-ink-3"><span className="spinner mr-2" /> Loading map…</div>}
           {mapError && <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-ink-2">{mapError}. The list on the right still works.</div>}
           <div className="absolute right-3 top-3 flex flex-wrap justify-end gap-1.5">
+            <button type="button" className="rounded-full border border-accent/50 bg-[rgba(13,15,22,.85)] px-2.5 py-1 text-[11px] font-medium text-accent backdrop-blur hover:bg-white/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={nearMe} disabled={locating}>{locating ? "Locating…" : "📍 Near me"}</button>
             {Object.entries(REGIONS).map(([name, b]) => <button key={name} type="button" className="rounded-full border border-line-2 bg-[rgba(13,15,22,.85)] px-2.5 py-1 text-[11px] font-medium backdrop-blur hover:bg-white/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={() => flyTo(b)}>{name}</button>)}
           </div>
           <div className="absolute bottom-7 left-3 flex flex-wrap gap-x-4 gap-y-1 rounded-2xl border border-line bg-[rgba(13,15,22,.85)] px-3 py-2 text-xs text-ink-2 backdrop-blur">
@@ -247,9 +280,10 @@ export function StockMap({ stores, initial }: { stores: MapStore[]; initial: Map
                 </div>
                 <SelectedParts parts={sel.parts} />
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Link href={`/stores/${sel.slug}`} className="btn btn-ghost btn-sm">Store page</Link>
-                  <Link href={`/?model=${modelMeta?.key ?? "18-pro"}#notify`} className="btn btn-primary btn-sm">Alert me</Link>
+                  <Link href={sel.path} className="btn btn-primary btn-sm">Open store page →</Link>
+                  <Link href={`/?model=${modelMeta?.key ?? "duo"}&store=${sel.n}#notify`} className="btn btn-ghost btn-sm">Alert me here</Link>
                 </div>
+                <p className="mt-2 text-xs text-ink-3">The store page has restock times, history, hours and nearby stores.</p>
               </>
             ) : (
               <>
@@ -295,7 +329,7 @@ export function StockMap({ stores, initial }: { stores: MapStore[]; initial: Map
 
 function SelectedParts({ parts }: { parts: string[] }) {
   const items = parts.map((p) => PART_INDEX.get(p)!).filter(Boolean);
-  if (items.length === 0) return <p className="mt-3 text-sm text-ink-3">Nothing matching your filter is listed here right now.</p>;
+  if (items.length === 0) return <p className="mt-3 text-sm text-ink-3">Nothing matching your filter is listed here right now — the store page shows when it usually restocks.</p>;
   const groups = MODELS.map((m) => ({ m, items: items.filter((i) => modelKeyFor(i.model) === m.key).sort((a, b) => STORAGE_ORDER.indexOf(a.storage) - STORAGE_ORDER.indexOf(b.storage) || a.color.localeCompare(b.color)) })).filter((g) => g.items.length);
   return (
     <div className="mt-3 space-y-3">
