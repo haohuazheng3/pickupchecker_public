@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: PageProps<"/stock/[model]">):
   if (!m) return {};
   return {
     title: `${m.name} in-store pickup stock — every US Apple Store, live`,
-    description: `Which Apple Stores have the ${m.name} available for in-store pickup right now, updated around the clock. Set a $5/month alert and get a notification the moment stock appears near you.`,
+    description: `Which Apple Stores have the ${m.name} available for in-store pickup right now, updated around the clock. Set a free alert and get a notification the moment stock appears near you.`,
     alternates: { canonical: `/stock/${m.slug}` },
   };
 }
@@ -56,7 +56,7 @@ export default async function StockModelPage({ params, searchParams }: PageProps
           <div className="pane p-5">
             <div className="eyebrow">Alerts</div>
             <p className="mt-2 text-ink-2">Don&apos;t refresh this page. Get a notification the second a {m.short} appears near you.</p>
-            <Link href={`/?model=${m.key}#notify`} className="btn btn-primary mt-4 w-full">Get notified · $5/mo</Link>
+            <Link href={`/?model=${m.key}#notify`} className="btn btn-primary mt-4 w-full">Get notified · free</Link>
           </div>
           <div className="pane p-5">
             <div className="eyebrow">Recent restocks</div>

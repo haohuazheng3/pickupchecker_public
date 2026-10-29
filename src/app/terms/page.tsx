@@ -5,11 +5,11 @@ export default function Terms() {
   return (
     <Page title="Terms of Service" lead="Last updated October 29, 2026.">
       <h2>The service</h2>
-      <p>PickupChecker sends email notifications about in-store pickup availability of selected iPhone models at Apple Stores in the United States, based on publicly displayed availability on apple.com. We don&apos;t sell devices, reserve them for you, or guarantee that a notification results in a purchase.</p>
+      <p>PickupChecker sends phone and email notifications about in-store pickup availability of selected iPhone models at Apple Stores in the United States, based on publicly displayed availability on apple.com. We don&apos;t sell devices, reserve them for you, or guarantee that a notification results in a purchase.</p>
       <h2>Accounts</h2>
       <p>You sign in with a one-time email code. Keep access to that mailbox secure; you are responsible for activity under your account.</p>
       <h2>Subscriptions</h2>
-      <p>Alerts for a model cost US$5 per month, billed in advance by Stripe, renewing monthly until cancelled. Cancel anytime from your account; alerts continue to the end of the paid period. Prices may change with 30 days&apos; notice.</p>
+      <p>Every account includes one alert rule at no charge. Plus (US$5 per month, 10 rules) and Pro (US$10 per month, 20 rules) are billed in advance by Stripe and renew monthly until cancelled. Cancel anytime from your account; paid rules continue to the end of the paid period, after which the account returns to the free plan and only the oldest rule keeps sending. Plan changes are prorated. Prices may change with 30 days&apos; notice.</p>
       <h2>Acceptable use</h2>
       <p>Personal, non-commercial use. No scraping, reselling of alerts, or automated accounts.</p>
       <h2>Availability and accuracy</h2>

@@ -35,7 +35,9 @@ export const subscriptions = pgTable(
   {
     id: text("id").primaryKey(), // Stripe subscription id
     userId: text("user_id").notNull().references(() => users.id),
-    model: text("model").notNull(), // catalog model key: "18-pro" | "18-pro-max" | "duo"
+    model: text("model").notNull().default("all"), // legacy per-model plans; "all" since the alert-count plans
+    plan: text("plan").notNull().default("plus"), // plus ($5, 10 alerts) | pro ($10, 20 alerts)
+    alertLimit: integer("alert_limit").notNull().default(10),
     status: text("status").notNull(), // active | trialing | past_due | canceled | incomplete | unpaid
     priceId: text("price_id"),
     currentPeriodEnd: ts("current_period_end"),

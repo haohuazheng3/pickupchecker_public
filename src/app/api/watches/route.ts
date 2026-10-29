@@ -6,7 +6,8 @@ import { ensureUser } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { MODELS, STORE_INDEX, storagesFor, colorsFor, type ModelKey } from "@/lib/apple/catalog";
 import { geocodeZip } from "@/lib/geo";
-import { activeSubscriptionsFor, subscriptionCovers } from "@/lib/billing";
+import { userPlan } from "@/lib/billing";
+import { coveredWatchIds, SAVE_CAP } from "@/lib/plans";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -26,14 +27,15 @@ export async function GET() {
   const u = await ensureUser();
   if (!u) return NextResponse.json({ error: "sign in first" }, { status: 401 });
   const rows = await db().select().from(schema.watches).where(eq(schema.watches.userId, u.id));
-  const subs = await activeSubscriptionsFor(u.id);
+  const { plan, sub } = await userPlan(u.id);
+  const covered = coveredWatchIds(rows, plan.limit);
   return NextResponse.json({
-    watches: rows.map((w) => ({ ...w, covered: subscriptionCovers(subs, w.model) })),
-    subscriptions: subs,
+    watches: rows.map((w) => ({ ...w, covered: covered.has(w.id) })),
+    plan: { key: plan.key, limit: plan.limit, used: rows.filter((w) => w.active).length, renewsAt: sub?.currentPeriodEnd ?? null },
   });
 }
 
-/** Save a watch (free to save; alerts only flow once the model is subscribed). */
+/** Save a rule. The first one is free; beyond the plan's limit it is saved but does not send until the user upgrades. */
 export async function POST(req: Request) {
   const u = await ensureUser();
   if (!u) return NextResponse.json({ error: "sign in first" }, { status: 401 });
@@ -54,8 +56,9 @@ export async function POST(req: Request) {
     geo = await geocodeZip(b.zip);
     if (!geo) return NextResponse.json({ error: "zip not found" }, { status: 400 });
   }
-  const subs = await activeSubscriptionsFor(u.id);
-  const sub = subs.find((s) => s.model === b.model && ["active", "trialing", "past_due"].includes(s.status));
+  const existing = await db().select({ id: schema.watches.id, active: schema.watches.active, createdAt: schema.watches.createdAt }).from(schema.watches).where(eq(schema.watches.userId, u.id));
+  if (existing.filter((w) => w.active).length >= SAVE_CAP) return NextResponse.json({ error: `you can keep at most ${SAVE_CAP} alert rules — delete one first` }, { status: 400 });
+  const { plan, sub } = await userPlan(u.id);
   const id = randomUUID();
   await db().insert(schema.watches).values({
     id,
@@ -70,7 +73,8 @@ export async function POST(req: Request) {
     lat: geo?.lat ?? null,
     lng: geo?.lng ?? null,
   });
-  return NextResponse.json({ id, covered: Boolean(sub) });
+  const covered = coveredWatchIds([...existing, { id, active: true, createdAt: new Date() }], plan.limit).has(id);
+  return NextResponse.json({ id, covered, plan: { key: plan.key, limit: plan.limit, used: existing.filter((w) => w.active).length + 1 } });
 }
 
 const Patch = z.object({ id: z.string().min(1), paused: z.boolean().optional(), active: z.boolean().optional() });

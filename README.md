@@ -1,8 +1,8 @@
 # PickupChecker
 
 A notification on your phone the moment an iPhone 18 Pro, iPhone 18 Pro Max or iPhone Duo is
-available for **in-store pickup** at any of the 269 Apple Stores in the United States. One $5/month
-subscription per model; every store is re-checked around the clock. Alerts are Web Push from the
+available for **in-store pickup** at any of the 269 Apple Stores in the United States. The first alert
+rule is free; Plus ($5/month) holds 10 and Pro ($10/month) 20. Every store is re-checked around the clock. Alerts are Web Push from the
 installable Home Screen app (`/install` walks the user through it); email is the fallback when no
 device has notifications on. `/map` shows every store on a live map.
 

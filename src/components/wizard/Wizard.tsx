@@ -1,12 +1,13 @@
 "use client";
 /**
  * "Get notified" — one surface, six steps:
- *   model → storage → color → stores → email + code (Clerk, custom UI) → $5/month (Stripe Checkout)
- * The watch is saved as soon as the user is signed in; alerts flow after payment.
+ *   model → storage → color → stores → email + code (Clerk, custom UI) → done, or pick a plan
+ * The rule is saved as soon as the user is signed in; the first one is free, more need Plus/Pro.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
 import { MODELS, COLOR_META, STORAGE_ORDER, type ModelKey } from "@/lib/apple/catalog";
+import { PLANS, type PlanKey } from "@/lib/plans";
 import { track } from "@/lib/track";
 import { StorePicker } from "./StorePicker";
 
@@ -41,6 +42,7 @@ export function Wizard({ catalog, initialModel, startSignIn, next }: { catalog: 
   const [error, setError] = useState<string | null>(null);
   const [watchId, setWatchId] = useState<string | null>(null);
   const [covered, setCovered] = useState(false);
+  const [planInfo, setPlanInfo] = useState<{ key: PlanKey; limit: number; used: number } | null>(null);
   const codeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (step === "code") codeRef.current?.focus(); }, [step]);
@@ -58,20 +60,20 @@ export function Wizard({ catalog, initialModel, startSignIn, next }: { catalog: 
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ model, storages, colors, storeNumbers: stores.storeNumbers, zip: stores.zip, radiusMiles: stores.radiusMiles }),
     });
-    const j = (await res.json()) as { id?: string; covered?: boolean; error?: string };
+    const j = (await res.json()) as { id?: string; covered?: boolean; plan?: { key: PlanKey; limit: number; used: number }; error?: string };
     if (!res.ok || !j.id) throw new Error(j.error ?? "Could not save your alert");
-    setWatchId(j.id); setCovered(Boolean(j.covered));
+    setWatchId(j.id); setCovered(Boolean(j.covered)); setPlanInfo(j.plan ?? null);
     track("watch_saved", { model, storages: storages.length, colors: colors.length, stores: stores.storeNumbers.length || (stores.zip ? "zip" : "all") });
     return j.id;
   }, [model, storages, colors, stores]);
 
-  const goPay = useCallback(async (id: string) => {
+  const goPay = useCallback(async (plan: "plus" | "pro", id: string | null) => {
     setBusy(true); setError(null);
     try {
-      const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ watchId: id }) });
-      const j = (await res.json()) as { url?: string; alreadySubscribed?: boolean; error?: string };
+      const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan, watchId: id ?? undefined }) });
+      const j = (await res.json()) as { url?: string; alreadySubscribed?: boolean; changed?: boolean; error?: string };
       if (!res.ok || !j.url) throw new Error(j.error ?? "Checkout unavailable");
-      track(j.alreadySubscribed ? "alert_activated" : "checkout_started", { model });
+      track(j.alreadySubscribed || j.changed ? "plan_changed" : "checkout_started", { model, plan });
       window.location.assign(j.url);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); setBusy(false); }
   }, [model]);
@@ -252,30 +254,37 @@ export function Wizard({ catalog, initialModel, startSignIn, next }: { catalog: 
 
       {step === "pay" && (
         <section>
-          <h2 className="display text-2xl sm:text-3xl">{covered ? "You're covered — alerts are on" : "Turn on alerts"}</h2>
+          <h2 className="display text-2xl sm:text-3xl">{covered ? (planInfo?.key === "free" ? "Your free alert is on" : "Alert saved — it's on") : "That's one more than your plan"}</h2>
           <p className="mt-2 text-ink-2">{summary}</p>
           {covered ? (
             <div className="mt-6">
-              <p className="text-ink-2">Your subscription for the {modelMeta?.name} already covers this alert. You&apos;ll be notified the moment it&apos;s in stock.</p>
-              <div className="mt-5 flex flex-wrap gap-2"><a href="/account" className="btn btn-primary">Open my alerts</a><a href="/install" className="btn btn-ghost">Get alerts on your phone</a></div>
+              <p className="text-ink-2">We&apos;re watching every store you chose. You&apos;ll be notified the moment the {modelMeta?.short} is available for pickup{planInfo && planInfo.key !== "free" ? ` (${planInfo.used} of ${planInfo.limit} ${PLANS[planInfo.key].name} alerts in use)` : ""}.</p>
+              <div className="mt-5 flex flex-wrap gap-2"><a href="/install" className="btn btn-primary">Get alerts on your phone</a><a href="/account" className="btn btn-ghost">Open my alerts</a></div>
+              {planInfo?.key === "free" && <p className="mt-4 text-sm text-ink-3">Want more than one rule? Plus is $5 a month for 10, Pro $10 for 20 — upgrade from your account whenever you need it.</p>}
             </div>
           ) : (
-            <div className="mt-6 grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
-              <div className="pane-2 p-5">
-                <div className="flex items-baseline gap-2"><span className="display text-4xl">$5</span><span className="text-ink-3">/ month</span></div>
-                <ul className="mt-3 space-y-1.5 text-sm text-ink-2">
-                  <li>✓ Every Apple Store in the US, checked around the clock</li>
-                  <li>✓ Instant notification on your phone when your {modelMeta?.short} is available for pickup</li>
-                  <li>✓ Unlimited alerts for this model · cancel anytime</li>
-                </ul>
+            <div className="mt-6">
+              <p className="text-ink-2">{planInfo?.key === "free" ? "Your account includes one free alert rule, and it's already in use. Pick a plan and this rule starts sending too." : `Your ${PLANS[planInfo?.key ?? "plus"].name} plan holds ${planInfo?.limit ?? 10} rules and they're all in use. Move up and this one starts sending.`}</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {(["plus", "pro"] as const).filter((k) => k !== planInfo?.key).map((k) => (
+                  <div key={k} className="pane-2 flex flex-col p-5">
+                    <div className="flex items-baseline justify-between"><span className="font-semibold">{PLANS[k].name}</span><span><span className="display text-3xl">${PLANS[k].priceUsd}</span><span className="text-ink-3"> / month</span></span></div>
+                    <ul className="mt-3 flex-1 space-y-1.5 text-sm text-ink-2">
+                      <li>✓ {PLANS[k].limit} alert rules, any model, any store</li>
+                      <li>✓ Phone notifications within seconds</li>
+                      <li>✓ Renews monthly · cancel anytime</li>
+                    </ul>
+                    <button type="button" className={`btn mt-4 ${k === "plus" ? "btn-primary" : "btn-ghost"}`} disabled={busy} onClick={() => goPay(k, watchId)}>
+                      {busy ? <><span className="spinner" /> Opening checkout</> : `Choose ${PLANS[k].name}`}
+                    </button>
+                  </div>
+                ))}
               </div>
-              <button type="button" className="btn btn-primary btn-lg" disabled={busy || !watchId} onClick={() => watchId && goPay(watchId)}>
-                {busy ? <><span className="spinner" /> Opening checkout</> : "Start alerts · $5/mo"}
-              </button>
+              <p className="mt-3 text-sm text-ink-3">Or keep the free plan: this rule stays saved but silent until you free up a slot or upgrade.</p>
             </div>
           )}
           {error && <Err msg={error} />}
-          <p className="mt-4 text-xs text-ink-3">Secure checkout by Stripe. We never see your card.</p>
+          <p className="mt-4 text-xs text-ink-3">Secure checkout by Stripe — card or Link. We never see your card.</p>
         </section>
       )}
     </div>

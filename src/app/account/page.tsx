@@ -2,10 +2,11 @@ import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { ensureUser } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
-import { activeSubscriptionsFor, subscriptionCovers } from "@/lib/billing";
-import { MODELS, STORE_INDEX, PART_INDEX } from "@/lib/apple/catalog";
+import { activeSubscriptionsFor } from "@/lib/billing";
+import { effectivePlan, coveredWatchIds } from "@/lib/plans";
+import { STORE_INDEX, PART_INDEX } from "@/lib/apple/catalog";
 import { WatchList } from "@/components/account/WatchList";
-import { BillingButton } from "@/components/account/BillingButton";
+import { PlanCard } from "@/components/account/PlanCard";
 import { Identify } from "@/components/account/Identify";
 import { SignOutButton } from "@/components/account/SignOutButton";
 import { DeviceList } from "@/components/account/DeviceList";
@@ -26,6 +27,8 @@ export default async function Account() {
     db().select().from(schema.pushSubscriptions).where(eq(schema.pushSubscriptions.userId, u.id)).orderBy(desc(schema.pushSubscriptions.createdAt)),
   ]);
   const row = await db().select().from(schema.users).where(eq(schema.users.id, u.id)).limit(1);
+  const { plan, sub } = effectivePlan(subs);
+  const covered = coveredWatchIds(watches, plan.limit);
   return (
     <div className="mx-auto max-w-5xl px-4 pt-8">
       <Identify userRef={u.id} email={u.email} />
@@ -36,23 +39,13 @@ export default async function Account() {
         </div>
         <div className="flex gap-2">
           <Link href="/#notify" className="btn btn-primary btn-sm">New alert</Link>
-          {row[0]?.stripeCustomerId && <BillingButton />}
           <SignOutButton />
         </div>
       </div>
 
-      <section className="mt-6 grid gap-3 sm:grid-cols-3">
-        {MODELS.map((m) => {
-          const covered = subscriptionCovers(subs, m.key);
-          const s = subs.find((x) => x.model === m.key);
-          return (
-            <div key={m.key} className="pane-2 p-4">
-              <div className="font-semibold">{m.name}</div>
-              <div className={`mt-1 text-sm ${covered ? "text-accent" : "text-ink-3"}`}>{covered ? `Active${s?.cancelAtPeriodEnd ? " · ends " + (s.currentPeriodEnd?.toLocaleDateString() ?? "") : s?.currentPeriodEnd ? " · renews " + s.currentPeriodEnd.toLocaleDateString() : ""}` : s ? `Subscription ${s.status}` : "No subscription"}</div>
-            </div>
-          );
-        })}
-      </section>
+      <div className="mt-6">
+        <PlanCard plan={{ key: plan.key, limit: plan.limit, used: watches.filter((w) => w.active).length, renewsAt: sub?.currentPeriodEnd?.toISOString() ?? null, cancelAtPeriodEnd: Boolean(sub?.cancelAtPeriodEnd), status: sub?.status ?? null, hasCustomer: Boolean(row[0]?.stripeCustomerId) }} />
+      </div>
 
       <div className="mt-6">
         <PushSetup vapidPublicKey={env.vapidPublicKey()} />
@@ -66,7 +59,7 @@ export default async function Account() {
         <WatchList
           watches={watches.map((w) => ({
             id: w.id, model: w.model, storages: w.storages, colors: w.colors, paused: w.paused, active: w.active, zip: w.zip, radiusMiles: w.radiusMiles,
-            storeNames: w.storeNumbers.map((n) => STORE_INDEX.get(n)?.name ?? n), covered: subscriptionCovers(subs, w.model), createdAt: w.createdAt.toISOString(),
+            storeNames: w.storeNumbers.map((n) => STORE_INDEX.get(n)?.name ?? n), covered: covered.has(w.id), createdAt: w.createdAt.toISOString(),
           }))}
         />
       </section>

@@ -15,9 +15,3 @@ export function stripe(): Stripe {
   });
   return _stripe;
 }
-
-export const PLAN = {
-  priceUsd: 5,
-  label: "$5 / month",
-  description: "Instant email alerts for one iPhone model at any Apple Store you choose.",
-};

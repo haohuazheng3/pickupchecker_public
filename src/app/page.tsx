@@ -15,7 +15,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const faq = [
     ["How fast are the alerts?", "Every Apple Store in the US is re-checked continuously, typically every 20 seconds. The notification reaches your phone within seconds of a store flipping to \"available\" for pickup."],
     ["How do I get notifications on my iPhone?", "Add PickupChecker to your Home Screen from Safari (Share → Add to Home Screen), open it from there, sign in and tap Turn on notifications. The install guide walks you through it in a minute. No device set up? Alerts go to your email instead."],
-    ["Does $5 cover every store?", "Yes. One subscription covers one iPhone model (for example iPhone 18 Pro) with as many alerts as you like: any storage, any color, nearby stores, hand-picked stores or the whole country."],
+    ["What's free and what's paid?", "Every account gets one alert rule free, forever: one model, the storages and colors you'd take, and nearby stores, hand-picked stores or the whole country. Plus ($5/month) holds 10 rules, Pro ($10/month) 20 — for several models, cities or people. Paid plans renew monthly until you cancel."],
     ["Can you reserve the phone for me?", "No. We tell you the instant it's available; you reserve it on apple.com or in the Apple Store app. Pickup stock often lasts minutes, so the speed of the alert is what matters."],
     ["Is this affiliated with Apple?", "No. PickupChecker is an independent service that reads the same public availability apple.com shows shoppers. Apple, iPhone and Apple Store are trademarks of Apple Inc."],
     ["How do I cancel?", "From your account page, any time. Alerts keep running until the end of the paid month."],
@@ -35,7 +35,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <div className="lg:pt-6">
           <div className="eyebrow mb-4 inline-flex items-center gap-2"><span className="dot dot-ok dot-live" /> Live across all 269 US Apple Stores</div>
           <h1 className="display text-4xl sm:text-6xl">Know the second your iPhone is in a store near you.</h1>
-          <p className="mt-5 max-w-xl text-lg text-ink-2">PickupChecker watches in-store pickup availability for the iPhone 18 Pro, 18 Pro Max and iPhone Duo at every Apple Store in the United States and pings your phone the moment yours shows up. $5 a month, cancel anytime.</p>
+          <p className="mt-5 max-w-xl text-lg text-ink-2">PickupChecker watches in-store pickup availability for the iPhone 18 Pro, 18 Pro Max and iPhone Duo at every Apple Store in the United States and pings your phone the moment yours shows up. Your first alert is free; more from $5 a month.</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <a href="#notify" className="btn btn-primary btn-lg">Get notified</a>
             <Link href="/stock/iphone-18-pro" className="btn btn-ghost btn-lg">See live stock</Link>
@@ -63,7 +63,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <section className="mt-20 grid gap-8 lg:grid-cols-[1fr_380px]">
         <div className="pane p-6 sm:p-8">
           <h2 className="display text-2xl sm:text-3xl">Live stock by model</h2>
-          <p className="mt-2 text-ink-2">Public pages, no account needed. Alerts are the paid part. Prefer a picture? <Link href="/map" className="underline underline-offset-4 hover:text-ink">See every store on the map →</Link></p>
+          <p className="mt-2 text-ink-2">Public pages, no account needed. Your first alert rule is free. Prefer a picture? <Link href="/map" className="underline underline-offset-4 hover:text-ink">See every store on the map →</Link></p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             {MODELS.map((m) => (
               <Link key={m.key} href={`/stock/${m.slug}`} className="pane-2 pane-hover p-5">

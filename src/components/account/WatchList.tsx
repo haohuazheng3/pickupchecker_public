@@ -18,15 +18,6 @@ export function WatchList({ watches }: { watches: WatchView[] }) {
       setItems((xs) => xs.map((x) => (x.id === id ? { ...x, ...body } : x)));
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); } finally { setBusy(null); }
   };
-  const subscribe = async (id: string) => {
-    setBusy(id); setErr(null);
-    try {
-      const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ watchId: id }) });
-      const j = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !j.url) throw new Error(j.error ?? "Checkout unavailable");
-      window.location.assign(j.url);
-    } catch (e) { setErr(e instanceof Error ? e.message : String(e)); setBusy(null); }
-  };
   const live = items.filter((w) => w.active);
   if (live.length === 0) return <p className="mt-2 text-sm text-ink-3">No alerts yet. <Link href="/#notify" className="underline">Create one</Link>.</p>;
   return (
@@ -40,10 +31,9 @@ export function WatchList({ watches }: { watches: WatchView[] }) {
             <div>
               <div className="font-semibold">{m?.name ?? w.model} <span className="text-ink-3">· {w.storages.length ? w.storages.join("/") : "any storage"} · {w.colors.length ? w.colors.join("/") : "any color"}</span></div>
               <div className="text-sm text-ink-3">{where}</div>
-              <div className={`mt-1 text-xs ${w.covered ? (w.paused ? "text-warn" : "text-accent") : "text-warn"}`}>{!w.covered ? "Needs a subscription to send alerts" : w.paused ? "Paused" : "Sending alerts"}</div>
+              <div className={`mt-1 text-xs ${w.covered ? (w.paused ? "text-warn" : "text-accent") : "text-warn"}`}>{!w.covered ? <>Over your plan&apos;s limit — not sending. <a href="#plan" className="underline">Upgrade</a> or delete an older rule.</> : w.paused ? "Paused" : "Sending alerts"}</div>
             </div>
             <div className="flex gap-2">
-              {!w.covered && <button className="btn btn-primary btn-sm" disabled={busy === w.id} onClick={() => subscribe(w.id)}>Subscribe · $5/mo</button>}
               {w.covered && <button className="btn btn-ghost btn-sm" disabled={busy === w.id} onClick={() => patch(w.id, { paused: !w.paused })}>{w.paused ? "Resume" : "Pause"}</button>}
               <button className="btn btn-ghost btn-sm" disabled={busy === w.id} onClick={() => patch(w.id, { active: false })}>Delete</button>
             </div>

@@ -15,6 +15,7 @@ import { sendAlertEmail } from "../mail/resend";
 import { recordError, errorMessage } from "../errors";
 import { enabledSubscriptionsFor, pushConfigured, sendPushToRows } from "../push/server";
 import { restockPayload } from "../push/payload";
+import { coveredWatchIds, effectivePlan } from "../plans";
 import type { Transition } from "./ingest";
 
 const COOLDOWN_MS = 30 * 60 * 1000; // same watch × store × part at most every 30 min
@@ -36,17 +37,25 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
 
   const models = [...new Set(restocks.map((x) => modelKeyFor(PART_INDEX.get(x.t.partNumber)?.model ?? "")))];
   const candidates = await d
-    .select({
-      watch: schema.watches,
-      email: schema.users.email,
-      subStatus: schema.subscriptions.status,
-    })
+    .select({ watch: schema.watches, email: schema.users.email })
     .from(schema.watches)
     .innerJoin(schema.users, eq(schema.users.id, schema.watches.userId))
-    .leftJoin(schema.subscriptions, eq(schema.subscriptions.id, schema.watches.subscriptionId))
     .where(and(eq(schema.watches.active, true), eq(schema.watches.paused, false), inArray(schema.watches.model, models)));
 
-  const active = candidates.filter((c) => c.subStatus === "active" || c.subStatus === "trialing" || c.subStatus === "past_due");
+  // Plan coverage: the oldest `limit` active rules of each user send (free = 1, plus = 10, pro = 20).
+  const userIds = [...new Set(candidates.map((c) => c.watch.userId))];
+  const [allRules, subs] = userIds.length
+    ? await Promise.all([
+        d.select({ id: schema.watches.id, userId: schema.watches.userId, active: schema.watches.active, createdAt: schema.watches.createdAt }).from(schema.watches).where(inArray(schema.watches.userId, userIds)),
+        d.select().from(schema.subscriptions).where(inArray(schema.subscriptions.userId, userIds)),
+      ])
+    : [[], []];
+  const coveredByUser = new Map<string, Set<string>>();
+  for (const uid of userIds) {
+    const { plan } = effectivePlan(subs.filter((s) => s.userId === uid));
+    coveredByUser.set(uid, coveredWatchIds(allRules.filter((r) => r.userId === uid), plan.limit));
+  }
+  const active = candidates.filter((c) => coveredByUser.get(c.watch.userId)?.has(c.watch.id));
 
   // Recent notifications for cool-down (last 30 min) for the involved watches.
   const watchIds = active.map((c) => c.watch.id);

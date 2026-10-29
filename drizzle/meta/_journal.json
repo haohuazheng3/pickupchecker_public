@@ -22,6 +22,13 @@
       "when": 1793304836723,
       "tag": "0002_ops_log",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793307340713,
+      "tag": "0003_plans",
+      "breakpoints": true
     }
   ]
 }

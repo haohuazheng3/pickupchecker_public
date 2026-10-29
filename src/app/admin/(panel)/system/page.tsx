@@ -7,7 +7,7 @@ import { Table, timeAgo } from "@/components/admin/Bits";
 
 const ENV_KEYS = [
   ["DATABASE_URL", "Neon (pooled)"], ["DATABASE_URL_UNPOOLED", "Neon (migrations)"], ["CLERK_SECRET_KEY", "Clerk server"], ["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "Clerk client"],
-  ["STRIPE_SECRET_KEY", "Stripe"], ["STRIPE_WEBHOOK_SECRET", "Stripe webhook"], ["STRIPE_PRICE_MONTHLY", "Stripe price"], ["STRIPE_CONTEXT", "Stripe org context"],
+  ["STRIPE_SECRET_KEY", "Stripe"], ["STRIPE_WEBHOOK_SECRET", "Stripe webhook"], ["STRIPE_PRICE_MONTHLY", "Stripe price · Plus $5"], ["STRIPE_PRICE_PRO", "Stripe price · Pro $10"], ["STRIPE_PMC_ID", "Stripe payment methods (card + Link)"], ["STRIPE_CONTEXT", "Stripe org context"],
   ["RESEND_API_KEY", "Resend"], ["VAPID_PUBLIC_KEY", "Web Push public"], ["VAPID_PRIVATE_KEY", "Web Push private"], ["VAPID_SUBJECT", "Web Push subject"],
   ["CRON_SECRET", "Vercel Cron bearer"], ["POLLER_TOKEN", "Poller → site bearer"], ["INBOX_INGEST_SECRET", "Worker → inbox bearer"], ["MAIL_WORKER_URL", "Mail worker"], ["MAIL_WORKER_TOKEN", "Mail worker bearer"],
   ["GITHUB_WEBHOOK_SECRET", "Actions → deploy-hook fallback"], ["VERCEL_DEPLOY_HOOK_URL", "Vercel deploy hook"], ["ADMIN_PASSWORD", "This console"], ["ADMIN_SESSION_SECRET", "Console session signing"],
@@ -50,6 +50,7 @@ export default async function AdminSystem() {
             ["Adaptive backoff", "541 share ≥ 25 % for 3 sweeps → +40 s pause and an owner email; ≥ 90 % → degraded (Vercel egress, 25 req / 35 min), probe full mode every 15 min"],
             ["Stale → unknown", "a status not confirmed for 30 min becomes unknown (never 'sold out' by silence)"],
             ["Heartbeat thresholds", "health: 150 s · watchdog: 120 s → degraded mode + owner email, reminders every 3 h"],
+            ["Plans", "free 1 rule · Plus $5/mo 10 rules · Pro $10/mo 20 rules · the oldest rules within the limit send; extra ones are saved but silent · hard cap 30 saved"],
             ["Alert rules", "push to every enabled device, else email · one per (rule, event) · 30 min cool-down per rule × store × SKU · push TTL 600 s"],
             ["Rate limits", "alerts API 30/h per user · push subscribe 30/h · push test 10/h · console login 10 per 15 min per IP"],
             ["Console session", "30 days, HMAC-signed cookie; rotate ADMIN_SESSION_SECRET to sign everyone out"],
