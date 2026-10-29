@@ -77,7 +77,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
           <div className="pane p-5">
             <div className="eyebrow">Hours</div>
             <ul className="mt-2 space-y-1 text-sm text-ink-2">
-              {(s.hours ?? []).map((h, i) => <li key={i}>{h.days.length === 7 ? "Every day" : h.days.join(", ")}: {h.opens.slice(0, 5)}–{h.closes.slice(0, 5)}</li>)}
+              {(s.hours ?? []).map((h, i) => <li key={i}>{h.days.length === 7 ? "Every day" : h.days.join(", ")}: {h.opens && h.closes ? `${h.opens.slice(0, 5)}–${h.closes.slice(0, 5)}` : "Closed"}</li>)}
             </ul>
           </div>
         </aside>

@@ -119,7 +119,7 @@ export const stores = pgTable(
     lat: doublePrecision("lat").notNull(),
     lng: doublePrecision("lng").notNull(),
     timezone: text("timezone"),
-    hours: jsonb("hours").$type<{ days: string[]; opens: string; closes: string }[]>(),
+    hours: jsonb("hours").$type<{ days: string[]; opens: string | null; closes: string | null }[]>(),
     image: text("image"),
     url: text("url"),
     active: boolean("active").notNull().default(true),

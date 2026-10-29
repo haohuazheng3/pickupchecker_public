@@ -80,7 +80,7 @@ write_files:
       NODE_ENV=production
       DATABASE_URL=__DATABASE_URL__
       RESEND_API_KEY=__RESEND_API_KEY__
-      ALERTS_FROM=PickupChecker <alerts@pickupchecker.com>
+      ALERTS_FROM="PickupChecker <alerts@pickupchecker.com>"
       SITE_URL=https://pickupchecker.com
       POLLER_TOKEN=__POLLER_TOKEN__
       VAPID_PUBLIC_KEY=__VAPID_PUBLIC_KEY__
@@ -91,7 +91,7 @@ write_files:
       OWNER_EMAIL=haohuazheng001@gmail.com
       IPV6_PREFIX=auto
       CADENCE_SEC=20
-      CONCURRENCY=8
+      CONCURRENCY=10
       HOST_LABEL=linode-1
   - path: /opt/pickupchecker/probe.sh
     permissions: "0755"
@@ -99,10 +99,12 @@ write_files:
       #!/bin/bash
       # External health probe of the site, every 5 minutes (systemd timer). The mail worker does the
       # GET + owner email + down/recovery bookkeeping; this host only triggers it.
+      # Reads just the two keys it needs: the env file is not shell syntax (values may contain spaces/<>).
       set -uo pipefail
-      . /opt/pickupchecker/poller.env
-      [ -n "${MAIL_WORKER_URL:-}" ] && [ -n "${MAIL_WORKER_TOKEN:-}" ] || exit 0
-      curl -fsS -m 40 -X POST "${MAIL_WORKER_URL%/}/probe" -H "Authorization: Bearer ${MAIL_WORKER_TOKEN}" >/dev/null || echo "probe trigger failed"
+      val() { sed -n "s/^$1=//p" /opt/pickupchecker/poller.env | head -1 | sed 's/^"\(.*\)"$/\1/'; }
+      URL="$(val MAIL_WORKER_URL)"; TOKEN="$(val MAIL_WORKER_TOKEN)"
+      [ -n "$URL" ] && [ -n "$TOKEN" ] || exit 0
+      curl -fsS -m 40 -X POST "${URL%/}/probe" -H "Authorization: Bearer ${TOKEN}" >/dev/null || echo "probe trigger failed"
   - path: /etc/systemd/system/pickupchecker-probe.service
     content: |
       [Unit]

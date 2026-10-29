@@ -30,7 +30,7 @@ export interface Store {
   stateCode?: string;
   phone?: string;
   image?: string;
-  hours?: { days: string[]; opens: string; closes: string }[];
+  hours?: { days: string[]; opens: string | null; closes: string | null }[]; // null = closed that day
   url?: string;
 }
 

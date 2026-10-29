@@ -23,18 +23,8 @@
   "anchorName": "Anchorage 5th Avenue Mall",
   "location": "99501",
   "covers": [
-   "R003",
    "R044",
-   "R072",
-   "R077",
-   "R090",
-   "R100",
-   "R106",
-   "R134",
-   "R262",
-   "R303",
-   "R339",
-   "R420"
+   "R262"
   ]
  },
  {
@@ -44,16 +34,12 @@
   "covers": [
    "R026",
    "R031",
-   "R064",
    "R086",
-   "R161",
    "R213",
-   "R219",
    "R247",
    "R267",
    "R292",
-   "R297",
-   "R650"
+   "R297"
   ]
  },
  {
@@ -120,16 +106,11 @@
   "covers": [
    "R030",
    "R047",
-   "R125",
-   "R130",
    "R172",
-   "R177",
    "R182",
    "R190",
    "R228",
-   "R338",
-   "R461",
-   "R599"
+   "R338"
   ]
  },
  {
@@ -308,14 +289,8 @@
   "anchorName": "Village Pointe",
   "location": "68118",
   "covers": [
-   "R007",
-   "R022",
-   "R054",
-   "R062",
    "R097",
    "R109",
-   "R114",
-   "R183",
    "R190",
    "R229",
    "R233",
@@ -461,17 +436,10 @@
   "location": "72223",
   "covers": [
    "R020",
-   "R042",
-   "R062",
-   "R114",
-   "R130",
-   "R144",
-   "R151",
    "R233",
    "R283",
    "R286",
-   "R324",
-   "R746"
+   "R324"
   ]
  },
  {
@@ -577,15 +545,11 @@
    "R026",
    "R031",
    "R086",
-   "R161",
-   "R177",
    "R213",
-   "R219",
    "R247",
    "R267",
    "R292",
-   "R297",
-   "R492"
+   "R297"
   ]
  },
  {
@@ -624,6 +588,122 @@
    "R318",
    "R364",
    "R615"
+  ]
+ },
+ {
+  "anchorStore": "R420",
+  "anchorName": "River Park Square",
+  "location": "99201",
+  "covers": [
+   "R420",
+   "R003",
+   "R100",
+   "R106",
+   "R072",
+   "R339"
+  ]
+ },
+ {
+  "anchorStore": "R130",
+  "anchorName": "Penn Square",
+  "location": "73118",
+  "covers": [
+   "R130",
+   "R233",
+   "R151",
+   "R746",
+   "R144",
+   "R042",
+   "R316"
+  ]
+ },
+ {
+  "anchorStore": "R599",
+  "anchorName": "Station Park",
+  "location": "84025",
+  "covers": [
+   "R599",
+   "R125",
+   "R461"
+  ]
+ },
+ {
+  "anchorStore": "R007",
+  "anchorName": "Mall of America",
+  "location": "55425",
+  "covers": [
+   "R007",
+   "R054",
+   "R022",
+   "R183",
+   "R229",
+   "R109"
+  ]
+ },
+ {
+  "anchorStore": "R114",
+  "anchorName": "Saint Louis Galleria",
+  "location": "63117",
+  "covers": [
+   "R114",
+   "R062",
+   "R097",
+   "R283",
+   "R066",
+   "R237",
+   "R348",
+   "R020"
+  ]
+ },
+ {
+  "anchorStore": "R177",
+  "anchorName": "ABQ Uptown",
+  "location": "87110",
+  "covers": [
+   "R177",
+   "R492"
+  ]
+ },
+ {
+  "anchorStore": "R077",
+  "anchorName": "Pioneer Place",
+  "location": "97204",
+  "covers": [
+   "R077",
+   "R134",
+   "R339",
+   "R106",
+   "R003",
+   "R072",
+   "R100",
+   "R090"
+  ]
+ },
+ {
+  "anchorStore": "R303",
+  "anchorName": "Boise Towne Square",
+  "location": "83704",
+  "covers": [
+   "R303"
+  ]
+ },
+ {
+  "anchorStore": "R161",
+  "anchorName": "The Forum Shops",
+  "location": "89109",
+  "covers": [
+   "R161",
+   "R064",
+   "R219",
+   "R650",
+   "R297",
+   "R094",
+   "R345",
+   "R156",
+   "R034",
+   "R451",
+   "R001",
+   "R550"
   ]
  }
 ]

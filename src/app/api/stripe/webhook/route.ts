@@ -21,9 +21,11 @@ export async function POST(req: Request) {
   } catch (e) {
     return NextResponse.json({ error: `invalid signature: ${errorMessage(e)}` }, { status: 400 });
   }
-  // Ignore events that belong to sibling apps on the shared account.
-  const obj = event.data.object as { metadata?: Record<string, string> };
-  if (obj?.metadata?.app && obj.metadata.app !== "pickupchecker") return NextResponse.json({ ignored: "other app" });
+  // The Stripe account is shared with sibling products: only objects tagged app=pickupchecker are
+  // ours. Our sessions and subscriptions always carry that tag; invoices carry it on the subscription.
+  const obj = event.data.object as { metadata?: Record<string, string>; parent?: { subscription_details?: { metadata?: Record<string, string> } } };
+  const tag = obj?.metadata?.app ?? obj?.parent?.subscription_details?.metadata?.app;
+  if (tag !== "pickupchecker") return NextResponse.json({ ignored: tag ? "other app" : "untagged object" });
 
   const d = db();
   const dup = await d.insert(schema.stripeEvents).values({ id: event.id, type: event.type }).onConflictDoNothing().returning({ id: schema.stripeEvents.id });

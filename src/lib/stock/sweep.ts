@@ -45,6 +45,7 @@ export interface SweepSummary {
   requests: number;
   failures: number;
   throttled: number;
+  timeouts: number;
   storesCovered: number;
   transitions: number;
   notified: { matched: number; sent: number; failed: number; skipped: number };
@@ -64,7 +65,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
   const covered = new Set<string>();
   const allTransitions: Transition[] = [];
   const allEventIds: number[] = [];
-  let requests = 0, failures = 0, throttled = 0, exhausted = false;
+  let requests = 0, failures = 0, throttled = 0, timeouts = 0, exhausted = false;
   const logRows: (typeof schema.pollLog.$inferInsert)[] = [];
 
   let cursor = 0;
@@ -79,7 +80,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
       try {
         res = await fetchPickup(task.parts, task.anchor.location, slot.fetch);
       } catch (e) {
-        err = errorMessage(e);
+        err = /abort/i.test(errorMessage(e)) ? `timed out after ${Math.round((Date.now() - t0) / 1000)} s` : errorMessage(e);
       }
       const ms = Date.now() - t0;
       const status = res?.httpStatus ?? 0;
@@ -109,13 +110,18 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
           await recordError("poller", `ingest failed: ${errorMessage(e)}`, { anchor: task.anchor.location, batch: task.batchIndex });
         }
       } else if (err && !/http \d+/.test(err)) {
-        await recordError("poller", `apple request failed: ${err}`, { anchor: task.anchor.location, egress: slot.label });
+        // Timeouts are counted (poll_log, sweep summary) and only become an incident when they pile up.
+        if (/timed out/.test(err)) timeouts++;
+        else await recordError("poller", `apple request failed: ${err}`, { anchor: task.anchor.location, egress: slot.label });
       }
     }
   };
   const notified = { matched: 0, sent: 0, failed: 0, skipped: 0 };
   await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, worker));
 
+  if (timeouts >= 3 && timeouts / Math.max(1, requests) >= 0.1) {
+    await recordError("poller", `apple requests timing out: ${timeouts} of ${requests} in one sweep`, { host: opts.host, sweepId: id });
+  }
   const finished = new Date();
   // poll_log in chunks
   for (let i = 0; i < logRows.length; i += 200) await d.insert(schema.pollLog).values(logRows.slice(i, i + 200));
@@ -123,7 +129,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
     .update(schema.sweeps)
     .set({ finishedAt: finished, requests, failures, storesCovered: covered.size, transitions: allTransitions.length, durationMs: finished.getTime() - started.getTime() })
     .where((await import("drizzle-orm")).eq(schema.sweeps.id, id));
-  return { id, requests, failures, throttled, storesCovered: covered.size, transitions: allTransitions.length, notified, durationMs: finished.getTime() - started.getTime(), exhausted };
+  return { id, requests, failures, throttled, timeouts, storesCovered: covered.size, transitions: allTransitions.length, notified, durationMs: finished.getTime() - started.getTime(), exhausted };
 }
 
 /** Heartbeat written after every sweep; the watchdog and the admin page read it. */
