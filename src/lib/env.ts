@@ -6,6 +6,8 @@ export const env = {
   inboxIngestSecret: () => process.env.INBOX_INGEST_SECRET ?? "",
   mailWorkerUrl: () => process.env.MAIL_WORKER_URL ?? "",
   mailWorkerToken: () => process.env.MAIL_WORKER_TOKEN ?? "",
+  adminPassword: () => process.env.ADMIN_PASSWORD ?? "",
+  adminSessionSecret: () => process.env.ADMIN_SESSION_SECRET ?? "",
   adminEmails: () =>
     (process.env.ADMIN_EMAILS ?? "")
       .split(",")

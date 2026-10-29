@@ -14,6 +14,7 @@
 import "dotenv/config";
 import os from "node:os";
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { Agent, fetch as undiciFetch } from "undici";
 import { runSweep, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
 import { expireStale } from "../src/lib/stock/ingest";
@@ -21,6 +22,7 @@ import { recordError, errorMessage } from "../src/lib/errors";
 import { prefixFromInterfaces, randomAddressIn } from "./ipv6";
 import type { FetchLike } from "../src/lib/apple/client";
 import { notifyOwner } from "../src/lib/mail/owner";
+import { logOps } from "../src/lib/ops";
 
 const CADENCE_SEC = Number(process.env.CADENCE_SEC ?? 20);
 const CONCURRENCY = Number(process.env.CONCURRENCY ?? 8);
@@ -46,6 +48,23 @@ function resolvePrefix(v: string): string {
   const p = prefixFromInterfaces(os.networkInterfaces());
   if (!p) console.warn("[poller] IPV6_PREFIX=auto but no routed prefix file and no global IPv6 address found");
   return p;
+}
+
+/** Short git sha of the checked-out tree (the admin page compares it with the site's build). */
+function currentCommit(): string | null {
+  try { return execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8", timeout: 3000 }).trim(); } catch { return null; }
+}
+const COMMIT = currentCommit();
+
+/** Host vitals that ride along with every heartbeat (the admin status board shows them). */
+function hostVitals() {
+  const [load1, load5] = os.loadavg();
+  return {
+    load1: Math.round(load1 * 100) / 100, load5: Math.round(load5 * 100) / 100, cpus: os.cpus().length,
+    memTotalMb: Math.round(os.totalmem() / 1048576), memFreeMb: Math.round(os.freemem() / 1048576),
+    rssMb: Math.round(process.memoryUsage().rss / 1048576), uptimeSec: Math.round(os.uptime()), procUptimeSec: Math.round(process.uptime()),
+    node: process.version, commit: COMMIT, pid: process.pid,
+  };
 }
 
 /* ---------------- egress: ipv6 rotate ---------------- */
@@ -133,7 +152,15 @@ async function main() {
   let consecutiveBad = 0;
   let lastAlert = 0;
   console.log(`[poller] start host=${HOST} mode=${mode} cadence=${CADENCE_SEC}s prefix=${PREFIX || "(none)"}`);
-  await writeState("poller:config", { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, prefix: PREFIX ? PREFIX.replace(/:[0-9a-f]*::\/64$/i, ":…::/64") : null, startedAt: new Date().toISOString() });
+  await writeState("poller:config", { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, prefix: PREFIX || null, startedAt: new Date().toISOString(), commit: COMMIT, node: process.version });
+  await logOps("poller", "info", `poller started (${mode})`, { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, prefix: PREFIX || null, commit: COMMIT, node: process.version });
+  for (const sig of ["SIGTERM", "SIGINT"] as const) {
+    process.on(sig, () => {
+      logOps("poller", "info", `poller stopping (${sig})`, { host: HOST, commit: COMMIT }).finally(() => process.exit(0));
+      setTimeout(() => process.exit(0), 3000).unref();
+    });
+  }
+  let sweepsSinceStart = 0;
 
   for (;;) {
     const t0 = Date.now();
@@ -146,29 +173,32 @@ async function main() {
         at: new Date().toISOString(), host: HOST, mode, cadenceSec: CADENCE_SEC, lastSweepId: r.id,
         requests: r.requests, failures: r.failures, throttled: r.throttled, storesCovered: r.storesCovered,
         transitions: r.transitions, notified: r.notified, durationMs: r.durationMs, egress: egress.name,
-        ipv6Stats: ipv6 ? ipv6.stats : null,
+        ipv6Stats: ipv6 ? ipv6.stats : null, sys: hostVitals(), sweeps: ++sweepsSinceStart, consecutiveBad,
       });
       void before;
       console.log(`[sweep ${r.id.slice(0, 8)}] ${mode}/${egress.name} req=${r.requests} fail=${r.failures} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} sent=${r.notified.sent} ${r.durationMs}ms`);
 
       if (mode === "full" && throttledShare >= 0.25) {
         consecutiveBad++;
+        await logOps("poller", "warn", `Apple throttling ${Math.round(throttledShare * 100)}% of requests`, { sweepId: r.id, throttled: r.throttled, requests: r.requests, consecutiveBad });
         if (consecutiveBad >= 3 && Date.now() - lastAlert > 30 * 60_000) {
           lastAlert = Date.now();
           await notifyOwner(`[PickupChecker] Apple throttling ${Math.round(throttledShare * 100)}% of IPv6 requests`, `Host ${HOST}: ${r.throttled}/${r.requests} requests returned 541 in the last sweep. The poller slows down automatically; if this persists Apple may be counting the whole /64 — see docs/architecture.md.`).catch(() => undefined);
         }
-        if (throttledShare >= 0.9 && consecutiveBad >= 3) { mode = "degraded"; console.warn("[poller] switching to degraded (vercel egress)"); }
+        if (throttledShare >= 0.9 && consecutiveBad >= 3) { mode = "degraded"; console.warn("[poller] switching to degraded (vercel egress)"); await logOps("poller", "error", "switched to degraded mode (Vercel egress)", { host: HOST, consecutiveBad }); }
       } else if (mode === "full") {
         consecutiveBad = 0;
       } else if (mode === "degraded" && ipv6 && Date.now() - lastAlert > 15 * 60_000) {
         // probe: try full mode again every 15 min
         mode = "full"; consecutiveBad = 0; lastAlert = Date.now();
+        await logOps("poller", "info", "probing full mode again (IPv6 egress)", { host: HOST });
       }
       // Statuses nobody has confirmed for 30 minutes become unknown (never "sold out" by silence).
       if (Math.random() < 0.05) await expireStale(30 * 60_000).catch(() => 0);
     } catch (e) {
       console.error("[poller] sweep failed:", e);
       await recordError("poller", `sweep failed: ${errorMessage(e)}`, { host: HOST }).catch(() => undefined);
+      await logOps("poller", "error", `sweep failed: ${errorMessage(e)}`, { host: HOST }).catch(() => undefined);
     }
     const elapsed = Date.now() - t0;
     const pause = Math.max(2_000, (mode === "full" ? CADENCE_SEC : 60) * 1000 - elapsed + (consecutiveBad ? 40_000 : 0));

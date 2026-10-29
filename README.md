@@ -21,7 +21,8 @@ Live at <https://pickupchecker.com>. Independent service, not affiliated with Ap
 * `src/app/` — the Next.js 16 site: live stock pages (public, SEO), the live map (`/map`, MapLibre +
   OpenFreeMap tiles, no key), the illustrated install guide (`/install`), a single-surface sign-up
   wizard (Clerk email code, custom UI), Stripe Checkout, account page with the notification switch
-  and device list, admin dashboard with request logs, anchor freshness, errors, alerts and the test inbox.
+  and device list, and the ops console at `/admin` (password `ADMIN_PASSWORD`): node status board,
+  24 h health strips, request/sweep/alert charts, every log with filters, stock, users, errors, system parameters.
 * `/api/cron/watchdog` (Vercel Cron, every minute) switches to a serverless degraded mode and
   emails the owner when the poller's heartbeat stops; `infra/workers/mail` is the Cloudflare
   worker that receives test@ mail and probes `/api/health`.

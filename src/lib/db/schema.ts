@@ -257,6 +257,23 @@ export const errorGroups = pgTable(
   (t) => [index("error_groups_last_idx").on(t.lastSeenAt)],
 );
 
+/**
+ * Operational events worth keeping (poller start/stop/mode switches, throttling, watchdog ticks,
+ * admin logins, deploys). Low volume; the admin "Logs" page and the 24 h health strips read it.
+ */
+export const opsLog = pgTable(
+  "ops_log",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    at: ts("at").notNull().defaultNow(),
+    source: text("source").notNull(), // poller | web | cron | worker
+    level: text("level").notNull().default("info"), // debug | info | warn | error
+    message: text("message").notNull(),
+    data: jsonb("data").$type<Record<string, unknown>>(),
+  },
+  (t) => [index("ops_log_at_idx").on(t.at), index("ops_log_source_idx").on(t.source, t.at)],
+);
+
 export const contactMessages = pgTable("contact_messages", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   email: text("email").notNull(),

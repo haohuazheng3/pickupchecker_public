@@ -4,6 +4,7 @@ import { readState, writeState } from "@/lib/stock/sweep";
 import { degradedTick } from "@/lib/stock/degraded";
 import { notifyOwner } from "@/lib/mail/owner";
 import { recordError, errorMessage } from "@/lib/errors";
+import { logOps } from "@/lib/ops";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,8 +25,11 @@ export async function GET(req: Request) {
     const age = hb ? Date.now() - new Date(hb.value.at ?? hb.updatedAt).getTime() : Infinity;
     const wd = (await readState<{ down: boolean; since?: string; lastMail?: string }>("watchdog"))?.value ?? { down: false };
     const now = new Date();
+    // One debug row per run: the admin health strip proves the cron itself is alive.
+    await logOps("cron", "debug", "watchdog tick", { ageMs: Number.isFinite(age) ? Math.round(age) : null, degraded: age > STALE_MS });
     if (age > STALE_MS) {
       const firstTime = !wd.down;
+      if (firstTime) await logOps("cron", "error", "poller heartbeat stale — degraded mode on", { ageMs: Number.isFinite(age) ? Math.round(age) : null, host: hb?.value.host ?? null });
       const lastMail = wd.lastMail ? new Date(wd.lastMail).getTime() : 0;
       if (firstTime || now.getTime() - lastMail > REMIND_MS) {
         await notifyOwner(
@@ -39,6 +43,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ degraded: true, ageMs: age, tick });
     }
     if (wd.down) {
+      await logOps("cron", "info", "poller heartbeat back — degraded mode off", { host: hb?.value.host ?? null, downSince: wd.since ?? null });
       await notifyOwner(`[PickupChecker] Poller recovered`, `Heartbeat is back (${hb?.value.host ?? "?"}, mode ${hb?.value.mode ?? "?"}). Down since ${wd.since ?? "?"}.`).catch(() => undefined);
       await writeState("watchdog", { down: false });
     }

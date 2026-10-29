@@ -1,7 +1,10 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { cookies, headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, schema } from "./db";
 import { env } from "./env";
+import { ADMIN_COOKIE, verifyAdminToken } from "./admin/session";
 
 export interface SessionUser {
   id: string;
@@ -33,13 +36,23 @@ export function isAdminEmail(email: string | null | undefined): boolean {
   return env.adminEmails().includes(email.toLowerCase());
 }
 
-export async function requireAdmin(): Promise<SessionUser> {
+/** True when the admin password cookie is valid (the proxy checks the same thing). */
+export async function hasAdminSession(): Promise<boolean> {
+  const jar = await cookies();
+  return verifyAdminToken(jar.get(ADMIN_COOKIE)?.value, env.adminSessionSecret());
+}
+
+/**
+ * Admin pages: the password session (set by /api/admin/login) or a whitelisted Clerk email.
+ * Anyone else is sent to the login page with the current path as ?next=.
+ */
+export async function requireAdmin(): Promise<{ via: "password" | "clerk"; email: string | null }> {
+  if (await hasAdminSession()) return { via: "password", email: null };
   const u = await sessionUser();
-  if (!u || !isAdminEmail(u.email)) {
-    const { notFound } = await import("next/navigation");
-    notFound();
-  }
-  return u!;
+  if (u && isAdminEmail(u.email)) return { via: "clerk", email: u.email };
+  const h = await headers();
+  const next = h.get("x-pathname") ?? "/admin";
+  redirect(`/admin/login?next=${encodeURIComponent(next)}`);
 }
 
 export async function userById(id: string) {
