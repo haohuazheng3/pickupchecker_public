@@ -13,7 +13,7 @@ export function Stat({ label, value, sub, tone }: { label: string; value: string
 
 export function Table({ head, rows }: { head: string[]; rows: (string | number | null | undefined | React.ReactNode)[][] }) {
   return (
-    <div className="overflow-auto rounded-2xl border border-line">
+    <div className="min-w-0 overflow-auto rounded-2xl border border-line">
       <table className="w-full text-left text-sm">
         <thead className="bg-white/4 text-xs uppercase tracking-wide text-ink-3"><tr>{head.map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
         <tbody>
