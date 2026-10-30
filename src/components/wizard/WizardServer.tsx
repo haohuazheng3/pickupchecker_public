@@ -1,18 +1,17 @@
-import { MODELS, storagesFor, colorsFor, catalogFor, type ModelKey } from "@/lib/apple/catalog";
-import { Wizard, type WizardCatalog } from "./Wizard";
+import { MODELS, catalogFor } from "@/lib/apple/catalog";
+import { Wizard, type WizardCatalog, type WizardStart } from "./Wizard";
 
+/** Every configuration (storage × colour × price) per model: the wizard filters colours by storage from it. */
 export function buildWizardCatalog(): WizardCatalog {
-  const storages = {} as WizardCatalog["storages"];
-  const colors = {} as WizardCatalog["colors"];
+  const configs = {} as WizardCatalog["configs"];
   const prices = {} as WizardCatalog["prices"];
   for (const m of MODELS) {
-    storages[m.key] = storagesFor(m.key);
-    colors[m.key] = colorsFor(m.key);
-    prices[m.key] = Math.min(...catalogFor(m.key).map((c) => c.price));
+    configs[m.key] = catalogFor(m.key).map((c) => ({ storage: c.storage, color: c.color, price: c.price, partNumber: c.partNumber }));
+    prices[m.key] = Math.min(...configs[m.key].map((c) => c.price));
   }
-  return { storages, colors, prices };
+  return { configs, prices };
 }
 
-export function WizardServer({ initialModel, initialStore, startSignIn, next }: { initialModel?: ModelKey; initialStore?: string; startSignIn?: boolean; next?: string }) {
-  return <Wizard catalog={buildWizardCatalog()} initialModel={initialModel} initialStore={initialStore} startSignIn={startSignIn} next={next} />;
+export function WizardServer(props: WizardStart) {
+  return <Wizard catalog={buildWizardCatalog()} {...props} />;
 }

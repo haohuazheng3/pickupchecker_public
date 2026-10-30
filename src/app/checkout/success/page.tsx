@@ -36,7 +36,7 @@ export default async function Success({ searchParams }: PageProps<"/checkout/suc
       <div className="pane p-8 text-center">
         <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-accent text-2xl text-accent-ink">✓</div>
         <h1 className="display text-3xl">{synced ? `${def?.name ?? "Your plan"} is on` : "Payment received"}</h1>
-        <p className="mt-3 text-ink-2">{synced ? `${def ? `${def.limit} alert rules, ` : ""}every store you chose, watched around the clock. The next restock reaches you within seconds.` : "Your subscription will show up in your account within a minute."}</p>
+        <p className="mt-3 text-ink-2">{synced ? `${def ? `${def.limit} alerts, ` : ""}each one store and one exact configuration, watched around the clock. The next restock reaches you within seconds.` : "Your subscription will show up in your account within a minute."}</p>
         <div className="mt-6 flex justify-center gap-3">
           <Link href="/account" className="btn btn-primary">Open my alerts</Link>
           <Link href="/#notify" className="btn btn-ghost">Add another rule</Link>

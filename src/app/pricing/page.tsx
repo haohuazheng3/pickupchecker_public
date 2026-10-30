@@ -22,7 +22,7 @@ export default function Pricing() {
             <div className="mt-2 text-sm text-ink-2">{plan.limit} alert rules</div>
             <ul className="mt-4 flex-1 space-y-2 text-sm text-ink-2">
               <li>✓ All 269 US Apple Stores, checked every 20 s</li>
-              <li>✓ Any model · any storage · any color · any store set</li>
+              <li>✓ Each alert: one store, one exact configuration — any of 269 stores</li>
               <li>✓ Phone notification (or email) within seconds of a restock</li>
               <li>✓ Renews monthly, cancel anytime from your account</li>
             </ul>
@@ -32,7 +32,7 @@ export default function Pricing() {
       </div>
       <div className="pane prose-site mt-8 p-6 sm:p-8">
         <h2>What counts as an alert rule?</h2>
-        <p>One rule is one model with the storage sizes, colors and stores you&apos;d accept — for example &ldquo;iPhone Duo, 256 GB or 512 GB, any color, within 50 miles of 10001&rdquo;. A rule can cover the whole country. You need more rules when you watch several models, want different settings for different places, or hunt for more than one phone.</p>
+        <p>One alert is one Apple Store and one exact phone — for example &ldquo;iPhone Duo 512 GB Night Sky at Apple Fifth Avenue&rdquo;. Want a second color, or the same phone at a second store? That is a second alert. Plus holds 10 of them, Pro 20.</p>
         <h2>Why isn&apos;t there a free alert?</h2>
         <p>Checking every store every 20 seconds costs real infrastructure, and free alert lists grow until everyone hears late. Keeping alerts paid keeps the list short and the notification fast — which is the whole point. Everything else on the site is free: <Link href="/stock/iphone-duo">live stock</Link>, the <Link href="/map">map</Link> and the <Link href="/restocks">restock log</Link>.</p>
         <h2>Billing</h2>

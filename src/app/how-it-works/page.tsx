@@ -6,9 +6,9 @@ export default function HowItWorks() {
   return (
     <Page title="How it works" lead="The same availability apple.com shows shoppers, checked for every store at once, turned into a notification the moment it changes.">
       <h2>1. Pick what you want</h2>
-      <p>Choose iPhone 18 Pro, 18 Pro Max or iPhone Duo, then any storage sizes and colors you&apos;d accept. Leave a filter empty to take anything.</p>
+      <p>Choose iPhone 18 Pro, 18 Pro Max or iPhone Duo, then the exact storage and color you want.</p>
       <h2>2. Pick where</h2>
-      <p>A ZIP code with a radius, specific stores, or all 269 US Apple Stores. Each of these is one alert rule: Plus ($5/month) holds 10 and Pro ($10/month) 20. Live stock, the map and the restock log are free to browse.</p>
+      <p>One Apple Store: we list the nearest ones from your location, or you search by city, state or store name. One store × one configuration is one alert; Plus ($5/month) holds 10 and Pro ($10/month) 20. Live stock, the map and the restock log are free to browse.</p>
       <h2>3. We watch, continuously</h2>
       <p>Our checker asks apple.com&apos;s pickup availability for every store in the country, round the clock, typically every 20 seconds. Each answer is compared with the last one; a store flipping from &ldquo;unavailable&rdquo; to &ldquo;available&rdquo; for one of your configurations is a restock.</p>
       <h2>4. You get a notification, fast</h2>

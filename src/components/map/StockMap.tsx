@@ -11,9 +11,12 @@ import type * as maplibregl from "maplibre-gl";
 import { MODELS, PART_INDEX, modelKeyFor, storagesFor, colorsFor, STORAGE_ORDER, COLOR_META, type ModelKey } from "@/lib/apple/catalog";
 import type { MapSnapshot } from "@/lib/stock/queries";
 import { LiveAgo } from "@/components/site/LiveAgo";
-import { MAP_STYLE as STYLE, MAP_WORKER_URL as WORKER_URL } from "@/lib/map";
+import { MAP_INK, MAP_WORKER_URL as WORKER_URL, mapStyleFor } from "@/lib/map";
+import { currentTheme, onThemeChange, type Theme } from "@/lib/theme";
 
 export interface MapStore { n: string; name: string; city: string; state: string; code: string; path: string; cityHref: string; stateHref: string; lat: number; lng: number }
+function dotColor(t: Theme) { const ink = MAP_INK[t]; return ["match", ["get", "state"], "ok", ink.ok, "unknown", ink.unknown, ink.none] as unknown as string; }
+
 export interface MapFocus { model: ModelKey | "all"; store?: string; stores?: string[]; stateCode?: string }
 
 type Bounds = [[number, number], [number, number]];
@@ -118,25 +121,39 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
       const focusStore = focus.store ? stores.find((s) => s.n === focus.store) : undefined;
       const focusBounds = focus.stores?.length ? boundsOf(stores.filter((s) => focus.stores!.includes(s.n)), 0.3) : focus.stateCode ? boundsOf(stores.filter((s) => s.code === focus.stateCode)) : null;
       const map = new lib.Map({
-        container: el, style: STYLE, minZoom: 2, maxZoom: 16, attributionControl: { compact: true },
+        container: el, style: mapStyleFor(currentTheme()), minZoom: 2, maxZoom: 16, attributionControl: { compact: true },
         ...(focusStore ? { center: [focusStore.lng, focusStore.lat] as [number, number], zoom: 11 } : { bounds: focusBounds ?? REGIONS["Lower 48"], fitBoundsOptions: { padding: 40 } }),
       });
       mapRef.current = map;
       if (process.env.NODE_ENV !== "production") (window as unknown as { __pcMap?: maplibregl.Map }).__pcMap = map;
       map.addControl(new lib.NavigationControl({ showCompass: false }), "top-left");
       map.on("error", (e: maplibregl.ErrorEvent) => { if (!map.isStyleLoaded()) setMapError(`Map tiles unavailable (${e.error?.message ?? "network"})`); });
+      // Theme toggle: swap the basemap but keep our sources/layers, then recolour them.
+      const KEEP_SOURCES = ["stores", "me"], KEEP_LAYERS = ["halo", "dots", "labels", "me-halo", "me"];
+      const offTheme = onThemeChange((t: Theme) => {
+        map.setStyle(mapStyleFor(t), { transformStyle: (prev, next) => prev ? { ...next, sources: { ...next.sources, ...Object.fromEntries(Object.entries(prev.sources).filter(([k]) => KEEP_SOURCES.includes(k))) }, layers: [...next.layers, ...prev.layers.filter((l) => KEEP_LAYERS.includes(l.id))] } : next });
+        map.once("style.load", () => {
+          const ink = MAP_INK[t];
+          if (map.getLayer("halo")) map.setPaintProperty("halo", "circle-color", ink.ok);
+          if (map.getLayer("dots")) { map.setPaintProperty("dots", "circle-color", dotColor(t)); map.setPaintProperty("dots", "circle-stroke-color", ink.stroke); }
+          if (map.getLayer("labels")) { map.setPaintProperty("labels", "text-color", ink.label); map.setPaintProperty("labels", "text-halo-color", ink.halo); }
+          if (map.getLayer("me-halo")) map.setPaintProperty("me-halo", "circle-color", ink.me);
+          if (map.getLayer("me")) { map.setPaintProperty("me", "circle-color", ink.me); map.setPaintProperty("me", "circle-stroke-color", ink.stroke); }
+        });
+      });
+      map.once("remove", offTheme);
       const popup = new lib.Popup({ closeButton: false, closeOnClick: false, offset: 14, className: "pc-popup" });
       map.on("load", () => {
         if (cancelled) return;
         setMapError(null); // a transient error before the style finished loading is not fatal
         map.addSource("stores", { type: "geojson", data: geojson });
-        map.addLayer({ id: "halo", type: "circle", source: "stores", filter: [">", ["get", "count"], 0], paint: { "circle-radius": ["interpolate", ["linear"], ["get", "count"], 1, 13, 10, 20, 30, 30], "circle-color": "#0a7f49", "circle-opacity": 0.14, "circle-blur": 0.5 } });
+        map.addLayer({ id: "halo", type: "circle", source: "stores", filter: [">", ["get", "count"], 0], paint: { "circle-radius": ["interpolate", ["linear"], ["get", "count"], 1, 13, 10, 20, 30, 30], "circle-color": MAP_INK[currentTheme()].ok, "circle-opacity": 0.14, "circle-blur": 0.5 } });
         map.addLayer({ id: "dots", type: "circle", source: "stores", paint: {
           "circle-radius": ["case", [">", ["get", "count"], 0], ["interpolate", ["linear"], ["get", "count"], 1, 6, 10, 10, 30, 14], 4.5],
-          "circle-color": ["match", ["get", "state"], "ok", "#0a7f49", "unknown", "#d97706", "rgba(107,117,111,0.5)"],
-          "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.5,
+          "circle-color": dotColor(currentTheme()),
+          "circle-stroke-color": MAP_INK[currentTheme()].stroke, "circle-stroke-width": 1.5,
         } });
-        map.addLayer({ id: "labels", type: "symbol", source: "stores", minzoom: 8, layout: { "text-field": ["get", "name"], "text-size": 11, "text-offset": [0, 1.1], "text-anchor": "top", "text-font": ["Noto Sans Regular"], "text-optional": true }, paint: { "text-color": "#0d1411", "text-halo-color": "#ffffff", "text-halo-width": 1.2 } });
+        map.addLayer({ id: "labels", type: "symbol", source: "stores", minzoom: 8, layout: { "text-field": ["get", "name"], "text-size": 11, "text-offset": [0, 1.1], "text-anchor": "top", "text-font": ["Noto Sans Regular"], "text-optional": true }, paint: { "text-color": MAP_INK[currentTheme()].label, "text-halo-color": MAP_INK[currentTheme()].halo, "text-halo-width": 1.2 } });
         map.on("mouseenter", "dots", (e: maplibregl.MapLayerMouseEvent) => {
           map.getCanvas().style.cursor = "pointer";
           const f = e.features?.[0];
@@ -179,8 +196,8 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
         const data = { type: "Feature" as const, geometry: { type: "Point" as const, coordinates: here }, properties: {} };
         if (!map.getSource("me")) {
           map.addSource("me", { type: "geojson", data });
-          map.addLayer({ id: "me-halo", type: "circle", source: "me", paint: { "circle-radius": 14, "circle-color": "#0a7aff", "circle-opacity": 0.22 } });
-          map.addLayer({ id: "me", type: "circle", source: "me", paint: { "circle-radius": 6, "circle-color": "#0a7aff", "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 } });
+          map.addLayer({ id: "me-halo", type: "circle", source: "me", paint: { "circle-radius": 14, "circle-color": MAP_INK[currentTheme()].me, "circle-opacity": 0.22 } });
+          map.addLayer({ id: "me", type: "circle", source: "me", paint: { "circle-radius": 6, "circle-color": MAP_INK[currentTheme()].me, "circle-stroke-color": MAP_INK[currentTheme()].stroke, "circle-stroke-width": 2 } });
         } else (map.getSource("me") as maplibregl.GeoJSONSource).setData(data);
         map.flyTo({ center: here, zoom: 9, duration: 1000 });
       },

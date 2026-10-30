@@ -4,7 +4,7 @@ import { ensureUser } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { activeSubscriptionsFor } from "@/lib/billing";
 import { effectivePlan, coveredWatchIds } from "@/lib/plans";
-import { STORE_INDEX, PART_INDEX } from "@/lib/apple/catalog";
+import { STORE_INDEX, PART_INDEX, stateCodeOf, storePath } from "@/lib/apple/catalog";
 import { WatchList } from "@/components/account/WatchList";
 import { PlanCard } from "@/components/account/PlanCard";
 import { Identify } from "@/components/account/Identify";
@@ -57,10 +57,16 @@ export default async function Account() {
       <section className="pane mt-6 p-5 sm:p-6">
         <h2 className="text-xl font-semibold">Alerts</h2>
         <WatchList
-          watches={watches.map((w) => ({
-            id: w.id, model: w.model, storages: w.storages, colors: w.colors, paused: w.paused, active: w.active, zip: w.zip, radiusMiles: w.radiusMiles, nearMe: !w.zip && w.lat != null,
-            storeNames: w.storeNumbers.map((n) => STORE_INDEX.get(n)?.name ?? n), covered: covered.has(w.id), createdAt: w.createdAt.toISOString(),
-          }))}
+          watches={watches.map((w) => {
+            const s = w.storeNumbers.length === 1 ? STORE_INDEX.get(w.storeNumbers[0]) : undefined;
+            const legacyWhere = w.storeNumbers.length > 1 ? `${w.storeNumbers.length} stores` : w.zip ? `within ${w.radiusMiles ?? 50} mi of ${w.zip}` : w.lat != null ? `within ${w.radiusMiles ?? 50} mi of your location` : w.storeNumbers.length === 0 ? "every US store" : null;
+            return {
+              id: w.id, model: w.model, storage: w.storages[0] ?? null, color: w.colors[0] ?? null, paused: w.paused, active: w.active, covered: covered.has(w.id), createdAt: w.createdAt.toISOString(),
+              store: s ? { number: s.storeNumber, name: s.name, city: s.city, code: stateCodeOf(s), href: storePath(s) } : null,
+              deactivatedReason: w.deactivatedReason ?? null,
+              legacy: { storages: w.storages, colors: w.colors, where: legacyWhere },
+            };
+          })}
         />
       </section>
 

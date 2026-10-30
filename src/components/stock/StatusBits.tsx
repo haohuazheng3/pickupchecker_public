@@ -14,6 +14,5 @@ export function Dot({ state, live }: { state: "ok" | "bad" | "warn" | "idle"; li
   return <span className={`dot ${cls} ${live ? "dot-live" : ""}`} aria-hidden />;
 }
 
-export function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`skeleton ${className}`} aria-hidden />;
-}
+/** Moved to the shared UI primitives; kept here so existing imports keep working. */
+export { Skeleton } from "@/components/ui/Skeleton";

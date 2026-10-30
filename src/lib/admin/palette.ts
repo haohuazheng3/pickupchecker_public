@@ -4,7 +4,7 @@
  * would hand them client references instead of strings (the bars then render with no fill).
  */
 export const PALETTE = {
-  blue: "#2a78d6", orange: "#eb6834", aqua: "#1baf7a", violet: "#6250d6",
+  blue: "var(--chart-blue)", orange: "var(--chart-orange)", aqua: "var(--chart-aqua)", violet: "var(--chart-violet)",
   good: "#0ca30c", warning: "#fab219", serious: "#ec835a", critical: "#d03b3b",
-  muted: "rgba(82,81,78,0.35)",
+  muted: "var(--chart-muted)",
 } as const;

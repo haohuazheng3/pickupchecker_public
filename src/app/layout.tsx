@@ -5,6 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { AlertBar } from "@/components/site/AlertBar";
+import { THEME_BOOT } from "@/lib/theme";
 import { Analytics } from "@/components/site/Analytics";
 import { PwaBoot } from "@/components/pwa/PwaBoot";
 
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
     "Get a notification on your phone the moment an iPhone Duo, iPhone 18 Pro or 18 Pro Max is available for in-store pickup at any Apple Store in the US. Every store checked every 20 seconds; plans from $5 a month.",
   applicationName: "PickupChecker",
   robots: INDEXABLE ? { index: true, follow: true } : { index: false, follow: false },
-  openGraph: { type: "website", siteName: "PickupChecker", url: SITE, images: ["/og.png"] },
+  openGraph: { type: "website", siteName: "PickupChecker", url: SITE },
   twitter: { card: "summary_large_image" },
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }, { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
@@ -36,7 +37,11 @@ export const viewport: Viewport = { themeColor: "#f6f7f5", width: "device-width"
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        {/* Runs as the parser reaches it — before any paint — so a dark reader never sees a light flash. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+      </head>
       <body className="flex min-h-full flex-col">
         <ClerkProvider
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}

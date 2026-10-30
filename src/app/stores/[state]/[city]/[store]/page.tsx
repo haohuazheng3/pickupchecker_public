@@ -1,16 +1,27 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cache } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
-import { STORES, MODELS, DEFAULT_MODEL, modelByKey, citySlug, stateSlug, stateCodeOf, storePath, cityPath, statePath, storeTimeZone } from "@/lib/apple/catalog";
+import { STORES, MODELS, DEFAULT_MODEL, modelByKey, citySlug, stateSlug, stateCodeOf, storePath, cityPath, statePath, storeTimeZone, modelKeyFor, catalogFor, type ModelKey, type Store } from "@/lib/apple/catalog";
 import { nearestStores, nearbyCities, neighborStates, cityRef, cityLabel } from "@/lib/seo/links";
+import { normalizeHours, compressHours, todayLabel, hoursText, storeJsonLd, nearestOutsideState, nearestInState, alertHref, faq, peakOf, storeTitle } from "@/lib/seo/enrich";
 import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { BrowseModels } from "@/components/seo/Browse";
-import { storesStock, restockFeed, restockStats } from "@/lib/stock/queries";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { PlaceStatStrip } from "@/components/seo/StatStrip";
+import { Narrative } from "@/components/seo/Narrative";
+import { Explainer } from "@/components/seo/Explainer";
+import { Faq } from "@/components/seo/Faq";
+import { storesStock, storeStatus, restockFeed, restockStats, placeStats } from "@/lib/stock/queries";
 import { StockByModel } from "@/components/stores/StockByModel";
+import { ConfigTable } from "@/components/stores/ConfigTable";
+import { StoreInfo, HoursTable } from "@/components/stores/StoreInfo";
+import { NearbyStores } from "@/components/stores/NearbyStores";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
+import { DailyBars } from "@/components/restocks/DailyBars";
+import { RestocksByConfig } from "@/components/restocks/RestocksByConfig";
 import { MiniMap } from "@/components/stores/MiniMap";
-import { Dot } from "@/components/stock/StatusBits";
 import { LiveAgo } from "@/components/site/LiveAgo";
 
 export const dynamic = "force-dynamic";
@@ -23,15 +34,34 @@ function find(state: string, city: string, store: string) {
   return STORES.find((s) => s.slug === store && stateSlug(s.state) === state && citySlug(s.city) === city);
 }
 
+/** Everything the page and its metadata need, loaded once per request (8 queries: 5 live + 3 cached statistics). */
+const load = cache(async (s: Store) => {
+  const tz = storeTimeZone(s);
+  const nearby = nearestStores(s, 6);
+  const outside = nearestOutsideState(s, 3);
+  const inState = nearestInState(s, 4, { excludeCity: true });
+  const others = [...new Set([...nearby, ...outside, ...inState].map((n) => n.storeNumber))];
+  const [rows, stock, feed, stats, pstats] = await Promise.all([
+    storeStatus(s.storeNumber),
+    storesStock([s.storeNumber, ...others]),
+    restockFeed({ storeNumber: s.storeNumber, kind: "all", limit: 30 }),
+    restockStats([s.storeNumber], tz, 30),
+    placeStats({ storeNumbers: [s.storeNumber], tz }),
+  ]);
+  const summary = stock.get(s.storeNumber);
+  const stockNow = Object.fromEntries(MODELS.map((m) => [m.key, summary?.perModel[m.key].available ?? 0])) as Record<ModelKey, number>;
+  const configs = Object.fromEntries(MODELS.map((m) => [m.key, rows.filter((r) => modelKeyFor(r.item.model) === m.key).length || catalogFor(m.key).length])) as Record<ModelKey, number>;
+  return { tz, nearby, outside, inState, rows, stock, summary, feed, stats, pstats, stockNow, configs };
+});
+
 export async function generateMetadata({ params }: PageProps<"/stores/[state]/[city]/[store]">): Promise<Metadata> {
   const { state, city, store } = await params;
   const s = find(state, city, store);
   if (!s) return {};
-  return {
-    title: `Apple ${s.name}, ${s.city}, ${stateCodeOf(s)} — iPhone Duo & 18 Pro pickup stock, restock times`,
-    description: `Live in-store pickup availability for every iPhone Duo, 18 Pro and 18 Pro Max configuration at Apple ${s.name} (${s.street?.trim()}, ${s.city}, ${s.state}), when this store usually restocks, and its restock history.`,
-    alternates: { canonical: storePath(s) },
-  };
+  const d = await load(s);
+  const title = storeTitle(s, stateCodeOf(s), d.stockNow.duo);
+  const description = `Live in-store pickup stock for all 40 iPhone Duo, 18 Pro and 18 Pro Max configurations at Apple ${s.name} (${s.street?.trim()}, ${s.city}, ${stateCodeOf(s)}): ${d.stockNow.duo} Duo, ${d.stockNow["18-pro"]} 18 Pro and ${d.stockNow["18-pro-max"]} Pro Max configurations available now, ${d.pstats.week} restocks this week, hours, restock times and history.`;
+  return { title, description, alternates: { canonical: storePath(s) }, openGraph: { type: "website", siteName: "PickupChecker", title, description, url: storePath(s) } };
 }
 
 export default async function StorePage({ params }: PageProps<"/stores/[state]/[city]/[store]">) {
@@ -43,13 +73,9 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
     if (legacy && store === legacy.slug) permanentRedirect(storePath(legacy));
     notFound();
   }
-  const tz = storeTimeZone(s);
-  const [stock, feed, stats, duoStats] = await Promise.all([
-    storesStock([s.storeNumber]), restockFeed({ storeNumber: s.storeNumber, kind: "all", limit: 30 }), restockStats([s.storeNumber], tz, 30), restockStats([s.storeNumber], tz, 30, DEFAULT_MODEL),
-  ]);
-  const summary = stock.get(s.storeNumber);
-  const nearby = nearestStores(s, 6);
-  const nearbyStock = await storesStock(nearby.map((n) => n.storeNumber));
+  const d = await load(s);
+  const week = normalizeHours(s.hours);
+  const today = todayLabel(week, d.tz);
   const sameCity = STORES.filter((x) => x.state === s.state && x.city === s.city && x.storeNumber !== s.storeNumber);
   const sameState = STORES.filter((x) => x.state === s.state && x.city !== s.city).sort((a, b) => a.city.localeCompare(b.city)).slice(0, 14);
   const here = cityRef(s.state, s.city);
@@ -57,78 +83,79 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
   const neighbors = neighborStates(s.state);
   const duo = modelByKey(DEFAULT_MODEL)!;
   const code = stateCodeOf(s);
-  const ld = {
-    "@context": "https://schema.org", "@type": "Store", name: `Apple ${s.name}`, url: `https://pickupchecker.com${storePath(s)}`, sameAs: s.url,
-    address: { "@type": "PostalAddress", streetAddress: s.street?.trim(), addressLocality: s.city, addressRegion: s.state, postalCode: s.postalCode, addressCountry: "US" },
-    geo: { "@type": "GeoCoordinates", latitude: s.lat, longitude: s.lng }, telephone: s.phone, image: s.image,
-  };
+  const place = `Apple ${s.name}`;
+  const alert = alertHref({ model: DEFAULT_MODEL, store: s.storeNumber });
+  const questions = faq({ kind: "store", place, stores: [s], stockNow: d.stockNow, stats: d.pstats, peak: peakOf(d.stats), nearest: d.nearby, hours: compressHours(week), todayText: `${hoursText(today.today)} (${today.label.toLowerCase()})` });
   return (
     <div className="mx-auto max-w-6xl px-4 pt-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <Breadcrumbs items={[{ href: "/stores", label: "Apple Stores" }, { href: statePath(s.state), label: s.state }, { href: cityPath(s.state, s.city), label: s.city }, { label: `Apple ${s.name}` }]} />
+      <JsonLd data={storeJsonLd(s, week)} />
+      <Breadcrumbs items={[{ href: "/stores", label: "Apple Stores" }, { href: statePath(s.state), label: s.state }, { href: cityPath(s.state, s.city), label: s.city }, { label: place }]} />
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="display text-3xl sm:text-5xl">Apple {s.name}</h1>
-          <p className="mt-2 text-ink-2">{s.street?.trim()}, {s.city}, {code} {s.postalCode}{s.phone ? ` · ${s.phone}` : ""}</p>
-          <p className="mt-1 text-sm text-ink-3">Last checked <LiveAgo iso={summary?.lastCheckedAt ?? null} /> · re-checked every 20 s · <a className="underline" href={s.url} rel="nofollow noopener" target="_blank">apple.com store page</a></p>
+        <div className="min-w-0">
+          <h1 className="display text-3xl sm:text-5xl">{place}</h1>
+          <div className="mt-3"><StoreInfo store={s} showMapLink={false} /></div>
+          <p className="mt-2 text-sm text-ink-3">Last checked <LiveAgo iso={d.summary?.lastCheckedAt ?? null} /> · re-checked every 20 s</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/map?store=${s.storeNumber}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>
-          <Link href={`/?model=${DEFAULT_MODEL}&store=${s.storeNumber}#notify`} className="btn btn-primary btn-sm">Alert me for {duo.short} here</Link>
+          <Link href={alert} className="btn btn-primary btn-sm">Alert me for {duo.short} here</Link>
         </div>
       </div>
 
+      <div className="mt-6"><PlaceStatStrip stores={1} stockNow={d.stockNow} stats={d.pstats} storeMode /></div>
+      <Narrative className="mt-4" input={{ kind: "store", place, stores: 1, stockNow: d.stockNow, configs: d.configs, stats: d.pstats }} stats={d.pstats} hideStore />
+
       <section className="mt-6">
         <h2 className="text-xl font-semibold">Pickup stock right now</h2>
-        <div className="mt-3"><StockByModel summary={summary} storeNumber={s.storeNumber} /></div>
+        <div className="mt-3"><StockByModel summary={d.summary} storeNumber={s.storeNumber} /></div>
       </section>
+
+      <div className="mt-6" id="configs"><ConfigTable store={s} rows={d.rows} /></div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           <section className="pane p-5">
             <h2 className="text-xl font-semibold">When does {s.name} restock?</h2>
-            <div className="mt-3"><RestockClock stats={stats} label="here" /></div>
-            {duoStats.total > 0 && duoStats.total !== stats.total && <p className="mt-3 text-xs text-ink-3">{duoStats.total} of those were the {duo.name}.</p>}
+            <div className="mt-3"><RestockClock stats={d.stats} label="here" /></div>
+          </section>
+          <section className="pane p-5">
+            <h2 className="text-xl font-semibold">Last {d.pstats.days} days, day by day</h2>
+            <div className="mt-3"><DailyBars stats={d.pstats} label="here" /></div>
+          </section>
+          <section className="pane p-5">
+            <h2 className="text-xl font-semibold">Restocks by configuration</h2>
+            <div className="mt-3"><RestocksByConfig stats={d.pstats} label="here" store={s.storeNumber} /></div>
           </section>
           <section className="pane p-5">
             <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-semibold">Restock history</h2><Link href={`/restocks?model=all&state=${stateSlug(s.state)}`} className="text-sm text-ink-3 hover:text-ink">All of {s.state} →</Link></div>
-            <RestockFeed rows={feed} showModel emptyText="No restock recorded here yet. Every change is logged the second it happens." />
+            <RestockFeed rows={d.feed} showModel emptyText="No restock or sell-out has been recorded here yet. Every change is logged the second it is confirmed." />
           </section>
         </div>
         <aside className="space-y-4">
-          <MiniMap lat={s.lat} lng={s.lng} label={`Apple ${s.name}`} href={`/map?store=${s.storeNumber}&model=${DEFAULT_MODEL}`} />
-          <div className="pane p-5">
-            <div className="eyebrow">Hours</div>
-            <ul className="mt-2 space-y-1 text-sm text-ink-2">
-              {(s.hours ?? []).map((h, i) => <li key={i}>{h.days.length === 7 ? "Every day" : h.days.join(", ")}: {h.opens && h.closes ? `${h.opens.slice(0, 5)}–${h.closes.slice(0, 5)}` : "Closed"}</li>)}
-            </ul>
-          </div>
-          {nearby.length > 0 && (
-            <div className="pane p-5">
-              <div className="eyebrow">Nearby stores</div>
-              <ul className="mt-2 divide-y divide-line text-sm">
-                {nearby.map((n) => {
-                  const st = nearbyStock.get(n.storeNumber);
-                  const d = st?.perModel[DEFAULT_MODEL].available ?? 0;
-                  return <li key={n.storeNumber} className="flex items-center justify-between gap-2 py-2"><Link href={storePath(n)} className="hover:underline">{n.name} <span className="text-ink-3">· {Math.round(n.distance)} mi</span></Link><span className="inline-flex items-center gap-1.5 text-xs text-ink-3"><Dot state={d ? "ok" : "idle"} live={d > 0} />{d ? `${duo.short} · ${d}` : `no ${duo.short}`}</span></li>;
-                })}
-              </ul>
-            </div>
-          )}
+          <MiniMap lat={s.lat} lng={s.lng} label={place} href={`/map?store=${s.storeNumber}&model=${DEFAULT_MODEL}`} />
+          <div className="pane p-5"><HoursTable store={s} /></div>
+          <NearbyStores title="Nearby stores" stores={d.nearby} stock={d.stock} />
+          {d.inState.length > 0 && <NearbyStores title={`Elsewhere in ${s.state}`} stores={d.inState} stock={d.stock} />}
+          <NearbyStores title="Across the state line" stores={d.outside} stock={d.stock} hint="Each store restocks on its own; a Pro plan can watch several at once." />
           {s.image && (
             // eslint-disable-next-line @next/next/no-img-element -- Apple CDN image, already sized by its query string
-            <img src={s.image} alt={`Apple ${s.name}`} className="w-full rounded-[20px] border border-line" loading="lazy" />
+            <img src={s.image} alt={place} className="w-full rounded-[20px] border border-line" loading="lazy" />
           )}
         </aside>
       </div>
 
-      <RelatedBlock title={`Around Apple ${s.name}`}>
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Explainer kind="store" place={place} alertHref={alert} />
+        <Faq items={questions} title={`Questions about ${place}`} />
+      </div>
+
+      <RelatedBlock title={`Around ${place}`}>
         {sameCity.length > 0 && <LinkRow title={`Other Apple Stores in ${s.city}`} links={sameCity.map((x) => ({ href: storePath(x), label: x.name }))} more={{ href: cityPath(s.state, s.city), label: `${s.city} page` }} />}
         {cities.length > 0 && <LinkRow title="Nearby cities with Apple Stores" links={cities.map((c) => ({ href: c.href, label: cityLabel(c), meta: `${Math.round(c.distance)} mi` }))} />}
         <LinkRow title={`More Apple Stores in ${s.state}`} links={sameState.map((x) => ({ href: storePath(x), label: `${x.name} · ${x.city}` }))} more={{ href: statePath(s.state), label: `All of ${s.state}` }} />
         {neighbors.length > 0 && <LinkRow title="Neighboring states" links={neighbors.map((n) => ({ href: n.href, label: n.name, meta: String(n.count) }))} />}
         <BrowseModels />
-        <LinkRow title="Restock logs" links={[{ href: `/restocks?model=all&state=${stateSlug(s.state)}`, label: `${s.state} restocks` }, { href: "/restocks", label: "All US restocks" }, { href: `/map?state=${stateCodeOf(s)}&model=${DEFAULT_MODEL}`, label: `${s.state} on the map` }]} />
+        <LinkRow title="Restock logs" links={[{ href: `/restocks?model=all&state=${stateSlug(s.state)}`, label: `${s.state} restocks` }, { href: "/restocks", label: "All US restocks" }, { href: `/map?state=${code}&model=${DEFAULT_MODEL}`, label: `${s.state} on the map` }]} />
       </RelatedBlock>
       <p className="mt-8 text-xs text-ink-3">Availability is what apple.com shows for in-store pickup at this store, as of the last check. {MODELS.map((m) => m.name).join(", ")} are tracked; Apple, iPhone and Apple Store are trademarks of Apple Inc.</p>
     </div>

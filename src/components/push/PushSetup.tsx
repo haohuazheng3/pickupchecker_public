@@ -31,7 +31,7 @@ export function PushSetup({ vapidPublicKey, title = "Phone notifications", compa
 async function previewLocally() {
   try {
     const reg = await navigator.serviceWorker.ready;
-    await reg.showNotification("In stock: iPhone Duo 256GB Black", { body: "Apple Fifth Avenue · New York, NY — Available Today. Tap to reserve on apple.com.", icon: "/icons/icon-192.png", badge: "/icons/badge-96.png", tag: "preview", data: { url: "/account" } });
+    await reg.showNotification("In stock: iPhone Duo 256GB Black", { body: "Apple Fifth Avenue · New York, NY — Available Today. Tap to reserve on apple.com.", icon: "/icons/icon-192.png", badge: "/icons/badge-96.png", tag: "preview", data: { url: "/account", kind: "test" } });
   } catch {
     /* unsupported: the server test still tells the truth */
   }
@@ -61,7 +61,7 @@ function Explain({ p }: { p: PushState }) {
     case "needs-signin": return <>Sign in on this device to link its notifications to your alerts.</>;
     case "denied": return <>Notifications are blocked for PickupChecker. {p.platform === "ios" ? <>Open <b>Settings → Notifications → PickupChecker</b> and allow them,</> : <>Allow them in your browser&apos;s site settings for pickupchecker.com,</>} then reload this page.</>;
     case "ready": return <>{p.standalone ? "You're in the app. " : ""}One tap and every restock that matches your alerts lands on this device within seconds. No email to open.</>;
-    case "on": return <>Restocks that match your alerts arrive here within seconds. <b>Send a test notification</b> goes through our servers and Apple/Google exactly like a real alert — it should pop up within a few seconds (on iPhone, also check the lock screen).</>;
+    case "on": return <>Restocks that match your alerts arrive here within seconds, even with the app closed or the phone locked. <b>Send a test notification</b> goes through our servers and Apple/Google exactly like a real alert; the banner names the device and the time it was sent, so you can check it from another device too.</>;
   }
 }
 

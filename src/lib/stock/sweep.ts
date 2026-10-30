@@ -104,10 +104,9 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
           allTransitions.push(...r.transitions);
           allEventIds.push(...r.eventIds);
           held += r.held;
-          // Notify immediately per response (latency matters more than batching).
+          // Notify immediately per response, but never hold the worker: push retries can take seconds.
           if (r.transitions.some((t) => t.kind === "restock")) {
-            const n = await notifyRestocks(r.transitions, r.eventIds);
-            notified.matched += n.matched; notified.sent += n.sent; notified.failed += n.failed; notified.skipped += n.skipped;
+            notifyJobs.push(notifyRestocks(r.transitions, r.eventIds).then((n) => { notified.matched += n.matched; notified.sent += n.sent; notified.failed += n.failed; notified.skipped += n.skipped; }).catch(() => undefined));
           }
         } catch (e) {
           await recordError("poller", `ingest failed: ${errorMessage(e)}`, { anchor: task.anchor.location, batch: task.batchIndex });
@@ -120,7 +119,10 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
     }
   };
   const notified = { matched: 0, sent: 0, failed: 0, skipped: 0 };
+  const notifyJobs: Promise<void>[] = [];
   await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, worker));
+  // Give in-flight alerts a moment to land in this sweep's numbers; stragglers finish in the background.
+  await Promise.race([Promise.allSettled(notifyJobs), new Promise((r) => setTimeout(r, 5000))]);
 
   if (timeouts >= 3 && timeouts / Math.max(1, requests) >= 0.1) {
     await recordError("poller", `apple requests timing out: ${timeouts} of ${requests} in one sweep`, { host: opts.host, sweepId: id });

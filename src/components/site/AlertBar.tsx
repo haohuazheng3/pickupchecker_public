@@ -22,17 +22,24 @@ export function alertHref(pathname: string): string {
 
 export function AlertBar() {
   const pathname = usePathname() ?? "/";
+  const [wizardMounted, setWizardMounted] = useState(false);
   const [wizardVisible, setWizardVisible] = useState(false);
+  // The wizard announces itself (pc:wizard) — a route's loading skeleton has no #notify yet.
   useEffect(() => {
-    const el = document.getElementById("notify");
+    const on = (e: Event) => setWizardMounted(Boolean((e as CustomEvent<boolean>).detail));
+    window.addEventListener("pc:wizard", on);
+    return () => window.removeEventListener("pc:wizard", on);
+  }, []);
+  useEffect(() => {
+    const el = wizardMounted ? document.getElementById("notify") : null;
     if (!el || typeof IntersectionObserver === "undefined") {
-      const t = window.setTimeout(() => setWizardVisible(false), 0); // a page without the wizard: show the bar
+      const t = window.setTimeout(() => setWizardVisible(false), 0); // no wizard on screen: show the bar
       return () => window.clearTimeout(t);
     }
     const io = new IntersectionObserver(([e]) => setWizardVisible(e.isIntersecting), { threshold: 0.15 });
     io.observe(el);
     return () => io.disconnect();
-  }, [pathname]);
+  }, [pathname, wizardMounted]);
   if (pathname.startsWith("/admin") || pathname.startsWith("/checkout")) return null;
   const href = alertHref(pathname);
   return (

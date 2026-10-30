@@ -1,114 +1,105 @@
 "use client";
-import { useMemo, useState } from "react";
-import { STORES, statesWithStores, storesNear } from "@/lib/apple/catalog";
+/**
+ * Pick exactly one Apple Store. On mount we ask for the location straight away (no extra tap) and
+ * list the nearest stores; a city or state handed in from an SEO page lists those stores first and
+ * skips the location prompt. A search box (store, city, state, ZIP) is always there as the fallback.
+ */
+import { useEffect, useMemo, useState } from "react";
+import { STORES, stateCodeOf, storesNear, type Store } from "@/lib/apple/catalog";
+import { norm } from "@/lib/search";
 
-export interface StoreSelection { storeNumbers: string[]; zip?: string; radiusMiles?: number; lat?: number; lng?: number }
+type Located = { lat: number; lng: number };
+type LocState = "idle" | "asking" | "ok" | "denied" | "unavailable";
 
-export function StorePicker({ value, onChange }: { value: StoreSelection; onChange: (v: StoreSelection) => void }) {
-  const [mode, setMode] = useState<"near" | "zip" | "pick" | "all">(value.storeNumbers.length ? "pick" : value.lat != null ? "near" : value.zip ? "zip" : "near");
-  const [state, setState] = useState<string>("");
+export interface StorePickerProps {
+  value: string | null;
+  onChange: (storeNumber: string) => void;
+  /** Full state name and/or city name to list first (from the state and city pages). */
+  preferState?: string;
+  preferCity?: string;
+}
+
+const GEO_OPTS: PositionOptions = { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 };
+
+export function StorePicker({ value, onChange, preferState, preferCity }: StorePickerProps) {
+  const [loc, setLoc] = useState<LocState>("idle");
+  const [here, setHere] = useState<Located | null>(null);
   const [q, setQ] = useState("");
-  const [locating, setLocating] = useState(false);
-  const [locError, setLocError] = useState<string | null>(null);
-  const states = useMemo(() => statesWithStores(), []);
+  const [state, setState] = useState<string>(preferState ?? "");
+  const preferred = Boolean(preferCity || preferState);
+
   const locate = () => {
-    if (!("geolocation" in navigator)) { setLocError("Location is not available in this browser — enter a ZIP instead."); return; }
-    setLocating(true); setLocError(null);
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) { setLoc("unavailable"); return; }
+    setLoc("asking");
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setLocating(false); onChange({ storeNumbers: [], lat: Math.round(pos.coords.latitude * 1e4) / 1e4, lng: Math.round(pos.coords.longitude * 1e4) / 1e4, radiusMiles: value.radiusMiles ?? 50 }); },
-      (err) => { setLocating(false); setLocError(err.code === err.PERMISSION_DENIED ? "Location permission was denied — enter a ZIP instead." : "Could not get your location — enter a ZIP instead."); },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
+      (pos) => { setHere({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLoc("ok"); },
+      (err) => setLoc(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable"),
+      GEO_OPTS,
     );
   };
-  const nearCount = value.lat != null && value.lng != null ? storesNear(value.lat, value.lng, value.radiusMiles ?? 50).length : 0;
-  const list = useMemo(() => {
-    const base = state ? STORES.filter((s) => s.state === state) : STORES;
-    const needle = q.trim().toLowerCase();
-    return (needle ? base.filter((s) => `${s.name} ${s.city} ${s.state}`.toLowerCase().includes(needle)) : base).slice(0, 60);
-  }, [state, q]);
+  // Ask immediately unless an SEO page already told us where the user is looking.
+  useEffect(() => {
+    if (preferred || value) return;
+    const t = window.setTimeout(locate, 0);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const set = (m: typeof mode) => {
-    setMode(m);
-    if (m === "all") onChange({ storeNumbers: [] });
-    if (m === "zip") onChange({ storeNumbers: [], zip: value.zip, radiusMiles: value.radiusMiles ?? 50 });
-    if (m === "pick") onChange({ storeNumbers: value.storeNumbers });
-    if (m === "near") { onChange({ storeNumbers: [], lat: value.lat, lng: value.lng, radiusMiles: value.radiusMiles ?? 50 }); if (value.lat == null) locate(); }
-  };
-  const toggleStore = (n: string) => {
-    const has = value.storeNumbers.includes(n);
-    onChange({ storeNumbers: has ? value.storeNumbers.filter((x) => x !== n) : [...value.storeNumbers, n] });
-  };
+  const states = useMemo(() => [...new Set(STORES.map((s) => s.state))].sort(), []);
+  const list = useMemo<(Store & { distance?: number })[]>(() => {
+    const needle = norm(q);
+    if (needle) {
+      const zip = /^\d{3,5}$/.test(needle);
+      return STORES.filter((s) => (zip ? (s.postalCode ?? "").startsWith(needle) : `${norm(s.name)} ${norm(s.city)} ${norm(s.state)} ${stateCodeOf(s).toLowerCase()}`.includes(needle))).slice(0, 12);
+    }
+    if (here) return storesNear(here.lat, here.lng, 400).slice(0, 8);
+    if (preferCity && preferState) {
+      const inCity = STORES.filter((s) => s.state === preferState && s.city === preferCity);
+      const rest = STORES.filter((s) => s.state === preferState && s.city !== preferCity).sort((a, b) => a.city.localeCompare(b.city));
+      return [...inCity, ...rest].slice(0, 12);
+    }
+    if (state) return STORES.filter((s) => s.state === state).sort((a, b) => a.city.localeCompare(b.city) || a.name.localeCompare(b.name));
+    return [];
+  }, [q, here, state, preferCity, preferState]);
+
+  const selected = value ? STORES.find((s) => s.storeNumber === value) : null;
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2" role="tablist">
-        <button type="button" className="chip" aria-pressed={mode === "near"} onClick={() => set("near")}>📍 Near me</button>
-        <button type="button" className="chip" aria-pressed={mode === "zip"} onClick={() => set("zip")}>Near a ZIP code</button>
-        <button type="button" className="chip" aria-pressed={mode === "pick"} onClick={() => set("pick")}>Pick stores</button>
-        <button type="button" className="chip" aria-pressed={mode === "all"} onClick={() => set("all")}>All 269 US stores</button>
+      {selected && (
+        <div className="pane-2 mb-3 flex items-center justify-between gap-3 px-4 py-3 text-sm">
+          <span><span className="font-semibold">Apple {selected.name}</span> <span className="text-ink-3">· {selected.city}, {stateCodeOf(selected)}</span></span>
+          <span className="dot dot-ok" aria-hidden />
+        </div>
+      )}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
+        <input className="input" placeholder="Search store, city, state or ZIP" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search stores" autoComplete="off" />
+        <button type="button" className="btn btn-ghost" onClick={locate} disabled={loc === "asking"} aria-busy={loc === "asking"}>
+          {loc === "asking" ? <><span className="spinner" /> Locating…</> : "📍 Near me"}
+        </button>
       </div>
-
-      {mode === "near" && (
-        <div className="mt-4">
-          {value.lat == null ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <button type="button" className="btn btn-primary" disabled={locating} onClick={locate}>{locating ? <><span className="spinner" /> Locating…</> : "Use my location"}</button>
-              <span className="text-sm text-ink-3">Your browser asks once. We only keep the coordinates for this alert.</span>
-            </div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-[1fr_1fr]">
-              <div className="pane-2 flex items-center justify-between px-4 py-3 text-sm"><span>📍 Located · <b className="text-ink">{nearCount}</b> store{nearCount === 1 ? "" : "s"} within {value.radiusMiles ?? 50} mi</span><button type="button" className="text-xs text-ink-3 underline" onClick={locate}>Refresh</button></div>
-              <label className="block text-sm text-ink-2">Radius
-                <select className="input mt-1" value={value.radiusMiles ?? 50} onChange={(e) => onChange({ ...value, storeNumbers: [], radiusMiles: Number(e.target.value) })}>
-                  {[10, 25, 50, 100, 200].map((r) => <option key={r} value={r}>{r} miles</option>)}
-                </select>
-              </label>
-            </div>
-          )}
-          {locError && <p className="mt-2 text-sm text-warn">{locError}</p>}
-        </div>
+      {loc === "denied" && !q && <p className="mt-2 text-sm text-warn">Location is off for this site — search above or pick a state.</p>}
+      {loc === "unavailable" && !q && <p className="mt-2 text-sm text-warn">Could not get your location — search above or pick a state.</p>}
+      {!q && !here && !preferred && (
+        <select className="input mt-2" value={state} onChange={(e) => setState(e.target.value)} aria-label="State">
+          <option value="">{loc === "asking" ? "Finding stores near you…" : "Pick a state"}</option>
+          {states.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
       )}
-
-      {mode === "zip" && (
-        <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr]">
-          <label className="block text-sm text-ink-2">ZIP code
-            <input className="input mt-1" inputMode="numeric" pattern="[0-9]{5}" maxLength={5} placeholder="10001" value={value.zip ?? ""} onChange={(e) => onChange({ storeNumbers: [], zip: e.target.value.replace(/\D/g, "").slice(0, 5), radiusMiles: value.radiusMiles ?? 50 })} />
-          </label>
-          <label className="block text-sm text-ink-2">Radius
-            <select className="input mt-1" value={value.radiusMiles ?? 50} onChange={(e) => onChange({ ...value, storeNumbers: [], radiusMiles: Number(e.target.value) })}>
-              {[10, 25, 50, 100, 200].map((r) => <option key={r} value={r}>{r} miles</option>)}
-            </select>
-          </label>
-        </div>
-      )}
-
-      {mode === "pick" && (
-        <div className="mt-4">
-          <div className="grid gap-3 sm:grid-cols-[1fr_1fr]">
-            <select className="input" value={state} onChange={(e) => setState(e.target.value)} aria-label="State">
-              <option value="">All states</option>
-              {states.map((s) => <option key={s.name} value={s.name}>{s.name} ({s.count})</option>)}
-            </select>
-            <input className="input" placeholder="Search store or city" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search stores" />
-          </div>
-          <div className="mt-3 max-h-64 overflow-auto rounded-2xl border border-line">
-            {list.map((s) => {
-              const on = value.storeNumbers.includes(s.storeNumber);
-              return (
-                <button key={s.storeNumber} type="button" onClick={() => toggleStore(s.storeNumber)} aria-pressed={on}
-                  className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-ink/5 ${on ? "bg-ink/8" : ""}`}>
-                  <span><span className="font-medium">{s.name}</span> <span className="text-ink-3">· {s.city}, {s.state}</span></span>
-                  <span className={`dot ${on ? "dot-ok" : ""}`} aria-hidden />
-                </button>
-              );
-            })}
-            {list.length === 0 && <div className="px-4 py-6 text-center text-sm text-ink-3">No stores match.</div>}
-          </div>
-          <div className="mt-2 text-xs text-ink-3">{value.storeNumbers.length} selected{value.storeNumbers.length >= 60 ? " (max 60)" : ""}</div>
-        </div>
-      )}
-
-      {mode === "all" && <p className="mt-4 text-sm text-ink-2">You&apos;ll hear about every store nationwide. Great for shipping-free pickup anywhere you travel; expect more alerts on launch days.</p>}
+      <div className="mt-3 overflow-hidden rounded-2xl border border-line">
+        {loc === "asking" && !q && list.length === 0 && Array.from({ length: 5 }, (_, i) => <div key={i} className="flex items-center justify-between gap-3 px-4 py-3"><div className="skeleton h-4 w-2/3" /><div className="skeleton h-3 w-10" /></div>)}
+        {list.map((s) => {
+          const on = s.storeNumber === value;
+          return (
+            <button key={s.storeNumber} type="button" onClick={() => onChange(s.storeNumber)} aria-pressed={on}
+              className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-ink/5 ${on ? "bg-ink/8" : ""}`}>
+              <span className="min-w-0"><span className="font-medium">{s.name}</span> <span className="text-ink-3">· {s.city}, {stateCodeOf(s)}</span></span>
+              <span className="shrink-0 text-xs text-ink-3">{s.distance != null ? `${s.distance < 10 ? s.distance.toFixed(1) : Math.round(s.distance)} mi` : ""}</span>
+            </button>
+          );
+        })}
+        {loc !== "asking" && list.length === 0 && <div className="px-4 py-6 text-center text-sm text-ink-3">{q ? "No store matches — try the city or ZIP." : "Search for your store, tap Near me, or pick a state."}</div>}
+      </div>
     </div>
   );
 }

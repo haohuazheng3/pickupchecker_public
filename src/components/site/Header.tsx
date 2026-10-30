@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "./Logo";
 import { AuthNav } from "./AuthNav";
 import { SiteSearch } from "./SiteSearch";
+import { ThemeToggle } from "./ThemeToggle";
 
 const LINKS: [string, string][] = [["/stock/iphone-duo", "Duo stock"], ["/restocks", "Restocks"], ["/map", "Map"], ["/stores", "Stores"], ["/pricing", "Pricing"]];
 
@@ -20,6 +21,7 @@ export function Header() {
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <AuthNav />
             <SiteSearch />
+            <ThemeToggle />
           </div>
         </div>
         {/* Phones and the Home Screen app (no address bar) still need every section one tap away. */}

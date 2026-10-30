@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { MODELS, DEFAULT_MODEL, modelByKey, STORE_INDEX, STORES, appleFamilyUrl, type ModelKey } from "@/lib/apple/catalog";
+import { MODELS, DEFAULT_MODEL, modelByKey, STORE_INDEX, STORES, appleFamilyUrl, storagesFor, colorsFor, cityBySlug, type ModelKey } from "@/lib/apple/catalog";
+import { stateRefs } from "@/lib/seo/links";
 import { restockFeed, restockCounts, stockByStore } from "@/lib/stock/queries";
 import { WizardServer } from "@/components/wizard/WizardServer";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
@@ -21,8 +22,15 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const initialStore = typeof sp.store === "string" ? (STORE_INDEX.has(sp.store) ? sp.store : STORES.find((s) => s.slug === sp.store)?.storeNumber) : undefined;
   const startSignIn = sp.signin === "1";
   const next = typeof sp.next === "string" ? sp.next : undefined;
+  // A configuration table or an SEO page can pre-fill the exact phone and the place to list stores for.
+  const initialStorage = typeof sp.storage === "string" && storagesFor(model).includes(sp.storage) ? sp.storage : undefined;
+  const initialColor = typeof sp.color === "string" && colorsFor(model, initialStorage).includes(sp.color) ? sp.color : undefined;
+  const stateParam = typeof sp.state === "string" ? sp.state.toLowerCase() : undefined;
+  const stateRef = stateParam ? stateRefs().find((s) => s.slug === stateParam || s.code.toLowerCase() === stateParam) : undefined;
+  const cityEntry = stateRef && typeof sp.city === "string" ? cityBySlug(stateRef.slug, sp.city) : undefined;
   const faq = [
     ["How fast are the alerts?", "Every Apple Store in the US is re-checked continuously, typically every 20 seconds. The notification reaches your phone within seconds of a store flipping to \"available\" for pickup."],
+    ["What is one alert?", "One alert watches one Apple Store for one exact phone: model, storage and color. Want two colors, or two stores? That is two alerts. Plus holds 10, Pro 20."],
     ["What does it cost?", "Plus is $5/month for 10 alert rules, Pro $10/month for 20; both renew monthly until you cancel from your account. Live stock, the map and the restock log are free to browse, no account needed."],
     ["How do I get notifications on my iPhone?", "Add PickupChecker to your Home Screen from Safari (Share → Add to Home Screen), open it from there, sign in and tap Turn on notifications. The install guide walks you through it in a minute."],
     ["Can you reserve the phone for me?", "No. We tell you the instant it's available; you reserve it on apple.com or in the Apple Store app. Pickup stock often lasts minutes, so the speed of the alert is what matters."],
@@ -52,7 +60,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             <Board model={model} />
           </Suspense>
         </div>
-        <WizardServer initialModel={requested ?? DEFAULT_MODEL} initialStore={initialStore} startSignIn={startSignIn} next={next} />
+        <WizardServer initialModel={requested ?? DEFAULT_MODEL} initialStorage={initialStorage} initialColor={initialColor} initialStore={initialStore} initialState={stateRef?.name} initialCity={cityEntry?.name} startSignIn={startSignIn} next={next} />
       </section>
 
       <section className="mt-6 flex flex-wrap items-center gap-2 text-sm text-ink-3">
@@ -66,7 +74,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         {[
           ["Every store, every 20 seconds", "Not just the 12 stores apple.com shows you. All 269 US locations, re-checked around the clock from our own servers."],
           ["A notification in seconds", "Add PickupChecker to your Home Screen and a restock lands on your lock screen like a text: the store, the exact configuration, one tap to reserve."],
-          ["Only what you asked for", "Your storage, your colors, your stores. One alert per restock, never a repeat while it's still in stock."],
+          ["Only what you asked for", "Your store, your exact configuration. One alert per restock, never a repeat while it's still in stock."],
         ].map(([t, d]) => (
           <div key={t} className="pane p-5">
             <h2 className="font-semibold">{t}</h2>

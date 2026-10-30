@@ -28,6 +28,8 @@ export const users = pgTable("users", {
   stripeCustomerId: text("stripe_customer_id"),
   createdAt: ts("created_at").notNull().defaultNow(),
   lastSeenAt: ts("last_seen_at"),
+  /** When we last emailed "notifications stopped on your phone" (one email per 30 days, not per dead device). */
+  pushStoppedNotifiedAt: ts("push_stopped_notified_at"),
 });
 
 export const subscriptions = pgTable(
@@ -56,13 +58,17 @@ export const watches = pgTable(
     userId: text("user_id").notNull().references(() => users.id),
     subscriptionId: text("subscription_id").references(() => subscriptions.id),
     model: text("model").notNull(),
-    storages: jsonb("storages").$type<string[]>().notNull().default([]), // [] = any
-    colors: jsonb("colors").$type<string[]>().notNull().default([]), // [] = any
-    storeNumbers: jsonb("store_numbers").$type<string[]>().notNull().default([]), // [] = all US
+    // One rule = one store × one exact configuration (2026-10-30): each array holds exactly one value.
+    // Rows written before that (several storages/colours, a ZIP radius, "all US") are inactive with
+    // deactivated_reason = 'legacy_shape' and shown on the account page as "set this alert up again".
+    storages: jsonb("storages").$type<string[]>().notNull().default([]),
+    colors: jsonb("colors").$type<string[]>().notNull().default([]),
+    storeNumbers: jsonb("store_numbers").$type<string[]>().notNull().default([]),
     zip: text("zip"),
     radiusMiles: integer("radius_miles"),
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
+    deactivatedReason: text("deactivated_reason"),
     active: boolean("active").notNull().default(true),
     paused: boolean("paused").notNull().default(false),
     createdAt: ts("created_at").notNull().defaultNow(),
@@ -92,6 +98,12 @@ export const pushSubscriptions = pgTable(
     lastSentAt: ts("last_sent_at"),
     disabledAt: ts("disabled_at"),
     lastError: text("last_error"),
+    /** Consecutive delivery failures that were not 404/410; reset on success, disabled at 5. */
+    failCount: integer("fail_count").notNull().default(0),
+    /** PushSubscription.expirationTime as reported by the browser (null = never). */
+    expirationTime: ts("expiration_time"),
+    /** base64url VAPID public key the browser subscribed with: a rotated key means re-subscribe. */
+    appServerKey: text("app_server_key"),
   },
   (t) => [uniqueIndex("push_subscriptions_endpoint_idx").on(t.endpoint), index("push_subscriptions_user_idx").on(t.userId)],
 );

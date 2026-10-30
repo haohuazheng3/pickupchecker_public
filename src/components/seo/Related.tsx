@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 
 export interface Crumb { href?: string; label: string }
 

@@ -2,18 +2,18 @@
  * Turn restock transitions into alerts: a push notification to every device the user turned on,
  * or an email when no device has (email is the fallback, not the default).
  *
- *  match: active, unpaused watches whose subscription is active, same model, storage/color filter,
- *         and store set (explicit store list, or radius around a zip, or all US)
+ *  match: active, unpaused rules of the same store × exact configuration (model, storage, colour)
  *  dedupe: one notification per (watch, event) — unique index; plus a per-(watch, store, part)
  *          cool-down so a flapping store does not mail every 20 s
  */
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db, schema } from "../db";
-import { PART_INDEX, STORE_INDEX, distanceMiles, modelKeyFor } from "../apple/catalog";
+import { PART_INDEX, STORE_INDEX, modelKeyFor } from "../apple/catalog";
 import { sendAlertEmail } from "../mail/resend";
 import { recordError, errorMessage } from "../errors";
-import { enabledSubscriptionsFor, pushConfigured, sendPushToRows } from "../push/server";
+import { enabledSubscriptionsFor, notifyPushStopped, pushConfigured, sendPushToRows } from "../push/server";
+import { logOps } from "../ops";
 import { restockPayload } from "../push/payload";
 import { coveredWatchIds, effectivePlan } from "../plans";
 import type { Transition } from "./ingest";
@@ -25,6 +25,13 @@ export interface NotifyStats {
   sent: number;
   failed: number;
   skipped: number;
+}
+
+/** One rule = one store × one exact configuration; a legacy-shaped row (arrays not of length 1) never matches. */
+export function ruleMatches(w: { model: string; storages: string[]; colors: string[]; storeNumbers: string[] }, modelKey: string, storage: string, color: string, storeNumber: string): boolean {
+  if (w.model !== modelKey) return false;
+  if (w.storages.length !== 1 || w.colors.length !== 1 || w.storeNumbers.length !== 1) return false;
+  return w.storages[0] === storage && w.colors[0] === color && w.storeNumbers[0] === storeNumber;
 }
 
 export async function notifyRestocks(transitions: Transition[], eventIds: number[], now = new Date()): Promise<NotifyStats> {
@@ -86,14 +93,7 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
     const modelKey = modelKeyFor(item.model);
     for (const c of active) {
       const w = c.watch;
-      if (w.model !== modelKey) continue;
-      if (w.storages.length && !w.storages.includes(item.storage)) continue;
-      if (w.colors.length && !w.colors.includes(item.color)) continue;
-      if (w.storeNumbers.length) {
-        if (!w.storeNumbers.includes(store.storeNumber)) continue;
-      } else if (w.lat != null && w.lng != null && w.radiusMiles) {
-        if (distanceMiles(w.lat, w.lng, store.lat, store.lng) > w.radiusMiles) continue;
-      }
+      if (!ruleMatches(w, modelKey, item.storage, item.color, store.storeNumber)) continue;
       stats.matched++;
       if (cooled.has(`${w.id}|${store.storeNumber}|${item.partNumber}`)) {
         stats.skipped++;
@@ -105,7 +105,8 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
     }
   }
 
-  for (const [, g] of perWatch) {
+  // Every matched rule is sent concurrently: one slow push service never serialises the others.
+  await Promise.all([...perWatch.values()].map(async (g) => {
     const w = g.c.watch;
     const started = Date.now();
     const lines = g.items.map((x) => {
@@ -114,14 +115,22 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
       return { item, store, quote: x.t.quote };
     });
     const devices = pushByUser.get(w.userId) ?? [];
-    const channel = devices.length ? "push" : "email";
+    let channel: "push" | "email" = devices.length ? "push" : "email";
     try {
-      let providerId: string | null;
+      let providerId: string | null = null;
       if (channel === "push") {
-        const r = await sendPushToRows(devices, restockPayload(lines, w.id, now));
-        if (r.sent === 0) throw new Error(`push to ${devices.length} device(s) failed: ${r.errors.join("; ") || "unknown"}`);
-        providerId = r.firstId;
-      } else {
+        const r = await sendPushToRows(devices, restockPayload(lines, w.id, now), { source: "poller" });
+        // Only when nothing reached the user: a device the push service dropped (410) while another
+        // device received the alert is a rotation, not an outage.
+        if (r.sent === 0 && r.disabledRows.length) await notifyPushStopped(w.userId, g.c.email, r.disabledRows, now).catch(() => undefined);
+        if (r.sent > 0) providerId = r.firstId;
+        else {
+          // Every device failed: the alert still goes out, by email, instead of being lost.
+          channel = "email";
+          await logOps("poller", "warn", `push to ${devices.length} device(s) failed, falling back to email`, { watchId: w.id, errors: r.errors.slice(0, 3) });
+        }
+      }
+      if (channel === "email") {
         providerId = await sendAlertEmail(g.c.email, lines, w.id);
       }
       const latency = Date.now() - started;
@@ -163,7 +172,7 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
         )
         .onConflictDoNothing();
     }
-  }
+  }));
   if (eventIds.length) {
     await d.update(schema.availabilityEvents).set({ notifiedAt: now }).where(inArray(schema.availabilityEvents.id, eventIds));
   }

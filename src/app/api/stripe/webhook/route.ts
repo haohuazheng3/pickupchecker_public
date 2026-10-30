@@ -2,12 +2,31 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
+import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { syncSubscription } from "@/lib/billing";
 import { recordError, errorMessage } from "@/lib/errors";
+import { logOps } from "@/lib/ops";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/**
+ * subscriptions.retrieve needs a permission the organisation key may lack ("Permission denied … on
+ * account"). That is not a failure of ours: return null and let the subscription events carry the data.
+ */
+async function retrieveIfAllowed(subId: string, where: string): Promise<Stripe.Subscription | null> {
+  try {
+    return await stripe().subscriptions.retrieve(subId);
+  } catch (e) {
+    const err = e as { statusCode?: number; code?: string; message?: string };
+    if (err.statusCode === 403 || /permission/i.test(err.message ?? "")) {
+      await logOps("web", "info", `stripe ${where}: subscription retrieve not permitted, relying on subscription events`, { subId });
+      return null;
+    }
+    throw e;
+  }
+}
 
 /** Stripe → us. Signature-verified, idempotent by event id. */
 export async function POST(req: Request) {
@@ -34,11 +53,17 @@ export async function POST(req: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
+        // The subscription itself arrives as customer.subscription.created (same second, full object).
+        // Retrieving it here needs the "Subscriptions" permission the organisation key does not have,
+        // so: remember the customer, try the retrieve, and treat a permission error as "nothing to do".
         const s = event.data.object as Stripe.Checkout.Session;
+        const customerId = typeof s.customer === "string" ? s.customer : s.customer?.id;
+        const userId = s.metadata?.userId ?? s.client_reference_id ?? undefined;
+        if (customerId && userId) await d.update(schema.users).set({ stripeCustomerId: customerId }).where(eq(schema.users.id, userId));
         if (s.mode === "subscription" && s.subscription) {
           const subId = typeof s.subscription === "string" ? s.subscription : s.subscription.id;
-          const sub = await stripe().subscriptions.retrieve(subId);
-          await syncSubscription(sub);
+          const sub = await retrieveIfAllowed(subId, event.type);
+          if (sub) await syncSubscription(sub);
         }
         break;
       }
@@ -50,10 +75,18 @@ export async function POST(req: Request) {
       }
       case "invoice.paid":
       case "invoice.payment_failed": {
+        // Renewals: the invoice carries the new period; a retrieve is only a bonus (see above).
         const inv = event.data.object as Stripe.Invoice;
         const subRef = inv.parent?.subscription_details?.subscription;
         const subId = typeof subRef === "string" ? subRef : subRef?.id;
-        if (subId) await syncSubscription(await stripe().subscriptions.retrieve(subId));
+        if (!subId) break;
+        const sub = await retrieveIfAllowed(subId, event.type);
+        if (sub) { await syncSubscription(sub); break; }
+        const periodEnd = inv.lines?.data?.reduce<number | null>((a, l) => (l.period?.end && (!a || l.period.end > a) ? l.period.end : a), null);
+        await d
+          .update(schema.subscriptions)
+          .set({ status: event.type === "invoice.paid" ? "active" : "past_due", ...(periodEnd ? { currentPeriodEnd: new Date(periodEnd * 1000) } : {}), updatedAt: new Date() })
+          .where(eq(schema.subscriptions.id, subId));
         break;
       }
       default:

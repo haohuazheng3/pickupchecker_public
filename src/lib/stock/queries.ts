@@ -1,4 +1,5 @@
 import { desc, eq, gt, inArray, sql, and } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { db, hasDatabase, schema } from "../db";
 import { PART_INDEX, STORE_INDEX, STORES, MODELS, modelKeyFor, partNumbersFor, type ModelKey, type CatalogItem, type Store } from "../apple/catalog";
 import { recordError, errorMessage } from "../errors";
@@ -60,7 +61,7 @@ export async function recentRestocks(limit = 30, model?: ModelKey) {
 export async function storeStatus(storeNumber: string) {
   if (!hasDatabase()) return [];
   const rows = await safe("store status", [] as (typeof schema.storeSkuStatus.$inferSelect)[], () => db().select().from(schema.storeSkuStatus).where(eq(schema.storeSkuStatus.storeNumber, storeNumber)));
-  return rows.map((r) => ({ ...r, item: PART_INDEX.get(r.partNumber) })).filter((r) => r.item);
+  return rows.map((r) => ({ ...r, item: PART_INDEX.get(r.partNumber) })).filter((r): r is typeof r & { item: CatalogItem } => Boolean(r.item));
 }
 
 export async function overview() {
@@ -204,4 +205,166 @@ export async function storesStock(storeNumbers: string[]): Promise<Map<string, S
     map.set(r.storeNumber, e);
   }
   return map;
+}
+
+/* ------------------------------------------------------------------ SEO page statistics (cached 60 s, keyed by their arguments) */
+
+/**
+ * Cached values are serialised, so every shape below is JSON-safe (ISO strings, never Date). Callers
+ * guard with hasDatabase() before entering the cache so a missing DATABASE_URL never caches a fallback.
+ */
+
+export interface PlaceStats {
+  day: number; week: number; month: number; soldouts: number;
+  /** Median restock→sell-out duration over the window, from pairs at the same store × part; null until there are pairs. */
+  medianMs: number | null; medianSamples: number;
+  lastRestock: { storeNumber: string; partNumber: string; at: string } | null;
+  /** Ascending, one entry per local day of the window (zero-filled). */
+  daily: { day: string; restocks: number; soldouts: number }[];
+  /** Restocks per configuration over the window, most first. */
+  byPart: { partNumber: string; restocks: number }[];
+  days: number; tz: string;
+}
+
+const EMPTY_STATS = (days: number, tz: string): PlaceStats => ({ day: 0, week: 0, month: 0, soldouts: 0, medianMs: null, medianSamples: 0, lastRestock: null, daily: [], byPart: [], days, tz });
+
+function dayKeysBack(days: number, tz: string): string[] {
+  const out: string[] = [];
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" });
+  for (let k = days - 1; k >= 0; k--) out.push(fmt.format(new Date(Date.now() - k * 86400_000)));
+  return out;
+}
+
+const cachedPlaceStats = unstable_cache(
+  async (storeNumbers: string[] | null, parts: string[] | null, tz: string, days: number): Promise<PlaceStats> => {
+    const base = EMPTY_STATS(days, tz);
+    const ev = schema.availabilityEvents;
+    const scope = [eq(ev.firstSeen, false), sql`${ev.at} > now() - interval '1 day' * ${days}`];
+    if (storeNumbers) scope.push(inArray(ev.storeNumber, storeNumbers));
+    if (parts) scope.push(inArray(ev.partNumber, parts));
+    const where = and(...scope);
+    const [totals, median, series] = await Promise.all([
+      safe("place stats totals", null as null | { day: number; week: number; month: number; soldouts: number; lastStore: string | null; lastPart: string | null; lastAt: string | null }, async () => {
+        const [r] = await db()
+          .select({
+            day: sql<number>`count(*) filter (where ${ev.kind} = 'restock' and ${ev.at} > now() - interval '24 hours')::int`,
+            week: sql<number>`count(*) filter (where ${ev.kind} = 'restock' and ${ev.at} > now() - interval '7 days')::int`,
+            month: sql<number>`count(*) filter (where ${ev.kind} = 'restock')::int`,
+            soldouts: sql<number>`count(*) filter (where ${ev.kind} = 'soldout')::int`,
+            lastStore: sql<string | null>`(array_agg(${ev.storeNumber} order by ${ev.at} desc) filter (where ${ev.kind} = 'restock'))[1]`,
+            lastPart: sql<string | null>`(array_agg(${ev.partNumber} order by ${ev.at} desc) filter (where ${ev.kind} = 'restock'))[1]`,
+            lastAt: sql<string | null>`max(${ev.at}) filter (where ${ev.kind} = 'restock')`,
+          })
+          .from(ev)
+          .where(where);
+        return r ?? null;
+      }),
+      safe("place stats median", null as null | { med: number | null; n: number }, async () => {
+        const inner = db()
+          .select({ dur: sql<number>`extract(epoch from (lead(${ev.at}) over (partition by ${ev.storeNumber}, ${ev.partNumber} order by ${ev.at}) - ${ev.at}))`.as("dur"), kind: ev.kind, nextKind: sql<string>`lead(${ev.kind}) over (partition by ${ev.storeNumber}, ${ev.partNumber} order by ${ev.at})`.as("next_kind") })
+          .from(ev)
+          .where(where)
+          .as("t");
+        const [r] = await db().select({ med: sql<number | null>`percentile_cont(0.5) within group (order by ${inner.dur})`, n: sql<number>`count(*)::int` }).from(inner).where(and(eq(inner.kind, "restock"), eq(inner.nextKind, "soldout")));
+        return r ?? null;
+      }),
+      safe("place stats series", [] as { day: string | null; partNumber: string | null; kind: string; n: number }[], () =>
+        db()
+          .select({ day: sql<string | null>`to_char(${ev.at} at time zone ${tz}, 'YYYY-MM-DD')`, partNumber: sql<string | null>`${ev.partNumber}`, kind: ev.kind, n: sql<number>`count(*)::int` })
+          .from(ev)
+          .where(where)
+          // Ordinals: the day expression carries a bound parameter, and Postgres would not match a re-bound copy in GROUP BY.
+          .groupBy(sql`grouping sets ((1, 3), (2, 3))`),
+      ),
+    ]);
+    const daily = new Map(dayKeysBack(days, tz).map((d) => [d, { day: d, restocks: 0, soldouts: 0 }]));
+    const byPart = new Map<string, number>();
+    for (const r of series) {
+      if (r.day) { const e = daily.get(r.day); if (e) { if (r.kind === "restock") e.restocks += r.n; else if (r.kind === "soldout") e.soldouts += r.n; } }
+      else if (r.partNumber && r.kind === "restock" && PART_INDEX.has(r.partNumber)) byPart.set(r.partNumber, (byPart.get(r.partNumber) ?? 0) + r.n);
+    }
+    return {
+      ...base,
+      day: totals?.day ?? 0, week: totals?.week ?? 0, month: totals?.month ?? 0, soldouts: totals?.soldouts ?? 0,
+      medianMs: median?.med != null && Number.isFinite(Number(median.med)) ? Math.round(Number(median.med) * 1000) : null, medianSamples: median?.n ?? 0,
+      lastRestock: totals?.lastStore && totals.lastPart && totals.lastAt ? { storeNumber: totals.lastStore, partNumber: totals.lastPart, at: new Date(totals.lastAt).toISOString() } : null,
+      daily: [...daily.values()], byPart: [...byPart.entries()].map(([partNumber, restocks]) => ({ partNumber, restocks })).sort((a, b) => b.restocks - a.restocks),
+    };
+  },
+  ["seo-place-stats"],
+  { revalidate: 60 },
+);
+
+/** Restock / sell-out statistics for a set of stores and/or one model over the last `days` (default 30). Three queries, cached 60 s. */
+export async function placeStats(opts: { storeNumbers?: string[]; model?: ModelKey; tz?: string; days?: number } = {}): Promise<PlaceStats> {
+  const days = opts.days ?? 30;
+  const tz = opts.tz ?? "America/New_York";
+  if (!hasDatabase()) return EMPTY_STATS(days, tz);
+  const stores = opts.storeNumbers && opts.storeNumbers.length < STORES.length ? [...opts.storeNumbers].sort() : null;
+  const parts = opts.model ? partNumbersFor(opts.model) : null;
+  if ((stores && stores.length === 0) || (parts && parts.length === 0)) return EMPTY_STATS(days, tz);
+  return cachedPlaceStats(stores, parts, tz, days);
+}
+
+const cachedStockNow = unstable_cache(
+  async (storeNumbers: string[] | null): Promise<Record<ModelKey, number>> => {
+    const out = Object.fromEntries(MODELS.map((m) => [m.key, 0])) as Record<ModelKey, number>;
+    const conds = [eq(schema.storeSkuStatus.status, "available")];
+    if (storeNumbers) conds.push(inArray(schema.storeSkuStatus.storeNumber, storeNumbers));
+    const rows = await safe("stock now", [] as { storeNumber: string; partNumber: string }[], () =>
+      db().selectDistinct({ storeNumber: schema.storeSkuStatus.storeNumber, partNumber: schema.storeSkuStatus.partNumber }).from(schema.storeSkuStatus).where(and(...conds)),
+    );
+    const sets = Object.fromEntries(MODELS.map((m) => [m.key, new Set<string>()])) as Record<ModelKey, Set<string>>;
+    for (const r of rows) { const item = PART_INDEX.get(r.partNumber); if (item) sets[modelKeyFor(item.model)].add(r.storeNumber); }
+    for (const m of MODELS) out[m.key] = sets[m.key].size;
+    return out;
+  },
+  ["seo-stock-now"],
+  { revalidate: 60 },
+);
+
+/** Stores (of the set, or all) with at least one configuration available right now, per model. One query, cached 60 s — for metadata. */
+export async function storesWithStockNow(storeNumbers?: string[]): Promise<Record<ModelKey, number>> {
+  const empty = Object.fromEntries(MODELS.map((m) => [m.key, 0])) as Record<ModelKey, number>;
+  if (!hasDatabase()) return empty;
+  const stores = storeNumbers && storeNumbers.length < STORES.length ? [...storeNumbers].sort() : null;
+  if (stores && stores.length === 0) return empty;
+  return cachedStockNow(stores);
+}
+
+export type StoreStatusRow = typeof schema.storeSkuStatus.$inferSelect & { item: CatalogItem };
+
+/** Every status row for several stores (the full configuration tables of thin state/city pages). */
+export async function storesStatusFull(storeNumbers: string[]): Promise<Map<string, StoreStatusRow[]>> {
+  const map = new Map<string, StoreStatusRow[]>();
+  if (!hasDatabase() || storeNumbers.length === 0) return map;
+  const rows = await safe("stores status", [] as (typeof schema.storeSkuStatus.$inferSelect)[], () => db().select().from(schema.storeSkuStatus).where(inArray(schema.storeSkuStatus.storeNumber, storeNumbers)));
+  for (const r of rows) {
+    const item = PART_INDEX.get(r.partNumber);
+    if (!item) continue;
+    const list = map.get(r.storeNumber) ?? [];
+    list.push({ ...r, item });
+    map.set(r.storeNumber, list);
+  }
+  return map;
+}
+
+const cachedLatestEvents = unstable_cache(
+  async (): Promise<Record<string, string>> => {
+    const ev = schema.availabilityEvents;
+    const rows = await safe("latest events", [] as { storeNumber: string; at: string | null }[], () =>
+      db().select({ storeNumber: ev.storeNumber, at: sql<string | null>`max(${ev.at})` }).from(ev).where(eq(ev.firstSeen, false)).groupBy(ev.storeNumber),
+    );
+    const out: Record<string, string> = {};
+    for (const r of rows) if (r.at) out[r.storeNumber] = new Date(r.at).toISOString();
+    return out;
+  },
+  ["seo-latest-events"],
+  { revalidate: 3600 },
+);
+
+/** storeNumber → ISO time of its latest real event (sitemap lastModified). Cached an hour. */
+export async function latestEventPerStore(): Promise<Record<string, string>> {
+  if (!hasDatabase()) return {};
+  return cachedLatestEvents();
 }

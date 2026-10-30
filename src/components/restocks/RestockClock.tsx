@@ -9,7 +9,7 @@ function Bars({ values, labels, peak }: { values: number[]; labels: string[]; pe
     <div className="flex h-24 items-end gap-[3px]" role="img" aria-label={values.map((v, i) => `${labels[i] || i}: ${v}`).join(", ")}>
       {values.map((v, i) => (
         <div key={i} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1">
-          <div className={`w-full rounded-t-[3px] ${i === peak && v > 0 ? "bg-accent" : "bg-[#2a78d6]"}`} style={{ height: `${(v / max) * 72}px`, minHeight: v > 0 ? 3 : 0 }} title={`${labels[i] || i}: ${v}`} />
+          <div className={`w-full rounded-t-[3px] ${i === peak && v > 0 ? "bg-accent" : "bg-accent-2"}`} style={{ height: `${(v / max) * 72}px`, minHeight: v > 0 ? 3 : 0 }} title={`${labels[i] || i}: ${v}`} />
           <span className="h-3 text-[9px] leading-3 text-ink-3">{labels[i]}</span>
         </div>
       ))}

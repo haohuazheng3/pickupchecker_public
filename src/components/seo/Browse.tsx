@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { MODELS, DEFAULT_MODEL } from "@/lib/apple/catalog";
 import { stateRefs, topStates, topCities, cityLabel } from "@/lib/seo/links";
 import { LinkRow } from "./Related";

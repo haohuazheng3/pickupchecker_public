@@ -1,8 +1,9 @@
-import Link from "next/link";
 import { PART_INDEX, STORE_INDEX, storePath, type ModelKey, MODELS } from "@/lib/apple/catalog";
 import { stockByStore } from "@/lib/stock/queries";
 import { Dot } from "./StatusBits";
 import { LiveAgo } from "@/components/site/LiveAgo";
+import { PendingLink } from "@/components/ui/PendingLink";
+import { Skeleton, SkeletonCard } from "@/components/ui/Skeleton";
 
 export async function StockBoard({ model, storage, color, limit = 60 }: { model: ModelKey; storage?: string; color?: string; limit?: number }) {
   const rows = await stockByStore(model, { storage, color });
@@ -27,7 +28,7 @@ export async function StockBoard({ model, storage, color, limit = 60 }: { model:
             const items = r.availableParts.map((p) => PART_INDEX.get(p)!).filter(Boolean);
             return (
               <li key={r.storeNumber} className="pane-2 pane-hover p-4">
-                <Link href={storePath(s)} className="block">
+                <PendingLink href={storePath(s)} className="block">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="font-semibold">Apple {s.name}</div>
@@ -40,7 +41,7 @@ export async function StockBoard({ model, storage, color, limit = 60 }: { model:
                     {items.length > 6 && <span className="text-xs text-ink-3">+{items.length - 6}</span>}
                   </div>
                   <div className="mt-2 text-xs text-ink-3">Seen <LiveAgo iso={r.lastAvailableAt} /></div>
-                </Link>
+                </PendingLink>
               </li>
             );
           })}
@@ -50,13 +51,14 @@ export async function StockBoard({ model, storage, color, limit = 60 }: { model:
   );
 }
 
-export function StockBoardSkeleton() {
+/** Same shape as the board: the status line, then the store-card grid with name, city, chips and "seen". */
+export function StockBoardSkeleton({ cards = 6 }: { cards?: number }) {
   return (
-    <div>
-      <div className="skeleton mb-4 h-4 w-72" />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton h-28" />)}
-      </div>
+    <div aria-busy="true" aria-label="Loading stock">
+      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1"><Skeleton className="h-4 w-72 max-w-full" /><Skeleton className="h-4 w-28" /></div>
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: cards }).map((_, i) => <li key={i}><SkeletonCard chips={3} lines={1} foot /></li>)}
+      </ul>
     </div>
   );
 }

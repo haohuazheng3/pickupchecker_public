@@ -1,0 +1,46 @@
+/* ------------------------------------------------------------------ pending / busy / stale feedback
+   Loaded right after Tailwind, before the rest of globals.css. A tapped link or button must change on
+   the same frame, before the server answers: PendingLink sets data-pending="true" on the anchor while
+   Next's navigation is in flight, forms set aria-busy="true" on their submit button, and content that
+   is being replaced carries .is-stale. The owner's :active rules in globals.css stay as they are. */
+
+[data-pending="true"] { opacity: .6; }
+
+/* Buttons keep their width: the label and icon fade, a spinner takes the centre. */
+.btn[data-pending="true"], .btn[aria-busy="true"] {
+  position: relative; pointer-events: none; -webkit-text-fill-color: transparent;
+}
+.btn[data-pending="true"] > *, .btn[aria-busy="true"] > * { visibility: hidden; }
+.btn[data-pending="true"]::after, .btn[aria-busy="true"]::after {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 1em; height: 1em; margin: -.5em 0 0 -.5em;
+  border-radius: 999px; border: 2px solid currentColor; border-right-color: transparent;
+  animation: spin .7s linear infinite; visibility: visible;
+}
+.btn[aria-busy="true"] { opacity: .85; }
+
+/* Chips and plain links: dim plus a small trailing spinner. */
+.chip[data-pending="true"] { pointer-events: none; }
+.chip[data-pending="true"]::after {
+  content: ""; width: .7em; height: .7em; flex: none; border-radius: 999px;
+  border: 1.5px solid currentColor; border-right-color: transparent; animation: spin .7s linear infinite;
+}
+
+/* Content being replaced by a newer response. */
+.is-stale { opacity: .55; transition: opacity .15s; }
+
+/* Touch screens have no hover: after a tap the browser keeps :hover on the element, so hover colours
+   would stick. Re-assert the resting backgrounds there (the pressed look comes from :active). */
+@media (hover: none) {
+  .btn.btn-primary:hover { background: var(--accent); }
+  .btn.btn-ink:hover { background: var(--ink); }
+  .btn.btn-ghost:hover { background: var(--fill-1); }
+  .btn.btn-ghost:active { background: var(--fill-3); }
+  .chip.chip:hover:not([aria-pressed="true"]):not([data-on="true"]) { background: var(--fill-1); }
+  .chip.chip:active:not([aria-pressed="true"]):not([data-on="true"]) { background: var(--fill-3); }
+  .pane-hover.pane-hover:hover { transform: none; border-color: var(--line); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn[data-pending="true"]::after, .btn[aria-busy="true"]::after, .chip[data-pending="true"]::after { animation: none; }
+  .is-stale { transition: none; }
+}
