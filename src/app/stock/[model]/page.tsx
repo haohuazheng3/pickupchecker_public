@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps<"/stock/[model]">):
   if (!m) return {};
   return {
     title: `${m.name} in-store pickup stock — every US Apple Store, live`,
-    description: `Which Apple Stores have the ${m.name} available for in-store pickup right now, updated around the clock. Set a free alert and get a notification the moment stock appears near you.`,
+    description: `Which Apple Stores have the ${m.name} available for in-store pickup right now, updated around the clock. Set an alert and get a notification the moment stock appears near you.`,
     alternates: { canonical: `/stock/${m.slug}` },
   };
 }
@@ -58,7 +58,7 @@ export default async function StockModelPage({ params, searchParams }: PageProps
           <div className="pane p-5">
             <div className="eyebrow">Alerts</div>
             <p className="mt-2 text-ink-2">Don&apos;t refresh this page. Get a notification the second a {m.short} appears near you.</p>
-            <Link href={`/?model=${m.key}#notify`} className="btn btn-primary mt-4 w-full">Get notified · free</Link>
+            <Link href={`/?model=${m.key}#notify`} className="btn btn-primary mt-4 w-full">Get notified</Link>
           </div>
           <div className="pane p-5">
             <div className="flex items-baseline justify-between gap-3"><div className="eyebrow">Recent restocks</div><Link href={`/restocks?model=${key}`} className="text-xs text-ink-3 hover:text-ink">Full log →</Link></div>
@@ -69,7 +69,7 @@ export default async function StockModelPage({ params, searchParams }: PageProps
         </aside>
       </div>
       <RelatedBlock title={`${m.name} by place`}>
-        <LinkRow title="This model" links={[{ href: `/restocks?model=${key}`, label: `${m.short} restock log` }, { href: `/map?model=${key}`, label: `${m.short} on the map` }, { href: `/?model=${key}#notify`, label: `${m.short} alert · free` }, ...MODELS.filter((x) => x.key !== key).map((x) => ({ href: `/stock/${x.slug}`, label: `${x.name} stock` }))]} />
+        <LinkRow title="This model" links={[{ href: `/restocks?model=${key}`, label: `${m.short} restock log` }, { href: `/map?model=${key}`, label: `${m.short} on the map` }, { href: `/?model=${key}#notify`, label: `${m.short} alert` }, ...MODELS.filter((x) => x.key !== key).map((x) => ({ href: `/stock/${x.slug}`, label: `${x.name} stock` }))]} />
         <BrowseStates />
         <BrowsePopular states={0} cities={12} />
       </RelatedBlock>

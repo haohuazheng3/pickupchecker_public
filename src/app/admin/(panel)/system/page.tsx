@@ -50,7 +50,7 @@ export default async function AdminSystem() {
             ["Adaptive backoff", "541 share ≥ 25 % for 3 sweeps → +40 s pause and an owner email; ≥ 90 % → degraded (Vercel egress, 25 req / 35 min), probe full mode every 15 min"],
             ["Stale → unknown", "a status not confirmed for 30 min becomes unknown (never 'sold out' by silence)"],
             ["Heartbeat thresholds", "health: 150 s · watchdog: 120 s → degraded mode + owner email, reminders every 3 h"],
-            ["Plans", "free 1 rule · Plus $5/mo 10 rules · Pro $10/mo 20 rules · the oldest rules within the limit send; extra ones are saved but silent · hard cap 30 saved"],
+            ["Plans", "no free alerts · Plus $5/mo 10 rules · Pro $10/mo 20 rules · the oldest rules within the limit send; extra ones are saved but silent · hard cap 30 saved"],
             ["Alert rules", "push to every enabled device, else email · one per (rule, event) · 30 min cool-down per rule × store × SKU · push TTL 600 s"],
             ["Rate limits", "alerts API 30/h per user · push subscribe 30/h · push test 10/h · console login 10 per 15 min per IP"],
             ["Console session", "30 days, HMAC-signed cookie; rotate ADMIN_SESSION_SECRET to sign everyone out"],

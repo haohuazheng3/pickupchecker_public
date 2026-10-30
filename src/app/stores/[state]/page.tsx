@@ -49,7 +49,7 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/map?state=${s.code}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>
-          <Link href={`/?model=${DEFAULT_MODEL}#notify`} className="btn btn-primary btn-sm">Alert me · free</Link>
+          <Link href={`/?model=${DEFAULT_MODEL}#notify`} className="btn btn-primary btn-sm">Alert me</Link>
         </div>
       </div>
 

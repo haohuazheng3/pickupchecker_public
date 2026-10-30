@@ -2,7 +2,7 @@
 /**
  * "Get notified" — one surface, six steps:
  *   model → storage → color → stores → email + code (Clerk, custom UI) → done, or pick a plan
- * The rule is saved as soon as the user is signed in; the first one is free, more need Plus/Pro.
+ * The rule is saved as soon as the user is signed in; it sends once a Plus/Pro plan is active.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
@@ -247,17 +247,16 @@ export function Wizard({ catalog, initialModel, initialStore, startSignIn, next 
 
       {step === "pay" && (
         <section>
-          <h2 className="display text-2xl sm:text-3xl">{covered ? (planInfo?.key === "free" ? "Your free alert is on" : "Alert saved — it's on") : "That's one more than your plan"}</h2>
+          <h2 className="display text-2xl sm:text-3xl">{covered ? "Alert saved — it's on" : planInfo?.key === "free" ? "Saved. Pick a plan to switch it on" : "That's one more than your plan"}</h2>
           <p className="mt-2 text-ink-2">{summary}</p>
           {covered ? (
             <div className="mt-6">
               <p className="text-ink-2">We&apos;re watching every store you chose. You&apos;ll be notified the moment the {modelMeta?.short} is available for pickup{planInfo && planInfo.key !== "free" ? ` (${planInfo.used} of ${planInfo.limit} ${PLANS[planInfo.key].name} alerts in use)` : ""}.</p>
               <div className="mt-5 flex flex-wrap gap-2"><a href="/install" className="btn btn-primary">Get alerts on your phone</a><a href="/account" className="btn btn-ghost">Open my alerts</a></div>
-              {planInfo?.key === "free" && <p className="mt-4 text-sm text-ink-3">Want more than one rule? Plus is $5 a month for 10, Pro $10 for 20 — upgrade from your account whenever you need it.</p>}
             </div>
           ) : (
             <div className="mt-6">
-              <p className="text-ink-2">{planInfo?.key === "free" ? "Your account includes one free alert rule, and it's already in use. Pick a plan and this rule starts sending too." : `Your ${PLANS[planInfo?.key ?? "plus"].name} plan holds ${planInfo?.limit ?? 10} rules and they're all in use. Move up and this one starts sending.`}</p>
+              <p className="text-ink-2">{planInfo?.key === "free" ? "Alerts are part of Plus and Pro. Your rule is saved; pick a plan and it starts sending right away." : `Your ${PLANS[planInfo?.key ?? "plus"].name} plan holds ${planInfo?.limit ?? 10} rules and they're all in use. Move up and this one starts sending.`}</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {(["plus", "pro"] as const).filter((k) => k !== planInfo?.key).map((k) => (
                   <div key={k} className="pane-2 flex flex-col p-5">
@@ -273,7 +272,7 @@ export function Wizard({ catalog, initialModel, initialStore, startSignIn, next 
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-sm text-ink-3">Or keep the free plan: this rule stays saved but silent until you free up a slot or upgrade.</p>
+              <p className="mt-3 text-sm text-ink-3">Your rule stays saved either way and starts sending the moment a plan is active. Cancel anytime from your account.</p>
             </div>
           )}
           {error && <Err msg={error} />}

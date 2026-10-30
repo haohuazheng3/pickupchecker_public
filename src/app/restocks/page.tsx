@@ -59,7 +59,7 @@ export default async function Restocks({ searchParams }: PageProps<"/restocks">)
       </div>
       <div className="mt-5 flex flex-wrap gap-2">
         <Link href={`/map${model ? `?model=${model}` : ""}`} className="btn btn-ghost btn-sm">Live map</Link>
-        <Link href={`/?model=${model ?? DEFAULT_MODEL}#notify`} className="btn btn-primary btn-sm">Get alerts · free</Link>
+        <Link href={`/?model=${model ?? DEFAULT_MODEL}#notify`} className="btn btn-primary btn-sm">Get alerts</Link>
       </div>
       <RelatedBlock title="Browse restocks by place">
         <BrowseStates current={state} title="Restock pages by state" />

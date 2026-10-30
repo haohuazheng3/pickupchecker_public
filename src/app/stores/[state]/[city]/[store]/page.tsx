@@ -73,7 +73,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/map?store=${s.storeNumber}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>
-          <Link href={`/?model=${DEFAULT_MODEL}&store=${s.storeNumber}#notify`} className="btn btn-primary btn-sm">Alert me for {duo.short} here · free</Link>
+          <Link href={`/?model=${DEFAULT_MODEL}&store=${s.storeNumber}#notify`} className="btn btn-primary btn-sm">Alert me for {duo.short} here</Link>
         </div>
       </div>
 

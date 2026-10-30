@@ -1,5 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { CATALOG, STORES, COVERAGE, STORE_INDEX, partNumbersFor, storagesFor, colorsFor, storesNear, statesWithStores, stateCodeOf } from "@/lib/apple/catalog";
+import { CATALOG, STORES, COVERAGE, STORE_INDEX, partNumbersFor, storagesFor, colorsFor, storesNear, statesWithStores, stateCodeOf, appleBuyUrl, appleFamilyUrl } from "@/lib/apple/catalog";
+
+describe("apple.com links", () => {
+  it("builds the unlocked configuration URL apple.com uses", () => {
+    expect(appleBuyUrl({ model: "iPhone Duo", storage: "256GB", color: "Night Sky" })).toBe("https://www.apple.com/shop/buy-iphone/iphone-duo/7.6-inch-display-256gb-night-sky-unlocked");
+    expect(appleBuyUrl({ model: "iPhone 18 Pro Max", storage: "1TB", color: "Burgundy" })).toBe("https://www.apple.com/shop/buy-iphone/iphone-18-pro/6.9-inch-display-1tb-burgundy-unlocked");
+    expect(appleBuyUrl({ model: "iPhone 18 Pro", storage: "512GB", color: "Glacier" })).toBe("https://www.apple.com/shop/buy-iphone/iphone-18-pro/6.3-inch-display-512gb-glacier-unlocked");
+    for (const c of CATALOG) expect(appleBuyUrl(c)).toMatch(/^https:\/\/www\.apple\.com\/shop\/buy-iphone\/iphone-(duo|18-pro)\/\d\.\d-inch-display-(256gb|512gb|1tb|2tb)-[a-z-]+-unlocked$/);
+    expect(appleFamilyUrl("18-pro-max")).toBe("https://www.apple.com/shop/buy-iphone/iphone-18-pro");
+  });
+});
 
 describe("catalog data", () => {
   it("has 40 SKUs across three models and 269 stores", () => {

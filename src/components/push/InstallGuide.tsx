@@ -86,7 +86,7 @@ export function InstallGuide({ vapidPublicKey }: { vapidPublicKey: string }) {
       <section className="pane mt-16 flex flex-wrap items-center justify-between gap-4 p-6 sm:p-8">
         <div>
           <h2 className="display text-2xl">No alert yet?</h2>
-          <p className="mt-1 text-ink-2">Pick a model, the configurations you&apos;d take and the stores you can reach. Your first alert is free.</p>
+          <p className="mt-1 text-ink-2">Pick a model, the configurations you&apos;d take and the stores you can reach.</p>
         </div>
         <Link href="/#notify" className="btn btn-primary btn-lg">Set up an alert</Link>
       </section>

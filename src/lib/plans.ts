@@ -1,6 +1,6 @@
 /**
  * Plans are about how many alert rules a user may have running, not which model:
- *   free  — 1 alert (every signed-in user)      plus — $5/month, 10 alerts      pro — $10/month, 20 alerts
+ *   free  — 0 alerts (browse only; a signed-in account with no subscription)      plus — $5/month, 10 alerts      pro — $10/month, 20 alerts
  * Paid plans are Stripe subscriptions that renew monthly until cancelled (no one-off month).
  * A user can save more rules than the plan allows; only the oldest `limit` active ones send alerts.
  */
@@ -12,7 +12,7 @@ export type PaidPlanKey = Exclude<PlanKey, "free">;
 export interface PlanDef { key: PlanKey; name: string; priceUsd: number; limit: number; blurb: string }
 
 export const PLANS: Record<PlanKey, PlanDef> = {
-  free: { key: "free", name: "Free", priceUsd: 0, limit: 1, blurb: "One alert rule. Every store, every configuration, phone notifications included." },
+  free: { key: "free", name: "Free", priceUsd: 0, limit: 0, blurb: "Live stock, the map and the restock log. Alerts need Plus or Pro." },
   plus: { key: "plus", name: "Plus", priceUsd: 5, limit: 10, blurb: "Ten alert rules: several models, colors or regions at once." },
   pro: { key: "pro", name: "Pro", priceUsd: 10, limit: 20, blurb: "Twenty alert rules for the serious hunt or a family of phones." },
 };

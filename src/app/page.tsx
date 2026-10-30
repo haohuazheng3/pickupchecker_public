@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { MODELS, DEFAULT_MODEL, modelByKey, STORE_INDEX, type ModelKey } from "@/lib/apple/catalog";
+import { MODELS, DEFAULT_MODEL, modelByKey, STORE_INDEX, appleFamilyUrl, type ModelKey } from "@/lib/apple/catalog";
 import { restockFeed, restockCounts, stockByStore } from "@/lib/stock/queries";
 import { WizardServer } from "@/components/wizard/WizardServer";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
@@ -21,7 +21,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const next = typeof sp.next === "string" ? sp.next : undefined;
   const faq = [
     ["How fast are the alerts?", "Every Apple Store in the US is re-checked continuously, typically every 20 seconds. The notification reaches your phone within seconds of a store flipping to \"available\" for pickup."],
-    ["What's free and what's paid?", "Every account gets one alert rule free, forever: one model, the storages and colors you'd take, and nearby stores, hand-picked stores or the whole country. Plus ($5/month) holds 10 rules, Pro ($10/month) 20. Paid plans renew monthly until you cancel."],
+    ["What does it cost?", "Plus is $5/month for 10 alert rules, Pro $10/month for 20; both renew monthly until you cancel from your account. Live stock, the map and the restock log are free to browse, no account needed."],
     ["How do I get notifications on my iPhone?", "Add PickupChecker to your Home Screen from Safari (Share → Add to Home Screen), open it from there, sign in and tap Turn on notifications. The install guide walks you through it in a minute."],
     ["Can you reserve the phone for me?", "No. We tell you the instant it's available; you reserve it on apple.com or in the Apple Store app. Pickup stock often lasts minutes, so the speed of the alert is what matters."],
     ["Is this affiliated with Apple?", "No. PickupChecker is an independent service that reads the same public availability apple.com shows shoppers. Apple, iPhone and Apple Store are trademarks of Apple Inc."],
@@ -41,7 +41,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <section className="pt-6 sm:pt-10">
         <div className="eyebrow inline-flex items-center gap-2"><span className="dot dot-ok dot-live" /> Live · all 269 US Apple Stores · checked every 20 s</div>
         <h1 className="display mt-3 text-3xl sm:text-5xl">{meta.name} restocks, the second they happen.</h1>
-        <p className="mt-2 max-w-2xl text-ink-2">Set one free alert and your phone buzzes when a {meta.short} is available for in-store pickup near you.</p>
+        <p className="mt-2 max-w-2xl text-ink-2">Set an alert and your phone buzzes the moment a {meta.short} is available for in-store pickup near you.</p>
       </section>
 
       <section className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
@@ -64,7 +64,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         {[
           ["Every store, every 20 seconds", "Not just the 12 stores apple.com shows you. All 269 US locations, re-checked around the clock from our own servers."],
           ["A notification in seconds", "Add PickupChecker to your Home Screen and a restock lands on your lock screen like a text: the store, the exact configuration, one tap to reserve."],
-          ["Only what you asked for", "Your storage, your colors, your stores. One alert per restock, never a repeat while it's still in stock. First rule free."],
+          ["Only what you asked for", "Your storage, your colors, your stores. One alert per restock, never a repeat while it's still in stock."],
         ].map(([t, d]) => (
           <div key={t} className="pane p-5">
             <h2 className="font-semibold">{t}</h2>
@@ -122,6 +122,7 @@ async function Board({ model }: { model: ModelKey }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <Link href={`/restocks?model=${model}`} className="btn btn-ghost btn-sm">All restocks</Link>
         <Link href={`/map?model=${model}`} className="btn btn-ghost btn-sm">{meta.short} map</Link>
+        <a href={appleFamilyUrl(model)} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm">Buy on apple.com</a>
         <Link href={`/stock/${meta.slug}`} className="btn btn-ghost btn-sm">Live {meta.short} stock</Link>
       </div>
     </>

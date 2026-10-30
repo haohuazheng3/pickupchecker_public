@@ -38,7 +38,7 @@ export async function GET() {
   });
 }
 
-/** Save a rule. The first one is free; beyond the plan's limit it is saved but does not send until the user upgrades. */
+/** Save a rule. It sends once the user has a plan with a free slot; otherwise it is saved but silent until they subscribe or upgrade. */
 export async function POST(req: Request) {
   const u = await ensureUser();
   if (!u) return NextResponse.json({ error: "sign in first" }, { status: 401 });

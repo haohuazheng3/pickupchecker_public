@@ -44,7 +44,7 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
     .innerJoin(schema.users, eq(schema.users.id, schema.watches.userId))
     .where(and(eq(schema.watches.active, true), eq(schema.watches.paused, false), inArray(schema.watches.model, models)));
 
-  // Plan coverage: the oldest `limit` active rules of each user send (free = 1, plus = 10, pro = 20).
+  // Plan coverage: the oldest `limit` active rules of each user send (no plan = 0, plus = 10, pro = 20).
   const userIds = [...new Set(candidates.map((c) => c.watch.userId))];
   const [allRules, subs] = userIds.length
     ? await Promise.all([

@@ -197,6 +197,23 @@ export function cityPath(stateName: string, city: string): string {
 export function storePath(store: Pick<Store, "state" | "city" | "slug">): string {
   return `/stores/${stateSlug(store.state)}/${citySlug(store.city)}/${store.slug}`;
 }
+/** apple.com buy page for a model family (the 18 Pro Max is a display option under iphone-18-pro). */
+export function appleFamilyUrl(model: ModelKey): string {
+  return `https://www.apple.com/shop/buy-iphone/${model === "duo" ? "iphone-duo" : "iphone-18-pro"}`;
+}
+
+/**
+ * apple.com buy page for one unlocked configuration, e.g.
+ * https://www.apple.com/shop/buy-iphone/iphone-duo/7.6-inch-display-256gb-night-sky-unlocked
+ * Pattern verified against apple.com on 2026-10-30: every catalog item resolves (tests/catalog.test.ts).
+ */
+export function appleBuyUrl(item: Pick<CatalogItem, "model" | "storage" | "color">): string {
+  const key = modelKeyFor(item.model);
+  const display = key === "duo" ? "7.6" : key === "18-pro-max" ? "6.9" : "6.3";
+  const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return `${appleFamilyUrl(key)}/${display}-inch-display-${slug(item.storage)}-${slug(item.color)}-unlocked`;
+}
+
 export function storeByNumber(n: string): Store | undefined {
   return STORE_INDEX.get(n);
 }

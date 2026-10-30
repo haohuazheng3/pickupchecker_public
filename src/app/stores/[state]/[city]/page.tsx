@@ -55,7 +55,7 @@ export default async function CityPage({ params }: PageProps<"/stores/[state]/[c
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/map?stores=${numbers.join(",")}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>
-          <Link href={`/?model=${DEFAULT_MODEL}#notify`} className="btn btn-primary btn-sm">Alert me · free</Link>
+          <Link href={`/?model=${DEFAULT_MODEL}#notify`} className="btn btn-primary btn-sm">Alert me</Link>
         </div>
       </div>
 

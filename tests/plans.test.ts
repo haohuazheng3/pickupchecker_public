@@ -15,7 +15,8 @@ describe("plans", () => {
       { id: "x", active: false, createdAt: "2026-09-01T00:00:00Z" },
       { id: "b", active: true, createdAt: "2026-10-02T00:00:00Z" },
     ];
-    expect([...coveredWatchIds(rules, PLANS.free.limit)]).toEqual(["a"]);
+    expect([...coveredWatchIds(rules, PLANS.free.limit)]).toEqual([]); // no free alerts
+    expect([...coveredWatchIds(rules, 1)]).toEqual(["a"]);
     expect([...coveredWatchIds(rules, 2)]).toEqual(["a", "b"]);
     expect(coveredWatchIds(rules, 10).size).toBe(3);
     expect(coveredWatchIds(rules, 0).size).toBe(0);
