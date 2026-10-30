@@ -2,6 +2,8 @@ import type { RestockStats } from "@/lib/stock/queries";
 
 const HOURS = ["12a", "", "", "3a", "", "", "6a", "", "", "9a", "", "", "12p", "", "", "3p", "", "", "6p", "", "", "9p", "", ""];
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+/** Sentences name the day in full: "Thu" + "s" read as the word "Thus". */
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function Bars({ values, labels, peak }: { values: number[]; labels: string[]; peak: number }) {
   const max = Math.max(1, ...values);
@@ -31,7 +33,7 @@ export function RestockClock({ stats, label }: { stats: RestockStats; label: str
   return (
     <div>
       <p className="text-sm text-ink-2">
-        {stats.total === 0 ? `No restocks recorded ${label} in the last ${stats.days} days yet.` : thin ? `${stats.total} restock${stats.total === 1 ? "" : "s"} ${label} in the last ${stats.days} days — too few to call a pattern yet.` : <>{stats.total} restocks {label} in the last {stats.days} days. Most arrive around <b className="text-ink">{fmtHour(peakHour)}</b> local time, and <b className="text-ink">{DAYS[peakDay]}s</b> are the busiest day.</>}
+        {stats.total === 0 ? `No restocks recorded ${label} in the last ${stats.days} days yet.` : thin ? `${stats.total} restock${stats.total === 1 ? "" : "s"} ${label} in the last ${stats.days} days — too few to call a pattern yet.` : <>{stats.total} restocks {label} in the last {stats.days} days. Most arrive around <b className="text-ink">{fmtHour(peakHour)}</b> local time, and <b className="text-ink">{DAY_NAMES[peakDay]}</b> is the busiest day.</>}
       </p>
       {stats.total > 0 && (
         <div className="mt-4 grid gap-6 sm:grid-cols-[3fr_2fr]">
