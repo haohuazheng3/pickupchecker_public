@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { DEFAULT_MODEL, storePath, type Store, appleName } from "@/lib/apple/catalog";
 import type { StoreStockSummary, StoreStatusRow } from "@/lib/stock/queries";
 import { nearestOutsideState, nearestInState, alertHref } from "@/lib/seo/enrich";

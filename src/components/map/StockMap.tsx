@@ -5,7 +5,7 @@
  * MapLibre + OpenFreeMap tiles (no key, no quota); the library loads only on this page.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type * as maplibregl from "maplibre-gl";
 import { MODELS, PART_INDEX, modelKeyFor, storagesFor, colorsFor, STORAGE_ORDER, COLOR_META, type ModelKey } from "@/lib/apple/catalog";

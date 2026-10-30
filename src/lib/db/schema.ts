@@ -16,6 +16,7 @@ import {
   index,
   uniqueIndex,
   primaryKey,
+  date,
 } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: "date" });
@@ -331,3 +332,21 @@ export const appState = pgTable("app_state", {
   value: jsonb("value").$type<unknown>().notNull(),
   updatedAt: ts("updated_at").notNull().defaultNow(),
 });
+
+/** Google Search Console search analytics, one row per day × query × page × device × country (pulled daily by /api/cron/gsc). */
+export const gscDaily = pgTable(
+  "gsc_daily",
+  {
+    date: date("date").notNull(),
+    query: text("query").notNull(),
+    page: text("page").notNull(),
+    device: text("device").notNull(),
+    country: text("country").notNull(),
+    clicks: integer("clicks").notNull().default(0),
+    impressions: integer("impressions").notNull().default(0),
+    ctr: doublePrecision("ctr").notNull().default(0),
+    position: doublePrecision("position").notNull().default(0),
+    fetchedAt: ts("fetched_at").notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ name: "gsc_daily_pk", columns: [t.date, t.query, t.page, t.device, t.country] }), index("gsc_daily_page_idx").on(t.page, t.date), index("gsc_daily_query_idx").on(t.query, t.date)],
+);

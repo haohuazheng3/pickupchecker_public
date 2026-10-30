@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { PART_INDEX, STORE_INDEX, storePath } from "@/lib/apple/catalog";
 import { narrative, type NarrativeInput } from "@/lib/seo/enrich";
 import type { PlaceStats } from "@/lib/stock/queries";

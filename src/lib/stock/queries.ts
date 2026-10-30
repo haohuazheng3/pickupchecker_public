@@ -259,6 +259,8 @@ export interface PlaceStats {
   day: number; week: number; month: number; soldouts: number;
   /** Median restock→sell-out duration over the window, from pairs at the same store × part; null until there are pairs. */
   medianMs: number | null; medianSamples: number;
+  /** Distinct stores with at least one restock in the window. */
+  restockStores: number;
   lastRestock: { storeNumber: string; partNumber: string; at: string } | null;
   /** Ascending, one entry per local day of the window (zero-filled). */
   daily: { day: string; restocks: number; soldouts: number }[];
@@ -269,7 +271,7 @@ export interface PlaceStats {
   unknown?: boolean;
 }
 
-const EMPTY_STATS = (days: number, tz: string): PlaceStats => ({ day: 0, week: 0, month: 0, soldouts: 0, medianMs: null, medianSamples: 0, lastRestock: null, daily: [], byPart: [], days, tz });
+const EMPTY_STATS = (days: number, tz: string): PlaceStats => ({ day: 0, week: 0, month: 0, soldouts: 0, medianMs: null, medianSamples: 0, restockStores: 0, lastRestock: null, daily: [], byPart: [], days, tz });
 
 function dayKeysBack(days: number, tz: string): string[] {
   const out: string[] = [];
@@ -294,6 +296,7 @@ const cachedPlaceStats = unstable_cache(
             week: sql<number>`count(*) filter (where ${ev.kind} = 'restock' and ${ev.at} > now() - interval '7 days')::int`,
             month: sql<number>`count(*) filter (where ${ev.kind} = 'restock')::int`,
             soldouts: sql<number>`count(*) filter (where ${ev.kind} = 'soldout')::int`,
+            stores: sql<number>`count(distinct ${ev.storeNumber}) filter (where ${ev.kind} = 'restock')::int`,
             lastStore: sql<string | null>`(array_agg(${ev.storeNumber} order by ${ev.at} desc) filter (where ${ev.kind} = 'restock'))[1]`,
             lastPart: sql<string | null>`(array_agg(${ev.partNumber} order by ${ev.at} desc) filter (where ${ev.kind} = 'restock'))[1]`,
             lastAt: sql<string | null>`max(${ev.at}) filter (where ${ev.kind} = 'restock')`,
@@ -328,13 +331,13 @@ const cachedPlaceStats = unstable_cache(
     }
     return {
       ...base,
-      day: totals?.day ?? 0, week: totals?.week ?? 0, month: totals?.month ?? 0, soldouts: totals?.soldouts ?? 0,
+      day: totals?.day ?? 0, week: totals?.week ?? 0, month: totals?.month ?? 0, soldouts: totals?.soldouts ?? 0, restockStores: totals?.stores ?? 0,
       medianMs: median?.med != null && Number.isFinite(Number(median.med)) ? Math.round(Number(median.med) * 1000) : null, medianSamples: median?.n ?? 0,
       lastRestock: totals?.lastStore && totals.lastPart && totals.lastAt ? { storeNumber: totals.lastStore, partNumber: totals.lastPart, at: new Date(totals.lastAt).toISOString() } : null,
       daily: [...daily.values()], byPart: [...byPart.entries()].map(([partNumber, restocks]) => ({ partNumber, restocks })).sort((a, b) => b.restocks - a.restocks),
     };
   },
-  ["seo-place-stats"],
+  ["seo-place-stats-v2"],
   { revalidate: 60 },
 );
 

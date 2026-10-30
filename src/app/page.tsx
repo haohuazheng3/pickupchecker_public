@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { Suspense } from "react";
 import { MODELS, modelByKey, STORE_INDEX, appleFamilyUrl, type ModelKey } from "@/lib/apple/catalog";
 import { restockFeed, restockCounts, stockByStore } from "@/lib/stock/queries";
@@ -10,30 +10,38 @@ import { Dot } from "@/components/stock/StatusBits";
 import { LiveAgo } from "@/components/site/LiveAgo";
 import { BrowseModels, BrowsePopular } from "@/components/seo/Browse";
 import { RelatedBlock } from "@/components/seo/Related";
+import type { Metadata } from "next";
+import { HOME_TITLES } from "@/content/titles";
+import { HOME_INTRO, HOME_SECTIONS, HOME_FAQ, HOME_SOURCES } from "@/content/home";
+import { getFacts } from "@/lib/content/facts";
+import { Inline } from "@/components/content/Inline";
+import { KeywordSections, slugId } from "@/components/content/KeywordSections";
+import { RichFaq, SourceList } from "@/components/content/RichFaq";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: { absolute: `${HOME_TITLES.main.title} · PickupChecker` },
+  description: HOME_TITLES.description,
+  alternates: { canonical: "/" },
+  openGraph: { type: "website", siteName: "PickupChecker", title: HOME_TITLES.main.title, description: HOME_TITLES.description, url: "/" },
+};
 
 /** Home: the Duo restock board first (that is what visitors come for), the alert wizard beside it, the pitch below. */
 export default async function Home({ searchParams }: PageProps<"/">) {
   const sp = await searchParams;
   const start = wizardStartFrom((k) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined));
   const model: ModelKey = start.initialModel;
-  const meta = modelByKey(model)!;
   const startSignIn = sp.signin === "1";
   const next = typeof sp.next === "string" ? sp.next : undefined;
-  const faq = [
-    ["How fast are the alerts?", "Every US Apple Store is re-checked about every 20 seconds; your phone gets the notification seconds after a store flips to available."],
-    ["What is one alert?", "One Apple Store × one exact phone (model, storage, color), so three stores are three alerts."],
-    ["What does it cost?", "Plus $5/month for 10 alerts, Pro $10 for 20, Max $20 for 50; live stock, the map and the restock log are free."],
-    ["How do I get notifications on my iPhone?", "Add PickupChecker to your Home Screen from Safari, open it from there, sign in and turn on notifications."],
-    ["Can you reserve the phone for me?", "No. We tell you the instant it's available; you reserve on apple.com or in the Apple Store app."],
-  ];
+  const facts = await getFacts();
+  const sections = HOME_TITLES.h2.map((h) => ({ id: slugId(h.keyword), h2: h.title, ...HOME_SECTIONS[h.keyword] }));
   const ld = {
     "@context": "https://schema.org",
     "@graph": [
       { "@type": "Organization", name: "PickupChecker", url: "https://pickupchecker.com", logo: "https://pickupchecker.com/icon.svg" },
       { "@type": "WebSite", name: "PickupChecker", url: "https://pickupchecker.com" },
-      { "@type": "FAQPage", mainEntity: faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) },
+      { "@type": "WebApplication", name: "PickupChecker iPhone stock checker", url: "https://pickupchecker.com", applicationCategory: "UtilitiesApplication", operatingSystem: "Web, iOS and Android (Home Screen app)", offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Live stock, map and restock log are free; alerts from $5/month" }, publisher: { "@type": "Organization", name: "PickupChecker" } },
     ],
   };
   return (
@@ -42,8 +50,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
       <section className="pt-6 sm:pt-10">
         <div className="eyebrow inline-flex items-center gap-2"><span className="dot dot-ok dot-live" /> Live · all 269 US Apple Stores · checked every 20 s</div>
-        <h1 className="display mt-3 text-3xl sm:text-5xl">{meta.name} restocks, the second they happen.</h1>
-        <p className="mt-2 max-w-2xl text-ink-2">Pick your stores and the exact {meta.short}. Your phone buzzes when it&apos;s in stock for pickup.</p>
+        <h1 className="display mt-3 text-3xl sm:text-5xl">{HOME_TITLES.main.h1}</h1>
+        <p className="mt-2 max-w-3xl text-ink-2"><Inline text={HOME_INTRO} facts={facts} /></p>
       </section>
 
       <section className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
@@ -67,17 +75,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <BrowseModels />
       </RelatedBlock>
 
-      <section className="mt-16">
-        <h2 className="display text-2xl sm:text-3xl">Questions</h2>
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {faq.map(([q, a]) => (
-            <details key={q} className="pane-2 group p-4">
-              <summary className="cursor-pointer list-none font-semibold">{q}</summary>
-              <p className="mt-2 text-sm text-ink-2">{a}</p>
-            </details>
-          ))}
-        </div>
-      </section>
+      <div className="mx-auto mt-12 max-w-3xl">
+        <KeywordSections sections={sections} facts={facts} />
+        <div className="mt-10"><RichFaq items={HOME_FAQ} facts={facts} title="Questions" /></div>
+        <div className="mt-8"><SourceList sources={HOME_SOURCES} facts={facts} /></div>
+      </div>
     </div>
   );
 }

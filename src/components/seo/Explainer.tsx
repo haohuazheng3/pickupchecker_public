@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { explainer, ALERT_RULE } from "@/lib/seo/enrich";
 
 /** "In-store pickup at {place}": the fixed process in three short paragraphs, place-interpolated, plus the alert rule. */

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 export default function NotFound() {
   return (
     <div className="mx-auto max-w-2xl px-4 pt-24 text-center">

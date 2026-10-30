@@ -188,11 +188,51 @@ export function storeTimeZone(store: Store): string {
 }
 
 /** Canonical URLs: /stores/{state}/{city}/{store}. City slugs can equal Apple's store slugs, so depth disambiguates. */
+/**
+ * The page for a state: a state page where the state has two or more stores; a one-store state is
+ * that store (11 states), so no state page duplicates a store page.
+ */
 export function statePath(stateName: string): string {
+  const here = STORES.filter((s) => s.state === stateName);
+  if (here.length === 1) return storePath(here[0]);
+  // All stores in one city (District of Columbia, Hawaii): the city page is the state's page.
+  if (new Set(here.map((s) => s.city)).size === 1 && here.length > 1) return `/stores/${stateSlug(stateName)}/${citySlug(here[0].city)}`;
   return `/stores/${stateSlug(stateName)}`;
 }
+
+/** States that get a state page of their own: two or more stores in two or more cities. */
+export function hasStatePage(stateName: string): boolean {
+  const here = STORES.filter((s) => s.state === stateName);
+  return here.length > 1 && new Set(here.map((s) => s.city)).size > 1;
+}
+
+/** True when the state has exactly one Apple Store. */
+export function isOneStoreState(stateName: string): boolean {
+  return STORES.filter((s) => s.state === stateName).length === 1;
+}
+/** Stores per "state|city", built once. */
+let _byCity: Map<string, Store[]> | null = null;
+function storesInCity(stateName: string, city: string): Store[] {
+  if (!_byCity) {
+    _byCity = new Map();
+    for (const s of STORES) { const k = `${s.state}|${s.city}`; const a = _byCity.get(k) ?? []; a.push(s); _byCity.set(k, a); }
+  }
+  return _byCity.get(`${stateName}|${city}`) ?? [];
+}
+
+/**
+ * The page for a city: a city page only where the city has two or more stores. A one-store city is
+ * that store (its page carries the city in the title), so 200 near-duplicate city pages never exist.
+ */
 export function cityPath(stateName: string, city: string): string {
+  const here = storesInCity(stateName, city);
+  if (here.length === 1) return storePath(here[0]);
   return `/stores/${stateSlug(stateName)}/${citySlug(city)}`;
+}
+
+/** True when the city has exactly one Apple Store. */
+export function isOneStoreCity(stateName: string, city: string): boolean {
+  return storesInCity(stateName, city).length === 1;
 }
 export function storePath(store: Pick<Store, "state" | "city" | "slug">): string {
   return `/stores/${stateSlug(store.state)}/${citySlug(store.city)}/${store.slug}`;

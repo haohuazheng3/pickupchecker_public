@@ -57,6 +57,23 @@ export const PRODUCTS: Product[] = MODELS.flatMap((m) => [
 ]);
 const BY_SLUG = new Map(PRODUCTS.map((p) => [p.slug, p]));
 
+/**
+ * National storage-size pages whose own keyword has no opening (seo.md §10, per-page SERP check of
+ * 2026-10-30): the mobile top 10 is Apple, carriers and big retailers, with at most one weak result in
+ * the top 5 (SERP-KD 57-88). They stay up for visitors and in the internal links, as noindex, follow,
+ * and out of the sitemap. Every other national model, storage and color page is indexed.
+ */
+export const NOT_INDEXED_PRODUCTS: ReadonlySet<string> = new Set([
+  "iphone-duo-512gb",
+  "iphone-18-pro-256gb", "iphone-18-pro-512gb", "iphone-18-pro-1tb", "iphone-18-pro-2tb",
+  "iphone-18-pro-max-512gb", "iphone-18-pro-max-1tb", "iphone-18-pro-max-2tb",
+]);
+
+/** The product pages that are indexed: national (US) pages of a model, a storage size or a color, minus the list above. */
+export function isIndexedProductPage(product: Pick<Product, "slug" | "kind">, place: Pick<Place, "level">): boolean {
+  return place.level === "us" && product.kind !== "config" && !NOT_INDEXED_PRODUCTS.has(product.slug);
+}
+
 export function productBySlug(slug: string): Product | undefined {
   return BY_SLUG.get(slug);
 }

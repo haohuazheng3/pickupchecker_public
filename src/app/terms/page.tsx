@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Page } from "@/components/site/Page";
-export const metadata: Metadata = { title: "Terms of Service", alternates: { canonical: "/terms" } };
+export const metadata: Metadata = { title: "Terms of Service", description: "The terms for using PickupChecker: live stock data shown as is, alerts on paid plans, and what we can and cannot promise.", alternates: { canonical: "/terms" } };
 export default function Terms() {
   return (
     <Page title="Terms of Service" lead="Last updated October 29, 2026.">

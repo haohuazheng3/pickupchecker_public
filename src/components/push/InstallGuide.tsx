@@ -4,7 +4,7 @@
  * from the device, lets the reader switch, and keeps the live notification switch next to the steps.
  */
 import { useState } from "react";
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { usePush, type PushState } from "./usePush";
 import {
   LockScreenMock, SafariUrlMock, SafariShareMock, ShareSheetMock, AddDialogMock, HomeScreenMock, IosPermissionMock,

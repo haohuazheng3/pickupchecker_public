@@ -5,7 +5,7 @@
  * console, at checkout, and while the wizard itself is on screen (the home page's #notify).
  */
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { usePathname } from "next/navigation";
 import { MODELS } from "@/lib/apple/catalog";
 import { productBySlug, resolvePlace } from "@/lib/seo/products";

@@ -10,9 +10,13 @@ import { buildWizardCatalog } from "@/components/wizard/WizardServer";
 import { THEME_BOOT } from "@/lib/theme";
 import { Analytics } from "@/components/site/Analytics";
 import { PwaBoot } from "@/components/pwa/PwaBoot";
+import { NavSkeleton } from "@/components/ui/NavSkeleton";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+// "optional": the page renders in the web font only if it is there within ~100 ms (cached after the first
+// visit); otherwise it keeps the metric-matched fallback for that view instead of swapping mid-read. Pages now
+// paint real text in the first frame, and a late swap re-wrapped the H1 and pushed the content (CLS ~0.15).
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"], display: "optional" });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], display: "optional" });
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pickupchecker.com";
 const INDEXABLE = process.env.NEXT_PUBLIC_INDEXABLE === "1";
@@ -53,7 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           <div className="void-bg" aria-hidden="true" />
           <Header />
-          <main className="flex-1 pb-24 sm:pb-28">{children}</main>
+          <main className="flex-1 pb-24 sm:pb-28"><NavSkeleton>{children}</NavSkeleton></main>
           <Footer />
           <AlertBar />
           <AlertDialogHost catalog={buildWizardCatalog()} />

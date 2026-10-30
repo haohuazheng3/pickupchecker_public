@@ -3,7 +3,7 @@
  * "Phone notifications" card: tells the user exactly where they are (installed? signed in?
  * allowed?) and offers the one action that moves them forward.
  */
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { usePush, type PushState } from "./usePush";
 
 export function PushSetup({ vapidPublicKey, title = "Phone notifications", compact = false }: { vapidPublicKey: string; title?: string; compact?: boolean }) {

@@ -386,13 +386,22 @@ export function cityTitle(city: string, code: string, duoNow: number, stores: nu
   ]);
 }
 
-export function storeTitle(s: Pick<Store, "name" | "city">, code: string, duoConfigs: number): string {
+/**
+ * Store page <title> and H1: "Apple {name}" first (the query people type), then the promise. `region` is
+ * added in parentheses when this store is the only one in its city or state, so "apple store {city}" or
+ * "apple store {state}" finds it too.
+ */
+export function storeTitle(s: Pick<Store, "name" | "city">, _code?: string, _duoConfigs?: number, region?: string): string {
+  const name = appleName(s);
+  const r = region && !s.name.toLowerCase().includes(region.toLowerCase()) ? ` (${region})` : "";
   return fitTitle([
-    `${appleName(s)}, ${s.city} ${code}: ${duoConfigs} iPhone Duo configs in stock`,
-    `${appleName(s)}, ${s.city} ${code} – iPhone Duo pickup stock`,
-    `${appleName(s)}, ${s.city} – iPhone Duo stock`,
-    `${appleName(s)} – iPhone pickup stock`,
-    `${appleName(s)} – stock`,
+    `${name}${r}: iPhone Stock Today, Pickup & Hours`,
+    `${name}${r}: iPhone Stock Today & Hours`,
+    `${name}${r}: iPhone Stock & Hours`,
+    `${name}: iPhone Stock Today, Pickup & Hours`,
+    `${name}: iPhone Stock & Hours`,
+    `${name}: iPhone Stock`,
+    `${name} – stock`,
   ]);
 }
 

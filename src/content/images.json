@@ -1,0 +1,1362 @@
+[
+ {
+  "id": "apple-fifth-avenue-cube",
+  "base": "/img/stores/apple-fifth-avenue-cube",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The glass cube entrance of Apple Fifth Avenue with the Apple logo",
+  "caption": "The glass cube above Apple Fifth Avenue, New York.",
+  "credit": "Tim Gouw",
+  "creditUrl": "https://www.pexels.com/photo/glass-building-of-company-in-city-center-5800229/",
+  "pexelsId": 5800229
+ },
+ {
+  "id": "apple-fifth-avenue-taxi",
+  "base": "/img/stores/apple-fifth-avenue-taxi",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Yellow taxi passing the Apple Fifth Avenue glass cube in Manhattan",
+  "caption": "Fifth Avenue traffic outside the Apple cube.",
+  "credit": "Louis",
+  "creditUrl": "https://www.pexels.com/photo/new-york-city-apple-store-with-yellow-taxi-28984285/",
+  "pexelsId": 28984285
+ },
+ {
+  "id": "apple-store-entrance",
+  "base": "/img/stores/apple-store-entrance",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "People outside an Apple Store entrance with a glass front",
+  "caption": "An Apple Store entrance on a busy afternoon.",
+  "credit": "떡이 민",
+  "creditUrl": "https://www.pexels.com/photo/street-view-of-busy-apple-store-in-urban-setting-33754602/",
+  "pexelsId": 33754602
+ },
+ {
+  "id": "apple-store-glass-canopy",
+  "base": "/img/stores/apple-store-glass-canopy",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Apple Store with a glass facade and wooden canopy at night",
+  "caption": "A glass-front Apple Store after dark.",
+  "credit": "WeStarMoney  Rec",
+  "creditUrl": "https://www.pexels.com/photo/bright-lights-inside-the-apple-building-lobby-14917510/",
+  "pexelsId": 14917510
+ },
+ {
+  "id": "apple-store-night",
+  "base": "/img/stores/apple-store-night",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "An Apple Store's glass storefront lit up at night",
+  "caption": "Pickup runs until closing time, so check today's hours before you drive.",
+  "credit": "Hc Digital",
+  "creditUrl": "https://www.pexels.com/photo/people-walking-on-the-sidewalk-near-a-store-with-glass-facade-3508089/",
+  "pexelsId": 3508089
+ },
+ {
+  "id": "apple-store-pickup-counter",
+  "base": "/img/stores/apple-store-pickup-counter",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Wooden pickup counter with a Pickup sign inside an Apple Store",
+  "caption": "Pickup orders are handed over at a counter like this one.",
+  "credit": "Ajay Lamichhane",
+  "creditUrl": "https://www.pexels.com/photo/apple-store-pickup-counter-with-wooden-finish-32781741/",
+  "pexelsId": 32781741
+ },
+ {
+  "id": "apple-store-queue",
+  "base": "/img/stores/apple-store-queue",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Shoppers queuing in a mall outside an Apple Store",
+  "caption": "A queue outside an Apple Store in a busy mall.",
+  "credit": "Deane Bayas",
+  "creditUrl": "https://www.pexels.com/photo/people-at-the-mall-13753893/",
+  "pexelsId": 13753893
+ },
+ {
+  "id": "black-phone",
+  "base": "/img/phones/black-phone",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A glossy black smartphone on a reflective surface",
+  "caption": "Dark finishes hide fingerprints better than they hide scratches.",
+  "credit": "Torsten Dettlaff",
+  "creditUrl": "https://www.pexels.com/photo/black-iphone-7-plus-on-white-surface-674884/",
+  "pexelsId": 674884
+ },
+ {
+  "id": "blue-phone",
+  "base": "/img/phones/blue-phone",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A blue smartphone on a round white table against a blue backdrop",
+  "caption": "Blue finishes shift with the light.",
+  "credit": "Аlex Ugolkov",
+  "creditUrl": "https://www.pexels.com/photo/close-up-photograph-of-a-cell-phone-on-a-white-table-9434650/",
+  "pexelsId": 9434650
+ },
+ {
+  "id": "city-map-phone",
+  "base": "/img/buying/city-map-phone",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Two people checking a city map on a phone",
+  "caption": "Planning a route to the store.",
+  "credit": "Samson Katt",
+  "creditUrl": "https://www.pexels.com/photo/crop-couple-with-map-on-smartphone-5226497/",
+  "pexelsId": 5226497
+ },
+ {
+  "id": "courier-delivery",
+  "base": "/img/buying/courier-delivery",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Courier in a red uniform delivering a package to a door",
+  "caption": "Home delivery for a phone ordered online.",
+  "credit": "Kampus Production",
+  "creditUrl": "https://www.pexels.com/photo/high-angle-shot-of-delivery-man-delivering-package-6667673/",
+  "pexelsId": 6667673
+ },
+ {
+  "id": "doorstep-packages",
+  "base": "/img/buying/doorstep-packages",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Delivery parcels stacked at a front door",
+  "caption": "Delivery: the slow but certain option.",
+  "credit": "Kindel Media",
+  "creditUrl": "https://www.pexels.com/photo/packages-on-a-porch-6994108/",
+  "pexelsId": 6994108
+ },
+ {
+  "id": "fifth-avenue-street",
+  "base": "/img/stores/fifth-avenue-street",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Fifth Avenue in New York with taxis and pedestrians",
+  "caption": "Fifth Avenue, Manhattan.",
+  "credit": "Fernando Gonzalez",
+  "creditUrl": "https://www.pexels.com/photo/cars-on-street-near-high-rise-buildings-4201248/",
+  "pexelsId": 4201248
+ },
+ {
+  "id": "foldable-apps",
+  "base": "/img/phones/foldable-apps",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A hand holding a foldable phone showing a grid of apps",
+  "caption": "A foldable phone outdoors.",
+  "credit": "Caleb Oquendo",
+  "creditUrl": "https://www.pexels.com/photo/hand-holding-a-smartphone-with-foldable-screen-outdoors-40476990/",
+  "pexelsId": 40476990
+ },
+ {
+  "id": "foldable-hands",
+  "base": "/img/phones/foldable-hands",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Two hands holding an unfolded book-style foldable phone",
+  "caption": "A book-style foldable from another brand; the iPhone Duo opens the same way.",
+  "credit": "Zana Latif",
+  "creditUrl": "https://www.pexels.com/photo/a-person-holding-a-smartphone-4313857/",
+  "pexelsId": 4313857
+ },
+ {
+  "id": "light-blue-case",
+  "base": "/img/phones/light-blue-case",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A hand holding a phone in a light blue case",
+  "caption": "Light blue, the shade family Glacier belongs to.",
+  "credit": "MART  PRODUCTION",
+  "creditUrl": "https://www.pexels.com/photo/person-holding-white-iphone-5-c-9558788/",
+  "pexelsId": 9558788
+ },
+ {
+  "id": "night-line",
+  "base": "/img/buying/night-line",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "People waiting in line outside a lit store at night",
+  "caption": "Lines are the old way to get a scarce phone.",
+  "credit": "David Yu",
+  "creditUrl": "https://www.pexels.com/photo/people-standing-in-front-of-store-during-night-time-10360985/",
+  "pexelsId": 10360985
+ },
+ {
+  "id": "nyc-street",
+  "base": "/img/stores/nyc-street",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A Manhattan street with skyscrapers and traffic",
+  "caption": "Manhattan has more Apple Stores than any other city in the US.",
+  "credit": "Satish Kumar",
+  "creditUrl": "https://www.pexels.com/photo/traffic-on-street-in-manhattan-17208457/",
+  "pexelsId": 17208457
+ },
+ {
+  "id": "phone-box-flatlay",
+  "base": "/img/phones/phone-box-flatlay",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A new iPhone with its box, charger cable and papers laid out on a white table",
+  "caption": "What comes in an iPhone box.",
+  "credit": "Luis Quintero",
+  "creditUrl": "https://www.pexels.com/photo/smartphone-on-the-table-6370366/",
+  "pexelsId": 6370366
+ },
+ {
+  "id": "phone-card-payment",
+  "base": "/img/buying/phone-card-payment",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A woman holding an iPhone and a credit card to pay online",
+  "caption": "Paying online for in-store pickup.",
+  "credit": "https://kaboompics.com/",
+  "creditUrl": "https://www.pexels.com/photo/close-up-shot-of-a-woman-holding-a-credit-card-and-smartphone-5717934/",
+  "pexelsId": 5717934
+ },
+ {
+  "id": "phone-hand-camera",
+  "base": "/img/phones/phone-hand-camera",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Person holding an iPhone with a triple camera",
+  "caption": "Pro models are the ones people line up for.",
+  "credit": "https://kaboompics.com/",
+  "creditUrl": "https://www.pexels.com/photo/a-person-holding-a-black-smartphone-4959754/",
+  "pexelsId": 4959754
+ },
+ {
+  "id": "phone-map",
+  "base": "/img/buying/phone-map",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Hands navigating with a map app on a smartphone outdoors",
+  "caption": "Distance matters more than people think when a restock lasts a minute.",
+  "credit": "Theo  Decker",
+  "creditUrl": "https://www.pexels.com/photo/person-wearing-bracelets-holding-black-phone-5448160/",
+  "pexelsId": 5448160
+ },
+ {
+  "id": "phone-notification",
+  "base": "/img/buying/phone-notification",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Hand holding a phone showing notifications on the lock screen",
+  "caption": "An alert arrives on the lock screen.",
+  "credit": "Tranmautritam",
+  "creditUrl": "https://www.pexels.com/photo/selective-focus-of-a-person-holding-a-cellphone-4979123/",
+  "pexelsId": 4979123
+ },
+ {
+  "id": "phone-on-box",
+  "base": "/img/phones/phone-on-box",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A new smartphone resting on its white box",
+  "caption": "A new phone, straight out of the box.",
+  "credit": "Brett Jordan",
+  "creditUrl": "https://www.pexels.com/photo/close-up-photo-of-iphone-2643698/",
+  "pexelsId": 2643698
+ },
+ {
+  "id": "phone-sofa-shopping",
+  "base": "/img/buying/phone-sofa-shopping",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Woman on a sofa shopping online with her phone and a credit card",
+  "caption": "Checking out on the phone.",
+  "credit": "Vitaly Gariev",
+  "creditUrl": "https://www.pexels.com/photo/woman-shopping-online-with-mobile-and-credit-card-39219886/",
+  "pexelsId": 39219886
+ },
+ {
+  "id": "place-alabama",
+  "base": "/img/places/place-alabama",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Vulcan statue above the Birmingham skyline at sunset",
+  "caption": "Birmingham, Alabama, from Vulcan Park.",
+  "credit": "K",
+  "creditUrl": "https://www.pexels.com/photo/aerial-view-of-vulcan-statue-overlooking-birmingham-skyline-34692833/",
+  "pexelsId": 34692833
+ },
+ {
+  "id": "place-arizona",
+  "base": "/img/places/place-arizona",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Phoenix and the desert hills at sunset",
+  "caption": "Phoenix, Arizona at sunset.",
+  "credit": "Nicole Seidl",
+  "creditUrl": "https://www.pexels.com/photo/scenic-phoenix-desert-landscape-at-sunset-32371656/",
+  "pexelsId": 32371656
+ },
+ {
+  "id": "place-arlington",
+  "base": "/img/places/place-arlington",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Rosslyn skyline and the Arlington Memorial Bridge over the Potomac",
+  "caption": "Rosslyn, Arlington, across the Potomac.",
+  "credit": "Jason Gooljar",
+  "creditUrl": "https://www.pexels.com/photo/rosslyn-skyline-with-arlington-memorial-bridge-37594909/",
+  "pexelsId": 37594909
+ },
+ {
+  "id": "place-atlanta",
+  "base": "/img/places/place-atlanta",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of the Atlanta skyline at sunset",
+  "caption": "Atlanta at sunset.",
+  "credit": "K",
+  "creditUrl": "https://www.pexels.com/photo/aerial-view-of-atlanta-skyline-at-dusk-33133727/",
+  "pexelsId": 33133727
+ },
+ {
+  "id": "place-austin",
+  "base": "/img/places/place-austin",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Austin skyline reflected in Lady Bird Lake",
+  "caption": "Austin across Lady Bird Lake.",
+  "credit": "Rufina Rusakova",
+  "creditUrl": "https://www.pexels.com/photo/austin-city-skyline-reflected-on-lady-bird-lake-39881381/",
+  "pexelsId": 39881381
+ },
+ {
+  "id": "place-brooklyn",
+  "base": "/img/places/place-brooklyn",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Brooklyn Bridge with the Manhattan skyline behind it",
+  "caption": "The Brooklyn Bridge.",
+  "credit": "Vlada Karpovich",
+  "creditUrl": "https://www.pexels.com/photo/brooklyn-bridge-in-new-york-4451504/",
+  "pexelsId": 4451504
+ },
+ {
+  "id": "place-california",
+  "base": "/img/places/place-california",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of a rugged Northern California coastline at sunset",
+  "caption": "The coast near Westport, Northern California.",
+  "credit": "ArtHouse Studio",
+  "creditUrl": "https://www.pexels.com/photo/aerial-view-of-sea-near-brown-mountain-8147170/",
+  "pexelsId": 8147170
+ },
+ {
+  "id": "place-chicago",
+  "base": "/img/places/place-chicago",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Chicago skyline reflected in calm water",
+  "caption": "Chicago from the lakefront.",
+  "credit": "K",
+  "creditUrl": "https://www.pexels.com/photo/chicago-skyline-26821665/",
+  "pexelsId": 26821665
+ },
+ {
+  "id": "place-colorado",
+  "base": "/img/places/place-colorado",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Denver's skyline under a colorful sunset",
+  "caption": "Denver, Colorado at sunset.",
+  "credit": "Noel Aph",
+  "creditUrl": "https://www.pexels.com/photo/denver-downtown-at-sunset-16108565/",
+  "pexelsId": 16108565
+ },
+ {
+  "id": "place-columbus",
+  "base": "/img/places/place-columbus",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Columbus skyline beside a riverside park",
+  "caption": "Downtown Columbus along the Scioto River.",
+  "credit": "Chris F",
+  "creditUrl": "https://www.pexels.com/photo/park-and-river-near-modern-city-downtown-8331320/",
+  "pexelsId": 8331320
+ },
+ {
+  "id": "place-connecticut",
+  "base": "/img/places/place-connecticut",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Autumn foliage reflected in still water at sunrise in Stamford",
+  "caption": "Autumn in Stamford, Connecticut.",
+  "credit": "David Kanigan",
+  "creditUrl": "https://www.pexels.com/photo/autumn-colors-at-sunrise-in-stamford-connecticut-29096910/",
+  "pexelsId": 29096910
+ },
+ {
+  "id": "place-dallas",
+  "base": "/img/places/place-dallas",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Reunion Tower and downtown Dallas skyscrapers",
+  "caption": "Reunion Tower, Dallas.",
+  "credit": "Phil Mitchell",
+  "creditUrl": "https://www.pexels.com/photo/reunion-tower-in-dallas-11926780/",
+  "pexelsId": 11926780
+ },
+ {
+  "id": "place-florida",
+  "base": "/img/places/place-florida",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Tall palm trees against a bright blue sky",
+  "caption": "Florida palms.",
+  "credit": "Jacob Moore",
+  "creditUrl": "https://www.pexels.com/photo/beach-palm-tree-florida-7784452/",
+  "pexelsId": 7784452
+ },
+ {
+  "id": "place-georgia",
+  "base": "/img/places/place-georgia",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of Savannah and the Talmadge Bridge",
+  "caption": "Savannah, Georgia, and the Talmadge Bridge.",
+  "credit": "K",
+  "creditUrl": "https://www.pexels.com/photo/drone-shot-of-city-19694270/",
+  "pexelsId": 19694270
+ },
+ {
+  "id": "place-glendale",
+  "base": "/img/places/place-glendale",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of downtown Glendale, California",
+  "caption": "Downtown Glendale, California.",
+  "credit": "RDNE Stock project",
+  "creditUrl": "https://www.pexels.com/photo/cityscape-view-from-above-8783585/",
+  "pexelsId": 8783585
+ },
+ {
+  "id": "place-honolulu",
+  "base": "/img/places/place-honolulu",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Waikiki Beach with Diamond Head in the background",
+  "caption": "Waikiki and Diamond Head, Honolulu.",
+  "credit": "Jess Loiterton",
+  "creditUrl": "https://www.pexels.com/photo/beach-and-sea-tourist-resort-5007314/",
+  "pexelsId": 5007314
+ },
+ {
+  "id": "place-houston",
+  "base": "/img/places/place-houston",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Houston's skyline and highways lit up at night",
+  "caption": "Houston's skyline at night.",
+  "credit": "Erik Mclean",
+  "creditUrl": "https://www.pexels.com/photo/illuminated-skyscrapers-and-roads-in-city-downtown-at-night-18441165/",
+  "pexelsId": 18441165
+ },
+ {
+  "id": "place-illinois",
+  "base": "/img/places/place-illinois",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Skyscrapers along the Chicago River",
+  "caption": "The Chicago River, Illinois.",
+  "credit": "jayjay13",
+  "creditUrl": "https://www.pexels.com/photo/chicago-financial-district-with-skyscrapers-seen-from-the-chicago-river-16143021/",
+  "pexelsId": 16143021
+ },
+ {
+  "id": "place-indiana",
+  "base": "/img/places/place-indiana",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of the Indianapolis skyline at dusk",
+  "caption": "Indianapolis at dusk.",
+  "credit": "K",
+  "creditUrl": "https://www.pexels.com/photo/aerial-view-of-city-buildings-4372134/",
+  "pexelsId": 4372134
+ },
+ {
+  "id": "place-kentucky",
+  "base": "/img/places/place-kentucky",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Louisville's skyline reflected in the Ohio River",
+  "caption": "Louisville, Kentucky, from the Ohio River.",
+  "credit": "Matt Ashworth",
+  "creditUrl": "https://www.pexels.com/photo/skyscrapers-of-louisville-in-usa-19148164/",
+  "pexelsId": 19148164
+ },
+ {
+  "id": "place-las-vegas",
+  "base": "/img/places/place-las-vegas",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Welcome to Fabulous Las Vegas sign lit up at night",
+  "caption": "The Las Vegas sign at night.",
+  "credit": "Luana Scorsoni",
+  "creditUrl": "https://www.pexels.com/photo/iconic-welcome-to-fabulous-las-vegas-sign-at-night-33448109/",
+  "pexelsId": 33448109
+ },
+ {
+  "id": "place-los-angeles",
+  "base": "/img/places/place-los-angeles",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Downtown Los Angeles skyscrapers at night",
+  "caption": "Downtown Los Angeles at night.",
+  "credit": "Stephen Leonardi",
+  "creditUrl": "https://www.pexels.com/photo/stunning-night-cityscape-of-downtown-los-angeles-35291216/",
+  "pexelsId": 35291216
+ },
+ {
+  "id": "place-louisiana",
+  "base": "/img/places/place-louisiana",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Balconies and a street in the French Quarter of New Orleans",
+  "caption": "The French Quarter, New Orleans.",
+  "credit": "Mark Stebnicki",
+  "creditUrl": "https://www.pexels.com/photo/charming-french-quarter-streets-of-new-orleans-39004130/",
+  "pexelsId": 39004130
+ },
+ {
+  "id": "place-maryland",
+  "base": "/img/places/place-maryland",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Baltimore skyline reflected in the Inner Harbor at night",
+  "caption": "Baltimore's Inner Harbor at night.",
+  "credit": "M-DESIGNZ LLC",
+  "creditUrl": "https://www.pexels.com/photo/city-skyline-during-night-time-10770456/",
+  "pexelsId": 10770456
+ },
+ {
+  "id": "place-massachusetts",
+  "base": "/img/places/place-massachusetts",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Boston skyline and waterfront under a clear sky",
+  "caption": "Boston from the harbor.",
+  "credit": "Tan Nguyen",
+  "creditUrl": "https://www.pexels.com/photo/boston-skyline-overlooking-the-harbor-40010149/",
+  "pexelsId": 40010149
+ },
+ {
+  "id": "place-miami",
+  "base": "/img/places/place-miami",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of the Miami skyline over the bay",
+  "caption": "Miami and its bay from the air.",
+  "credit": "Mikhail Nilov",
+  "creditUrl": "https://www.pexels.com/photo/high-rise-buildings-near-body-of-water-9400835/",
+  "pexelsId": 9400835
+ },
+ {
+  "id": "place-michigan",
+  "base": "/img/places/place-michigan",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Detroit skyline across the Detroit River",
+  "caption": "Detroit across the Detroit River.",
+  "credit": "Bruno Storchi Bergmann",
+  "creditUrl": "https://www.pexels.com/photo/detroit-skyline-across-the-detroit-river-39854896/",
+  "pexelsId": 39854896
+ },
+ {
+  "id": "place-minnesota",
+  "base": "/img/places/place-minnesota",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Minneapolis skyscrapers against a clear sky",
+  "caption": "Downtown Minneapolis.",
+  "credit": "Andrew Patrick Photo",
+  "creditUrl": "https://www.pexels.com/photo/white-and-blue-concrete-building-6796424/",
+  "pexelsId": 6796424
+ },
+ {
+  "id": "place-missouri",
+  "base": "/img/places/place-missouri",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Kansas City skyline seen from Kaw Point Park",
+  "caption": "Kansas City from Kaw Point.",
+  "credit": "Giancarlo Rojas",
+  "creditUrl": "https://www.pexels.com/photo/city-skyline-under-blue-sky-5660080/",
+  "pexelsId": 5660080
+ },
+ {
+  "id": "place-nashville",
+  "base": "/img/places/place-nashville",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Nashville's downtown skyline with the AT&T Building",
+  "caption": "Downtown Nashville.",
+  "credit": "MINEIA  MARTINS",
+  "creditUrl": "https://www.pexels.com/photo/nashville-skyline-featuring-at-t-building-28412270/",
+  "pexelsId": 28412270
+ },
+ {
+  "id": "place-nevada",
+  "base": "/img/places/place-nevada",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A desert road leading to snow-capped mountains in Nevada",
+  "caption": "Open road in Nevada.",
+  "credit": "Joseph Russo",
+  "creditUrl": "https://www.pexels.com/photo/road-towards-mountains-19098053/",
+  "pexelsId": 19098053
+ },
+ {
+  "id": "place-new-hampshire",
+  "base": "/img/places/place-new-hampshire",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Autumn foliage and a clear sky in Lincoln, New Hampshire",
+  "caption": "Fall in Lincoln, New Hampshire.",
+  "credit": "Mohan Nannapaneni",
+  "creditUrl": "https://www.pexels.com/photo/yellow-and-green-trees-beside-river-under-blue-sky-14456871/",
+  "pexelsId": 14456871
+ },
+ {
+  "id": "place-new-jersey",
+  "base": "/img/places/place-new-jersey",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of the Jersey City skyline on the Hudson River",
+  "caption": "Jersey City on the Hudson.",
+  "credit": "Matthis Volquardsen",
+  "creditUrl": "https://www.pexels.com/photo/aerial-photography-of-high-rise-buildings-2130511/",
+  "pexelsId": 2130511
+ },
+ {
+  "id": "place-new-york-city",
+  "base": "/img/places/place-new-york-city",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "New York City skyline along the waterfront",
+  "caption": "Manhattan has seven Apple Stores, more than any other US city.",
+  "credit": "Malcolm Hill",
+  "creditUrl": "https://www.pexels.com/photo/city-skyline-12327112/",
+  "pexelsId": 12327112
+ },
+ {
+  "id": "place-new-york-state",
+  "base": "/img/places/place-new-york-state",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of Taughannock Falls in autumn in upstate New York",
+  "caption": "Taughannock Falls, upstate New York.",
+  "credit": "Ryan Hiebendahl",
+  "creditUrl": "https://www.pexels.com/photo/high-angle-view-on-waterfall-surrounded-by-autumn-forest-10013098/",
+  "pexelsId": 10013098
+ },
+ {
+  "id": "place-north-carolina",
+  "base": "/img/places/place-north-carolina",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Charlotte skyline above green trees under a moody sky",
+  "caption": "Charlotte, North Carolina.",
+  "credit": "Mahoney Fotos",
+  "creditUrl": "https://www.pexels.com/photo/charlotte-skyline-view-with-lush-greenery-33971181/",
+  "pexelsId": 33971181
+ },
+ {
+  "id": "place-ohio",
+  "base": "/img/places/place-ohio",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Downtown Cleveland's skyline lit up at dusk",
+  "caption": "Downtown Cleveland, Ohio.",
+  "credit": "Stephen Leonardi",
+  "creditUrl": "https://www.pexels.com/photo/downtown-of-cleveland-18353982/",
+  "pexelsId": 18353982
+ },
+ {
+  "id": "place-oklahoma",
+  "base": "/img/places/place-oklahoma",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Downtown Tulsa's skyline at twilight",
+  "caption": "Downtown Tulsa, Oklahoma.",
+  "credit": "Matt Reinke",
+  "creditUrl": "https://www.pexels.com/photo/stunning-twilight-aerial-view-of-tulsa-skyline-33274204/",
+  "pexelsId": 33274204
+ },
+ {
+  "id": "place-oregon",
+  "base": "/img/places/place-oregon",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Sunset over Cannon Beach and Haystack Rock, Oregon",
+  "caption": "Cannon Beach on the Oregon coast.",
+  "credit": "Veronika Andrews",
+  "creditUrl": "https://www.pexels.com/photo/scenic-view-of-cannon-beach-and-haystack-rock-at-sunset-34887111/",
+  "pexelsId": 34887111
+ },
+ {
+  "id": "place-orlando",
+  "base": "/img/places/place-orlando",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Orlando's skyline reflected in a lake at sunrise",
+  "caption": "Orlando at sunrise.",
+  "credit": "Connor Scott McManus",
+  "creditUrl": "https://www.pexels.com/photo/city-buildings-during-sunrise-11665601/",
+  "pexelsId": 11665601
+ },
+ {
+  "id": "place-palo-alto",
+  "base": "/img/places/place-palo-alto",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Hoover Tower and the arches of Stanford University at night",
+  "caption": "Stanford's Hoover Tower, next door to Palo Alto.",
+  "credit": "Zetong Li",
+  "creditUrl": "https://www.pexels.com/photo/hoover-tower-at-stanford-university-9985044/",
+  "pexelsId": 9985044
+ },
+ {
+  "id": "place-pennsylvania",
+  "base": "/img/places/place-pennsylvania",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Philadelphia skyline reflected in the river at dusk",
+  "caption": "Philadelphia at dusk.",
+  "credit": "Samyantak Mohanty",
+  "creditUrl": "https://www.pexels.com/photo/stunning-philadelphia-skyline-at-twilight-32182595/",
+  "pexelsId": 32182595
+ },
+ {
+  "id": "place-pittsburgh",
+  "base": "/img/places/place-pittsburgh",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Pittsburgh skyline with a riverboat on the waterfront",
+  "caption": "Pittsburgh's riverfront.",
+  "credit": "Jay Brand",
+  "creditUrl": "https://www.pexels.com/photo/skyline-of-pittsburgh-with-iconic-buildings-30736972/",
+  "pexelsId": 30736972
+ },
+ {
+  "id": "place-portland",
+  "base": "/img/places/place-portland",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of the Portland skyline with rivers and bridges",
+  "caption": "Portland, Oregon; Tigard is in its southwest suburbs.",
+  "credit": "Brett Sayles",
+  "creditUrl": "https://www.pexels.com/photo/aerial-view-of-a-river-near-the-city-8675575/",
+  "pexelsId": 8675575
+ },
+ {
+  "id": "place-san-antonio",
+  "base": "/img/places/place-san-antonio",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Colorful umbrellas along the San Antonio River Walk",
+  "caption": "The San Antonio River Walk.",
+  "credit": "Mariya Eskina",
+  "creditUrl": "https://www.pexels.com/photo/colorful-riverwalk-dining-at-san-antonio-39387634/",
+  "pexelsId": 39387634
+ },
+ {
+  "id": "place-san-diego",
+  "base": "/img/places/place-san-diego",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "San Diego skyline on a bright day with a ship in the harbor",
+  "caption": "San Diego from the harbor.",
+  "credit": "Humphrey  Jones-Behan",
+  "creditUrl": "https://www.pexels.com/photo/curtain-wall-high-rise-buildings-813793/",
+  "pexelsId": 813793
+ },
+ {
+  "id": "place-san-francisco",
+  "base": "/img/places/place-san-francisco",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A sailboat on San Francisco Bay with the city skyline behind",
+  "caption": "San Francisco from the bay.",
+  "credit": "Robert So",
+  "creditUrl": "https://www.pexels.com/photo/a-sailboat-on-the-sea-16553756/",
+  "pexelsId": 16553756
+ },
+ {
+  "id": "place-scottsdale",
+  "base": "/img/places/place-scottsdale",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A Scottsdale golf course with palm trees and mountains at sunset",
+  "caption": "Scottsdale at sunset.",
+  "credit": "Tom Jackson",
+  "creditUrl": "https://www.pexels.com/photo/scenic-arizona-golf-course-at-sunset-39480846/",
+  "pexelsId": 39480846
+ },
+ {
+  "id": "place-south-carolina",
+  "base": "/img/places/place-south-carolina",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Colorful historic houses and a palm tree in Charleston",
+  "caption": "Historic Charleston, South Carolina.",
+  "credit": "Karen F",
+  "creditUrl": "https://www.pexels.com/photo/colorful-historic-buildings-in-charleston-29434324/",
+  "pexelsId": 29434324
+ },
+ {
+  "id": "place-st-louis",
+  "base": "/img/places/place-st-louis",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Gateway Arch in St. Louis against a blue sky",
+  "caption": "The Gateway Arch, St. Louis.",
+  "credit": "Matthias Cooper",
+  "creditUrl": "https://www.pexels.com/photo/low-angle-photography-of-gateway-arch-in-st-louis-673357/",
+  "pexelsId": 673357
+ },
+ {
+  "id": "place-tennessee",
+  "base": "/img/places/place-tennessee",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Memphis sign in front of the city skyline",
+  "caption": "Memphis, Tennessee.",
+  "credit": "Demarius Bell Bell",
+  "creditUrl": "https://www.pexels.com/photo/iconic-memphis-sign-with-city-skyline-36698953/",
+  "pexelsId": 36698953
+ },
+ {
+  "id": "place-texas",
+  "base": "/img/places/place-texas",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The historic Fort Worth Stockyards street",
+  "caption": "The Fort Worth Stockyards, Texas.",
+  "credit": "Vishnu Vardhan Akula",
+  "creditUrl": "https://www.pexels.com/photo/historic-fort-worth-stockyards-street-view-32448245/",
+  "pexelsId": 32448245
+ },
+ {
+  "id": "place-utah",
+  "base": "/img/places/place-utah",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Salt Lake City skyline and the Utah State Capitol at night",
+  "caption": "Salt Lake City and the Utah State Capitol.",
+  "credit": "Stephen Leonardi",
+  "creditUrl": "https://www.pexels.com/photo/illuminated-salt-lake-city-skyline-at-night-35120541/",
+  "pexelsId": 35120541
+ },
+ {
+  "id": "place-virginia",
+  "base": "/img/places/place-virginia",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of Richmond and the James River at sunset",
+  "caption": "Richmond, Virginia, on the James River.",
+  "credit": "K",
+  "creditUrl": "https://www.pexels.com/photo/richmond-virginia-skyline-at-sunset-34586187/",
+  "pexelsId": 34586187
+ },
+ {
+  "id": "place-washington",
+  "base": "/img/places/place-washington",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Seattle skyline with the Space Needle under a clear sky",
+  "caption": "Seattle and the Space Needle.",
+  "credit": "Thomas K",
+  "creditUrl": "https://www.pexels.com/photo/the-seattle-space-needle-15049156/",
+  "pexelsId": 15049156
+ },
+ {
+  "id": "place-washington-dc",
+  "base": "/img/places/place-washington-dc",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Washington Monument reflected in the Reflecting Pool",
+  "caption": "The National Mall, Washington, D.C.",
+  "credit": "Paula Nardini",
+  "creditUrl": "https://www.pexels.com/photo/lincoln-memorial-reflecting-pool-with-the-washington-monument-under-cloudy-sky-9152409/",
+  "pexelsId": 9152409
+ },
+ {
+  "id": "place-wisconsin",
+  "base": "/img/places/place-wisconsin",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Milwaukee skyline and the Milwaukee Art Museum at sunset",
+  "caption": "Milwaukee's lakefront at sunset.",
+  "credit": "Hanna Elesha Abraham",
+  "creditUrl": "https://www.pexels.com/photo/stunning-sunset-over-milwaukee-art-museum-36119195/",
+  "pexelsId": 36119195
+ },
+ {
+  "id": "red-iphone-set",
+  "base": "/img/phones/red-iphone-set",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A red iPhone, AirPods and an Apple Watch on a wooden table",
+  "caption": "A red iPhone setup.",
+  "credit": "Melike  B",
+  "creditUrl": "https://www.pexels.com/photo/close-up-shot-of-apple-gadgets-9741343/",
+  "pexelsId": 9741343
+ },
+ {
+  "id": "red-phone",
+  "base": "/img/phones/red-phone",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A red smartphone with two cameras on a red backdrop",
+  "caption": "Reds look different on screen than in hand.",
+  "credit": "Tessa Charles",
+  "creditUrl": "https://www.pexels.com/photo/close-up-shot-of-a-cellphone-13886741/",
+  "pexelsId": 13886741
+ },
+ {
+  "id": "two-phones-sky",
+  "base": "/img/phones/two-phones-sky",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A hand holding two iPhones against a cloudy sky",
+  "caption": "Two phones, one decision.",
+  "credit": "Rubaitul Azad",
+  "creditUrl": "https://www.pexels.com/photo/close-up-photo-of-a-person-holding-cellphones-11374459/",
+  "pexelsId": 11374459
+ }
+]

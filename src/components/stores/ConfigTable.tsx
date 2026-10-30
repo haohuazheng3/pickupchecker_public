@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { MODELS, COLOR_META, catalogFor, appleBuyUrl, modelKeyFor, type CatalogItem, type Store, appleName } from "@/lib/apple/catalog";
 import { productFor, productPath, storePlace } from "@/lib/seo/products";
 import type { StoreStatusRow } from "@/lib/stock/queries";

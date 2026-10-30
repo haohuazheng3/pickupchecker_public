@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Page } from "@/components/site/Page";
-export const metadata: Metadata = { title: "Privacy Policy", alternates: { canonical: "/privacy" } };
+export const metadata: Metadata = { title: "Privacy Policy", description: "What PickupChecker stores (your email, alerts and push subscription), why, how long, and how to delete it.", alternates: { canonical: "/privacy" } };
 export default function Privacy() {
   return (
     <Page title="Privacy Policy" lead="Last updated October 29, 2026.">

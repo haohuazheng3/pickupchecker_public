@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { MODELS, storePath, stateCodeOf, type Store } from "@/lib/apple/catalog";
 import { productFor, productPath, storePlace } from "@/lib/seo/products";
 import type { StoreStockSummary } from "@/lib/stock/queries";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { Logo } from "./Logo";
 import { AuthNav } from "./AuthNav";
 import { SiteSearch } from "./SiteSearch";

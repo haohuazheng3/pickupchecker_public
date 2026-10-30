@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { stateCodeOf, storeTimeZone, storePath, DEFAULT_MODEL, type Store } from "@/lib/apple/catalog";
 import { normalizeHours, compressHours, todayLabel, directionsUrl, telHref, hoursText, type OpenStatus } from "@/lib/seo/enrich";
 

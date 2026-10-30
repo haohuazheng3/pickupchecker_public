@@ -3,7 +3,7 @@ import { cache } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { PART_INDEX, STORE_INDEX, appleBuyUrl, cityPath, statePath, storePath, appleName } from "@/lib/apple/catalog";
-import { canonicalPlace, cityPlace, inPlace, placeChain, productBySlug, productPath, resolvePlace, storePlace, statePlace, type Place, type Product } from "@/lib/seo/products";
+import { canonicalPlace, cityPlace, inPlace, isIndexedProductPage, placeChain, productBySlug, productPath, resolvePlace, storePlace, statePlace, type Place, type Product } from "@/lib/seo/products";
 import { childPlaces, configGrid, facetsFor, indexStock, lastChecked, nearestWithStock, siblingPlaces, storeLines } from "@/lib/seo/productData";
 import { priceLabel, productDescription, productFaq, productJsonLdFor, productTitle } from "@/lib/seo/productCopy";
 import { alertHref, fmtDuration } from "@/lib/seo/enrich";
@@ -19,6 +19,14 @@ import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestocksByConfig } from "@/components/restocks/RestocksByConfig";
 import { LiveAgo } from "@/components/site/LiveAgo";
 import { Dot } from "@/components/stock/StatusBits";
+import { PRODUCT_TITLES } from "@/content/titles";
+import { PRODUCT_COPY } from "@/content/product-pages";
+import { getFacts } from "@/lib/content/facts";
+import { Inline } from "@/components/content/Inline";
+import { Figure } from "@/components/content/Figure";
+import { QuickCheckServer } from "@/components/content/QuickCheckServer";
+import { KeywordSections, slugId } from "@/components/content/KeywordSections";
+import { RichFaq, SourceList } from "@/components/content/RichFaq";
 
 export const dynamic = "force-dynamic";
 
@@ -48,9 +56,10 @@ const load = cache(async (slug: string, path: string) => {
   const ix = indexStock({ duo, "18-pro": pro, "18-pro-max": max });
   const lines = storeLines(ix, product, place.stores);
   const inStock = lines.filter((l) => l.available.length > 0).length;
-  // Model pages and the national page of every variant are hubs; a narrower page earns indexing with real activity.
-  // Unknown statistics (a failed read) never cost a page its indexing.
-  const indexable = product.kind === "model" || place.level === "us" || stats.month > 0 || Boolean(stats.unknown);
+  // Index scope (seo.md §10): the national page of a model, a storage size or a color. Every place-level product
+  // page and every exact configuration is noindex, follow: the /stores page of that place is the one indexed page
+  // for "iPhone Duo in <place>", which keeps near-duplicates out of the index.
+  const indexable = isIndexedProductPage(product, place);
   return { kind: "page" as const, product, place, ix, lines, inStock, stats, clock, feed, indexable };
 });
 
@@ -61,8 +70,9 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const d = await load(slug, segments.join("/"));
   if (!d || d.kind === "redirect") return {};
   const inStock = d.place.level === "store" ? d.lines[0]?.available.length ?? 0 : d.inStock;
-  const title = productTitle(d.product, d.place, inStock);
-  const description = productDescription(d.product, d.place, inStock, d.stats);
+  const bound = d.place.level === "us" ? PRODUCT_TITLES[d.product.slug] : undefined;
+  const title = bound?.main.title ?? productTitle(d.product, d.place, inStock);
+  const description = bound?.description ?? productDescription(d.product, d.place, inStock, d.stats);
   const url = productPath(d.product, d.place);
   const canonical = productPath(d.product, canonicalPlace(d.place));
   return {
@@ -108,6 +118,11 @@ export default async function ProductPlacePage({ params }: { params: Promise<Par
   const usNone = place.level === "us" && inStock === 0;
   const shownLines = place.level !== "us" ? lines : usNone ? lines.filter((l) => l.lastAvailableAt).slice(0, 12) : lines.filter((l) => l.available.length > 0).slice(0, 40);
   const faq = productFaq(product, place, lines, stats, clock, nearest ? { name: nearest.store.name, city: nearest.store.city, distance: nearest.distance } : null);
+  // Keyword-bound national pages (seo.md §3): entry titles, an Answer-First intro, one section per secondary keyword.
+  const bound = place.level === "us" ? PRODUCT_TITLES[product.slug] : undefined;
+  const copy = bound ? PRODUCT_COPY[product.slug] : undefined;
+  const facts = place.level === "us" ? await getFacts() : null;
+  const sections = bound && copy ? bound.h2.map((h) => ({ id: slugId(h.keyword), h2: h.title, ...(copy.sections[h.keyword] ?? { lead: "", blocks: [] }) })).filter((x) => x.lead) : [];
 
   const stat: Stat[] = [
     atStore
@@ -126,8 +141,9 @@ export default async function ProductPlacePage({ params }: { params: Promise<Par
       )}
       {chain.length > 1 && <Breadcrumbs items={chain.map((p, i) => ({ href: i < chain.length - 1 ? productPath(product, p) : undefined, label: p.label }))} />}
 
-      <h1 className="display mt-2 text-3xl sm:text-5xl">{place.level === "us" ? `${product.name} pickup stock` : `${product.name} ${inPlace(place)}`}</h1>
-      <p className="mt-2 flex items-center gap-2 text-lg text-ink-2">
+      <h1 className="display mt-2 text-3xl sm:text-5xl">{bound ? bound.main.h1 ?? bound.main.title : place.level === "us" ? `${product.name} pickup stock` : `${product.name} ${inPlace(place)}`}</h1>
+      {copy && facts && <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2"><Inline text={copy.intro} facts={facts} /></p>}
+      <p className={`mt-2 items-center gap-2 text-lg text-ink-2 ${copy ? "hidden" : "flex"}`}>
         <Dot state={inStock ? "ok" : "idle"} live={inStock > 0} />
         {atStore
           ? (one ? <b className={inStock ? "text-accent" : "text-ink"}>{inStock ? "In stock now" : "Not in stock now"}</b> : <span><b className="text-ink">{line?.available.length ?? 0}</b> of {product.parts.length} configurations in stock</span>)
@@ -139,6 +155,8 @@ export default async function ProductPlacePage({ params }: { params: Promise<Par
         {configItem && !atStore && <a href={appleBuyUrl(configItem)} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm">Buy on apple.com</a>}
         <Link href={placePagePath(place)} className="btn btn-ghost btn-sm max-w-full truncate">{place.level === "us" ? "All stores" : atStore ? "Every iPhone here" : `Every iPhone ${inPlace(place)}`}</Link>
       </div>
+
+      {place.level === "us" && <div className="mt-5 max-w-3xl"><QuickCheckServer model={product.model} product={product} /></div>}
 
       <div className="mt-6"><ProductNav facets={facets} place={place} unit={atStore ? "configurations" : "stores"} /></div>
 
@@ -191,6 +209,18 @@ export default async function ProductPlacePage({ params }: { params: Promise<Par
         </div>
       )}
 
+      {facts && sections.length > 0 && (
+        <div className="mx-auto mt-8 max-w-3xl">
+          {copy?.photos[0] && <Figure id={copy.photos[0]} />}
+          <KeywordSections sections={sections} facts={facts} model={product.model} />
+        </div>
+      )}
+      {place.level === "us" && !copy && (
+        <div className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
+          {(product.model === "duo" ? ["foldable-hands", "apple-store-pickup-counter"] : ["phone-hand-camera", "apple-store-pickup-counter"]).map((id) => <Figure key={id} id={id} className="my-0" />)}
+        </div>
+      )}
+
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <section className="min-w-0">
           <h2 className="text-lg font-semibold">Latest changes</h2>
@@ -214,7 +244,14 @@ export default async function ProductPlacePage({ params }: { params: Promise<Par
         )}
       </div>
 
-      <div className="mt-6"><Faq items={faq} title={`${product.short} ${inPlace(place)}`} /></div>
+      {copy && facts ? (
+        <div className="mx-auto mt-8 max-w-3xl space-y-8">
+          <RichFaq items={[...faq, ...copy.faq]} facts={facts} title={`${product.name} FAQ`} />
+          <SourceList sources={copy.sources} facts={facts} />
+        </div>
+      ) : (
+        <div className="mt-6"><Faq items={faq} title={`${product.short} ${inPlace(place)}`} /></div>
+      )}
 
       <RelatedBlock title="Nearby">
         {place.level === "state" && siblings.length > 0 && <LinkRow title="Neighboring states" links={siblings.map((s) => ({ href: productPath(product, s.place), label: s.place.name, meta: `${s.inStock}/${s.stores}` }))} />}

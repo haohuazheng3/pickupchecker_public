@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Page } from "@/components/site/Page";
-export const metadata: Metadata = { title: "Refund Policy", alternates: { canonical: "/refunds" } };
+export const metadata: Metadata = { title: "Refund Policy", description: "How refunds work for PickupChecker Plus, Pro and Max subscriptions, and how to cancel before the next renewal.", alternates: { canonical: "/refunds" } };
 export default function Refunds() {
   return (
     <Page title="Refund Policy" lead="Simple: if it didn't work for you, ask within 7 days.">

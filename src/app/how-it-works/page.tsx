@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { Page } from "@/components/site/Page";
 export const metadata: Metadata = { title: "How it works", description: "How PickupChecker checks every US Apple Store for iPhone pickup stock and notifies your phone in seconds.", alternates: { canonical: "/how-it-works" } };
 export default function HowItWorks() {

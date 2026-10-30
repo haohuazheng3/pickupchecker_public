@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { MODELS, DEFAULT_MODEL, modelByKey, statesWithStores, type ModelKey } from "@/lib/apple/catalog";
 import { restockFeed, restockCounts } from "@/lib/stock/queries";
 import { RestockFeed } from "@/components/restocks/RestockFeed";

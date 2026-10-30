@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { Logo } from "./Logo";
 import { topStates } from "@/lib/seo/links";
 
@@ -32,7 +32,6 @@ export function Footer() {
               <li><Link href="/how-it-works" className="hover:text-ink">How it works</Link></li>
               <li><Link href="/install" className="hover:text-ink">Get the app</Link></li>
               <li><Link href="/about" className="hover:text-ink">About</Link></li>
-              <li><Link href="/blog" className="hover:text-ink">Blog</Link></li>
               <li><Link href="/contact" className="hover:text-ink">Contact</Link></li>
             </ul>
           </div>

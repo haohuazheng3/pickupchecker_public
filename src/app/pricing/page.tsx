@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { PAID_PLANS, PLANS } from "@/lib/plans";
 import { PlanButton } from "@/components/site/PlanButton";
 

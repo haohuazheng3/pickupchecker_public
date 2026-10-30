@@ -4,7 +4,7 @@
  * Opens with the button, ⌘K / Ctrl+K, or "/" outside a text field; arrows + Enter to pick.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { useRouter } from "next/navigation";
 import { searchIndex, type SearchEntry, type SearchKind } from "@/lib/search";
 import { track } from "@/lib/track";

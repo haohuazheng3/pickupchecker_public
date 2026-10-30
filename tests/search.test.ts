@@ -17,10 +17,10 @@ describe("site search", () => {
     expect(top("TX").h).toBe("/stores/texas");
     expect(top("new york").h).toBe("/stores/new-york");
   });
-  it("a city goes to the city page, a store name to the store page", () => {
+  it("a city goes to the city page (or its only store), a store name to the store page", () => {
     expect(top("houston").h).toBe("/stores/texas/houston");
     expect(top("Fifth Avenue").h).toBe("/stores/new-york/new-york/fifthavenue");
-    expect(top("ann arbor").h).toBe("/stores/michigan/ann-arbor");
+    expect(top("ann arbor").h).toBe("/stores/michigan/ann-arbor/briarwood"); // a one-store city is its store
   });
   it("a ZIP code lists the nearest stores by distance, even one with no store nearby", () => {
     const r = searchIndex(index, "10001");

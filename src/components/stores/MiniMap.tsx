@@ -1,7 +1,7 @@
 "use client";
 /** A small non-interactive map with one pin; loads MapLibre only when scrolled into view. */
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAP_INK, MAP_WORKER_URL, mapStyleFor } from "@/lib/map";
 import { currentTheme, onThemeChange } from "@/lib/theme";

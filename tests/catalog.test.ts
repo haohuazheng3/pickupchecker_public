@@ -47,10 +47,26 @@ describe("store and city URLs", () => {
     const { STORES, citiesWithStores, storePath, cityPath, DEFAULT_MODEL, MODELS } = await import("@/lib/apple/catalog");
     const paths = new Set(STORES.map((s) => storePath(s)));
     expect(paths.size).toBe(STORES.length);
-    for (const s of STORES) expect(storePath(s).startsWith(cityPath(s.state, s.city) + "/")).toBe(true);
     const cities = citiesWithStores();
+    // A city with two or more stores has its own page above its stores; a one-store city is its store's page.
+    for (const s of STORES) {
+      const c = cities.find((x) => x.state === s.state && x.name === s.city)!;
+      if (c.stores.length > 1) expect(storePath(s).startsWith(cityPath(s.state, s.city) + "/")).toBe(true);
+      else expect(cityPath(s.state, s.city)).toBe(storePath(s));
+    }
     expect(new Set(cities.map((c) => cityPath(c.state, c.name))).size).toBe(cities.length);
     expect(cities.reduce((n, c) => n + c.stores.length, 0)).toBe(STORES.length);
     expect(MODELS[0].key).toBe(DEFAULT_MODEL); // Duo first everywhere
+  });
+  it("gives a state its own page only with stores in two or more cities", async () => {
+    const { STORES, statePath, storePath, hasStatePage } = await import("@/lib/apple/catalog");
+    const delaware = STORES.filter((s) => s.state === "Delaware");
+    expect(delaware).toHaveLength(1);
+    expect(statePath("Delaware")).toBe(storePath(delaware[0]));
+    expect(statePath("Hawaii")).toBe("/stores/hawaii/honolulu");
+    expect(statePath("District of Columbia")).toBe("/stores/district-of-columbia/washington");
+    expect(statePath("Texas")).toBe("/stores/texas");
+    expect(hasStatePage("Texas")).toBe(true);
+    expect(hasStatePage("Hawaii")).toBe(false);
   });
 });

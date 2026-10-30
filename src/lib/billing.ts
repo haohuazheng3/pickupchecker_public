@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "./db";
 import { stripe } from "./stripe";
 import { env } from "./env";
-import { PAID_PLANS as PAID_PLAN_KEYS, PLANS, planFromPrice, priceIdFor, effectivePlan, type PaidPlanKey } from "./plans";
+import { PLANS, planFromPrice, priceIdFor, effectivePlan, type PaidPlanKey } from "./plans";
 
 /** Upsert a subscription row from a Stripe subscription object (idempotent). */
 export async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
@@ -138,17 +138,12 @@ export async function changePlan(subscriptionId: string, plan: PaidPlanKey, cust
   } catch (e) {
     if (!isPermissionError(e)) throw e;
     if (!customerId) throw new BillingPermissionError("Subscriptions write");
-    try {
-      return { url: await portalUrl(customerId, { subscriptionId, returnTo: `/account?plan=${plan}` }) };
-    } catch (p) {
-      if (isPermissionError(p)) throw new BillingPermissionError("Subscriptions write or Customer portal write");
-      throw p;
-    }
+    throw new BillingPermissionError("Subscriptions write");
   }
 }
 
 let portalConfig: string | null = null;
-/** PickupChecker's own customer-portal configuration (plan switching between our three prices), found or created once. */
+/** PickupChecker's own customer-portal configuration (invoices, card, cancel at period end), found or created once. */
 async function portalConfiguration(): Promise<string> {
   if (portalConfig) return portalConfig;
   if (env.stripePortalConfig()) return (portalConfig = env.stripePortalConfig());
@@ -165,10 +160,8 @@ async function portalConfiguration(): Promise<string> {
       invoice_history: { enabled: true },
       payment_method_update: { enabled: true },
       subscription_cancel: { enabled: true, mode: "at_period_end" },
-      subscription_update: {
-        enabled: true, default_allowed_updates: ["price"], proration_behavior: "create_prorations",
-        products: [{ product: (await s.prices.retrieve(priceIdFor("plus"))).product as string, prices: PAID_PLAN_KEYS.map(priceIdFor) }],
-      },
+      // Plan switching happens in place through the API; Stripe's portal cannot list three monthly prices of one product.
+      subscription_update: { enabled: false },
     },
   });
   return (portalConfig = created.id);

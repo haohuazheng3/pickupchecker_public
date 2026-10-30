@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { cache } from "react";
 import { notFound } from "next/navigation";
-import { STORES, MODELS, DEFAULT_MODEL, statesWithStores, citiesWithStores, storePath, cityPath, storeTimeZone, type ModelKey } from "@/lib/apple/catalog";
+import { hasStatePage, STORES, MODELS, DEFAULT_MODEL, statesWithStores, citiesWithStores, storePath, cityPath, storeTimeZone, type ModelKey } from "@/lib/apple/catalog";
 import { neighborStates } from "@/lib/seo/links";
-import { nearestOutsideState, centroid, alertHref, faq, peakOf, stateTitle, fitTitle, itemListJsonLd } from "@/lib/seo/enrich";
+import { nearestOutsideState, centroid, alertHref, faq, peakOf, itemListJsonLd } from "@/lib/seo/enrich";
 import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { BrowseModels, BrowseStates } from "@/components/seo/Browse";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -21,6 +21,14 @@ import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
 import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestocksByConfig } from "@/components/restocks/RestocksByConfig";
+import { placeTitle, placeDescription, placeIntro, placeSections, taxFaq, type PlaceCopyInput } from "@/lib/seo/placeCopy";
+import { KeywordSections } from "@/components/content/KeywordSections";
+import { Inline } from "@/components/content/Inline";
+import { Figure } from "@/components/content/Figure";
+import { SourceList } from "@/components/content/RichFaq";
+import { emptyFacts } from "@/lib/content/facts";
+import { SALES_TAX_SOURCE } from "@/content/sales-tax";
+import { placePhotos } from "@/content/place-photos";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +36,7 @@ export const dynamic = "force-dynamic";
 const THIN = 2;
 
 export function generateStaticParams() {
-  return statesWithStores().map((s) => ({ state: s.slug }));
+  return statesWithStores().filter((s) => hasStatePage(s.name)).map((s) => ({ state: s.slug }));
 }
 
 /** One load per request, shared by the page and its metadata: ≤ 7 queries (4 live + 3 cached statistics). */
@@ -42,16 +50,19 @@ const load = cache(async (slug: string) => {
   const thin = stores.length <= THIN;
   const outside = nearestOutsideState({ ...centroid(stores), state: s.name }, 6);
   const extra = thin ? [...new Set([...outside, ...stores.flatMap((x) => nearestOutsideState(x, 4))].map((x) => x.storeNumber))] : outside.map((x) => x.storeNumber);
-  const [stock, feed, stats, pstats, full] = await Promise.all([
+  const [stock, feed, stats, pstats, full, duoStats, maxStats] = await Promise.all([
     storesStock([...numbers, ...extra]),
     restockFeed({ state: s.name, limit: 12 }),
     restockStats(numbers, tz, 30),
     placeStats({ storeNumbers: numbers, tz }),
     thin ? storesStatusFull(numbers) : Promise.resolve(new Map()),
+    placeStats({ storeNumbers: numbers, model: "duo", tz }),
+    placeStats({ storeNumbers: numbers, model: "18-pro-max", tz }),
   ]);
   const stockNow = Object.fromEntries(MODELS.map((m) => [m.key, stores.filter((x) => (stock.get(x.storeNumber)?.perModel[m.key].available ?? 0) > 0).length])) as Record<ModelKey, number>;
   const duoStores = stores.filter((x) => (stock.get(x.storeNumber)?.perModel[DEFAULT_MODEL].available ?? 0) > 0);
-  return { s, stores, cities, numbers, tz, thin, outside, stock, feed, stats, pstats, full, stockNow, duoStores };
+  const copy: PlaceCopyInput = { kind: "state", name: s.name, state: s.name, stateSlug: s.slug, stores, cities: cities.length, stockNow, stock, duo: duoStats, max: maxStats };
+  return { s, stores, cities, numbers, tz, thin, outside, stock, feed, stats, pstats, full, stockNow, duoStores, copy };
 });
 
 export async function generateMetadata({ params }: PageProps<"/stores/[state]">): Promise<Metadata> {
@@ -59,11 +70,8 @@ export async function generateMetadata({ params }: PageProps<"/stores/[state]">)
   const d = await load(state);
   if (!d) return {};
   const { s } = d;
-  const title = stateTitle(s.name, d.stockNow.duo, s.count);
-  const description = fitTitle([
-    `Live iPhone pickup stock at ${s.count} Apple Store${s.count > 1 ? "s" : ""} in ${s.name}: ${d.stockNow.duo} with the Duo now, ${d.pstats.week} restocks this week, plus hours, addresses and history.`,
-    `${s.count} Apple Store${s.count > 1 ? "s" : ""} in ${s.name}: ${d.stockNow.duo} with iPhone Duo pickup stock now, ${d.pstats.week} restocks this week, hours and history.`,
-  ], 155);
+  const title = placeTitle(d.copy);
+  const description = placeDescription(d.copy);
   return { title, description, alternates: { canonical: `/stores/${s.slug}` }, openGraph: { type: "website", siteName: "PickupChecker", title, description, url: `/stores/${s.slug}` } };
 }
 
@@ -74,15 +82,21 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
   const { s, stores, cities } = d;
   const neighbors = neighborStates(s.name);
   const alert = alertHref({ model: DEFAULT_MODEL, state: s.slug });
-  const questions = faq({ kind: "state", place: s.name, stores, stockNow: d.stockNow, duoStores: d.duoStores, stats: d.pstats, peak: peakOf(d.stats), nearest: d.outside });
+  // Five questions: the "how long does stock last" answer now lives in the iPhone Duo section, the tax question takes its place.
+  const tq = taxFaq(d.copy);
+  const questions = faq({ kind: "state", place: s.name, stores, stockNow: d.stockNow, duoStores: d.duoStores, stats: d.pstats, peak: peakOf(d.stats), nearest: d.outside }).filter((q) => !q.q.startsWith("How long does stock last"));
+  if (tq) questions.splice(2, 0, tq);
+  const facts = emptyFacts();
+  const [photo1, photo2] = placePhotos(s.name);
   return (
     <div className="mx-auto max-w-6xl px-4 pt-8">
       <JsonLd data={itemListJsonLd(`Apple Stores in ${s.name}`, stores)} />
       <Breadcrumbs items={[{ href: "/stores", label: "Apple Stores" }, { label: s.name }]} />
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="display text-3xl sm:text-5xl">Apple Stores in {s.name}</h1>
-          <p className="mt-2 text-ink-2">{stores.length} store{stores.length > 1 ? "s" : ""} · {cities.length} cit{cities.length > 1 ? "ies" : "y"} · <b className="text-ink">{d.stockNow.duo}</b> with iPhone Duo pickup stock now · checked every 20 s</p>
+          <h1 className="display text-3xl sm:text-5xl">{placeTitle(d.copy)}</h1>
+          <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2"><Inline text={placeIntro(d.copy)} facts={facts} /></p>
+          <p className="mt-1 text-sm text-ink-3">{stores.length} stores · {cities.length} cit{cities.length > 1 ? "ies" : "y"} · checked every 20 s</p>
           <div className="mt-3 flex flex-wrap gap-1.5">{cities.map((c) => <Link key={c.slug} href={cityPath(c.state, c.name)} className="chip px-3 py-1.5 text-xs">{c.name}<span className="text-ink-3"> · {c.stores.length}</span></Link>)}</div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -111,6 +125,12 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
         </section>
       )}
 
+      <div className="mx-auto mt-10 max-w-3xl">
+        <Figure id={photo1} />
+        <KeywordSections sections={placeSections(d.copy)} facts={facts} />
+        <Figure id={photo2} />
+      </div>
+
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">When do {s.name} stores restock?</h2>
@@ -134,6 +154,7 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Faq items={questions} title={`Apple Stores in ${s.name}: FAQ`} />
+        <div className="pane p-5 sm:p-6"><SourceList sources={[...stores.slice(0, 3).filter((x) => x.url).map((x) => ({ label: `Apple: ${x.name} store page`, url: x.url! })), { label: "Apple: Shipping & Pickup help (what to bring to a pickup)", url: "https://www.apple.com/shop/help/shipping_delivery" }, SALES_TAX_SOURCE]} facts={facts} /></div>
       </div>
 
       <RelatedBlock title={`Beyond ${s.name}`}>

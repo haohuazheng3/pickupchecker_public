@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { useAuth } from "@clerk/nextjs";
 
 /** Signed-in → "My alerts"; signed-out → nothing (sign-in happens inside the wizard, never on a Clerk page). */
