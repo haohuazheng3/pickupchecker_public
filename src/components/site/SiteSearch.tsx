@@ -79,8 +79,9 @@ export function SiteSearch() {
       <button type="button" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-2 bg-ink/4 text-ink transition hover:bg-ink/10 active:scale-95" aria-label="Search states, cities and stores" title="Search (⌘K)" onClick={show}><SearchIcon /></button>
       <dialog ref={ref} className="search-dialog" aria-label="Search" onClose={onClose} onClick={(e) => { if (e.target === e.currentTarget) hide(); }}>
         <div className="flex items-center gap-2 border-b border-line px-3 py-3 sm:px-4">
-          <label className="search-field flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-2xl border border-line-2 bg-ink/4 px-3.5 text-ink-3">
-            <SearchIcon className="h-[18px] w-[18px]" />
+          {/* Ink on the label: the global `input { color: inherit }` is unlayered and beats a text-* utility on the input. */}
+          <label className="search-field flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-2xl border border-line-2 bg-ink/4 px-3.5 text-ink">
+            <span className="text-ink-3"><SearchIcon className="h-[18px] w-[18px]" /></span>
             <input ref={inputRef} className="search-input h-full min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-ink-3" placeholder="State, city, store, ZIP or model" value={q}
               onChange={(e) => { setQ(e.target.value); setActive(0); }} onKeyDown={onKeyDown} inputMode="search" enterKeyHint="go"
               autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} role="combobox" aria-expanded={results.length > 0} aria-autocomplete="list" aria-controls="site-search-results" aria-label="Search" />
