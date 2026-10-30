@@ -1,5 +1,4 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
-import { Suspense } from "react";
 import { MODELS, modelByKey, STORE_INDEX, appleFamilyUrl, type ModelKey } from "@/lib/apple/catalog";
 import { restockFeed, restockCounts, stockByStore } from "@/lib/stock/queries";
 import { WizardServer } from "@/components/wizard/WizardServer";
@@ -56,9 +55,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
       <section className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
         <div className="min-w-0">
-          <Suspense fallback={<div className="skeleton h-72 rounded-2xl" />}>
-            <Board model={model} />
-          </Suspense>
+          {/* Rendered with the page, not behind Suspense: a 288 px fallback swapped for the full board (1,148 px on
+              a phone) pushed the wizard down 860 px after the first paint (PSI CLS 0.149 in some runs). */}
+          <Board model={model} />
         </div>
         <WizardServer initialModel={start.initialModel} initialStorage={start.initialStorage} initialColor={start.initialColor} initialStore={start.initialStore} initialState={start.initialState} initialCity={start.initialCity} startSignIn={startSignIn} next={next} />
       </section>
