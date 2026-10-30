@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { adminTokenFrom, verifyAdminToken } from "@/lib/admin/session";
+import { publicRouteCheck } from "@/lib/seo/routes";
 
 const isProtected = createRouteMatcher(["/account", "/account/(.*)", "/checkout/success", "/checkout/success/(.*)"]);
 const isAdmin = createRouteMatcher(["/admin", "/admin/(.*)", "/api/admin/(.*)"]);
@@ -12,6 +13,11 @@ const isAdminPublic = createRouteMatcher(["/admin/login", "/api/admin/login", "/
  * Internal .md files never exist as routes (404 by Next).
  */
 export default clerkMiddleware(async (auth, req) => {
+  const check = publicRouteCheck(req.nextUrl.pathname);
+  if (check) {
+    if ("redirect" in check) return NextResponse.redirect(new URL(check.redirect + req.nextUrl.search, req.url), 308);
+    return NextResponse.rewrite(new URL("/__not_found__", req.url), { status: 404 });
+  }
   if (isAdmin(req) && !isAdminPublic(req)) {
     const ok = await verifyAdminToken(adminTokenFrom(req), process.env.ADMIN_SESSION_SECRET ?? "");
     if (!ok) {
