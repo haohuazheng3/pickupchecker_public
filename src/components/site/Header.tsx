@@ -7,18 +7,19 @@ const LINKS: [string, string][] = [["/stock/iphone-duo", "Duo stock"], ["/restoc
 
 export function Header() {
   return (
-    <header className="site-header sticky top-3 z-40 px-4">
-      <div className="pane mx-auto max-w-6xl px-4 py-2.5 sm:px-5">
-        <div className="flex items-center justify-between gap-3">
-          <Link href="/" className="shrink-0" aria-label="PickupChecker home">
+    <header className="site-header sticky top-3 z-40 px-3 sm:px-4">
+      <div className="pane mx-auto max-w-6xl px-3 py-2.5 sm:px-5">
+        {/* One row on every width: mark (+ wordmark from 420 px), nav on md+, then the action cluster that never wraps or shrinks. */}
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <Link href="/" className="flex min-w-0 shrink items-center" aria-label="PickupChecker home">
             <Logo compact />
           </Link>
           <nav className="hidden items-center gap-1 text-sm text-ink-2 md:flex" aria-label="Main">
             {LINKS.map(([href, label]) => <Link key={href} className="rounded-full px-3 py-2 hover:bg-white/5 hover:text-ink" href={href}>{label}</Link>)}
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <AuthNav />
-            <Link href="/#notify" className="btn btn-primary btn-sm">Get notified</Link>
+            <Link href="/#notify" className="btn btn-primary btn-sm px-3 sm:px-[.9rem]">Get notified</Link>
             <SiteSearch />
           </div>
         </div>

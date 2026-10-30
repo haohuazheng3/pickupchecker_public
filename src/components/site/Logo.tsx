@@ -14,12 +14,16 @@ export function LogoMark({ size = 28 }: { size?: number }) {
   );
 }
 
-/** `compact` hides the wordmark on narrow screens (the header has three things to fit). */
+/**
+ * `compact` hides the wordmark below 420 px and lets it truncate above that: the header row must hold
+ * the mark, "My alerts", "Get notified" and the search button on a phone, so the wordmark is the one
+ * thing allowed to give way — it never pushes the buttons out of the pane.
+ */
 export function Logo({ className = "", compact = false }: { className?: string; compact?: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-2.5 ${className}`}>
-      <LogoMark />
-      <span className={`font-semibold tracking-tight text-[1.05rem] ${compact ? "hidden min-[400px]:inline" : ""}`}>
+    <span className={`inline-flex min-w-0 max-w-full items-center gap-2.5 ${className}`}>
+      <span className="shrink-0"><LogoMark /></span>
+      <span className={`min-w-0 truncate font-semibold tracking-tight text-[1.05rem] ${compact ? "hidden min-[420px]:inline-block" : ""}`}>
         Pickup<span className="text-accent">Checker</span>
       </span>
     </span>

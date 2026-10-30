@@ -60,7 +60,7 @@ export function SiteSearch() {
 
   return (
     <>
-      <button type="button" className="btn btn-ghost btn-sm px-2.5" aria-label="Search states, cities and stores" title="Search (⌘K)" onClick={show}><SearchIcon /></button>
+      <button type="button" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-2 bg-white/6 text-ink transition hover:bg-white/10 active:scale-95" aria-label="Search states, cities and stores" title="Search (⌘K)" onClick={show}><SearchIcon /></button>
       {open && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[10vh] backdrop-blur-sm" onClick={hide} role="presentation">
           <div role="dialog" aria-modal="true" aria-label="Search" className="pane w-full max-w-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
