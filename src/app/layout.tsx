@@ -11,6 +11,7 @@ import { THEME_BOOT } from "@/lib/theme";
 import { Analytics } from "@/components/site/Analytics";
 import { PwaBoot } from "@/components/pwa/PwaBoot";
 import { NavSkeleton } from "@/components/ui/NavSkeleton";
+import { FreshOnReturn } from "@/components/site/FreshOnReturn";
 
 // "optional": the page renders in the web font only if it is there within ~100 ms (cached after the first
 // visit); otherwise it keeps the metric-matched fallback for that view instead of swapping mid-read. Pages now
@@ -61,6 +62,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Footer />
           <AlertBar />
           <AlertDialogHost catalog={buildWizardCatalog()} />
+          <FreshOnReturn />
         </ClerkProvider>
         <Analytics />
         <PwaBoot />

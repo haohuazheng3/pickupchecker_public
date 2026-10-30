@@ -224,6 +224,39 @@ export async function restockStats(storeNumbers: string[], tz: string, days = 30
   });
 }
 
+/** "When your stores restock": hour-of-day and weekday histograms for a user's stores, per store too. */
+export interface RestockPattern extends RestockStats {
+  /** The part of `total` that was one of the user's exact phones. */
+  exact: { total: number; byHour: number[] };
+  /** Busiest store first. */
+  stores: { storeNumber: string; total: number; byHour: number[] }[];
+}
+
+/** Restocks of `parts` at `storeNumbers` over the last `days`, bucketed by hour and weekday in `tz`. */
+export async function restockPattern(storeNumbers: string[], parts: string[], exactParts: string[], tz: string, days = 30): Promise<RestockPattern> {
+  const empty: RestockPattern = { total: 0, byHour: Array(24).fill(0), byWeekday: Array(7).fill(0), days, tz, exact: { total: 0, byHour: Array(24).fill(0) }, stores: [] };
+  if (!hasDatabase() || storeNumbers.length === 0 || parts.length === 0) return empty;
+  const ev = schema.availabilityEvents;
+  return safe("restock pattern", empty, async () => {
+    const rows = await db()
+      .select({ store: ev.storeNumber, part: ev.partNumber, h: sql<number>`extract(hour from ${ev.at} at time zone ${tz})::int`, d: sql<number>`extract(dow from ${ev.at} at time zone ${tz})::int`, n: sql<number>`count(*)::int` })
+      .from(ev)
+      .where(and(eq(ev.firstSeen, false), eq(ev.kind, "restock"), gt(ev.at, new Date(Date.now() - days * 86400_000)), inArray(ev.storeNumber, storeNumbers), inArray(ev.partNumber, parts)))
+      .groupBy(sql`1`, sql`2`, sql`3`, sql`4`);
+    const out: RestockPattern = { ...empty, byHour: Array(24).fill(0), byWeekday: Array(7).fill(0), exact: { total: 0, byHour: Array(24).fill(0) } };
+    const exact = new Set(exactParts);
+    const perStore = new Map<string, { total: number; byHour: number[] }>();
+    for (const r of rows) {
+      out.byHour[r.h] += r.n; out.byWeekday[r.d] += r.n; out.total += r.n;
+      if (exact.has(r.part)) { out.exact.byHour[r.h] += r.n; out.exact.total += r.n; }
+      const st = perStore.get(r.store) ?? { total: 0, byHour: Array(24).fill(0) };
+      st.total += r.n; st.byHour[r.h] += r.n; perStore.set(r.store, st);
+    }
+    out.stores = [...perStore.entries()].map(([storeNumber, v]) => ({ storeNumber, ...v })).sort((a, b) => b.total - a.total);
+    return out;
+  });
+}
+
 /* ------------------------------------------------------------------ per-store stock summaries (state / city / store pages) */
 
 export interface StoreStockSummary { storeNumber: string; lastCheckedAt: Date | null; perModel: Record<ModelKey, { available: number; total: number; parts: string[] }> }

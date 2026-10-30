@@ -12,7 +12,10 @@ export interface WatchView {
 }
 
 export function WatchList({ watches }: { watches: WatchView[] }) {
-  const [items, setItems] = useState(watches);
+  // Local edits sit on top of the server's list, so a refresh (after the alert dialog closes, or the tab
+  // comes back) shows new rules instead of the list as it was on first render.
+  const [edits, setEdits] = useState<Record<string, Partial<WatchView>>>({});
+  const items = watches.map((w) => (edits[w.id] ? { ...w, ...edits[w.id] } : w));
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -21,7 +24,7 @@ export function WatchList({ watches }: { watches: WatchView[] }) {
     try {
       const res = await fetch("/api/watches", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, ...body }) });
       if (!res.ok) throw new Error("Could not update");
-      setItems((xs) => xs.map((x) => (x.id === id ? { ...x, ...local } : x)));
+      setEdits((e) => ({ ...e, [id]: { ...e[id], ...local } }));
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); } finally { setBusy(null); }
   };
   const live = items.filter((w) => w.active);

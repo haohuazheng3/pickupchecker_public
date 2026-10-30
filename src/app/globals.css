@@ -381,4 +381,27 @@ a:active { opacity: .7; }
 }
 @keyframes sheet-in { from { transform: translateY(100%); } }
 html.dialog-open { overflow: hidden; }
+
+/* Site search: a command palette on larger screens, the whole screen on phones. In the top layer (showModal),
+   so the header's backdrop-filter cannot trap it the way it trapped the old position: fixed overlay. */
+.search-dialog {
+  padding: 0; border: 0; color: var(--ink); background: var(--pane-solid);
+  width: min(40rem, calc(100vw - 2rem)); max-width: none; height: auto; max-height: min(72dvh, 38rem);
+  margin: 12vh auto auto; border-radius: 24px; overflow: hidden;
+  box-shadow: 0 40px 100px -30px rgba(0, 0, 0, .45), 0 0 0 1px var(--line);
+}
+.search-dialog[open] { display: flex; flex-direction: column; animation: dialog-in .18s cubic-bezier(.2, .8, .2, 1); }
+.search-dialog::backdrop {
+  background: color-mix(in srgb, var(--bg) 45%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1); backdrop-filter: blur(12px) saturate(1.1);
+}
+@media (max-width: 639px) {
+  .search-dialog { width: 100vw; height: 100dvh; max-height: none; margin: 0; border-radius: 0; box-shadow: none; padding-top: env(safe-area-inset-top); }
+  .search-dialog[open] { animation: search-in .2s ease-out; }
+}
+@keyframes search-in { from { opacity: 0; transform: translateY(-8px); } }
+/* The field draws the focus ring; the global :focus-visible outline would box the text inside it. */
+.search-input:focus, .search-input:focus-visible { outline: none; }
+.search-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+@media (prefers-reduced-motion: reduce) { .search-dialog[open] { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .alert-dialog[open] { animation: none; } }

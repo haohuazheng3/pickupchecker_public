@@ -94,11 +94,11 @@ async function Board({ model }: { model: ModelKey }) {
       <div className="grid grid-cols-3 gap-2">
         <Link href={`/stock/${meta.slug}`} className={`min-w-0 rounded-2xl border p-3 ${inStock.length ? "border-accent/30 bg-accent/[0.06]" : "border-line bg-[var(--pane-solid)]"}`}>
           <div className="flex items-center gap-1.5 text-2xl font-semibold tabular-nums"><Dot state={inStock.length ? "ok" : "idle"} live={inStock.length > 0} />{inStock.length}</div>
-          <div className="truncate text-xs text-ink-3">{meta.short} in stock · stores</div>
+          <div className="truncate text-xs text-ink-3">stores with {meta.short}</div>
         </Link>
         <Link href={`/restocks?model=${model}`} className="min-w-0 rounded-2xl border border-line bg-[var(--pane-solid)] p-3">
           <div className="text-2xl font-semibold tabular-nums">{counts.day}</div>
-          <div className="truncate text-xs text-ink-3">restocks 24 h · {counts.week} wk</div>
+          <div className="truncate text-xs text-ink-3">restocks 24 h<span className="hidden sm:inline"> · {counts.week} wk</span></div>
         </Link>
         <div className="min-w-0 rounded-2xl border border-line bg-[var(--pane-solid)] p-3">
           <div className="truncate text-2xl font-semibold tabular-nums"><LiveAgo iso={newest} /></div>

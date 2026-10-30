@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { desc, eq } from "drizzle-orm";
 import { ensureUser } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
@@ -14,6 +15,7 @@ import { PushSetup } from "@/components/push/PushSetup";
 import { timeAgo } from "@/components/stock/StatusBits";
 import { env } from "@/lib/env";
 import { summarizeDevices } from "@/lib/devices";
+import { RestockTimes, RestockTimesSkeleton } from "@/components/account/RestockTimes";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "My alerts", robots: { index: false } };
@@ -54,6 +56,11 @@ export default async function Account() {
           <DeviceList devices={devices.map((d) => ({ id: d.id, platform: d.platform, standalone: d.standalone, added: timeAgo(d.createdAt), lastAlert: d.lastSentAt ? timeAgo(d.lastSentAt) : null, disabledAt: d.disabledAt?.toISOString() ?? null, lastError: d.lastError }))} />
         )}
       </div>
+
+      {/* Streams in after the rest: thirty days of events for every store the user watches. */}
+      <Suspense fallback={watches.some((w) => w.active) ? <RestockTimesSkeleton /> : null}>
+        <RestockTimes watches={watches} />
+      </Suspense>
 
       <section className="pane mt-6 p-5 sm:p-6">
         <h2 className="text-xl font-semibold">Alerts</h2>

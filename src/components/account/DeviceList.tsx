@@ -7,13 +7,14 @@ export interface DeviceView { id: string; platform: string; standalone: boolean;
 
 /** Every browser / Home Screen app that registered for notifications on this account. */
 export function DeviceList({ devices }: { devices: DeviceView[] }) {
-  const [items, setItems] = useState(devices);
+  const [removed, setRemoved] = useState<string[]>([]); // over the server's list, which a refresh replaces
+  const items = devices.filter((d) => !removed.includes(d.id));
   const [busy, setBusy] = useState<string | null>(null);
   const remove = async (id: string) => {
     setBusy(id);
     try {
       await fetch("/api/push/subscribe", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ id }) });
-      setItems((xs) => xs.filter((x) => x.id !== id));
+      setRemoved((r) => [...r, id]);
     } finally { setBusy(null); }
   };
   if (items.length === 0) return null;
