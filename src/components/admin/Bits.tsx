@@ -15,7 +15,7 @@ export function Table({ head, rows }: { head: string[]; rows: (string | number |
   return (
     <div className="min-w-0 overflow-auto rounded-2xl border border-line">
       <table className="w-full text-left text-sm">
-        <thead className="bg-white/4 text-xs uppercase tracking-wide text-ink-3"><tr>{head.map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
+        <thead className="bg-ink/4 text-xs uppercase tracking-wide text-ink-3"><tr>{head.map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
         <tbody>
           {rows.length === 0 && <tr><td className="px-3 py-6 text-center text-ink-3" colSpan={head.length}>Nothing here.</td></tr>}
           {rows.map((r, i) => <tr key={i} className="border-t border-line">{r.map((c, j) => <td key={j} className="px-3 py-2 align-top text-ink-2">{c as React.ReactNode}</td>)}</tr>)}

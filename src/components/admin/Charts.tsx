@@ -10,12 +10,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 export interface Series { key: string; label: string; color: string }
 export interface Point { t: string; [k: string]: number | string }
 
-/** Categorical slots (validated for the dark pane surface) and the fixed status steps. */
-export const PALETTE = { blue: "#3987e5", orange: "#d95926", aqua: "#199e70", violet: "#9085e9", good: "#0ca30c", warning: "#fab219", serious: "#ec835a", critical: "#d03b3b", muted: "rgba(180,184,198,0.35)" };
+import { PALETTE } from "@/lib/admin/palette";
+export { PALETTE };
 
 const PAD = { l: 40, r: 8, t: 10, b: 22 };
-const GRID = "rgba(255,255,255,0.08)";
-const INK3 = "#7c8196";
+const GRID = "rgba(13,20,17,0.08)";
+const INK3 = "#6b756f";
 
 function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
   const ref = useRef<T>(null);
@@ -71,7 +71,7 @@ function Legend({ series }: { series: Series[] }) {
 function Tooltip({ x, w, title, rows }: { x: number; w: number; title: string; rows: { label: string; value: string; color: string }[] }) {
   const left = x > w * 0.6;
   return (
-    <div className="pointer-events-none absolute top-0 z-10 rounded-xl border border-line bg-[rgba(20,22,32,.97)] px-3 py-2 text-xs shadow-xl" style={left ? { right: w - x + 10 } : { left: x + 10 }}>
+    <div className="pointer-events-none absolute top-0 z-10 rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-xl" style={left ? { right: w - x + 10 } : { left: x + 10 }}>
       <div className="text-ink-3">{title}</div>
       {rows.map((r) => (
         <div key={r.label} className="mt-0.5 flex items-center gap-2"><span className="inline-block h-0.5 w-3 rounded" style={{ background: r.color }} /><span className="font-semibold text-ink">{r.value}</span><span className="text-ink-3">{r.label}</span></div>
@@ -122,7 +122,7 @@ export function StackedBars({ data, series, height = 170, format: fmtName = "com
             </g>
           );
         })}
-        {hover != null && <rect x={PAD.l + hover * slot} y={PAD.t} width={slot} height={plotH} fill="rgba(255,255,255,0.05)" />}
+        {hover != null && <rect x={PAD.l + hover * slot} y={PAD.t} width={slot} height={plotH} fill="rgba(13,20,17,0.04)" />}
       </svg>
       {hover != null && data[hover] && (
         <Tooltip x={PAD.l + hover * slot + slot / 2} w={w} title={fullTime(data[hover].t)} rows={[...series.map((s) => ({ label: s.label, value: format(Number(data[hover][s.key] ?? 0)) + unit, color: s.color })), ...(series.length > 1 ? [{ label: "total", value: format(totals[hover]) + unit, color: "transparent" }] : [])]} />
@@ -165,8 +165,8 @@ export function LineChart({ data, series, height = 170, format: fmtName = "compa
         {data.map((d, i) => i % labelEvery === 0 ? <text key={d.t} x={x(i)} y={height - 6} fontSize="10" fill={INK3} textAnchor="middle">{hhmm(d.t)}</text> : null)}
         {hover != null && (
           <g>
-            <line x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={PAD.t + plotH} stroke="rgba(255,255,255,0.25)" />
-            {series.map((s) => <circle key={s.key} cx={x(hover)} cy={y(Number(data[hover][s.key] ?? 0))} r="4.5" fill={s.color} stroke="#0d0f16" strokeWidth="2" />)}
+            <line x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={PAD.t + plotH} stroke="rgba(13,20,17,0.3)" />
+            {series.map((s) => <circle key={s.key} cx={x(hover)} cy={y(Number(data[hover][s.key] ?? 0))} r="4.5" fill={s.color} stroke="#ffffff" strokeWidth="2" />)}
           </g>
         )}
       </svg>

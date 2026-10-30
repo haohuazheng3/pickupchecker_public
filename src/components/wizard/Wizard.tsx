@@ -158,7 +158,7 @@ export function Wizard({ catalog, initialModel, initialStore, startSignIn, next 
       {/* progress */}
       <div className="mb-5 flex items-center gap-2" aria-label={`Step ${STAGE[step] + 1} of 5`}>
         {[0, 1, 2, 3, 4].map((i) => (
-          <span key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= STAGE[step] ? "bg-accent" : "bg-white/10"}`} />
+          <span key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= STAGE[step] ? "bg-accent" : "bg-ink/8"}`} />
         ))}
       </div>
 
@@ -196,7 +196,7 @@ export function Wizard({ catalog, initialModel, initialStore, startSignIn, next 
             <button type="button" className="chip" aria-pressed={colors.length === 0} onClick={() => setColors([])}>Any</button>
             {colorOptions.map((c) => (
               <button key={c} type="button" className="chip" aria-pressed={colors.includes(c)} onClick={() => toggle(colors, c, setColors)}>
-                <span className="inline-block h-3 w-3 rounded-full border border-white/20" style={{ background: COLOR_META[c]?.hex ?? "#888" }} aria-hidden />{c}
+                <span className="inline-block h-3 w-3 rounded-full border border-ink/15" style={{ background: COLOR_META[c]?.hex ?? "#888" }} aria-hidden />{c}
               </button>
             ))}
           </div>
@@ -294,5 +294,5 @@ function Next({ label, onClick, busy }: { label: string; onClick: () => void; bu
   );
 }
 function Err({ msg }: { msg: string }) {
-  return <p role="alert" className="mt-3 rounded-xl border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-[#ffb3b3]">{msg}</p>;
+  return <p role="alert" className="mt-3 rounded-xl border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-bad">{msg}</p>;
 }

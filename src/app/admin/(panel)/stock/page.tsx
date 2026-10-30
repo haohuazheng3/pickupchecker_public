@@ -1,6 +1,7 @@
 import { stockByModel, skuTable, storeFreshness, recentTransitions, eventBuckets } from "@/lib/admin/ops";
 import { Section, Chip, Filters } from "@/components/admin/Status";
-import { StackedBars, PALETTE } from "@/components/admin/Charts";
+import { StackedBars } from "@/components/admin/Charts";
+import { PALETTE } from "@/lib/admin/palette";
 import { Table, timeAgo, ageMs } from "@/components/admin/Bits";
 
 export default async function AdminStock({ searchParams }: PageProps<"/admin/stock">) {
@@ -17,7 +18,7 @@ export default async function AdminStock({ searchParams }: PageProps<"/admin/sto
           return (
             <div key={m.model.key} className="pane-2 p-4">
               <div className="flex items-baseline justify-between"><span className="font-semibold">{m.model.name}</span><span className="text-xs text-ink-3">{m.available + m.unavailable + m.unknown} rows</span></div>
-              <div className="mt-3 flex h-2.5 gap-px overflow-hidden rounded-full"><span style={{ width: `${(m.available / total) * 100}%`, background: PALETTE.good }} /><span style={{ width: `${(m.unavailable / total) * 100}%` }} className="bg-white/15" /><span style={{ width: `${(m.unknown / total) * 100}%`, background: PALETTE.warning }} /></div>
+              <div className="mt-3 flex h-2.5 gap-px overflow-hidden rounded-full"><span style={{ width: `${(m.available / total) * 100}%`, background: PALETTE.good }} /><span style={{ width: `${(m.unavailable / total) * 100}%` }} className="bg-ink/15" /><span style={{ width: `${(m.unknown / total) * 100}%`, background: PALETTE.warning }} /></div>
               <div className="mt-2 flex flex-wrap gap-x-3 text-xs text-ink-2"><span><b className="text-ink">{m.available}</b> available</span><span><b className="text-ink">{m.unavailable}</b> unavailable</span><span><b className={m.unknown ? "text-warn" : "text-ink"}>{m.unknown}</b> unknown</span></div>
             </div>
           );

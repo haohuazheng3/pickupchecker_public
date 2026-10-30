@@ -18,7 +18,7 @@ export function DeviceList({ devices }: { devices: DeviceView[] }) {
   };
   if (items.length === 0) return null;
   return (
-    <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-white/3 text-sm">
+    <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-ink/3 text-sm">
       {items.map((d) => (
         <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5">
           <span>

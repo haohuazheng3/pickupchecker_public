@@ -96,7 +96,7 @@ export function StorePicker({ value, onChange }: { value: StoreSelection; onChan
               const on = value.storeNumbers.includes(s.storeNumber);
               return (
                 <button key={s.storeNumber} type="button" onClick={() => toggleStore(s.storeNumber)} aria-pressed={on}
-                  className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-white/5 ${on ? "bg-white/10" : ""}`}>
+                  className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-ink/5 ${on ? "bg-ink/8" : ""}`}>
                   <span><span className="font-medium">{s.name}</span> <span className="text-ink-3">· {s.city}, {s.state}</span></span>
                   <span className={`dot ${on ? "dot-ok" : ""}`} aria-hidden />
                 </button>

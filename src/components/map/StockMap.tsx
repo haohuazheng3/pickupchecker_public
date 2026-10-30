@@ -130,13 +130,13 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
         if (cancelled) return;
         setMapError(null); // a transient error before the style finished loading is not fatal
         map.addSource("stores", { type: "geojson", data: geojson });
-        map.addLayer({ id: "halo", type: "circle", source: "stores", filter: [">", ["get", "count"], 0], paint: { "circle-radius": ["interpolate", ["linear"], ["get", "count"], 1, 13, 10, 20, 30, 30], "circle-color": "#35e38c", "circle-opacity": 0.16, "circle-blur": 0.5 } });
+        map.addLayer({ id: "halo", type: "circle", source: "stores", filter: [">", ["get", "count"], 0], paint: { "circle-radius": ["interpolate", ["linear"], ["get", "count"], 1, 13, 10, 20, 30, 30], "circle-color": "#0a7f49", "circle-opacity": 0.14, "circle-blur": 0.5 } });
         map.addLayer({ id: "dots", type: "circle", source: "stores", paint: {
           "circle-radius": ["case", [">", ["get", "count"], 0], ["interpolate", ["linear"], ["get", "count"], 1, 6, 10, 10, 30, 14], 4.5],
-          "circle-color": ["match", ["get", "state"], "ok", "#35e38c", "unknown", "#ffb547", "rgba(180,184,198,0.55)"],
-          "circle-stroke-color": "#07080c", "circle-stroke-width": 1.5,
+          "circle-color": ["match", ["get", "state"], "ok", "#0a7f49", "unknown", "#d97706", "rgba(107,117,111,0.5)"],
+          "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.5,
         } });
-        map.addLayer({ id: "labels", type: "symbol", source: "stores", minzoom: 8, layout: { "text-field": ["get", "name"], "text-size": 11, "text-offset": [0, 1.1], "text-anchor": "top", "text-font": ["Noto Sans Regular"], "text-optional": true }, paint: { "text-color": "#f3f4f8", "text-halo-color": "#07080c", "text-halo-width": 1.2 } });
+        map.addLayer({ id: "labels", type: "symbol", source: "stores", minzoom: 8, layout: { "text-field": ["get", "name"], "text-size": 11, "text-offset": [0, 1.1], "text-anchor": "top", "text-font": ["Noto Sans Regular"], "text-optional": true }, paint: { "text-color": "#0d1411", "text-halo-color": "#ffffff", "text-halo-width": 1.2 } });
         map.on("mouseenter", "dots", (e: maplibregl.MapLayerMouseEvent) => {
           map.getCanvas().style.cursor = "pointer";
           const f = e.features?.[0];
@@ -179,8 +179,8 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
         const data = { type: "Feature" as const, geometry: { type: "Point" as const, coordinates: here }, properties: {} };
         if (!map.getSource("me")) {
           map.addSource("me", { type: "geojson", data });
-          map.addLayer({ id: "me-halo", type: "circle", source: "me", paint: { "circle-radius": 14, "circle-color": "#7cc4ff", "circle-opacity": 0.25 } });
-          map.addLayer({ id: "me", type: "circle", source: "me", paint: { "circle-radius": 6, "circle-color": "#7cc4ff", "circle-stroke-color": "#07080c", "circle-stroke-width": 2 } });
+          map.addLayer({ id: "me-halo", type: "circle", source: "me", paint: { "circle-radius": 14, "circle-color": "#0a7aff", "circle-opacity": 0.22 } });
+          map.addLayer({ id: "me", type: "circle", source: "me", paint: { "circle-radius": 6, "circle-color": "#0a7aff", "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 } });
         } else (map.getSource("me") as maplibregl.GeoJSONSource).setData(data);
         map.flyTo({ center: here, zoom: 9, duration: 1000 });
       },
@@ -233,13 +233,13 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
         <div className="pane relative h-[62vh] min-h-[460px] overflow-hidden">
           {/* explicit size, not inset-0: maplibre's own CSS sets position: relative on the container */}
           <div ref={mapEl} className="h-full w-full" aria-label="Map of US Apple Stores" role="application" />
-          {!ready && !mapError && <div className="absolute inset-0 flex items-center justify-center bg-[#0b0d14] text-sm text-ink-3"><span className="spinner mr-2" /> Loading map…</div>}
+          {!ready && !mapError && <div className="absolute inset-0 flex items-center justify-center bg-bg-2 text-sm text-ink-3"><span className="spinner mr-2" /> Loading map…</div>}
           {mapError && <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-ink-2">{mapError}. The list on the right still works.</div>}
           <div className="absolute right-3 top-3 flex flex-wrap justify-end gap-1.5">
-            <button type="button" className="rounded-full border border-accent/50 bg-[rgba(13,15,22,.85)] px-2.5 py-1 text-[11px] font-medium text-accent backdrop-blur hover:bg-white/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={nearMe} disabled={locating}>{locating ? "Locating…" : "📍 Near me"}</button>
-            {Object.entries(REGIONS).map(([name, b]) => <button key={name} type="button" className="rounded-full border border-line-2 bg-[rgba(13,15,22,.85)] px-2.5 py-1 text-[11px] font-medium backdrop-blur hover:bg-white/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={() => flyTo(b)}>{name}</button>)}
+            <button type="button" className="rounded-full border border-accent/50 bg-pane px-2.5 py-1 text-[11px] font-medium text-accent backdrop-blur hover:bg-ink/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={nearMe} disabled={locating}>{locating ? "Locating…" : "📍 Near me"}</button>
+            {Object.entries(REGIONS).map(([name, b]) => <button key={name} type="button" className="rounded-full border border-line-2 bg-pane px-2.5 py-1 text-[11px] font-medium backdrop-blur hover:bg-ink/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={() => flyTo(b)}>{name}</button>)}
           </div>
-          <div className="absolute bottom-7 left-3 flex flex-wrap gap-x-4 gap-y-1 rounded-2xl border border-line bg-[rgba(13,15,22,.85)] px-3 py-2 text-xs text-ink-2 backdrop-blur">
+          <div className="absolute bottom-7 left-3 flex flex-wrap gap-x-4 gap-y-1 rounded-2xl border border-line bg-pane px-3 py-2 text-xs text-ink-2 backdrop-blur">
             <span className="inline-flex items-center gap-1.5"><span className="dot dot-ok" /> in stock</span>
             <span className="inline-flex items-center gap-1.5"><span className="dot" /> none</span>
             <span className="inline-flex items-center gap-1.5"><span className="dot dot-warn" /> not checked yet</span>
@@ -257,7 +257,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
                   <li key={s.code}>
                     <button type="button" className="group grid w-full grid-cols-[2.2rem_1fr_auto] items-center gap-2 text-left text-sm" onClick={() => focusState(s.code)}>
                       <span className="font-mono text-xs text-ink-3">{s.code}</span>
-                      <span className="h-2 overflow-hidden rounded-full bg-white/8"><span className="block h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.max(6, (s.withStock / stats.states[0].withStock) * 100)}%` }} /></span>
+                      <span className="h-2 overflow-hidden rounded-full bg-ink/6"><span className="block h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.max(6, (s.withStock / stats.states[0].withStock) * 100)}%` }} /></span>
                       <span className="text-ink-2 group-hover:text-ink">{s.withStock}/{s.stores}</span>
                     </button>
                   </li>
@@ -311,12 +311,12 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
             <thead className="text-left text-xs uppercase tracking-wide text-ink-3"><tr><th className="py-2 pr-3 font-medium">State</th><th className="py-2 pr-3 font-medium">Stores</th><th className="py-2 pr-3 font-medium">With stock</th><th className="py-2 pr-3 font-medium">Configurations</th><th className="py-2 font-medium">Share</th></tr></thead>
             <tbody className="divide-y divide-line">
               {stats.states.map((s) => (
-                <tr key={s.code} className="cursor-pointer hover:bg-white/4" onClick={() => focusState(s.code)}>
+                <tr key={s.code} className="cursor-pointer hover:bg-ink/5" onClick={() => focusState(s.code)}>
                   <td className="py-2 pr-3"><span className="font-mono text-xs text-ink-3">{s.code}</span> {s.name} <Link href={stores.find((x) => x.code === s.code)?.stateHref ?? "/stores"} className="ml-1 text-xs text-ink-3 underline hover:text-ink" onClick={(e) => e.stopPropagation()}>page</Link></td>
                   <td className="py-2 pr-3 text-ink-2">{s.stores}</td>
                   <td className={`py-2 pr-3 ${s.withStock ? "text-accent" : "text-ink-3"}`}>{s.withStock}</td>
                   <td className="py-2 pr-3 text-ink-2">{s.configs}</td>
-                  <td className="py-2"><span className="block h-1.5 w-32 overflow-hidden rounded-full bg-white/8"><span className="block h-full bg-accent" style={{ width: `${(s.withStock / s.stores) * 100}%` }} /></span></td>
+                  <td className="py-2"><span className="block h-1.5 w-32 overflow-hidden rounded-full bg-ink/6"><span className="block h-full bg-accent" style={{ width: `${(s.withStock / s.stores) * 100}%` }} /></span></td>
                 </tr>
               ))}
             </tbody>
@@ -337,7 +337,7 @@ function SelectedParts({ parts }: { parts: string[] }) {
         <div key={g.m.key}>
           <div className="text-xs font-semibold uppercase tracking-wide text-ink-3">{g.m.name} · {g.items.length}</div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {g.items.map((i) => <span key={i.partNumber} className="inline-flex items-center gap-1.5 rounded-full bg-white/8 px-2 py-0.5 text-xs text-ink-2"><span className="h-2.5 w-2.5 rounded-full border border-white/20" style={{ background: COLOR_META[i.color]?.hex ?? "#888" }} />{i.storage} {i.color}</span>)}
+            {g.items.map((i) => <span key={i.partNumber} className="inline-flex items-center gap-1.5 rounded-full bg-ink/6 px-2 py-0.5 text-xs text-ink-2"><span className="h-2.5 w-2.5 rounded-full border border-ink/15" style={{ background: COLOR_META[i.color]?.hex ?? "#888" }} />{i.storage} {i.color}</span>)}
           </div>
         </div>
       ))}

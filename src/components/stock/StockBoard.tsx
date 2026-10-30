@@ -35,7 +35,7 @@ export async function StockBoard({ model, storage, color, limit = 60 }: { model:
                     <Dot state="ok" live />
                   </div>
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    {items.slice(0, 6).map((i) => <span key={i.partNumber} className="rounded-full bg-white/8 px-2 py-0.5 text-xs text-ink-2">{i.storage} {i.color}</span>)}
+                    {items.slice(0, 6).map((i) => <span key={i.partNumber} className="rounded-full bg-ink/6 px-2 py-0.5 text-xs text-ink-2">{i.storage} {i.color}</span>)}
                     {items.length > 6 && <span className="text-xs text-ink-3">+{items.length - 6}</span>}
                   </div>
                   <div className="mt-2 text-xs text-ink-3">Seen {timeAgo(r.lastAvailableAt)}</div>

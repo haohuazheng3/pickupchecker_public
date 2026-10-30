@@ -4,7 +4,8 @@ import { fmtDuration, type Heartbeat } from "@/lib/admin/health";
 import { COVERAGE, STORE_INDEX, ALL_PART_NUMBERS } from "@/lib/apple/catalog";
 import { Table, timeAgo, Stat, ageMs, isPast } from "@/components/admin/Bits";
 import { Section, KV, Chip, Filters } from "@/components/admin/Status";
-import { StackedBars, LineChart, PALETTE } from "@/components/admin/Charts";
+import { StackedBars, LineChart } from "@/components/admin/Charts";
+import { PALETTE } from "@/lib/admin/palette";
 
 export default async function AdminPoller({ searchParams }: PageProps<"/admin/poller">) {
   const sp = await searchParams;

@@ -39,13 +39,13 @@ async function previewLocally() {
 
 function StatusPill({ status }: { status: PushState["status"] }) {
   const map: Record<PushState["status"], [string, string]> = {
-    checking: ["Checking…", "bg-white/8 text-ink-3"],
+    checking: ["Checking…", "bg-ink/6 text-ink-3"],
     "in-app-browser": ["Open in Safari", "bg-warn/15 text-warn"],
     "needs-install": ["Not installed", "bg-warn/15 text-warn"],
-    unsupported: ["Unsupported", "bg-white/8 text-ink-3"],
+    unsupported: ["Unsupported", "bg-ink/6 text-ink-3"],
     "needs-signin": ["Sign in", "bg-warn/15 text-warn"],
     denied: ["Blocked", "bg-bad/15 text-bad"],
-    ready: ["Off", "bg-white/8 text-ink-2"],
+    ready: ["Off", "bg-ink/6 text-ink-2"],
     on: ["On", "bg-accent/15 text-accent"],
   };
   const [label, cls] = map[status];
@@ -105,7 +105,7 @@ function IosMiniSteps() {
   return (
     <ol className="mt-4 grid gap-2 sm:grid-cols-3">
       {steps.map(([t, icon], i) => (
-        <li key={t} className="flex items-center gap-3 rounded-2xl border border-line bg-white/4 px-3 py-2.5 text-sm">
+        <li key={t} className="flex items-center gap-3 rounded-2xl border border-line bg-ink/4 px-3 py-2.5 text-sm">
           <span className="step-num shrink-0">{i + 1}</span>
           <span className="text-accent">{icon}</span>
           <span>{t}</span>

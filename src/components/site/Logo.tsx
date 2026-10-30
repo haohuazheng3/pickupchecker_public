@@ -3,7 +3,7 @@ export function LogoMark({ size = 28 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
       <rect x="4" y="4" width="56" height="56" rx="18" fill="url(#pc-g)" />
       <path d="M22 33.5l7 7L43 25.5" stroke="#052414" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="46" cy="18" r="6" fill="#07080c" stroke="#35e38c" strokeWidth="3" />
+      <circle cx="46" cy="18" r="6" fill="#ffffff" stroke="#1fbf72" strokeWidth="3" />
       <defs>
         <linearGradient id="pc-g" x1="4" y1="4" x2="60" y2="60" gradientUnits="userSpaceOnUse">
           <stop stopColor="#5cf0a5" />

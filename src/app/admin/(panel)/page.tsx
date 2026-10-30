@@ -3,7 +3,8 @@ import { adminOverview } from "@/lib/admin/queries";
 import { computeNodes, overallState } from "@/lib/admin/health";
 import { pollerStrip, appleStrip, cronStrip, alertStrip } from "@/lib/admin/strips";
 import { NodeCard, HealthStrip, Section, StatePill } from "@/components/admin/Status";
-import { StackedBars, LineChart, PALETTE } from "@/components/admin/Charts";
+import { StackedBars, LineChart } from "@/components/admin/Charts";
+import { PALETTE } from "@/lib/admin/palette";
 import { Table, timeAgo } from "@/components/admin/Bits";
 
 export default async function AdminHome() {

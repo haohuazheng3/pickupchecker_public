@@ -114,7 +114,7 @@ async function Board({ model }: { model: ModelKey }) {
       {inStock.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {inStock.slice(0, 6).map((r) => { const s = STORE_INDEX.get(r.storeNumber); return s ? <Link key={r.storeNumber} href={`/map?store=${r.storeNumber}&model=${model}`} className="rounded-full bg-accent/15 px-2.5 py-1 text-xs text-accent hover:bg-accent/25">{s.name} · {r.availableParts.length}</Link> : null; })}
-          {inStock.length > 6 && <Link href={`/stock/${meta.slug}`} className="rounded-full bg-white/8 px-2.5 py-1 text-xs text-ink-2">+{inStock.length - 6} more</Link>}
+          {inStock.length > 6 && <Link href={`/stock/${meta.slug}`} className="rounded-full bg-ink/6 px-2.5 py-1 text-xs text-ink-2">+{inStock.length - 6} more</Link>}
         </div>
       )}
       <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-3">Latest {meta.short} restocks</div>

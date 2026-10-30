@@ -36,7 +36,7 @@ export function PlanCard({ plan }: { plan: PlanView }) {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-semibold">{plan.key === "free" ? "No plan yet" : `${def.name} plan`}</h2>
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${plan.key === "free" ? "bg-white/8 text-ink-2" : "bg-accent/15 text-accent"}`}>{def.priceUsd ? `$${def.priceUsd}/month` : "alerts off"}</span>
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${plan.key === "free" ? "bg-ink/6 text-ink-2" : "bg-accent/15 text-accent"}`}>{def.priceUsd ? `$${def.priceUsd}/month` : "alerts off"}</span>
             {plan.status === "past_due" && <span className="rounded-full bg-warn/15 px-2.5 py-0.5 text-xs font-semibold text-warn">payment failed</span>}
           </div>
           <p className="mt-1 text-sm text-ink-2">
@@ -44,7 +44,7 @@ export function PlanCard({ plan }: { plan: PlanView }) {
               ? `${plan.used} alert rule${plan.used === 1 ? "" : "s"} saved — not sending until you pick a plan.`
               : <>{plan.used} of {plan.limit} alert rules in use{over ? ` — ${plan.used - plan.limit} over the limit and not sending` : ""}.{renews ? (plan.cancelAtPeriodEnd ? ` Ends ${renews}.` : ` Renews ${renews}.`) : ""}</>}
           </p>
-          {plan.key !== "free" && <div className="mt-3 h-2 w-64 max-w-full overflow-hidden rounded-full bg-white/8"><div className={`h-full rounded-full ${over ? "bg-warn" : "bg-accent"}`} style={{ width: `${pct}%` }} /></div>}
+          {plan.key !== "free" && <div className="mt-3 h-2 w-64 max-w-full overflow-hidden rounded-full bg-ink/6"><div className={`h-full rounded-full ${over ? "bg-warn" : "bg-accent"}`} style={{ width: `${pct}%` }} /></div>}
         </div>
         <div className="flex flex-wrap gap-2">
           {plan.key === "free" && <><button className="btn btn-primary btn-sm" disabled={busy != null} onClick={() => void go("plus")}>{busy === "plus" && <span className="spinner" />}Plus · 10 alerts · $5/mo</button><button className="btn btn-ghost btn-sm" disabled={busy != null} onClick={() => void go("pro")}>{busy === "pro" && <span className="spinner" />}Pro · 20 alerts · $10/mo</button></>}

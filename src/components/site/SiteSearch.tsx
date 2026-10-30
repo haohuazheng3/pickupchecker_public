@@ -60,9 +60,9 @@ export function SiteSearch() {
 
   return (
     <>
-      <button type="button" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-2 bg-white/6 text-ink transition hover:bg-white/10 active:scale-95" aria-label="Search states, cities and stores" title="Search (⌘K)" onClick={show}><SearchIcon /></button>
+      <button type="button" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-2 bg-ink/4 text-ink transition hover:bg-ink/10 active:scale-95" aria-label="Search states, cities and stores" title="Search (⌘K)" onClick={show}><SearchIcon /></button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[10vh] backdrop-blur-sm" onClick={hide} role="presentation">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink/35 p-4 pt-[10vh] backdrop-blur-sm" onClick={hide} role="presentation">
           <div role="dialog" aria-modal="true" aria-label="Search" className="pane w-full max-w-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 border-b border-line px-4 text-ink-3">
               <SearchIcon />
@@ -76,7 +76,7 @@ export function SiteSearch() {
               {q.trim() !== "" && index && results.length === 0 && <li className="px-4 py-3 text-sm text-ink-3">Nothing matches. Try a state, a city, a store name or a ZIP code.</li>}
               {results.map((r, i) => (
                 <li key={`${r.k}:${r.h}:${r.l}`} role="option" aria-selected={i === active}>
-                  <Link href={r.h} onClick={() => go(r)} onMouseEnter={() => setActive(i)} className={`flex items-center gap-3 px-4 py-2.5 text-sm ${i === active ? "bg-white/8" : ""}`}>
+                  <Link href={r.h} onClick={() => go(r)} onMouseEnter={() => setActive(i)} className={`flex items-center gap-3 px-4 py-2.5 text-sm ${i === active ? "bg-ink/6" : ""}`}>
                     <span className="w-11 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-ink-3">{KIND_LABEL[r.k]}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium text-ink">{r.k === "store" ? `Apple ${r.l}` : r.l}</span>

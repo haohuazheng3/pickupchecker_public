@@ -17,7 +17,7 @@ export function StockByModel({ summary, storeNumber }: { summary: StoreStockSumm
             <div className={`mt-1 text-sm ${n ? "text-accent" : "text-ink-3"}`}>{s ? (n ? `${n} of ${s.total} configurations available now` : `none of ${s.total} configurations right now`) : "not checked yet"}</div>
             {items.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {items.slice(0, 8).map((i) => <span key={i.partNumber} className="inline-flex items-center gap-1.5 rounded-full bg-white/8 px-2 py-0.5 text-xs text-ink-2"><span className="h-2 w-2 rounded-full border border-white/20" style={{ background: COLOR_META[i.color]?.hex ?? "#888" }} />{i.storage} {i.color}</span>)}
+                {items.slice(0, 8).map((i) => <span key={i.partNumber} className="inline-flex items-center gap-1.5 rounded-full bg-ink/6 px-2 py-0.5 text-xs text-ink-2"><span className="h-2 w-2 rounded-full border border-ink/15" style={{ background: COLOR_META[i.color]?.hex ?? "#888" }} />{i.storage} {i.color}</span>)}
                 {items.length > 8 && <span className="text-xs text-ink-3">+{items.length - 8}</span>}
               </div>
             )}

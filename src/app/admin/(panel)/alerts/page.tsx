@@ -2,7 +2,8 @@ import { alertBuckets, notificationRows, pushDevices, watchesTable } from "@/lib
 import { PART_INDEX, STORE_INDEX, MODELS } from "@/lib/apple/catalog";
 import { platformLabel, type Platform } from "@/lib/push/platform";
 import { Section, Chip, Filters, Pager } from "@/components/admin/Status";
-import { StackedBars, PALETTE } from "@/components/admin/Charts";
+import { StackedBars } from "@/components/admin/Charts";
+import { PALETTE } from "@/lib/admin/palette";
 import { Table, timeAgo, Stat } from "@/components/admin/Bits";
 
 export default async function AdminAlerts({ searchParams }: PageProps<"/admin/alerts">) {

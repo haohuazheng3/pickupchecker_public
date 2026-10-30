@@ -26,7 +26,7 @@ export default async function AdminLogin({ searchParams }: PageProps<"/admin/log
         <label className="mt-5 block text-sm text-ink-2">Password
           <input className="input mt-1" type="password" name="password" autoComplete="current-password" autoFocus required />
         </label>
-        {error && <p role="alert" className="mt-3 rounded-xl border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-[#ffb3b3]">{error}</p>}
+        {error && <p role="alert" className="mt-3 rounded-xl border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-bad">{error}</p>}
         <button type="submit" className="btn btn-primary mt-5 w-full">Open the console</button>
       </form>
     </div>

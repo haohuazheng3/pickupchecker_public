@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { NodeHealth, NodeState } from "@/lib/admin/health";
 
 const DOT: Record<NodeState, string> = { ok: "bg-accent", warn: "bg-warn", bad: "bg-bad", idle: "bg-ink-3" };
-const RING: Record<NodeState, string> = { ok: "shadow-[0_0_0_4px_rgba(53,227,140,.18)]", warn: "shadow-[0_0_0_4px_rgba(255,181,71,.18)]", bad: "shadow-[0_0_0_4px_rgba(255,107,107,.2)]", idle: "" };
+const RING: Record<NodeState, string> = { ok: "shadow-[0_0_0_4px_rgba(10,127,73,.18)]", warn: "shadow-[0_0_0_4px_rgba(194,113,10,.18)]", bad: "shadow-[0_0_0_4px_rgba(220,38,38,.18)]", idle: "" };
 export const STATE_LABEL: Record<NodeState, string> = { ok: "Healthy", warn: "Attention", bad: "Down", idle: "Idle" };
 const ICON: Record<NodeState, string> = { ok: "✓", warn: "!", bad: "✕", idle: "–" };
 
@@ -11,7 +11,7 @@ export function StateDot({ state, live }: { state: NodeState; live?: boolean }) 
 }
 
 export function StatePill({ state, label }: { state: NodeState; label?: string }) {
-  const cls = state === "ok" ? "bg-accent/15 text-accent" : state === "warn" ? "bg-warn/15 text-warn" : state === "bad" ? "bg-bad/15 text-bad" : "bg-white/8 text-ink-3";
+  const cls = state === "ok" ? "bg-accent/15 text-accent" : state === "warn" ? "bg-warn/15 text-warn" : state === "bad" ? "bg-bad/15 text-bad" : "bg-ink/6 text-ink-3";
   return <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${cls}`}><span aria-hidden>{ICON[state]}</span>{label ?? STATE_LABEL[state]}</span>;
 }
 
@@ -42,7 +42,7 @@ export function HealthStrip({ label, cells, legend }: { label: string; cells: St
     <div>
       <div className="mb-1 flex items-center justify-between text-xs"><span className="font-medium text-ink-2">{label}</span><span className="text-ink-3">{legend ? `${legend} · ` : ""}{summary}</span></div>
       <div className="flex h-3.5 gap-px overflow-hidden rounded-md" role="img" aria-label={`${label}: ${summary}`}>
-        {cells.map((c) => <span key={c.t} title={c.title} className={`min-w-0 flex-1 ${c.state === "ok" ? "bg-accent/70" : c.state === "warn" ? "bg-warn/80" : c.state === "bad" ? "bg-bad/80" : "bg-white/8"}`} />)}
+        {cells.map((c) => <span key={c.t} title={c.title} className={`min-w-0 flex-1 ${c.state === "ok" ? "bg-accent/70" : c.state === "warn" ? "bg-warn/80" : c.state === "bad" ? "bg-bad/80" : "bg-ink/6"}`} />)}
       </div>
       <div className="mt-1 flex justify-between text-[10px] text-ink-3"><span>24 h ago</span><span>now</span></div>
     </div>

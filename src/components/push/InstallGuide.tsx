@@ -118,11 +118,11 @@ function StepAction({ kind, p }: { kind: "notify" | "install"; p: PushState }) {
     return <button type="button" className="btn btn-primary mt-4 w-full" disabled={p.busy} onClick={() => void p.install()}>Install PickupChecker</button>;
   }
   if (p.status === "on") return <div className="mt-4 rounded-2xl bg-accent/12 px-4 py-3 text-sm text-accent">✓ Notifications are on for this device.{" "}<button type="button" className="underline" disabled={p.busy} onClick={() => void p.sendTest()}>Send a test</button></div>;
-  if (p.status === "needs-install") return <div className="mt-4 rounded-2xl bg-white/5 px-4 py-3 text-sm text-ink-3">This button lights up once you open PickupChecker from your Home Screen.</div>;
+  if (p.status === "needs-install") return <div className="mt-4 rounded-2xl bg-ink/4 px-4 py-3 text-sm text-ink-3">This button lights up once you open PickupChecker from your Home Screen.</div>;
   if (p.status === "needs-signin") return <a href={`/?signin=1&next=${encodeURIComponent("/install")}`} className="btn btn-primary mt-4 w-full">Sign in first</a>;
   if (p.status === "ready" && p.signedIn === false) return <a href={`/?signin=1&next=${encodeURIComponent("/install")}`} className="btn btn-primary mt-4 w-full">Sign in, then turn on</a>;
   if (p.status === "ready") return <button type="button" className="btn btn-primary mt-4 w-full" disabled={p.busy} onClick={() => void p.turnOn()}>{p.busy && <span className="spinner" />}Turn on notifications</button>;
-  if (p.status === "denied") return <div className="mt-4 rounded-2xl bg-bad/10 px-4 py-3 text-sm text-[#ffb3b3]">Blocked. Allow notifications for PickupChecker in your settings, then reload.</div>;
+  if (p.status === "denied") return <div className="mt-4 rounded-2xl bg-bad/10 px-4 py-3 text-sm text-bad">Blocked. Allow notifications for PickupChecker in your settings, then reload.</div>;
   return null;
 }
 

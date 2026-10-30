@@ -62,10 +62,10 @@ const Monitor = ({ className = "" }: { className?: string }) => (
 
 export function AppIcon({ size = 44 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" className="shrink-0 rounded-[22%] shadow-[0_6px_18px_-6px_rgba(53,227,140,.6)]">
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" className="shrink-0 rounded-[22%] shadow-[0_6px_18px_-6px_rgba(10,127,73,.45)]">
       <rect width="64" height="64" fill="url(#pc-icon-g)" />
       <path d="M20 33.5l8 8L45 24" stroke="#052414" strokeWidth="6.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="47" cy="17" r="6" fill="#07080c" stroke="#35e38c" strokeWidth="3" />
+      <circle cx="47" cy="17" r="6" fill="#ffffff" stroke="#1fbf72" strokeWidth="3" />
       <defs><linearGradient id="pc-icon-g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop stopColor="#5cf0a5" /><stop offset="1" stopColor="#1fbf72" /></linearGradient></defs>
     </svg>
   );
@@ -252,11 +252,11 @@ export function LockScreenMock() {
           </div>
         </div>
         <div className="mock-notif mock-notif-faded">
-          <span className="h-9 w-9 shrink-0 rounded-[22%] bg-white/10" />
+          <span className="h-9 w-9 shrink-0 rounded-[22%] bg-ink/8" />
           <div className="min-w-0 flex-1"><div className="mock-skel w-1/3" /><div className="mock-skel w-3/4" /></div>
         </div>
         <div className="mock-notif mock-notif-faded mock-notif-fainter">
-          <span className="h-9 w-9 shrink-0 rounded-[22%] bg-white/10" />
+          <span className="h-9 w-9 shrink-0 rounded-[22%] bg-ink/8" />
           <div className="min-w-0 flex-1"><div className="mock-skel w-1/4" /><div className="mock-skel w-2/3" /></div>
         </div>
         <div className="mock-home-bar" />

@@ -27,16 +27,16 @@ export function MiniMap({ lat, lng, label, href }: { lat: number; lng: number; l
       map.on("load", () => {
         if (!map) return;
         map.addSource("pin", { type: "geojson", data: { type: "Feature", geometry: { type: "Point", coordinates: [lng, lat] }, properties: {} } });
-        map.addLayer({ id: "pin-halo", type: "circle", source: "pin", paint: { "circle-radius": 16, "circle-color": "#35e38c", "circle-opacity": 0.2 } });
-        map.addLayer({ id: "pin", type: "circle", source: "pin", paint: { "circle-radius": 7, "circle-color": "#35e38c", "circle-stroke-color": "#07080c", "circle-stroke-width": 2 } });
+        map.addLayer({ id: "pin-halo", type: "circle", source: "pin", paint: { "circle-radius": 16, "circle-color": "#0a7f49", "circle-opacity": 0.18 } });
+        map.addLayer({ id: "pin", type: "circle", source: "pin", paint: { "circle-radius": 7, "circle-color": "#0a7f49", "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 } });
       });
     })();
     return () => { cancelled = true; map?.remove(); };
   }, [visible, lat, lng]);
   return (
-    <Link href={href} className="pane-hover relative block h-56 overflow-hidden rounded-[20px] border border-line bg-[#0b0d14]" aria-label={`Open ${label} on the live map`}>
+    <Link href={href} className="pane-hover relative block h-56 overflow-hidden rounded-[20px] border border-line bg-bg-2" aria-label={`Open ${label} on the live map`}>
       <div ref={el} className="h-full w-full" />
-      <span className="absolute bottom-3 left-3 rounded-full border border-line-2 bg-[rgba(13,15,22,.85)] px-3 py-1 text-xs backdrop-blur">Open on the live map →</span>
+      <span className="absolute bottom-3 left-3 rounded-full border border-line-2 bg-pane px-3 py-1 text-xs backdrop-blur">Open on the live map →</span>
     </Link>
   );
 }
