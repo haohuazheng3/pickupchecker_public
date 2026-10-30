@@ -150,6 +150,10 @@ export const storeSkuStatus = pgTable(
     lastCheckedAt: ts("last_checked_at"),
     lastChangedAt: ts("last_changed_at"),
     lastAvailableAt: ts("last_available_at"),
+    // An observed change waiting for confirmation (stock/ingest.ts CONFIRM): one response never flips a status alone.
+    pendingStatus: text("pending_status"),
+    pendingSince: ts("pending_since"),
+    pendingSeen: integer("pending_seen").notNull().default(0),
   },
   (t) => [
     primaryKey({ columns: [t.storeNumber, t.partNumber] }),

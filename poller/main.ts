@@ -172,11 +172,11 @@ async function main() {
       await writeHeartbeat({
         at: new Date().toISOString(), host: HOST, mode, cadenceSec: CADENCE_SEC, lastSweepId: r.id,
         requests: r.requests, failures: r.failures, throttled: r.throttled, storesCovered: r.storesCovered,
-        transitions: r.transitions, notified: r.notified, durationMs: r.durationMs, egress: egress.name,
+        transitions: r.transitions, held: r.held, notified: r.notified, durationMs: r.durationMs, egress: egress.name,
         ipv6Stats: ipv6 ? ipv6.stats : null, sys: hostVitals(), sweeps: ++sweepsSinceStart, consecutiveBad,
       });
       void before;
-      console.log(`[sweep ${r.id.slice(0, 8)}] ${mode}/${egress.name} req=${r.requests} fail=${r.failures} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} sent=${r.notified.sent} ${r.durationMs}ms`);
+      console.log(`[sweep ${r.id.slice(0, 8)}] ${mode}/${egress.name} req=${r.requests} fail=${r.failures} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} held=${r.held} sent=${r.notified.sent} ${r.durationMs}ms`);
 
       if (mode === "full" && throttledShare >= 0.25) {
         consecutiveBad++;

@@ -48,6 +48,8 @@ export interface SweepSummary {
   timeouts: number;
   storesCovered: number;
   transitions: number;
+  /** Observations held back as unconfirmed (Apple blips) — see ingest.ts CONFIRM. */
+  held: number;
   notified: { matched: number; sent: number; failed: number; skipped: number };
   durationMs: number;
   exhausted: boolean;
@@ -65,7 +67,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
   const covered = new Set<string>();
   const allTransitions: Transition[] = [];
   const allEventIds: number[] = [];
-  let requests = 0, failures = 0, throttled = 0, timeouts = 0, exhausted = false;
+  let requests = 0, failures = 0, throttled = 0, timeouts = 0, held = 0, exhausted = false;
   const logRows: (typeof schema.pollLog.$inferInsert)[] = [];
 
   let cursor = 0;
@@ -101,6 +103,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
           for (const s of res.stores) if (known.has(s.storeNumber)) covered.add(s.storeNumber);
           allTransitions.push(...r.transitions);
           allEventIds.push(...r.eventIds);
+          held += r.held;
           // Notify immediately per response (latency matters more than batching).
           if (r.transitions.some((t) => t.kind === "restock")) {
             const n = await notifyRestocks(r.transitions, r.eventIds);
@@ -129,7 +132,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
     .update(schema.sweeps)
     .set({ finishedAt: finished, requests, failures, storesCovered: covered.size, transitions: allTransitions.length, durationMs: finished.getTime() - started.getTime() })
     .where((await import("drizzle-orm")).eq(schema.sweeps.id, id));
-  return { id, requests, failures, throttled, timeouts, storesCovered: covered.size, transitions: allTransitions.length, notified, durationMs: finished.getTime() - started.getTime(), exhausted };
+  return { id, requests, failures, throttled, timeouts, storesCovered: covered.size, transitions: allTransitions.length, held, notified, durationMs: finished.getTime() - started.getTime(), exhausted };
 }
 
 /** Heartbeat written after every sweep; the watchdog and the admin page read it. */

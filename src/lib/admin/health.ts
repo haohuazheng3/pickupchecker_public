@@ -18,7 +18,7 @@ export interface NodeHealth {
 
 export interface Heartbeat {
   at?: string; host?: string; mode?: string; cadenceSec?: number; requests?: number; failures?: number; throttled?: number;
-  storesCovered?: number; durationMs?: number; egress?: string; transitions?: number;
+  storesCovered?: number; durationMs?: number; egress?: string; transitions?: number; held?: number;
   sys?: { load1?: number; load5?: number; cpus?: number; memTotalMb?: number; memFreeMb?: number; rssMb?: number; uptimeSec?: number; procUptimeSec?: number; node?: string; commit?: string | null; pid?: number };
   sweeps?: number; consecutiveBad?: number;
   ipv6Stats?: { requests: number; throttled: number; errors: number } | null;
@@ -80,7 +80,7 @@ export function computeNodes(s: HealthSnapshot): NodeHealth[] {
     key: "poller", name: "Poller (Linode)", href: "/admin/poller",
     state: hbAge < 2.5 * MIN ? (hb?.mode === "degraded" ? "warn" : "ok") : hbAge < 10 * MIN ? "warn" : "bad",
     value: hb ? `${hb.mode ?? "?"} · ${fmtAge(hbAge)}` : "no heartbeat",
-    detail: hb ? `${hb.host ?? "?"} · every ${hb.cadenceSec ?? "?"} s via ${hb.egress ?? "?"} · last sweep ${hb.requests ?? 0} req, ${hb.storesCovered ?? 0} stores, ${hb.durationMs ? (hb.durationMs / 1000).toFixed(1) : "?"} s` : "the host has never written a heartbeat",
+    detail: hb ? `${hb.host ?? "?"} · every ${hb.cadenceSec ?? "?"} s via ${hb.egress ?? "?"} · last sweep ${hb.requests ?? 0} req, ${hb.storesCovered ?? 0} stores, ${hb.durationMs ? (hb.durationMs / 1000).toFixed(1) : "?"} s · ${hb.held ?? 0} unconfirmed blips held` : "the host has never written a heartbeat",
   });
 
   // 2. host vitals

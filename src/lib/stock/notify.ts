@@ -31,7 +31,9 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
   const stats: NotifyStats = { matched: 0, sent: 0, failed: 0, skipped: 0 };
   const restocks = transitions
     .map((t, i) => ({ t, eventId: eventIds[i] }))
-    .filter((x) => x.t.kind === "restock");
+    // First sightings (a store or part we had no status for: coverage grew, a SKU was added, rows expired
+    // as stale while the poller was down) are not restocks — alerting on them would spam every watcher.
+    .filter((x) => x.t.kind === "restock" && !x.t.firstSeen);
   if (restocks.length === 0) return stats;
   const d = db();
 
