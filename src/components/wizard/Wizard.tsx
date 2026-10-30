@@ -1,14 +1,15 @@
 "use client";
 /**
  * "Alert me" — one surface, five stages:
- *   model → exact configuration (storage, colour) → one store → email + code (Clerk, custom UI) → done, or pick a plan
- * One rule = one store × one exact configuration. Every pick advances on its own (no Continue buttons
- * between picks); the rule is saved as soon as the user is signed in and sends once a Plus/Pro plan is active.
+ *   model → exact configuration (storage, colour) → tick stores → email + code (Clerk, custom UI) → done, or pick a plan
+ * One rule = one store × one exact configuration; ticking several stores saves one rule per store when the
+ * user presses "Set N alerts". Model and configuration picks advance on their own; the store step waits for
+ * that button. Rules are saved as soon as the user is signed in and send once a Plus/Pro plan is active.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
 import { MODELS, COLOR_META, STORAGE_ORDER, STORE_INDEX, stateCodeOf, type ModelKey } from "@/lib/apple/catalog";
-import { PLANS, comparePlans, type PlanKey } from "@/lib/plans";
+import { PLANS, SAVE_CAP, comparePlans, type PlanKey } from "@/lib/plans";
 import { track } from "@/lib/track";
 import { StorePicker } from "./StorePicker";
 
@@ -34,6 +35,10 @@ export interface WizardStart {
   next?: string;
 }
 
+type PlanInfo = { key: PlanKey; limit: number; used: number };
+/** One saved rule, as /api/watches returns it. */
+type SavedRule = { id: string; storeNumber: string; covered: boolean; existing: boolean };
+
 function clerkMessage(e: unknown): string {
   const err = e as { longMessage?: string; errors?: { longMessage?: string; message?: string }[]; message?: string };
   return err?.longMessage ?? err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? err?.message ?? "Something went wrong";
@@ -49,15 +54,17 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
   const [model, setModel] = useState<ModelKey | null>(initialModel ?? null);
   const [storage, setStorage] = useState<string | null>(configOk ? initialStorage! : null);
   const [color, setColor] = useState<string | null>(configOk ? initialColor! : null);
-  const [storeNumber, setStoreNumber] = useState<string | null>(initialStore ?? null);
+  const [storeNumbers, setStoreNumbers] = useState<string[]>(initialStore ? [initialStore] : []);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [authMode, setAuthMode] = useState<"signin" | "signup" | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [watchId, setWatchId] = useState<string | null>(null);
-  const [covered, setCovered] = useState(false);
-  const [planInfo, setPlanInfo] = useState<{ key: PlanKey; limit: number; used: number } | null>(null);
+  /** What the last save returned: one entry per store, in the order they were ticked. */
+  const [results, setResults] = useState<SavedRule[]>([]);
+  const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null);
+  const coveredCount = results.filter((r) => r.covered).length;
+  const allCovered = results.length > 0 && coveredCount === results.length;
   const codeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (step === "code") codeRef.current?.focus(); }, [step]);
@@ -67,23 +74,34 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
   const storageOptions = useMemo(() => [...new Set(configs.map((c) => c.storage))].sort((a, b) => STORAGE_ORDER.indexOf(a) - STORAGE_ORDER.indexOf(b)), [configs]);
   const colorOptions = useMemo(() => [...new Set(configs.filter((c) => !storage || c.storage === storage).map((c) => c.color))], [configs, storage]);
   const picked = configs.find((c) => c.storage === storage && c.color === color) ?? null;
-  const store = storeNumber ? STORE_INDEX.get(storeNumber) : undefined;
+  const stores = useMemo(() => storeNumbers.map((n) => STORE_INDEX.get(n)).filter((s): s is NonNullable<typeof s> => Boolean(s)), [storeNumbers]);
 
-  /** The exact rule being built. Passed explicitly so a click can save what it just picked (state updates land later). */
-  type Rule = { model: ModelKey | null; storage: string | null; color: string | null; storeNumber: string | null };
+  /** The rules being built: one configuration, one store each. Passed explicitly so a click saves what it just picked. */
+  type Rule = { model: ModelKey | null; storage: string | null; color: string | null; storeNumbers: string[] };
   const saving = useRef(false);
-  const saveWatch = useCallback(async (v: Rule): Promise<string> => {
-    if (!v.model || !v.storage || !v.color || !v.storeNumber) throw new Error("Pick the model, configuration and store first");
+  const saveWatch = useCallback(async (v: Rule): Promise<SavedRule[]> => {
+    if (!v.model || !v.storage || !v.color || v.storeNumbers.length === 0) throw new Error("Pick the model, configuration and at least one store first");
     const res = await fetch("/api/watches", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model: v.model, storage: v.storage, color: v.color, storeNumber: v.storeNumber }),
+      body: JSON.stringify({ model: v.model, storage: v.storage, color: v.color, storeNumbers: v.storeNumbers }),
     });
-    const j = (await res.json().catch(() => ({}))) as { id?: string; covered?: boolean; existing?: boolean; plan?: { key: PlanKey; limit: number; used: number }; error?: string };
-    if (!res.ok || !j.id) throw new Error(j.error ?? (res.ok ? "Could not save your alert" : `Could not save your alert (${res.status})`));
-    setWatchId(j.id); setCovered(Boolean(j.covered)); setPlanInfo(j.plan ?? null);
-    track(j.existing ? "watch_existing" : "watch_saved", { model: v.model, storage: v.storage, color: v.color, store: v.storeNumber });
-    return j.id;
+    const j = (await res.json().catch(() => ({}))) as { rules?: SavedRule[]; plan?: PlanInfo; error?: string };
+    if (!res.ok || !j.rules?.length) throw new Error(j.error ?? (res.ok ? "Could not save your alerts" : `Could not save your alerts (${res.status})`));
+    setResults(j.rules); setPlanInfo(j.plan ?? null);
+    // The confirmation describes exactly what was saved, even if a chip was tapped while the request flew.
+    setModel(v.model); setStorage(v.storage); setColor(v.color); setStoreNumbers(j.rules.map((r) => r.storeNumber));
+    track("watch_saved", { model: v.model, storage: v.storage, color: v.color, stores: j.rules.length, existing: j.rules.filter((r) => r.existing).length });
+    return j.rules;
   }, []);
+
+  // Signed-in users see how many slots their plan has left while they tick stores.
+  const [slots, setSlots] = useState<PlanInfo | null>(null);
+  useEffect(() => {
+    if (!authLoaded || !isSignedIn || step !== "store") return;
+    let gone = false;
+    fetch("/api/watches").then((r) => (r.ok ? r.json() : null)).then((j: { plan?: PlanInfo } | null) => { if (!gone && j?.plan) setSlots(j.plan); }).catch(() => undefined);
+    return () => { gone = true; };
+  }, [authLoaded, isSignedIn, step]);
 
   const goPay = useCallback(async (plan: "plus" | "pro", id: string | null) => {
     setBusy(true); setError(null);
@@ -101,7 +119,8 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
   const [held, setHeld] = useState<Rule | null>(null);
   const continueFromStore = useCallback(async (v: Rule) => {
     setError(null);
-    if (!v.model || !v.storage || !v.color || !v.storeNumber) return;
+    if (!v.model || !v.storage || !v.color) { setStep("config"); setError("Pick the storage and color first."); return; }
+    if (v.storeNumbers.length === 0) return;
     if (!authLoaded) { setHeld(v); setBusy(true); return; }
     if (!isSignedIn) { setStep("email"); return; }
     if (saving.current) return;
@@ -116,23 +135,13 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
     return () => window.clearTimeout(t);
   }, [authLoaded, held, continueFromStore]);
 
-  // Everything handed in by the page (e.g. a store page's configuration table): continue without a tap.
-  const autoRan = useRef(false);
-  useEffect(() => {
-    if (autoRan.current || !authLoaded || step !== "store" || !storeNumber || !picked) return;
-    autoRan.current = true;
-    const v: Rule = { model, storage, color, storeNumber };
-    const t = window.setTimeout(() => { void continueFromStore(v); }, 0);
-    return () => window.clearTimeout(t);
-  }, [authLoaded, step, storeNumber, picked, model, storage, color, continueFromStore]);
-
   // A signed-in user who still landed on the email step (Clerk finished loading late): save instead.
   useEffect(() => {
-    if (step !== "email" || !authLoaded || !isSignedIn || !model || !storage || !color || !storeNumber) return;
-    const v: Rule = { model, storage, color, storeNumber };
+    if (step !== "email" || !authLoaded || !isSignedIn || !model || !storage || !color || storeNumbers.length === 0) return;
+    const v: Rule = { model, storage, color, storeNumbers };
     const t = window.setTimeout(() => { void continueFromStore(v); }, 0);
     return () => window.clearTimeout(t);
-  }, [step, authLoaded, isSignedIn, model, storage, color, storeNumber, continueFromStore]);
+  }, [step, authLoaded, isSignedIn, model, storage, color, storeNumbers, continueFromStore]);
 
   // The floating AlertBar hides while the wizard is on screen; tell it we exist, and honour #notify.
   useEffect(() => {
@@ -141,10 +150,20 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
     return () => { window.dispatchEvent(new CustomEvent("pc:wizard", { detail: false })); };
   }, []);
 
-  const chooseStore = (n: string) => {
-    if (busy || saving.current) return;
-    setStoreNumber(n); track("store_selected", { store: n });
-    void continueFromStore({ model, storage, color, storeNumber: n });
+  /** How many more rules this account can hold (the picker caps at it; the server re-checks). */
+  const pickMax = slots ? Math.max(0, SAVE_CAP - slots.used) : SAVE_CAP;
+  const ruleReady = Boolean(model && storage && color && storeNumbers.length > 0);
+  /** Functional update: two quick taps never overwrite each other. */
+  const toggleStore = useCallback((n: string) => {
+    if (busy) return;
+    setStoreNumbers((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : prev.length < pickMax ? [...prev, n] : prev));
+  }, [busy, pickMax]);
+
+  /** The "Set N alerts" button: every ticked store becomes one rule. */
+  const submitStores = () => {
+    if (busy || saving.current || storeNumbers.length === 0) return;
+    track("stores_submitted", { stores: storeNumbers.length });
+    void continueFromStore({ model, storage, color, storeNumbers });
   };
 
   const sendCode = async () => {
@@ -194,26 +213,41 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
         if (f.error) throw f.error;
       }
       track("signed_in", { mode: authMode });
-      if (!model || !storeNumber) {
+      if (!model || storeNumbers.length === 0) {
         // Sign-in only (header link, a protected page, the install guide): go where they were headed.
         window.location.assign(next && next.startsWith("/") && !next.startsWith("//") ? next : "/account");
         return;
       }
-      await saveWatch({ model, storage, color, storeNumber });
+      await saveWatch({ model, storage, color, storeNumbers });
       setStep("pay");
     } catch (e) { setError(clerkMessage(e)); }
     finally { setBusy(false); }
   };
 
+  const storeText = useMemo(() => {
+    const names = stores.map((s) => `Apple ${s.name}`);
+    if (names.length === 0) return "";
+    if (names.length === 1) return `${names[0]}, ${stores[0].city}, ${stateCodeOf(stores[0])}`;
+    const shown = names.slice(0, 3);
+    const more = names.length - shown.length;
+    return more > 0 ? `${shown.join(", ")} and ${more} more` : `${shown.slice(0, -1).join(", ")} and ${shown[shown.length - 1]}`;
+  }, [stores]);
   const summary = useMemo(() => {
     if (!modelMeta) return "";
     const cfg = storage && color ? `${storage} ${color}` : storage ? storage : "";
-    const where = store ? `Apple ${store.name}, ${store.city}, ${stateCodeOf(store)}` : "";
+    const where = stores.length > 1 ? `${stores.length} stores` : storeText;
     return [modelMeta.name, cfg, where].filter(Boolean).join(" · ");
-  }, [modelMeta, storage, color, store]);
+  }, [modelMeta, storage, color, stores.length, storeText]);
+  const slotHint = useMemo(() => {
+    if (!slots || storeNumbers.length === 0) return null;
+    if (slots.key === "free") return "Saved now; they start sending once you pick a plan.";
+    const room = Math.max(0, slots.limit - slots.used);
+    if (storeNumbers.length > room) return room === 0 ? `Your ${PLANS[slots.key].name} plan is full (${slots.used} of ${slots.limit}): these save silently until you upgrade or delete some.` : `Only ${room} more will send on ${PLANS[slots.key].name}; the rest save silently until you upgrade.`;
+    return `${slots.used + storeNumbers.length} of ${slots.limit} ${PLANS[slots.key].name} alerts after this.`;
+  }, [slots, storeNumbers.length]);
 
   return (
-    <div id="notify" className="pane relative min-w-0 scroll-mt-28 overflow-hidden p-5 sm:p-7 sm:scroll-mt-32">
+    <div id="notify" className="pane relative min-w-0 scroll-mt-28 overflow-clip p-5 sm:p-7 sm:scroll-mt-32">
       {/* progress */}
       <div className="mb-5 flex items-center gap-2" aria-label={`Step ${STAGE[step] + 1} of 5`}>
         {[0, 1, 2, 3, 4].map((i) => (
@@ -240,45 +274,51 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
         <section>
           <div className="flex items-center justify-between gap-3">
             <h2 className="display text-2xl sm:text-3xl">{modelMeta?.name}</h2>
-            <button type="button" className="text-sm text-ink-3 hover:text-ink" onClick={() => setStep("model")}>Change model</button>
+            <button type="button" className="text-sm text-ink-3 hover:text-ink" disabled={busy} onClick={() => { if (!busy) setStep("model"); }}>Change model</button>
           </div>
           <p className="mt-1 text-sm text-ink-3">Pick the exact phone you want — one storage, one color.</p>
           <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-3">Storage</div>
           <div className="mt-2 flex flex-wrap gap-2">
             {storageOptions.map((v) => (
-              <button key={v} type="button" className="chip" aria-pressed={storage === v} onClick={() => { setStorage(v); if (color && !configs.some((c) => c.storage === v && c.color === color)) setColor(null); track("storage_selected", { model, storage: v }); }}>{v}</button>
+              <button key={v} type="button" className="chip" aria-pressed={storage === v} onClick={() => { if (busy) return; setStorage(v); if (color && !configs.some((c) => c.storage === v && c.color === color)) setColor(null); track("storage_selected", { model, storage: v }); }}>{v}</button>
             ))}
           </div>
           <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-3">Color</div>
           <div className="mt-2 flex flex-wrap gap-2">
             {colorOptions.map((c) => (
               <button key={c} type="button" className="chip" aria-pressed={color === c} disabled={!storage} title={storage ? undefined : "Pick a storage first"}
-                onClick={() => { if (busy) return; setColor(c); track("color_selected", { model, color: c }); if (storage) { if (storeNumber) void continueFromStore({ model, storage, color: c, storeNumber }); else setStep("store"); } }}>
+                onClick={() => { if (busy) return; setColor(c); track("color_selected", { model, color: c }); if (storage) setStep("store"); }}>
                 <span className="inline-block h-3 w-3 rounded-full border border-ink/15" style={{ background: COLOR_META[c]?.hex ?? "#888" }} aria-hidden />{c}
               </button>
             ))}
           </div>
           <p className="mt-4 text-sm text-ink-3">{picked ? `${modelMeta?.name} ${picked.storage} ${picked.color} · $${picked.price.toLocaleString()}` : storage ? "Now the color." : "Start with the storage."}</p>
-          {busy && <p className="mt-3 inline-flex items-center gap-2 text-sm text-ink-3"><span className="spinner" /> Saving…</p>}
           {error && <Err msg={error} />}
         </section>
       )}
 
       {step === "store" && model && (
         <section>
-          <Back onClick={() => setStep("config")} />
-          <h2 className="display text-2xl sm:text-3xl">Which store?</h2>
+          <Back onClick={() => { if (!busy) setStep("config"); }} />
+          <h2 className="display text-2xl sm:text-3xl">Which stores?</h2>
           <p className="mt-1 text-sm text-ink-3">{summary}</p>
-          <div className="mt-5"><StorePicker value={storeNumber} onChange={chooseStore} preferState={initialState} preferCity={initialCity} /></div>
+          <p className="mt-1 text-sm text-ink-3">Tick every store you can get to — each one is its own alert — then press the button.</p>
+          <div className="mt-5"><StorePicker value={storeNumbers} onToggle={toggleStore} max={pickMax} preferState={initialState} preferCity={initialCity} /></div>
+          {/* Sticks to the bottom of the screen while the list is taller than it, so the way forward is always in view. */}
+          <div className="sticky bottom-0 -mx-5 mt-4 flex flex-wrap items-center gap-3 px-5 py-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] sm:-mx-7 sm:px-7" style={{ background: "var(--pane-solid)" }}>
+            <button type="button" className="btn btn-primary btn-lg" disabled={busy || storeNumbers.length === 0} aria-busy={busy} onClick={submitStores}>
+              {busy ? <><span className="spinner" /> Saving…</> : storeNumbers.length === 0 ? "Tick a store" : storeNumbers.length === 1 ? "Set 1 alert" : `Set ${storeNumbers.length} alerts`}
+            </button>
+            {slotHint && <span className="text-sm text-ink-3">{slotHint}</span>}
+          </div>
           {error && <Err msg={error} />}
-          {busy && <p className="mt-3 inline-flex items-center gap-2 text-sm text-ink-3"><span className="spinner" /> Saving…</p>}
         </section>
       )}
 
       {step === "email" && (
         <section>
-          {model ? <Back onClick={() => setStep("store")} /> : null}
-          <h2 className="display text-2xl sm:text-3xl">{model ? "Save this alert to your account" : "Sign in"}</h2>
+          {ruleReady ? <Back onClick={() => setStep("store")} /> : null}
+          <h2 className="display text-2xl sm:text-3xl">{ruleReady ? (storeNumbers.length === 1 ? "Save this alert to your account" : `Save these ${storeNumbers.length} alerts to your account`) : "Sign in"}</h2>
           <p className="mt-2 text-ink-2">Your email is your account: we&apos;ll send a 6-digit code to confirm it&apos;s you. No password, ever.</p>
           {summary && <div className="pane-2 mt-4 px-4 py-3 text-sm text-ink-2">{summary}</div>}
           <form className="mt-6 flex flex-col gap-3 sm:flex-row" onSubmit={(e) => { e.preventDefault(); void sendCode(); }}>
@@ -308,16 +348,16 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
 
       {step === "pay" && (
         <section>
-          <h2 className="display text-2xl sm:text-3xl">{covered ? "Alert saved — it's on" : planInfo?.key === "free" ? "Saved. Pick a plan to switch it on" : "That's one more than your plan"}</h2>
+          <h2 className="display text-2xl sm:text-3xl">{allCovered ? (results.length === 1 ? "Alert saved — it's on" : `${results.length} alerts saved — they're on`) : coveredCount > 0 ? `${coveredCount} of ${results.length} alerts are on` : planInfo?.key === "free" ? (results.length === 1 ? "Saved. Pick a plan to switch it on" : `${results.length} alerts saved. Pick a plan to switch them on`) : results.length === 1 ? "That's one more than your plan" : "That's more than your plan holds"}</h2>
           <p className="mt-2 text-ink-2">{summary}</p>
-          {covered ? (
+          {allCovered ? (
             <div className="mt-6">
-              <p className="text-ink-2">We&apos;re watching {store ? `Apple ${store.name}` : "your store"} for the {modelMeta?.name} {storage} {color}. You&apos;ll be notified the moment it is available for pickup{planInfo && planInfo.key !== "free" ? ` (${planInfo.used} of ${planInfo.limit} ${PLANS[planInfo.key].name} alerts in use)` : ""}.</p>
-              <div className="mt-5 flex flex-wrap gap-2"><a href="/install" className="btn btn-primary">Get alerts on your phone</a><a href="/account" className="btn btn-ghost">Open my alerts</a><button type="button" className="btn btn-ghost" onClick={() => { setStep("model"); setStoreNumber(null); setStorage(null); setColor(null); setCovered(false); autoRan.current = false; }}>Add another</button></div>
+              <p className="text-ink-2">We&apos;re watching {storeText || "your store"} for the {modelMeta?.name} {storage} {color}. You&apos;ll be notified the moment it is available for pickup{planInfo && planInfo.key !== "free" ? ` (${planInfo.used} of ${planInfo.limit} ${PLANS[planInfo.key].name} alerts in use)` : ""}.</p>
+              <div className="mt-5 flex flex-wrap gap-2"><a href="/install" className="btn btn-primary">Get alerts on your phone</a><a href="/account" className="btn btn-ghost">Open my alerts</a><button type="button" className="btn btn-ghost" onClick={() => { setStep("model"); setStoreNumbers([]); setStorage(null); setColor(null); setResults([]); }}>Add another</button></div>
             </div>
           ) : (
             <div className="mt-6">
-              <p className="text-ink-2">{planInfo?.key === "free" ? "Alerts are part of Plus and Pro. Your rule is saved; pick a plan and it starts sending right away." : `Your ${PLANS[planInfo?.key ?? "plus"].name} plan holds ${planInfo?.limit ?? 10} alerts and they are all in use. ${planInfo?.key === "pro" ? "Delete one from your account and this rule takes its slot." : "Upgrade, or delete one from your account."}`}</p>
+              <p className="text-ink-2">{planInfo?.key === "free" ? `Alerts are part of Plus and Pro. ${results.length === 1 ? "Your rule is saved; pick a plan and it starts" : `Your ${results.length} rules are saved; pick a plan and they start`} sending right away.` : coveredCount > 0 ? `Your ${PLANS[planInfo?.key ?? "plus"].name} plan holds ${planInfo?.limit ?? 10} alerts: ${coveredCount} of these ${results.length} are sending and the other ${results.length - coveredCount} ${results.length - coveredCount === 1 ? "is" : "are"} saved but silent. ${planInfo?.key === "pro" ? "Delete rules from your account to free slots." : "Upgrade, or delete rules from your account."}` : `Your ${PLANS[planInfo?.key ?? "plus"].name} plan holds ${planInfo?.limit ?? 10} alerts and they are all in use. ${planInfo?.key === "pro" ? "Delete one from your account and this rule takes its slot." : "Upgrade, or delete one from your account."}`}</p>
               {planInfo?.key === "pro" && <div className="mt-4"><a href="/account" className="btn btn-primary">Open my alerts</a></div>}
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {(["plus", "pro"] as const).filter((k) => comparePlans(k, planInfo?.key ?? "free") > 0).map((k) => (
@@ -328,13 +368,13 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
                       <li>✓ Phone notifications within seconds</li>
                       <li>✓ Renews monthly · cancel anytime</li>
                     </ul>
-                    <button type="button" className={`btn mt-4 ${k === "plus" ? "btn-primary" : "btn-ghost"}`} disabled={busy} aria-busy={busy} onClick={() => goPay(k, watchId)}>
+                    <button type="button" className={`btn mt-4 ${k === "plus" ? "btn-primary" : "btn-ghost"}`} disabled={busy} aria-busy={busy} onClick={() => goPay(k, results[0]?.id ?? null)}>
                       {busy ? <><span className="spinner" /> Opening checkout</> : `Choose ${PLANS[k].name}`}
                     </button>
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-sm text-ink-3">Your rule stays saved either way and starts sending the moment a plan is active. Cancel anytime from your account.</p>
+              <p className="mt-3 text-sm text-ink-3">{results.length === 1 ? "Your rule stays" : "Your rules stay"} saved either way and {results.length === 1 ? "starts" : "start"} sending the moment a plan is active. Cancel anytime from your account.</p>
             </div>
           )}
           {error && <Err msg={error} />}

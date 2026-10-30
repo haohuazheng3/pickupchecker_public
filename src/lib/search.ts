@@ -17,7 +17,7 @@ const PAGES: [string, string, string, string][] = [
   ["Live stock map", "Every US Apple Store, live", "/map", "map live stock stores near me"],
   ["Restock log", "Every restock and sell-out, newest first", "/restocks", "restocks restock log history sold out feed"],
   ["Get the app", "Phone notifications from your Home Screen", "/install", "install app home screen notifications push alerts iphone android get the app"],
-  ["Set up an alert", "One store, one exact configuration", "/#notify", "alert alerts notify get notified new watch"],
+  ["Set up an alert", "Tick your stores — one alert each, one exact configuration", "/#notify", "alert alerts notify get notified new watch"],
   ["My alerts", "Your rules, devices and plan", "/account", "account my alerts rules devices plan billing sign in"],
   ["Pricing", "Plus $5 · Pro $10, monthly", "/pricing", "pricing plans plus pro price cost subscription upgrade"],
   ["How it works", "What we check and how fast", "/how-it-works", "how it works faq about speed"],

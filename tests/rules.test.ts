@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ruleMatches } from "@/lib/stock/notify";
-import { Body, ruleConfig } from "@/app/api/watches/route";
+import { Body, ruleConfig, storeNumbersOf } from "@/app/api/watches/route";
 
 const rule = { model: "duo", storages: ["512GB"], colors: ["Night Sky"], storeNumbers: ["R123"] };
 
@@ -21,10 +21,19 @@ describe("one rule = one store × one exact configuration", () => {
     expect(ruleConfig({ model: "duo", storages: ["512GB"], colors: ["Purple"], storeNumbers: ["R123"] })).toBeNull();
     expect(ruleConfig({ model: "duo", storages: [], colors: [], storeNumbers: [] })).toBeNull();
   });
-  it("the API body needs exactly one of each", () => {
+  it("the API body needs one configuration and at least one store", () => {
     expect(Body.safeParse({ model: "duo", storage: "512GB", color: "Night Sky", storeNumber: "R123" }).success).toBe(true);
+    expect(Body.safeParse({ model: "duo", storage: "512GB", color: "Night Sky", storeNumbers: ["R123", "R124"] }).success).toBe(true);
     expect(Body.safeParse({ model: "duo", storages: ["512GB"], colors: ["Night Sky"], storeNumbers: ["R123"] }).success).toBe(false);
     expect(Body.safeParse({ model: "duo", storage: "512GB", color: "Night Sky" }).success).toBe(false);
+    expect(Body.safeParse({ model: "duo", storage: "512GB", color: "Night Sky", storeNumbers: [] }).success).toBe(false);
     expect(Body.safeParse({ model: "duo", storage: "512GB", color: "Night Sky", storeNumber: "X1" }).success).toBe(false);
+    expect(Body.safeParse({ model: "duo", storage: "512GB", color: "Night Sky", storeNumbers: ["R123", "X1"] }).success).toBe(false);
+    expect(Body.safeParse({ model: "duo", storage: "512GB", color: "Night Sky", storeNumbers: Array.from({ length: 31 }, (_, i) => `R${100 + i}`) }).success).toBe(false);
+  });
+  it("one rule per store, in tick order, without repeats", () => {
+    expect(storeNumbersOf({ storeNumbers: ["R124", "R123", "R124"] })).toEqual(["R124", "R123"]);
+    expect(storeNumbersOf({ storeNumber: "R123" })).toEqual(["R123"]);
+    expect(storeNumbersOf({ storeNumbers: ["R123"], storeNumber: "R123" })).toEqual(["R123"]);
   });
 });

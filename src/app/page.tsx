@@ -30,7 +30,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const cityEntry = stateRef && typeof sp.city === "string" ? cityBySlug(stateRef.slug, sp.city) : undefined;
   const faq = [
     ["How fast are the alerts?", "Every Apple Store in the US is re-checked continuously, typically every 20 seconds. The notification reaches your phone within seconds of a store flipping to \"available\" for pickup."],
-    ["What is one alert?", "One alert watches one Apple Store for one exact phone: model, storage and color. Want two colors, or two stores? That is two alerts. Plus holds 10, Pro 20."],
+    ["What is one alert?", "One alert watches one Apple Store for one exact phone: model, storage and color. Tick three stores and you have three alerts; two colors are two more. Plus holds 10, Pro 20."],
     ["What does it cost?", "Plus is $5/month for 10 alert rules, Pro $10/month for 20; both renew monthly until you cancel from your account. Live stock, the map and the restock log are free to browse, no account needed."],
     ["How do I get notifications on my iPhone?", "Add PickupChecker to your Home Screen from Safari (Share → Add to Home Screen), open it from there, sign in and tap Turn on notifications. The install guide walks you through it in a minute."],
     ["Can you reserve the phone for me?", "No. We tell you the instant it's available; you reserve it on apple.com or in the Apple Store app. Pickup stock often lasts minutes, so the speed of the alert is what matters."],
