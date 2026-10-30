@@ -7,6 +7,7 @@ describe("database pool config", () => {
       const c = poolConfig(url, {});
       expect(c.ssl).toBe(false);
       expect(c.max).toBe(8);
+      expect(c.statement_timeout).toBe(30_000);
     }
   });
 
@@ -14,6 +15,7 @@ describe("database pool config", () => {
     const c = poolConfig("postgres://u:p@203.0.113.7:5432/db", { DATABASE_CA: "-----BEGIN CERTIFICATE-----\\nabc\\n-----END CERTIFICATE-----" });
     expect(c.ssl).toEqual({ ca: "-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----", rejectUnauthorized: true });
     expect(c.max).toBe(3);
+    expect(c.statement_timeout).toBe(15_000);
   });
 
   it("fails closed without a CA: still verified, never plain", () => {

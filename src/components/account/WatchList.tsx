@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MODELS } from "@/lib/apple/catalog";
+import { announceAlertsChanged } from "@/lib/alertEvents";
 
 export interface WatchView {
   id: string; model: string; storage: string | null; color: string | null; paused: boolean; active: boolean; covered: boolean; createdAt: string;
@@ -25,6 +26,7 @@ export function WatchList({ watches }: { watches: WatchView[] }) {
       const res = await fetch("/api/watches", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, ...body }) });
       if (!res.ok) throw new Error("Could not update");
       setEdits((e) => ({ ...e, [id]: { ...e[id], ...local } }));
+      announceAlertsChanged(); // the restock modules follow the stores that are still on
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); } finally { setBusy(null); }
   };
   const live = items.filter((w) => w.active);

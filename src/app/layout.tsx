@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
-// theme-color matches the header bar (browsers that still read it: Safari before 26, Chrome on Android);
+// theme-color matches the header band (browsers that still read it: Safari before 26, Chrome on Android);
 // THEME_BOOT and the toggle switch it with the theme.
 export const viewport: Viewport = { themeColor: THEME_COLORS.light, width: "device-width", initialScale: 1, viewportFit: "cover" };
 

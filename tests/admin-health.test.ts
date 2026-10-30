@@ -38,6 +38,18 @@ describe("health rules", () => {
     expect(overallState(nodes)).toBe("ok");
     expect(nodes.find((n) => n.key === "deploy")?.detail).not.toContain("behind");
   });
+  it("judges the host on the 5-minute load, so a momentary spike stays green", () => {
+    const host = (load1: number, load5: number) => computeNodes(snap({ heartbeat: { ...snap().heartbeat!, sys: { ...snap().heartbeat!.sys!, load1, load5 } } })).find((n) => n.key === "host")!;
+    expect(host(1.6, 0.3).state).toBe("ok");
+    expect(host(1.6, 0.3).value).toContain("load 0.3");
+    expect(host(0.9, 1.0).state).toBe("warn");
+    expect(host(2, 1.8).state).toBe("bad");
+  });
+  it("judges the database on an open connection and shows what connecting cost", () => {
+    const db = computeNodes(snap({ dbLatencyMs: 20, dbConnectMs: 480 })).find((n) => n.key === "db")!;
+    expect(db.state).toBe("ok");
+    expect(db.detail).toContain("first query 480 ms");
+  });
   it("flags a silent poller and a throttled API", () => {
     const nodes = computeNodes(snap({ heartbeat: { ...snap().heartbeat!, at: iso(12) }, heartbeatUpdatedAt: iso(12), req15: { n: 100, ok: 60, s541: 40, avgMs: 500 } }));
     expect(nodes.find((n) => n.key === "poller")?.state).toBe("bad");

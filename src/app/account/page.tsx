@@ -16,6 +16,7 @@ import { timeAgo } from "@/components/stock/StatusBits";
 import { env } from "@/lib/env";
 import { summarizeDevices } from "@/lib/devices";
 import { RestockTimes, RestockTimesSkeleton } from "@/components/account/RestockTimes";
+import { RefreshOnAlertsChange } from "@/components/account/RefreshOnAlertsChange";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "My alerts", robots: { index: false } };
@@ -57,6 +58,7 @@ export default async function Account() {
         )}
       </div>
 
+      <RefreshOnAlertsChange />
       {/* Streams in after the rest: thirty days of events for every store the user watches. */}
       <Suspense fallback={watches.some((w) => w.active) ? <RestockTimesSkeleton /> : null}>
         <RestockTimes watches={watches} />

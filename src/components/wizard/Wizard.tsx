@@ -14,6 +14,8 @@ import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
 import { MODELS, COLOR_META, STORAGE_ORDER, STORE_INDEX, stateCodeOf, type ModelKey, appleName } from "@/lib/apple/catalog";
 import { FREE_PICK_LIMIT, PAID_PLANS, PLANS, SAVE_CAP, comparePlans, isPaidPlan, type PaidPlanKey, type PlanKey } from "@/lib/plans";
 import { track } from "@/lib/track";
+import { announceAlertsChanged } from "@/lib/alertEvents";
+import { forgetMe } from "@/lib/me";
 import type { DeviceSummary } from "@/lib/devices";
 import { ownedKeys, pickDelta, ruleKey, storesOwnedFor } from "@/lib/alertPicks";
 import { PRETICK, StorePicker, freshPickerMemory, type PickerMemory } from "./StorePicker";
@@ -195,6 +197,9 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
     // The confirmation describes exactly what was saved.
     setItems(v.items); setStoreNumbers([...new Set(rules.map((r) => r.storeNumber))]);
     track("watch_saved", { phones: v.items.length, stores: v.storeNumbers.length, rules: rules.length, existing: rules.filter((r) => r.existing).length, removed: j.removed ?? 0 });
+    // The account page behind the dialog (or in another tab) redraws its lists and restock modules now.
+    forgetMe();
+    announceAlertsChanged();
     return rules;
   }, []);
 

@@ -259,15 +259,18 @@ a:active { opacity: .7; }
 }
 
 /* ------------------------------------------------------------------ site header on phones and tablets
-   A solid bar flush with the top edge whose padding clears the status bar. Safari on iOS 26 and later draws
-   a soft blur under its status bar that reaches into the page, and swaps it for a solid tint only when a
-   fixed or sticky element touches that edge: the floating translucent card, 12 px down, sat half inside
-   the blur, and so did the top of the search sheet opened over it. Wide screens with a mouse keep the card. */
+   The rounded card floats as on big screens, but on a band that touches the top edge and clears the status
+   bar. Safari on iOS 26 and later draws a soft blur under its status bar that reaches into the page, and
+   swaps it for a solid tint only when a fixed or sticky element touches that edge: the card alone, 12 px
+   down and translucent, sat half inside the blur (and so did the top of the search sheet opened over it).
+   The band is the colour of the top of the page (--bg under the background's faint accent glow) and fades
+   out below, so it reads as page, not as a bar. Wide screens with a mouse keep the bare floating card. */
+:root { --header-band: color-mix(in srgb, var(--accent) 6%, var(--bg)); }
 @media (max-width: 1023px), (hover: none) and (pointer: coarse) {
-  header.site-header { top: 0; padding: env(safe-area-inset-top) 0 0; background: var(--pane-solid); border-bottom: 1px solid var(--line); }
-  header.site-header > .pane {
-    padding-left: 1rem; padding-right: 1rem; background: transparent; border: 0; border-radius: 0; box-shadow: none;
-    -webkit-backdrop-filter: none; backdrop-filter: none;
+  header.site-header { top: 0; padding-top: calc(env(safe-area-inset-top) + .75rem); background: var(--header-band); }
+  header.site-header::after {
+    content: ""; position: absolute; left: 0; right: 0; top: 100%; height: .875rem; pointer-events: none;
+    background: linear-gradient(var(--header-band), color-mix(in srgb, var(--header-band) 0%, transparent));
   }
 }
 

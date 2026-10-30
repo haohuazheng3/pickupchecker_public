@@ -1,8 +1,8 @@
 /** Light (default) / dark theme: one attribute on <html>, persisted, applied before paint. */
 export type Theme = "light" | "dark";
 export const THEME_KEY = "pc:theme";
-/** theme-color per theme: the header bar's colour (--pane-solid), which sits under the status bar on phones. */
-export const THEME_COLORS: Record<Theme, string> = { light: "#ffffff", dark: "#15171f" };
+/** theme-color per theme: the header band's colour (--header-band: 6 % accent in --bg), under the status bar on phones. */
+export const THEME_COLORS: Record<Theme, string> = { light: "#e8f0eb", dark: "#0a1514" };
 
 /** Inline in <body> before anything renders so a dark reader never sees a light flash. */
 export const THEME_BOOT = `(function(){try{var t=localStorage.getItem('${THEME_KEY}');t=t==='dark'?'dark':'light';var d=document.documentElement;d.setAttribute('data-theme',t);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='dark'?'${THEME_COLORS.dark}':'${THEME_COLORS.light}');}catch(e){}})();`;

@@ -7,8 +7,12 @@
 #   scp infra/linode/postgres.sh root@HOST:/root/ && ssh root@HOST bash /root/postgres.sh
 #
 # Leaves, root-only: /root/pg-secrets/<db>.url (remote: TLS to this host's IPv4), /root/pg-secrets/<db>-local.url
-# (loopback, for the poller) and /root/pg-ca/ca.crt (the site pins it as DATABASE_CA).
+# (loopback, for the poller) and /root/pg-ca/ca.crt (the site pins it as DATABASE_CA). Copy db-maintenance.sh
+# next to this script to (re)install the daily maintenance. Postgres restarts only when its settings change.
 set -euo pipefail
+HERE=$(cd "$(dirname "$0")" && pwd)
+# Write stdin to $1 only if it differs; succeeds (0) when the file changed.
+put() { local t; t=$(mktemp); cat > "$t"; if cmp -s "$t" "$1"; then rm -f "$t"; return 1; fi; install -m 644 "$t" "$1"; rm -f "$t"; }
 PGV=17
 DBS=(pickupchecker pickupchecker_preview)
 SECRETS=/root/pg-secrets
@@ -48,7 +52,8 @@ if ! openssl x509 -in "$CONF/server.crt" -noout -ext subjectAltName 2>/dev/null 
 fi
 
 # Sized for a 1 GB machine; few connections (the site keeps 3 per instance, the poller 8). UTC like Neon.
-cat > "$CONF/conf.d/pickupchecker.conf" <<CONF
+restart=0; reload=0
+put "$CONF/conf.d/pickupchecker.conf" <<CONF && restart=1
 listen_addresses = '*'
 port = 5432
 max_connections = 50
@@ -79,7 +84,7 @@ CONF
 
 # Peer auth for local admin, passwords on loopback, and from anywhere else only TLS plus a password, and only
 # each app role to its own database.
-cat > "$CONF/pg_hba.conf" <<HBA
+put "$CONF/pg_hba.conf" <<HBA && reload=1
 local   all                    postgres                              peer
 local   all                    all                                   peer
 host    all                    all                    127.0.0.1/32   scram-sha-256
@@ -89,9 +94,29 @@ hostssl pickupchecker          pickupchecker          ::/0           scram-sha-2
 hostssl pickupchecker_preview  pickupchecker_preview  0.0.0.0/0      scram-sha-256
 hostssl pickupchecker_preview  pickupchecker_preview  ::/0           scram-sha-256
 HBA
+chown postgres:postgres "$CONF/conf.d/pickupchecker.conf" "$CONF/pg_hba.conf"
+
+# Under memory pressure the kernel should kill the poller (systemd restarts it), never the database: the
+# postmaster is shielded and its backends reset to neutral (PostgreSQL's documented setup), and the poller is
+# capped well above its ~190 MB so a leak restarts it instead of starving everything else.
+install -d /etc/systemd/system/postgresql@$PGV-main.service.d /etc/systemd/system/pickupchecker-poller.service.d
+put /etc/systemd/system/postgresql@$PGV-main.service.d/oom.conf <<'UNIT' && restart=1
+[Service]
+OOMScoreAdjust=-900
+Environment=PG_OOM_ADJUST_FILE=/proc/self/oom_score_adj PG_OOM_ADJUST_VALUE=0
+UNIT
+poller_unit=0
+put /etc/systemd/system/pickupchecker-poller.service.d/memory.conf <<'UNIT' && poller_unit=1
+[Service]
+OOMScoreAdjust=500
+MemoryHigh=400M
+MemoryMax=500M
+UNIT
+systemctl daemon-reload
 systemctl enable -q postgresql
-systemctl restart postgresql
+if [ "$restart" = 1 ] || ! systemctl is-active -q postgresql@$PGV-main; then systemctl restart postgresql@$PGV-main; elif [ "$reload" = 1 ]; then systemctl reload postgresql@$PGV-main; fi
 for _ in $(seq 1 30); do sudo -u postgres pg_isready -q && break; sleep 1; done
+[ "$poller_unit" = 1 ] && systemctl is-active -q pickupchecker-poller && systemctl restart pickupchecker-poller
 
 # One role and one database per environment; passwords made once, never printed.
 install -d -m 700 "$SECRETS"
@@ -127,7 +152,31 @@ Persistent=true
 [Install]
 WantedBy=timers.target
 UNIT
+
+# Daily maintenance (db-maintenance.sh): trim the request logs, then the off-host copy to Neon.
+if [ -f "$HERE/db-maintenance.sh" ]; then
+  install -m 755 "$HERE/db-maintenance.sh" /opt/pickupchecker/db-maintenance.sh
+  cat > /etc/systemd/system/pickupchecker-db-maintenance.service <<'UNIT'
+[Unit]
+Description=Trim PickupChecker request logs and copy the database off the host
+After=postgresql.service network-online.target
+[Service]
+Type=oneshot
+Environment=HOME=/root
+ExecStart=/opt/pickupchecker/db-maintenance.sh
+UNIT
+  cat > /etc/systemd/system/pickupchecker-db-maintenance.timer <<'UNIT'
+[Unit]
+Description=Daily PickupChecker database maintenance
+[Timer]
+OnCalendar=*-*-* 10:00:00 UTC
+Persistent=true
+[Install]
+WantedBy=timers.target
+UNIT
+fi
 systemctl daemon-reload
 systemctl enable -q --now pickupchecker-pgdump.timer
+[ -f /etc/systemd/system/pickupchecker-db-maintenance.timer ] && systemctl enable -q --now pickupchecker-db-maintenance.timer
 
 echo "postgres $(sudo -u postgres psql -qtAc 'SHOW server_version') on $IP4:5432 · databases: ${DBS[*]}"

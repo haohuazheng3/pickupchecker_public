@@ -38,6 +38,8 @@ export function poolConfig(url: string, env: Record<string, string | undefined> 
     connectionTimeoutMillis: 10_000,
     maxLifetimeSeconds: 600,
     keepAlive: true,
+    // Nothing should wait forever: a page query that hangs holds a function open, a poller one stalls the sweep.
+    statement_timeout: local ? 30_000 : 15_000,
     ssl: local ? false : { ca, rejectUnauthorized: true },
   };
 }

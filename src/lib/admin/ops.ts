@@ -121,8 +121,13 @@ export async function healthSnapshot(): Promise<HealthSnapshot> {
   const d = db();
   const now = Date.now();
   const m15 = new Date(now - 15 * 60_000), hour = new Date(now - 3600_000), day = new Date(now - 86400_000), m30 = new Date(now - 30 * 60_000);
-  let dbLatencyMs: number | null = null, dbError: string | null = null;
-  try { const t0 = Date.now(); await d.execute(sql`select 1`); dbLatencyMs = Date.now() - t0; } catch (e) { dbError = e instanceof Error ? e.message : String(e); }
+  // Twice: the first may have to dial (TCP, TLS, SCRAM to the poller host from a cold instance); the second
+  // is the database's own round trip, which is what the node judges.
+  let dbLatencyMs: number | null = null, dbConnectMs: number | null = null, dbError: string | null = null;
+  try {
+    let t0 = Date.now(); await d.execute(sql`select 1`); dbConnectMs = Date.now() - t0;
+    t0 = Date.now(); await d.execute(sql`select 1`); dbLatencyMs = Date.now() - t0;
+  } catch (e) { dbError = e instanceof Error ? e.message : String(e); }
   const [heartbeat, watchdog] = await Promise.all([readState<Heartbeat>("heartbeat"), readState<{ down?: boolean; since?: string }>("watchdog")]);
   const [req15] = await d.select({ n: sql<number>`count(*)::int`, ok: sql<number>`count(*) filter (where ok)::int`, s541: sql<number>`count(*) filter (where http_status = 541)::int`, avgMs: sql<number>`coalesce(avg(duration_ms),0)::int` }).from(schema.pollLog).where(gt(schema.pollLog.at, m15));
   const [reqHour] = await d.select({ n: sql<number>`count(*)::int`, ok: sql<number>`count(*) filter (where ok)::int`, s541: sql<number>`count(*) filter (where http_status = 541)::int`, avgMs: sql<number>`coalesce(avg(duration_ms),0)::int` }).from(schema.pollLog).where(gt(schema.pollLog.at, hour));
@@ -153,7 +158,7 @@ export async function healthSnapshot(): Promise<HealthSnapshot> {
     heartbeat: heartbeat?.value ?? null,
     heartbeatUpdatedAt: heartbeat ? heartbeat.updatedAt.toISOString() : null,
     watchdog: watchdog?.value ?? null,
-    dbLatencyMs, dbError,
+    dbLatencyMs, dbConnectMs, dbError,
     req15: req15 ?? { n: 0, ok: 0, s541: 0, avgMs: 0 },
     reqHour: reqHour ?? { n: 0, ok: 0, s541: 0, avgMs: 0 },
     stock: { total: stock?.total ?? 0, available: stock?.available ?? 0, unknown: stock?.unknown ?? 0, newest: toIso(stock?.newest), storesChecked: stock?.storesChecked ?? 0, storesStale: stock?.storesStale ?? 0 },

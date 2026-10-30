@@ -30,6 +30,8 @@ export interface HealthSnapshot {
   heartbeatUpdatedAt: string | null;
   watchdog: { down?: boolean; since?: string } | null;
   dbLatencyMs: number | null;
+  /** The first `select 1` of the request, including any connection set-up. */
+  dbConnectMs?: number | null;
   dbError: string | null;
   req15: { n: number; ok: number; s541: number; avgMs: number };
   reqHour: { n: number; ok: number; s541: number; avgMs: number };
@@ -92,11 +94,13 @@ export function computeNodes(s: HealthSnapshot): NodeHealth[] {
   if (sys) {
     const memUsed = sys.memTotalMb && sys.memFreeMb != null ? sys.memTotalMb - sys.memFreeMb : null;
     const memPct = memUsed != null && sys.memTotalMb ? memUsed / sys.memTotalMb : 0;
-    const loadPerCpu = sys.load1 != null && sys.cpus ? sys.load1 / sys.cpus : 0;
+    // Judged on the 5-minute load: a dump, a vacuum or an update spikes the 1-minute figure for a moment.
+    const load = sys.load5 ?? sys.load1;
+    const loadPerCpu = load != null && sys.cpus ? load / sys.cpus : 0;
     nodes.push({
       key: "host", name: "Host vitals", href: "/admin/poller",
       state: hbAge > 10 * MIN ? "idle" : loadPerCpu > 1.5 || memPct > 0.9 ? "bad" : loadPerCpu > 0.8 || memPct > 0.75 ? "warn" : "ok",
-      value: `load ${sys.load1 ?? "?"} · mem ${Math.round(memPct * 100)}%`,
+      value: `load ${sys.load5 ?? sys.load1 ?? "?"} · mem ${Math.round(memPct * 100)}%`,
       detail: `${sys.cpus ?? "?"} vCPU · ${memUsed ?? "?"}/${sys.memTotalMb ?? "?"} MB · rss ${sys.rssMb ?? "?"} MB · up ${fmtDuration(sys.uptimeSec)} · ${sys.node ?? ""} ${sys.commit ? "@ " + sys.commit : ""}`,
     });
   } else {
@@ -129,7 +133,7 @@ export function computeNodes(s: HealthSnapshot): NodeHealth[] {
     key: "db", name: "Database", href: "/admin/system",
     state: s.dbError ? "bad" : s.dbLatencyMs == null ? "idle" : s.dbLatencyMs > 1500 ? "bad" : s.dbLatencyMs > 400 ? "warn" : "ok",
     value: s.dbError ? "error" : s.dbLatencyMs != null ? `${s.dbLatencyMs} ms` : "—",
-    detail: s.dbError ?? "round trip of `select 1` from this request",
+    detail: s.dbError ?? `round trip of \`select 1\` on an open connection${s.dbConnectMs != null ? ` · first query ${s.dbConnectMs} ms (includes connecting)` : ""}`,
   });
 
   // 6. cron watchdog
