@@ -9,6 +9,9 @@ import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { BrowseModels, BrowseStates } from "@/components/seo/Browse";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaceStatStrip } from "@/components/seo/StatStrip";
+import { ModelPlaceCards } from "@/components/seo/ModelPlaceCards";
+import { statePlace } from "@/lib/seo/products";
+
 import { Faq } from "@/components/seo/Faq";
 import { storesStock, storesStatusFull, restockFeed, restockStats, placeStats } from "@/lib/stock/queries";
 import { ModelStoreMatrix } from "@/components/stores/ModelStoreMatrix";
@@ -88,7 +91,8 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
         </div>
       </div>
 
-      <div className="mt-6"><PlaceStatStrip stores={stores.length} cities={cities.length} stockNow={d.stockNow} stats={d.pstats} /></div>
+      <div className="mt-6"><ModelPlaceCards place={statePlace(s.name)!} stockNow={d.stockNow} of={stores.length} unit="stores with it" /></div>
+      <div className="mt-3"><PlaceStatStrip stores={stores.length} cities={cities.length} stockNow={d.stockNow} stats={d.pstats} /></div>
 
       {d.thin ? (
         <div className="mt-8 space-y-10">
@@ -120,7 +124,7 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
           <h2 className="text-xl font-semibold">Restocks by configuration</h2>
           <div className="mt-3"><RestocksByConfig stats={d.pstats} label={`in ${s.name}`} /></div>
         </section>
-        <section className="pane p-5">
+        <section className="min-w-0">
           <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-semibold">Latest restocks in {s.name}</h2><Link href={`/restocks?model=all&state=${s.slug}`} className="text-sm text-ink-3 hover:text-ink">Full log →</Link></div>
           <RestockFeed rows={d.feed} showModel emptyText={`No restock recorded in ${s.name} yet.`} />
         </section>

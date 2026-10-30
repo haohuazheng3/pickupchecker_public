@@ -8,7 +8,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
-import { MODELS, COLOR_META, STORAGE_ORDER, STORE_INDEX, stateCodeOf, type ModelKey } from "@/lib/apple/catalog";
+import { MODELS, COLOR_META, STORAGE_ORDER, STORE_INDEX, stateCodeOf, type ModelKey, appleName } from "@/lib/apple/catalog";
 import { FREE_PICK_LIMIT, PAID_PLANS, PLANS, SAVE_CAP, comparePlans, isPaidPlan, type PaidPlanKey, type PlanKey } from "@/lib/plans";
 import { track } from "@/lib/track";
 import { PRETICK, StorePicker, freshPickerMemory, type PickerMemory } from "./StorePicker";
@@ -33,6 +33,8 @@ export interface WizardStart {
   initialCity?: string;
   startSignIn?: boolean;
   next?: string;
+  /** Rendered inside the alert dialog: no page anchor, no page events. */
+  inDialog?: boolean;
 }
 
 /** One exact phone. */
@@ -48,7 +50,7 @@ function clerkMessage(e: unknown): string {
   return err?.longMessage ?? err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? err?.message ?? "Something went wrong";
 }
 
-export function Wizard({ catalog, initialModel, initialStorage, initialColor, initialStore, initialState, initialCity, startSignIn, next }: { catalog: WizardCatalog } & WizardStart) {
+export function Wizard({ catalog, initialModel, initialStorage, initialColor, initialStore, initialState, initialCity, startSignIn, next, inDialog = false }: { catalog: WizardCatalog } & WizardStart) {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
@@ -170,10 +172,11 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
 
   // The floating button hides while the wizard is on screen; tell it we exist, and honour #notify.
   useEffect(() => {
+    if (inDialog) return;
     window.dispatchEvent(new CustomEvent("pc:wizard", { detail: true }));
     if (window.location.hash === "#notify") document.getElementById("notify")?.scrollIntoView({ block: "start" });
     return () => { window.dispatchEvent(new CustomEvent("pc:wizard", { detail: false })); };
-  }, []);
+  }, [inDialog]);
 
   /** Add the phone being picked and go on to the stores. */
   const addItem = (it: Item) => {
@@ -275,7 +278,7 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
 
   const phoneLabel = (it: Item) => `${shortName(it.model)} ${it.storage} ${it.color}`;
   const storeText = useMemo(() => {
-    const names = stores.map((s) => `Apple ${s.name}`);
+    const names = stores.map((s) => `${appleName(s)}`);
     if (names.length === 0) return "";
     if (names.length === 1) return `${names[0]}, ${stores[0].city}, ${stateCodeOf(stores[0])}`;
     const shown = names.slice(0, 3);
@@ -291,8 +294,8 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
   const fitPlan = PAID_PLANS.find((k) => PLANS[k].limit >= (planInfo?.used ?? results.length));
 
   return (
-    <div id="notify" className="pane relative min-w-0 scroll-mt-28 overflow-clip p-5 sm:p-7 sm:scroll-mt-32">
-      <div className="mb-5 flex items-center gap-2" aria-label={`Step ${STAGE[step] + 1} of 5`}>
+    <div id={inDialog ? undefined : "notify"} className={inDialog ? "relative min-w-0 px-5 pb-5 pt-1 sm:px-7 sm:pb-7" : "pane relative min-w-0 scroll-mt-28 overflow-clip p-5 sm:p-7 sm:scroll-mt-32"}>
+      <div className={`mb-5 flex items-center gap-2 ${inDialog ? "pr-10" : ""}`} aria-label={`Step ${STAGE[step] + 1} of 5`}>
         {[0, 1, 2, 3, 4].map((i) => (
           <span key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= STAGE[step] ? "bg-accent" : "bg-ink/8"}`} />
         ))}
@@ -367,7 +370,7 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
             <div className="flex h-9 items-center gap-2 overflow-x-auto whitespace-nowrap pr-8 [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]" role="group" aria-label="Stores ticked">
               {stores.length === 0
                 ? <span className="text-sm text-ink-3">No stores ticked yet</span>
-                : stores.map((s) => <button key={s.storeNumber} type="button" className="chip chip-sm shrink-0" data-on="true" onClick={() => toggleStore(s.storeNumber)} aria-label={`Untick Apple ${s.name}`}>{s.name} <span aria-hidden>×</span></button>)}
+                : stores.map((s) => <button key={s.storeNumber} type="button" className="chip chip-sm shrink-0" data-on="true" onClick={() => toggleStore(s.storeNumber)} aria-label={`Untick ${appleName(s)}`}>{s.name} <span aria-hidden>×</span></button>)}
             </div>
             <div className="mt-2 flex items-center justify-between gap-3">
               <div className="min-w-0 text-sm text-ink-2" aria-live="polite">

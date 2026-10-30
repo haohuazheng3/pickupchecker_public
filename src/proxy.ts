@@ -13,9 +13,9 @@ const isAdminPublic = createRouteMatcher(["/admin/login", "/api/admin/login", "/
  * Internal .md files never exist as routes (404 by Next).
  */
 export default clerkMiddleware(async (auth, req) => {
-  const check = publicRouteCheck(req.nextUrl.pathname);
+  const check = publicRouteCheck(req.nextUrl.pathname, req.nextUrl.search);
   if (check) {
-    if ("redirect" in check) return NextResponse.redirect(new URL(check.redirect + req.nextUrl.search, req.url), 308);
+    if ("redirect" in check) return NextResponse.redirect(new URL(check.redirect, req.url), 308);
     return NextResponse.rewrite(new URL("/__not_found__", req.url), { status: 404 });
   }
   if (isAdmin(req) && !isAdminPublic(req)) {
@@ -39,5 +39,5 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 export const config = {
-  matcher: ["/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|txt|xml|mjs)).*)", "/(api|trpc)(.*)"],
+  matcher: ["/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|txt|xml|mjs)).*)", "/(api|trpc)(.*)", "/stock/:path*", "/stores/:path*"],
 };

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { ensureUser } from "@/lib/auth";
-import { createCheckout, changePlan, userPlan } from "@/lib/billing";
+import { BillingPermissionError, createCheckout, changePlan, userPlan } from "@/lib/billing";
+import { userById } from "@/lib/auth";
 import { comparePlans, isPaidPlan } from "@/lib/plans";
 import { db, schema } from "@/lib/db";
 import { recordError, errorMessage } from "@/lib/errors";
@@ -31,7 +32,9 @@ export async function POST(req: Request) {
     const current = await userPlan(u.id);
     if (current.sub && isPaidPlan(current.plan.key)) {
       if (comparePlans(plan, current.plan.key) === 0) return NextResponse.json({ alreadySubscribed: true, url: "/account" });
-      await changePlan(current.sub.id, plan);
+      const row = await userById(u.id);
+      const r = await changePlan(current.sub.id, plan, row?.stripeCustomerId);
+      if (r.url) return NextResponse.json({ url: r.url }); // Stripe's hosted plan-change page
       await logOps("web", "info", `plan changed ${current.plan.key} → ${plan}`, { userId: u.id });
       return NextResponse.json({ changed: true, url: `/account?plan=${plan}` });
     }
@@ -39,6 +42,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ url });
   } catch (e) {
     await recordError("web", `checkout failed: ${errorMessage(e)}`, { userId: u.id, plan });
-    return NextResponse.json({ error: "checkout unavailable" }, { status: 502 });
+    if (e instanceof BillingPermissionError) return NextResponse.json({ error: "Plan changes are offline for a moment. Your current plan keeps working.", code: "billing_permission" }, { status: 503 });
+    return NextResponse.json({ error: "Checkout didn't open. Try again in a minute." }, { status: 502 });
   }
 }

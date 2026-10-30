@@ -1,3 +1,4 @@
+import { appleName } from "@/lib/apple/catalog";
 import { Resend } from "resend";
 import { env } from "../env";
 import type { CatalogItem, Store } from "../apple/catalog";
@@ -20,14 +21,14 @@ export interface AlertLine {
 export function alertSubject(lines: AlertLine[]): string {
   const first = lines[0];
   const more = lines.length > 1 ? ` +${lines.length - 1} more` : "";
-  return `In stock: ${first.item.model} ${first.item.storage} ${first.item.color} at Apple ${first.store.name}${more}`;
+  return `In stock: ${first.item.model} ${first.item.storage} ${first.item.color} at ${appleName(first.store)}${more}`;
 }
 
 export function alertText(lines: AlertLine[], manageUrl: string): string {
   const body = lines
     .map(
       (l) =>
-        `• ${l.item.model} ${l.item.storage} ${l.item.color} — Apple ${l.store.name}, ${l.store.city}, ${l.store.state}` +
+        `• ${l.item.model} ${l.item.storage} ${l.item.color} — ${appleName(l.store)}, ${l.store.city}, ${l.store.state}` +
         `${l.quote ? ` (${l.quote})` : ""}\n  Reserve: https://www.apple.com/shop/buy-iphone\n  Store: ${l.store.url ?? ""}`,
     )
     .join("\n\n");

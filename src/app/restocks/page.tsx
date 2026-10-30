@@ -50,7 +50,7 @@ export default async function Restocks({ searchParams }: PageProps<"/restocks">)
           <button className="chip px-3 py-1.5 text-xs" type="submit">Filter</button>
         </form>
       </div>
-      <div className="pane mt-5 p-4 sm:p-6">
+      <div className="mt-5">
         <RestockFeed rows={rows} model={model} showModel={!model} />
         <div className="mt-3 flex items-center justify-between text-xs text-ink-3">
           <span>page {page + 1}</span>

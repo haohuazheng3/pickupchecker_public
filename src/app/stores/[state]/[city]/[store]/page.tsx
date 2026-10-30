@@ -2,13 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cache } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
-import { STORES, MODELS, DEFAULT_MODEL, modelByKey, citySlug, stateSlug, stateCodeOf, storePath, cityPath, statePath, storeTimeZone, modelKeyFor, catalogFor, type ModelKey, type Store } from "@/lib/apple/catalog";
+import { STORES, MODELS, DEFAULT_MODEL, modelByKey, citySlug, stateSlug, stateCodeOf, storePath, cityPath, statePath, storeTimeZone, modelKeyFor, catalogFor, type ModelKey, type Store, appleName } from "@/lib/apple/catalog";
 import { nearestStores, nearbyCities, neighborStates, cityRef, cityLabel } from "@/lib/seo/links";
 import { normalizeHours, compressHours, todayLabel, hoursText, storeJsonLd, nearestOutsideState, nearestInState, alertHref, faq, peakOf, storeTitle, fitTitle } from "@/lib/seo/enrich";
 import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { BrowseModels } from "@/components/seo/Browse";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaceStatStrip } from "@/components/seo/StatStrip";
+import { ModelPlaceCards } from "@/components/seo/ModelPlaceCards";
+import { storePlace } from "@/lib/seo/products";
+
 import { Faq } from "@/components/seo/Faq";
 import { storesStock, storeStatus, restockFeed, restockStats, placeStats } from "@/lib/stock/queries";
 import { StockByModel } from "@/components/stores/StockByModel";
@@ -59,9 +62,9 @@ export async function generateMetadata({ params }: PageProps<"/stores/[state]/[c
   const d = await load(s);
   const title = storeTitle(s, stateCodeOf(s), d.stockNow.duo);
   const description = fitTitle([
-    `Live iPhone pickup stock at Apple ${s.name}, ${s.city} ${stateCodeOf(s)}: ${d.stockNow.duo} Duo, ${d.stockNow["18-pro"]} 18 Pro and ${d.stockNow["18-pro-max"]} Pro Max configurations in stock now, ${d.pstats.week} restocks this week, hours and history.`,
-    `Apple ${s.name}, ${s.city} ${stateCodeOf(s)}: ${d.stockNow.duo} Duo, ${d.stockNow["18-pro"]} 18 Pro and ${d.stockNow["18-pro-max"]} Pro Max configurations in stock for pickup now; ${d.pstats.week} restocks this week.`,
-    `Apple ${s.name}, ${s.city}: ${d.stockNow.duo} Duo, ${d.stockNow["18-pro"]} 18 Pro, ${d.stockNow["18-pro-max"]} Pro Max configurations in stock for pickup; ${d.pstats.week} restocks this week.`,
+    `Live iPhone pickup stock at ${appleName(s)}, ${s.city} ${stateCodeOf(s)}: ${d.stockNow.duo} Duo, ${d.stockNow["18-pro"]} 18 Pro and ${d.stockNow["18-pro-max"]} Pro Max configurations in stock now, ${d.pstats.week} restocks this week, hours and history.`,
+    `${appleName(s)}, ${s.city} ${stateCodeOf(s)}: ${d.stockNow.duo} Duo, ${d.stockNow["18-pro"]} 18 Pro and ${d.stockNow["18-pro-max"]} Pro Max configurations in stock for pickup now; ${d.pstats.week} restocks this week.`,
+    `${appleName(s)}, ${s.city}: ${d.stockNow.duo} Duo, ${d.stockNow["18-pro"]} 18 Pro, ${d.stockNow["18-pro-max"]} Pro Max configurations in stock for pickup; ${d.pstats.week} restocks this week.`,
   ], 155);
   return { title, description, alternates: { canonical: storePath(s) }, openGraph: { type: "website", siteName: "PickupChecker", title, description, url: storePath(s) } };
 }
@@ -85,7 +88,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
   const neighbors = neighborStates(s.state);
   const duo = modelByKey(DEFAULT_MODEL)!;
   const code = stateCodeOf(s);
-  const place = `Apple ${s.name}`;
+  const place = `${appleName(s)}`;
   const alert = alertHref({ model: DEFAULT_MODEL, store: s.storeNumber });
   const questions = faq({ kind: "store", place, stores: [s], stockNow: d.stockNow, stats: d.pstats, peak: peakOf(d.stats), nearest: d.nearby, hours: compressHours(week), todayText: `${hoursText(today.today)} (${today.label.toLowerCase()})` });
   return (
@@ -104,7 +107,8 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
         </div>
       </div>
 
-      <div className="mt-6"><PlaceStatStrip stores={1} stockNow={d.stockNow} stats={d.pstats} storeMode /></div>
+      <div className="mt-6"><ModelPlaceCards place={storePlace(s)} stockNow={d.stockNow} of={Object.fromEntries(MODELS.map((m) => [m.key, catalogFor(m.key).length])) as Record<ModelKey, number>} unit="configs in stock" /></div>
+      <div className="mt-3"><PlaceStatStrip stores={1} stockNow={d.stockNow} stats={d.pstats} storeMode /></div>
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold">Pickup stock right now</h2>
@@ -127,7 +131,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
             <h2 className="text-xl font-semibold">Restocks by configuration</h2>
             <div className="mt-3"><RestocksByConfig stats={d.pstats} label="here" store={s.storeNumber} /></div>
           </section>
-          <section className="pane p-5">
+          <section className="min-w-0">
             <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-semibold">Restock history</h2><Link href={`/restocks?model=all&state=${stateSlug(s.state)}`} className="text-sm text-ink-3 hover:text-ink">All of {s.state} →</Link></div>
             <RestockFeed rows={d.feed} showModel emptyText="No restock or sell-out recorded here yet." />
           </section>

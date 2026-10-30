@@ -142,6 +142,11 @@ export async function healthSnapshot(): Promise<HealthSnapshot> {
   const [cron] = await d.select({ lastTickAt: sql<string | null>`max(at)`, ticksHour: sql<number>`count(*) filter (where at > ${hour})::int` }).from(schema.opsLog).where(and(eq(schema.opsLog.source, "cron"), eq(schema.opsLog.message, "watchdog tick"), gt(schema.opsLog.at, day)));
   const [errors24] = await d.select({ open: sql<number>`count(*)::int`, lastAt: sql<string | null>`max(last_seen_at)` }).from(schema.errorGroups).where(and(isNull(schema.errorGroups.resolvedAt), gt(schema.errorGroups.lastSeenAt, day)));
   const [inboxRow] = await d.select({ lastAt: sql<string | null>`max(received_at)` }).from(schema.inboxMessages);
+  // A restricted Stripe key names the permission it lacks ("Enabling Subscriptions Read (…) permissions …").
+  const [perm] = await d.select({ message: schema.errorGroups.message }).from(schema.errorGroups)
+    .where(and(isNull(schema.errorGroups.resolvedAt), gt(schema.errorGroups.lastSeenAt, day), sql`${schema.errorGroups.message} like '%does not have the required permissions%'`))
+    .orderBy(desc(schema.errorGroups.lastSeenAt)).limit(1);
+  const missingPermission = perm ? (perm.message.match(/Enabling ([A-Za-z ]+?) \(/)?.[1] ?? "a permission") : null;
   const toIso = (v: string | Date | null | undefined) => (v ? new Date(v).toISOString() : null);
   return {
     now,
@@ -156,7 +161,7 @@ export async function healthSnapshot(): Promise<HealthSnapshot> {
     alerts24: { sent: alerts24?.sent ?? 0, failed: alerts24?.failed ?? 0, pushSent: alerts24?.pushSent ?? 0, emailSent: alerts24?.emailSent ?? 0, lastSentAt: toIso(alerts24?.lastSentAt), lastFailedAt: toIso(alerts24?.lastFailedAt) },
     push: { configured: Boolean(env.vapidPublicKey() && env.vapidPrivateKey()), enabled: push?.enabled ?? 0, disabled: push?.disabled ?? 0, lastSentAt: toIso(push?.lastSentAt) },
     email: { configured: Boolean(env.resendKey()), lastSentAt: toIso(email?.lastSentAt), lastFailedAt: toIso(email?.lastFailedAt) },
-    stripe: { configured: Boolean(env.stripeKey() && env.stripeWebhookSecret() && env.stripePriceMonthly()), lastEventAt: toIso(stripe?.lastEventAt), lastEventType: stripe?.lastEventType ?? null, activeSubs: subs?.active ?? 0 },
+    stripe: { configured: Boolean(env.stripeKey() && env.stripeWebhookSecret() && env.stripePriceMonthly()), lastEventAt: toIso(stripe?.lastEventAt), lastEventType: stripe?.lastEventType ?? null, activeSubs: subs?.active ?? 0, missingPermission },
     cron: { lastTickAt: toIso(cron?.lastTickAt), ticksHour: cron?.ticksHour ?? 0 },
     errors24: { open: errors24?.open ?? 0, lastAt: toIso(errors24?.lastAt) },
     inbox: { lastAt: toIso(inboxRow?.lastAt), worker: Boolean(env.mailWorkerUrl() && env.mailWorkerToken()) },

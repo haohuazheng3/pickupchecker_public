@@ -9,6 +9,9 @@ import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { BrowseModels } from "@/components/seo/Browse";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaceStatStrip } from "@/components/seo/StatStrip";
+import { ModelPlaceCards } from "@/components/seo/ModelPlaceCards";
+import { cityPlace, storePlace } from "@/lib/seo/products";
+
 import { Faq } from "@/components/seo/Faq";
 import { storesStock, storesStatusFull, restockFeed, restockStats, placeStats } from "@/lib/stock/queries";
 import { ModelStoreMatrix } from "@/components/stores/ModelStoreMatrix";
@@ -99,7 +102,8 @@ export default async function CityPage({ params }: PageProps<"/stores/[state]/[c
         </div>
       </div>
 
-      <div className="mt-6"><PlaceStatStrip stores={stores.length} stockNow={d.stockNow} stats={d.pstats} /></div>
+      <div className="mt-6"><ModelPlaceCards place={cityPlace(c.state, c.name) ?? storePlace(stores[0])} stockNow={d.stockNow} of={stores.length} unit="stores with it" /></div>
+      <div className="mt-3"><PlaceStatStrip stores={stores.length} stockNow={d.stockNow} stats={d.pstats} /></div>
 
       {d.thin ? (
         <div className="mt-8"><StoreBlock store={stores[0]} summary={d.stock.get(stores[0].storeNumber)} rows={d.full.get(stores[0].storeNumber) ?? []} stock={d.stock} /></div>
@@ -134,7 +138,7 @@ export default async function CityPage({ params }: PageProps<"/stores/[state]/[c
           <h2 className="text-xl font-semibold">Restocks by configuration</h2>
           <div className="mt-3"><RestocksByConfig stats={d.pstats} label={`in ${c.name}`} /></div>
         </section>
-        <section className="pane p-5">
+        <section className="min-w-0">
           <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-semibold">Latest restocks in {c.name}</h2><Link href={`/restocks?model=all&state=${c.stateSlug}`} className="text-sm text-ink-3 hover:text-ink">All of {c.state} →</Link></div>
           <RestockFeed rows={d.feed} showModel emptyText={`No restock recorded in ${c.name} yet.`} />
         </section>

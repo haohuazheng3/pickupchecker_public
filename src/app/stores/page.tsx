@@ -8,6 +8,9 @@ import { BrowseModels, BrowsePopular } from "@/components/seo/Browse";
 import { LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaceStatStrip } from "@/components/seo/StatStrip";
+import { ModelPlaceCards } from "@/components/seo/ModelPlaceCards";
+import { US } from "@/lib/seo/products";
+
 import { Faq } from "@/components/seo/Faq";
 import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestockClock } from "@/components/restocks/RestockClock";
@@ -42,7 +45,8 @@ export default async function StoresIndex() {
       <p className="mt-3 max-w-2xl text-ink-2">{STORES.length} stores · {cities.length} cities · {states.length} states and territories.</p>
       <div className="mt-6 flex flex-wrap gap-2"><Link href={`/map?model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Live map</Link><Link href="/restocks" className="btn btn-ghost btn-sm">Restock log</Link><Link href={alert} className="btn btn-primary btn-sm">Alert me</Link></div>
 
-      <div className="mt-6"><PlaceStatStrip stores={STORES.length} cities={cities.length} stockNow={d.stockNow} stats={d.pstats} /></div>
+      <div className="mt-6"><ModelPlaceCards place={US} stockNow={d.stockNow} of={STORES.length} unit="stores with it" /></div>
+      <div className="mt-3"><PlaceStatStrip stores={STORES.length} cities={cities.length} stockNow={d.stockNow} stats={d.pstats} /></div>
 
       <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {states.map((s) => {

@@ -63,10 +63,13 @@ const Monitor = ({ className = "" }: { className?: string }) => (
 export function AppIcon({ size = 44 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" className="shrink-0 rounded-[22%] shadow-[0_6px_18px_-6px_rgba(10,127,73,.45)]">
+      <defs><linearGradient id="pc-icon-g" x1="32" y1="0" x2="32" y2="64" gradientUnits="userSpaceOnUse"><stop stopColor="#16a565" /><stop offset="1" stopColor="#077040" /></linearGradient></defs>
       <rect width="64" height="64" fill="url(#pc-icon-g)" />
-      <path d="M20 33.5l8 8L45 24" stroke="#052414" strokeWidth="6.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="47" cy="17" r="6" fill="#ffffff" stroke="#1fbf72" strokeWidth="3" />
-      <defs><linearGradient id="pc-icon-g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop stopColor="#5cf0a5" /><stop offset="1" stopColor="#1fbf72" /></linearGradient></defs>
+      <g transform="translate(2.56 2.56) scale(.92)">
+        <path d="M25 24.5v-3.6a7 7 0 0 1 14 0v3.6" stroke="#fff" strokeWidth="3.8" strokeLinecap="round" />
+        <path d="M18.2 24h27.6a2 2 0 0 1 2 2.15l-1.55 20.6a4.3 4.3 0 0 1-4.29 3.98H21.99a4.3 4.3 0 0 1-4.29-3.98l-1.55-20.6A2 2 0 0 1 18.2 24z" fill="#fff" />
+        <path d="M25.4 37.6l4.6 4.6 8.6-9.4" stroke="#0a7f49" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
     </svg>
   );
 }

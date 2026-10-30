@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DEFAULT_MODEL, storePath, type Store } from "@/lib/apple/catalog";
+import { DEFAULT_MODEL, storePath, type Store, appleName } from "@/lib/apple/catalog";
 import type { StoreStockSummary, StoreStatusRow } from "@/lib/stock/queries";
 import { nearestOutsideState, nearestInState, alertHref } from "@/lib/seo/enrich";
 import { StockByModel } from "./StockByModel";
@@ -17,7 +17,7 @@ export function StoreBlock({ store, summary, rows, stock }: { store: Store; summ
   const outside = nearestOutsideState(store, 4);
   const inState = nearestInState(store, 3);
   return (
-    <section className="space-y-4" aria-label={`Apple ${store.name}`} id={store.slug}>
+    <section className="space-y-4" aria-label={`${appleName(store)}`} id={store.slug}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-2xl font-semibold"><Link href={storePath(store)} className="hover:underline">Apple {store.name}</Link></h2>
@@ -30,7 +30,7 @@ export function StoreBlock({ store, summary, rows, stock }: { store: Store; summ
       </div>
       <div className="pane p-5"><StoreInfo store={store} compact /></div>
       <StockByModel summary={summary} storeNumber={store.storeNumber} />
-      <ConfigTable store={store} rows={rows} title={`Every configuration at Apple ${store.name}`} />
+      <ConfigTable store={store} rows={rows} title={`Every configuration at ${appleName(store)}`} />
       <div className="grid gap-4 md:grid-cols-2">
         <div className="pane p-5"><HoursTable store={store} /></div>
         <div className="space-y-4">

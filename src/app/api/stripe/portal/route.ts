@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ensureUser, userById } from "@/lib/auth";
-import { portalUrl } from "@/lib/billing";
+import { isPermissionError, portalUrl } from "@/lib/billing";
 import { recordError, errorMessage } from "@/lib/errors";
 
 export const runtime = "nodejs";
@@ -15,6 +15,7 @@ export async function POST() {
     return NextResponse.json({ url: await portalUrl(row.stripeCustomerId) });
   } catch (e) {
     await recordError("web", `portal failed: ${errorMessage(e)}`, { userId: u.id });
-    return NextResponse.json({ error: "portal unavailable" }, { status: 502 });
+    if (isPermissionError(e)) return NextResponse.json({ error: "Billing is offline for a moment. Your plan keeps working.", code: "billing_permission" }, { status: 503 });
+    return NextResponse.json({ error: "Billing didn't open. Try again in a minute." }, { status: 502 });
   }
 }

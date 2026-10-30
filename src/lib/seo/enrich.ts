@@ -4,7 +4,7 @@
  * zone, nearest stores across state lines, narrative paragraphs, FAQs, JSON-LD and page titles.
  * Everything here is deterministic and unit-tested (tests/seo-enrich.test.ts); nothing touches the DB.
  */
-import { STORES, MODELS, DEFAULT_MODEL, STORAGE_ORDER, catalogFor, modelByKey, stateCodeOf, distanceMiles, storePath, type Store, type ModelKey, type CatalogItem } from "../apple/catalog";
+import { STORES, MODELS, DEFAULT_MODEL, STORAGE_ORDER, catalogFor, modelByKey, stateCodeOf, distanceMiles, storePath, type Store, type ModelKey, type CatalogItem, appleName } from "../apple/catalog";
 
 /* ------------------------------------------------------------------ opening hours */
 
@@ -298,7 +298,7 @@ export function faq(c: FaqContext): FaqItem[] {
   const prep = c.kind === "store" ? "at" : c.kind === "model" ? "for the" : "in";
   const restockA = `${c.stats.month === 0 ? `No restock logged ${prep} ${c.place} in the last ${n} days` : `${plural(c.stats.month, "restock")} ${prep} ${c.place} in the last ${n} days, ${c.stats.week} this week`}${c.peak ? `, most of them around ${c.peak.hour} local time and most often on ${c.peak.day}s` : ""}; Apple publishes no schedule.`;
   const lastsA = c.stats.medianMs == null ? `Too few restock-to-sell-out pairs ${prep} ${c.place} yet to measure.` : `Over the last ${n} days a restocked configuration stayed available about ${fmtDuration(c.stats.medianMs)} (median) before selling out again.`;
-  const nearestA = (list: StoreWithDistance[]) => `${listWords(list.slice(0, 3).map((x) => `Apple ${x.name} in ${x.city}, ${stateCodeOf(x)} (${Math.round(x.distance)} mi)`))}.`;
+  const nearestA = (list: StoreWithDistance[]) => `${listWords(list.slice(0, 3).map((x) => `${appleName(x)} in ${x.city}, ${stateCodeOf(x)} (${Math.round(x.distance)} mi)`))}.`;
   if (c.kind === "model") {
     const now = c.stockNow[MODELS.find((m) => m.name === c.place)?.key ?? "duo"] ?? 0;
     out.push({ q: `Which Apple Stores have the ${c.place} in stock right now?`, a: now === 0 ? `None at the last check; the list on this page updates as soon as a US Apple Store lists the ${c.place} for pickup.` : `${plural(now, "US Apple Store")} at the last check, each named on this page with the configurations it has.` });
@@ -320,8 +320,8 @@ export function faq(c: FaqContext): FaqItem[] {
   }
   const label = c.place;
   const duoNow = c.duoStores ?? [];
-  out.push({ q: `Which Apple Stores in ${label} have the ${duo.name} in stock right now?`, a: duoNow.length === 0 ? `None at the last check; this page updates the moment a store in ${label} lists the ${duo.name} for pickup.` : `${plural(duoNow.length, "store")} at the last check: ${listWords(duoNow.map((x) => `Apple ${x.name}`))}.` });
-  out.push({ q: `How many Apple Stores are there in ${label}?`, a: `${plural(c.stores.length, "Apple Store")}${c.stores.length > 1 ? `, including ${listWords(c.stores.slice(0, 3).map((x) => `Apple ${x.name}${c.kind === "state" ? ` in ${x.city}` : ""}`), 3)}` : `: Apple ${c.stores[0]?.name ?? ""}`}.` });
+  out.push({ q: `Which Apple Stores in ${label} have the ${duo.name} in stock right now?`, a: duoNow.length === 0 ? `None at the last check; this page updates the moment a store in ${label} lists the ${duo.name} for pickup.` : `${plural(duoNow.length, "store")} at the last check: ${listWords(duoNow.map((x) => `${appleName(x)}`))}.` });
+  out.push({ q: `How many Apple Stores are there in ${label}?`, a: `${plural(c.stores.length, "Apple Store")}${c.stores.length > 1 ? `, including ${listWords(c.stores.slice(0, 3).map((x) => `${appleName(x)}${c.kind === "state" ? ` in ${x.city}` : ""}`), 3)}` : `: Apple ${c.stores[0]?.name ?? ""}`}.` });
   out.push({ q: `How often do ${label} Apple Stores restock the iPhone?`, a: restockA });
   out.push({ q: `How long does stock last in ${label}?`, a: lastsA });
   if (c.nearest?.length) out.push({ q: `What is the closest Apple Store outside ${label}?`, a: nearestA(c.nearest) });
@@ -337,12 +337,12 @@ export function faqJsonLd(items: FaqItem[]) {
 }
 
 export function itemListJsonLd(name: string, stores: Store[]) {
-  return { "@context": "https://schema.org", "@type": "ItemList", name, numberOfItems: stores.length, itemListElement: stores.map((s, i) => ({ "@type": "ListItem", position: i + 1, name: `Apple ${s.name}`, url: `${BASE}${storePath(s)}` })) };
+  return { "@context": "https://schema.org", "@type": "ItemList", name, numberOfItems: stores.length, itemListElement: stores.map((s, i) => ({ "@type": "ListItem", position: i + 1, name: `${appleName(s)}`, url: `${BASE}${storePath(s)}` })) };
 }
 
 export function storeJsonLd(s: Store, week: DayHours[]) {
   return {
-    "@context": "https://schema.org", "@type": "Store", name: `Apple ${s.name}`, url: `${BASE}${storePath(s)}`, sameAs: s.url, brand: { "@type": "Brand", name: "Apple" },
+    "@context": "https://schema.org", "@type": "Store", name: `${appleName(s)}`, url: `${BASE}${storePath(s)}`, sameAs: s.url, brand: { "@type": "Brand", name: "Apple" },
     address: { "@type": "PostalAddress", streetAddress: (s.street ?? "").trim(), addressLocality: s.city, addressRegion: s.state, postalCode: s.postalCode, addressCountry: "US" },
     geo: { "@type": "GeoCoordinates", latitude: s.lat, longitude: s.lng }, telephone: s.phone, image: s.image,
     hasMap: directionsUrl(s), openingHoursSpecification: openingHoursSpec(week),
@@ -388,11 +388,11 @@ export function cityTitle(city: string, code: string, duoNow: number, stores: nu
 
 export function storeTitle(s: Pick<Store, "name" | "city">, code: string, duoConfigs: number): string {
   return fitTitle([
-    `Apple ${s.name}, ${s.city} ${code}: ${duoConfigs} iPhone Duo configs in stock`,
-    `Apple ${s.name}, ${s.city} ${code} – iPhone Duo pickup stock`,
-    `Apple ${s.name}, ${s.city} – iPhone Duo stock`,
-    `Apple ${s.name} – iPhone pickup stock`,
-    `Apple ${s.name} – stock`,
+    `${appleName(s)}, ${s.city} ${code}: ${duoConfigs} iPhone Duo configs in stock`,
+    `${appleName(s)}, ${s.city} ${code} – iPhone Duo pickup stock`,
+    `${appleName(s)}, ${s.city} – iPhone Duo stock`,
+    `${appleName(s)} – iPhone pickup stock`,
+    `${appleName(s)} – stock`,
   ]);
 }
 

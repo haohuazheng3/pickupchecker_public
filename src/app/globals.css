@@ -154,6 +154,8 @@ button { cursor: pointer; }
 /* Grid tracks size to their items' min-content by default, so one truncated (nowrap) line inside a
    pane made the whole page 526 px wide on phones and Mobile Safari zoomed out. Items may shrink. */
 .grid > *, .pane { min-width: 0; }
+/* One wide element must never widen the page: Mobile Safari would zoom the whole page out. */
+html, body { overflow-x: clip; }
 
 /* ------------------------------------------------------------------ buttons: instant feedback */
 .btn {
@@ -357,3 +359,24 @@ a:active { opacity: .7; }
 .pc-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--pane-solid); }
 .pc-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--pane-solid); }
 .maplibregl-canvas:focus { outline: none; }
+
+/* The alert flow, opened in place over a blurred page: a centred card, a bottom sheet on phones. */
+.alert-dialog {
+  padding: 0; border: 0; margin: auto; color: var(--ink); background: var(--pane-solid);
+  width: min(40rem, calc(100vw - 2rem)); max-width: none; max-height: min(88dvh, 54rem);
+  border-radius: 28px; overflow-y: auto; overscroll-behavior: contain;
+  box-shadow: 0 40px 100px -30px rgba(0, 0, 0, .45), 0 0 0 1px var(--line);
+}
+.alert-dialog[open] { animation: dialog-in .22s cubic-bezier(.2, .8, .2, 1); }
+.alert-dialog::backdrop {
+  background: color-mix(in srgb, var(--bg) 40%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1); backdrop-filter: blur(12px) saturate(1.1);
+}
+@keyframes dialog-in { from { opacity: 0; transform: translateY(14px) scale(.985); } }
+@media (max-width: 639px) {
+  .alert-dialog { width: 100vw; max-height: 92dvh; margin: auto 0 0; border-radius: 24px 24px 0 0; }
+  .alert-dialog[open] { animation: sheet-in .3s cubic-bezier(.2, .8, .2, 1); }
+}
+@keyframes sheet-in { from { transform: translateY(100%); } }
+html.dialog-open { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .alert-dialog[open] { animation: none; } }

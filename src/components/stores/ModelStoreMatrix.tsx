@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MODELS, storePath, stateCodeOf, type Store } from "@/lib/apple/catalog";
+import { productFor, productPath, storePlace } from "@/lib/seo/products";
 import type { StoreStockSummary } from "@/lib/stock/queries";
 import { normalizeHours, todayLabel } from "@/lib/seo/enrich";
 import { storeTimeZone } from "@/lib/apple/catalog";
@@ -32,7 +33,7 @@ export function ModelStoreMatrix({ stores, stock, showCity = true, now = new Dat
                 const c = r?.perModel[m.key];
                 const n = c?.available ?? 0;
                 return (
-                  <Link key={m.key} href={`${storePath(s)}#configs`} className={`inline-flex items-center justify-center gap-1 rounded-full py-1 text-sm tabular-nums ${n ? "bg-accent/15 font-semibold text-accent" : "text-ink-3"}`} title={`${m.name}: ${n} of ${c?.total ?? 0} configurations available`}>
+                  <Link key={m.key} href={productPath(productFor(m.key), storePlace(s))} className={`inline-flex items-center justify-center gap-1 rounded-full py-1 text-sm tabular-nums ${n ? "bg-accent/15 font-semibold text-accent" : "text-ink-3"}`} title={`${m.name}: ${n} of ${c?.total ?? 0} configurations available`}>
                     <Dot state={n ? "ok" : c ? "idle" : "warn"} live={n > 0} />{n}<span className="hidden text-xs font-normal text-ink-3 sm:inline">/{c?.total ?? 0}</span>
                   </Link>
                 );

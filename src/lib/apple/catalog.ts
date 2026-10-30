@@ -214,6 +214,11 @@ export function appleBuyUrl(item: Pick<CatalogItem, "model" | "storage" | "color
   return `${appleFamilyUrl(key)}/${display}-inch-display-${slug(item.storage)}-${slug(item.color)}-unlocked`;
 }
 
+/** "Apple Fifth Avenue", but "Apple Park Visitor Center" stays as it is. */
+export function appleName(store: Pick<Store, "name">): string {
+  return /^apple\b/i.test(store.name) ? store.name : `Apple ${store.name}`;
+}
+
 export function storeByNumber(n: string): Store | undefined {
   return STORE_INDEX.get(n);
 }

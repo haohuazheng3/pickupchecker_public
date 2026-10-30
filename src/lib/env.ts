@@ -23,6 +23,7 @@ export const env = {
   stripePricePro: () => process.env.STRIPE_PRICE_PRO ?? "", // Pro ($10, 20 alerts)
   stripePriceMax: () => process.env.STRIPE_PRICE_MAX ?? "", // Max ($20, 50 alerts)
   stripePmc: () => process.env.STRIPE_PMC_ID ?? "", // payment method configuration (card + Link)
+  stripePortalConfig: () => process.env.STRIPE_PORTAL_CONFIG ?? "", // customer-portal configuration (found or created when unset)
   stripeApiVersion: () => process.env.STRIPE_API_VERSION ?? "2026-09-30.endive",
   vapidPublicKey: () => process.env.VAPID_PUBLIC_KEY ?? "",
   vapidPrivateKey: () => process.env.VAPID_PRIVATE_KEY ?? "",

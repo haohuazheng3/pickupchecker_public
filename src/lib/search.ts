@@ -5,6 +5,7 @@
 import { MODELS, STORES, statePath, cityPath, storePath, stateCodeOf, type ModelKey } from "./apple/catalog";
 import { stateRefs, cityRefs } from "./seo/links";
 import { rankStores, zipAnchor } from "./geo";
+import { PRODUCTS, productPath } from "./seo/products";
 import { norm } from "./text";
 
 export { norm };
@@ -35,6 +36,7 @@ export function buildSearchIndex(): SearchEntry[] {
     out.push({ k: "model", l: `${m.name} restocks`, s: "Restock log", h: `/restocks?model=${m.key as ModelKey}`, q: `${base} restocks restock log` });
     out.push({ k: "model", l: `${m.name} map`, s: "Where it is in stock right now", h: `/map?model=${m.key as ModelKey}`, q: `${base} map` });
   }
+  for (const p of PRODUCTS) if (p.kind !== "model") out.push({ k: "model", l: p.name, s: "Live pickup stock", h: productPath(p), q: `${norm(p.name)} ${norm(p.short)} stock` });
   for (const st of stateRefs()) out.push({ k: "state", l: st.name, s: `${st.count} store${st.count === 1 ? "" : "s"}`, h: st.href, q: `${norm(st.name)} ${st.code.toLowerCase()} state` });
   for (const c of cityRefs()) out.push({ k: "city", l: `${c.name}, ${c.stateCode}`, s: `${c.count} store${c.count === 1 ? "" : "s"} · ${c.state}`, h: c.href, q: `${norm(c.name)} ${c.stateCode.toLowerCase()} ${norm(c.state)}` });
   for (const s of STORES) {

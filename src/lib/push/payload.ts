@@ -3,7 +3,7 @@
  * so keep them small: push services cap payloads at 4 KB and iOS shows ~2 lines of body.
  */
 import type { AlertLine } from "../mail/resend";
-import { appleBuyUrl, storePath, stateCodeOf } from "../apple/catalog";
+import { appleBuyUrl, storePath, stateCodeOf, appleName } from "../apple/catalog";
 
 export type PushKind = "restock" | "test";
 
@@ -42,7 +42,7 @@ export function restockTag(watchId: string, storeNumber: string, partNumber: str
 export function restockPayload(lines: AlertLine | AlertLine[], watchId: string, now = new Date()): PushPayload {
   const first = Array.isArray(lines) ? lines[0] : lines;
   const title = `In stock: ${first.item.model} ${first.item.storage} ${first.item.color}`;
-  const where = `Apple ${first.store.name} · ${first.store.city}, ${stateCodeOf(first.store)}`;
+  const where = `${appleName(first.store)} · ${first.store.city}, ${stateCodeOf(first.store)}`;
   const body = `${where}${first.quote ? ` — ${first.quote}` : ""}. Tap to reserve on apple.com.`;
   return {
     v: 1,

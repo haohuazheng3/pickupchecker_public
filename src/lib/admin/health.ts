@@ -38,7 +38,7 @@ export interface HealthSnapshot {
   alerts24: { sent: number; failed: number; pushSent: number; emailSent: number; lastSentAt: string | null; lastFailedAt: string | null };
   push: { configured: boolean; enabled: number; disabled: number; lastSentAt: string | null };
   email: { configured: boolean; lastSentAt: string | null; lastFailedAt: string | null };
-  stripe: { configured: boolean; lastEventAt: string | null; lastEventType: string | null; activeSubs: number };
+  stripe: { configured: boolean; lastEventAt: string | null; lastEventType: string | null; activeSubs: number; missingPermission?: string | null };
   cron: { lastTickAt: string | null; ticksHour: number };
   errors24: { open: number; lastAt: string | null };
   inbox: { lastAt: string | null; worker: boolean };
@@ -166,9 +166,11 @@ export function computeNodes(s: HealthSnapshot): NodeHealth[] {
   // 10. stripe
   nodes.push({
     key: "stripe", name: "Stripe", href: "/admin/users",
-    state: !s.stripe.configured ? "bad" : "ok",
-    value: s.stripe.configured ? `${s.stripe.activeSubs} active` : "key missing",
-    detail: s.stripe.lastEventAt ? `last webhook ${s.stripe.lastEventType ?? ""} ${fmtAge(ageMs(s.stripe.lastEventAt, s.now))}` : "no webhook event received yet",
+    state: !s.stripe.configured ? "bad" : s.stripe.missingPermission ? "warn" : "ok",
+    value: s.stripe.configured ? (s.stripe.missingPermission ? "key lacks a permission" : `${s.stripe.activeSubs} active`) : "key missing",
+    detail: s.stripe.missingPermission
+      ? `the API key is missing “${s.stripe.missingPermission}” — plan changes / Billing fail until it is granted in Stripe → Developers → API keys`
+      : s.stripe.lastEventAt ? `last webhook ${s.stripe.lastEventType ?? ""} ${fmtAge(ageMs(s.stripe.lastEventAt, s.now))}` : "no webhook event received yet",
   });
 
   // 11. errors

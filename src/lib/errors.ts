@@ -34,6 +34,14 @@ export async function recordError(
 }
 
 export function errorMessage(e: unknown): string {
-  if (e instanceof Error) return e.message;
+  if (e instanceof Error) {
+    // Drizzle wraps driver errors as "Failed query: <sql>"; the reason lives in .cause — put it first.
+    const cause = (e as { cause?: unknown }).cause;
+    if (cause instanceof Error && cause.message && !e.message.includes(cause.message)) {
+      const head = e.message.startsWith("Failed query:") ? "Failed query" : e.message;
+      return `${head}: ${cause.message}${e.message.startsWith("Failed query:") ? ` — ${e.message.slice(14, 160)}` : ""}`;
+    }
+    return e.message;
+  }
   return typeof e === "string" ? e : JSON.stringify(e);
 }

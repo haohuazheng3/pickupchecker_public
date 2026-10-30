@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { MODELS, COLOR_META, catalogFor, appleBuyUrl, type CatalogItem, type Store } from "@/lib/apple/catalog";
+import { MODELS, COLOR_META, catalogFor, appleBuyUrl, modelKeyFor, type CatalogItem, type Store, appleName } from "@/lib/apple/catalog";
+import { productFor, productPath, storePlace } from "@/lib/seo/products";
 import type { StoreStatusRow } from "@/lib/stock/queries";
 import { alertHref, fmtPrice, sortConfigs } from "@/lib/seo/enrich";
 import { Dot } from "@/components/stock/StatusBits";
@@ -20,7 +21,7 @@ function Line({ r, store }: { r: Row; store: Store }) {
       <Swatch color={r.item.color} className="h-3.5 w-3.5" />
       <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="font-medium text-ink">{r.item.storage} {r.item.color}</span>
+          <Link href={productPath(productFor(modelKeyFor(r.item.model), r.item.storage, r.item.color), storePlace(store))} className="font-medium text-ink hover:underline">{r.item.storage} {r.item.color}</Link>
           <span className="text-xs text-ink-3">{fmtPrice(r.item.price)}</span>
         </div>
         <div className="flex flex-wrap items-center gap-x-2 text-xs text-ink-3">
@@ -32,7 +33,7 @@ function Line({ r, store }: { r: Row; store: Store }) {
       </div>
       <div className="flex shrink-0 items-center gap-3 text-xs">
         {ok && <a href={appleBuyUrl(r.item)} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm px-2.5 text-xs">Buy</a>}
-        <Link href={alertHref({ model: MODELS.find((m) => m.name === r.item.model)?.key, storage: r.item.storage, color: r.item.color, store: store.storeNumber })} className="font-medium text-ink hover:underline" aria-label={`Alert me when the ${r.item.model} ${r.item.storage} ${r.item.color} is available at Apple ${store.name}`}>Alert me →</Link>
+        <Link href={alertHref({ model: MODELS.find((m) => m.name === r.item.model)?.key, storage: r.item.storage, color: r.item.color, store: store.storeNumber })} className="font-medium text-ink hover:underline" aria-label={`Alert me when the ${r.item.model} ${r.item.storage} ${r.item.color} is available at ${appleName(store)}`}>Alert me →</Link>
       </div>
     </li>
   );

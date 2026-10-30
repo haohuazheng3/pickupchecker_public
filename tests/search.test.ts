@@ -9,7 +9,7 @@ describe("site search", () => {
     expect(index.filter((e) => e.k === "store")).toHaveLength(269);
     expect(index.filter((e) => e.k === "state").length).toBeGreaterThan(40);
     expect(index.filter((e) => e.k === "city").length).toBeGreaterThan(200);
-    expect(index.filter((e) => e.k === "model")).toHaveLength(9);
+    expect(index.filter((e) => e.k === "model")).toHaveLength(9 + 62); // 3 models × stock/restocks/map + every storage, color and configuration
     expect(new Set(index.map((e) => `${e.k}:${e.h}`)).size).toBe(index.length);
   });
   it("a state name or code goes to the state page before its cities and stores", () => {

@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "./db";
 import { stripe } from "./stripe";
 import { env } from "./env";
-import { PLANS, planFromPrice, priceIdFor, effectivePlan, type PaidPlanKey } from "./plans";
+import { PAID_PLANS as PAID_PLAN_KEYS, PLANS, planFromPrice, priceIdFor, effectivePlan, type PaidPlanKey } from "./plans";
 
 /** Upsert a subscription row from a Stripe subscription object (idempotent). */
 export async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
@@ -106,25 +106,81 @@ async function checkoutSession(userId: string, email: string, plan: PaidPlanKey,
   return session.url;
 }
 
-/** Move an existing subscription to another paid plan in place (prorated), then mirror it. */
-export async function changePlan(subscriptionId: string, plan: PaidPlanKey): Promise<void> {
-  const s = stripe();
-  const sub = await s.subscriptions.retrieve(subscriptionId);
-  const item = sub.items.data[0];
-  if (!item) throw new Error("subscription has no item");
-  const updated = await s.subscriptions.update(subscriptionId, {
-    items: [{ id: item.id, price: priceIdFor(plan) }],
-    proration_behavior: "create_prorations",
-    cancel_at_period_end: false,
-    metadata: { ...sub.metadata, plan },
-  });
-  await syncSubscription(updated);
+/** Stripe refused because the API key lacks a permission (a restricted key), not because of the request. */
+export function isPermissionError(e: unknown): boolean {
+  const err = e as { type?: string; statusCode?: number; message?: string };
+  return err?.type === "StripePermissionError" || err?.statusCode === 403 || /permission/i.test(err?.message ?? "");
 }
 
-export async function portalUrl(customerId: string): Promise<string> {
+export class BillingPermissionError extends Error {
+  constructor(public missing: string) { super(`Stripe key lacks ${missing}`); }
+}
+
+/**
+ * Move an existing subscription to another paid plan. In place and prorated when the key may update
+ * subscriptions; otherwise through Stripe's hosted plan-change page (customer portal), whose URL is
+ * returned for the browser to open. Throws BillingPermissionError when neither is allowed.
+ */
+export async function changePlan(subscriptionId: string, plan: PaidPlanKey, customerId?: string | null): Promise<{ url?: string }> {
+  const s = stripe();
+  try {
+    const sub = await s.subscriptions.retrieve(subscriptionId);
+    const item = sub.items.data[0];
+    if (!item) throw new Error("subscription has no item");
+    const updated = await s.subscriptions.update(subscriptionId, {
+      items: [{ id: item.id, price: priceIdFor(plan) }],
+      proration_behavior: "create_prorations",
+      cancel_at_period_end: false,
+      metadata: { ...sub.metadata, plan },
+    });
+    await syncSubscription(updated);
+    return {};
+  } catch (e) {
+    if (!isPermissionError(e)) throw e;
+    if (!customerId) throw new BillingPermissionError("Subscriptions write");
+    try {
+      return { url: await portalUrl(customerId, { subscriptionId, returnTo: `/account?plan=${plan}` }) };
+    } catch (p) {
+      if (isPermissionError(p)) throw new BillingPermissionError("Subscriptions write or Customer portal write");
+      throw p;
+    }
+  }
+}
+
+let portalConfig: string | null = null;
+/** PickupChecker's own customer-portal configuration (plan switching between our three prices), found or created once. */
+async function portalConfiguration(): Promise<string> {
+  if (portalConfig) return portalConfig;
+  if (env.stripePortalConfig()) return (portalConfig = env.stripePortalConfig());
+  const s = stripe();
+  const list = await s.billingPortal.configurations.list({ limit: 100 });
+  const mine = list.data.find((c) => c.metadata?.app === "pickupchecker" && c.active);
+  if (mine) return (portalConfig = mine.id);
+  const site = env.siteUrl();
+  const created = await s.billingPortal.configurations.create({
+    metadata: { app: "pickupchecker" },
+    business_profile: { headline: "PickupChecker — iPhone pickup alerts", privacy_policy_url: `${site}/privacy`, terms_of_service_url: `${site}/terms` },
+    default_return_url: `${site}/account`,
+    features: {
+      invoice_history: { enabled: true },
+      payment_method_update: { enabled: true },
+      subscription_cancel: { enabled: true, mode: "at_period_end" },
+      subscription_update: {
+        enabled: true, default_allowed_updates: ["price"], proration_behavior: "create_prorations",
+        products: [{ product: (await s.prices.retrieve(priceIdFor("plus"))).product as string, prices: PAID_PLAN_KEYS.map(priceIdFor) }],
+      },
+    },
+  });
+  return (portalConfig = created.id);
+}
+
+export async function portalUrl(customerId: string, flow?: { subscriptionId: string; returnTo: string }): Promise<string> {
+  const site = env.siteUrl();
   const session = await stripe().billingPortal.sessions.create({
     customer: customerId,
-    return_url: `${env.siteUrl()}/account`,
-  });
+    configuration: await portalConfiguration(),
+    return_url: `${site}/account`,
+    ...(flow ? { flow_data: { type: "subscription_update", subscription_update: { subscription: flow.subscriptionId }, after_completion: { type: "redirect", redirect: { return_url: `${site}${flow.returnTo}` } } } } : {}),
+  } as Stripe.BillingPortal.SessionCreateParams);
   return session.url;
 }

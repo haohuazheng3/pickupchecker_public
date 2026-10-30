@@ -8,8 +8,23 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MODELS } from "@/lib/apple/catalog";
+import { productBySlug, resolvePlace } from "@/lib/seo/products";
 
 export function alertHref(pathname: string): string {
+  // A product page: the exact phone, and the store / city / state it is about.
+  const parts = pathname.split("/").filter(Boolean);
+  const product = parts[0] === "stock" && parts[1] ? productBySlug(parts[1]) : undefined;
+  if (product) {
+    const q = new URLSearchParams({ model: product.model });
+    if (product.storage) q.set("storage", product.storage);
+    if (product.color) q.set("color", product.color);
+    const place = resolvePlace(parts.slice(2));
+    if (place && !("redirect" in place)) {
+      if (place.store) q.set("store", place.store.storeNumber);
+      else if (place.stateSlug) { q.set("state", place.stateSlug); if (place.citySlug) q.set("city", place.citySlug); }
+    }
+    return `/?${q.toString()}#notify`;
+  }
   const store = pathname.match(/^\/stores\/[^/]+\/[^/]+\/([^/]+)\/?$/);
   if (store) return `/?store=${encodeURIComponent(store[1])}#notify`;
   const model = pathname.match(/^\/stock\/([^/]+)\/?$/);

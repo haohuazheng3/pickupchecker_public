@@ -7,7 +7,7 @@
  * ticking, so the next row stays where it was.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { STORES, STORE_INDEX, distanceMiles, stateCodeOf } from "@/lib/apple/catalog";
+import { STORES, STORE_INDEX, distanceMiles, stateCodeOf, appleName } from "@/lib/apple/catalog";
 import { centroid, formatDrive, formatMiles, rankStores, searchAnchor, type Anchor } from "@/lib/geo";
 
 const PAGE = 10;
@@ -76,7 +76,7 @@ export function StorePicker({ value, onToggle, onPretick, room, preferState, pre
       const c = centroid(inCity);
       if (c) return { ...c, label: preferCity, kind: "place", first: new Set(inCity.map((s) => s.storeNumber)) };
     }
-    if (seed) return { lat: seed.lat, lng: seed.lng, label: `Apple ${seed.name}`, kind: "store" };
+    if (seed) return { lat: seed.lat, lng: seed.lng, label: `${appleName(seed)}`, kind: "store" };
     if (state) {
       const inState = STORES.filter((s) => s.state === state);
       const c = centroid(inState);
