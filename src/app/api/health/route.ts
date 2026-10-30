@@ -39,7 +39,11 @@ export async function GET(req: Request) {
   }
   const ok = Object.values(checks).every((c) => c.ok);
   return NextResponse.json(
-    { ok, service: "pickupchecker", env: process.env.VERCEL_ENV ?? "local", site: env.siteUrl(), checks, at: new Date().toISOString() },
+    {
+      ok, service: "pickupchecker", env: process.env.VERCEL_ENV ?? "local", site: env.siteUrl(), checks, at: new Date().toISOString(),
+      // The poller host's auto-update reads these: the deployed commit, and the poller code it was built with.
+      commit: process.env.VERCEL_GIT_COMMIT_SHA || null, pollerCode: process.env.POLLER_CODE_HASH || null,
+    },
     { status: ok ? 200 : 503, headers: { "cache-control": "no-store" } },
   );
 }

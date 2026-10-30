@@ -5,6 +5,7 @@
 import { and, desc, eq, gt, isNull, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "../db";
 import { readState } from "../stock/sweep";
+import { stripePermissions } from "./stripeCheck";
 import { env } from "../env";
 import { STORES, PART_INDEX, MODELS, modelKeyFor, type ModelKey } from "../apple/catalog";
 import type { HealthSnapshot, Heartbeat } from "./health";
@@ -140,13 +141,12 @@ export async function healthSnapshot(): Promise<HealthSnapshot> {
   const [stripe] = await d.select({ lastEventAt: sql<string | null>`max(received_at)`, lastEventType: sql<string | null>`(array_agg(type order by received_at desc))[1]` }).from(schema.stripeEvents);
   const [subs] = await d.select({ active: sql<number>`count(*) filter (where status in ('active','trialing','past_due'))::int` }).from(schema.subscriptions);
   const [cron] = await d.select({ lastTickAt: sql<string | null>`max(at)`, ticksHour: sql<number>`count(*) filter (where at > ${hour})::int` }).from(schema.opsLog).where(and(eq(schema.opsLog.source, "cron"), eq(schema.opsLog.message, "watchdog tick"), gt(schema.opsLog.at, day)));
-  const [errors24] = await d.select({ open: sql<number>`count(*)::int`, lastAt: sql<string | null>`max(last_seen_at)` }).from(schema.errorGroups).where(and(isNull(schema.errorGroups.resolvedAt), gt(schema.errorGroups.lastSeenAt, day)));
   const [inboxRow] = await d.select({ lastAt: sql<string | null>`max(received_at)` }).from(schema.inboxMessages);
-  // A restricted Stripe key names the permission it lacks ("Enabling Subscriptions Read (…) permissions …").
-  const [perm] = await d.select({ message: schema.errorGroups.message }).from(schema.errorGroups)
-    .where(and(isNull(schema.errorGroups.resolvedAt), gt(schema.errorGroups.lastSeenAt, day), sql`${schema.errorGroups.message} like '%does not have the required permissions%'`))
-    .orderBy(desc(schema.errorGroups.lastSeenAt)).limit(1);
-  const missingPermission = perm ? (perm.message.match(/Enabling ([A-Za-z ]+?) \(/)?.[1] ?? "a permission") : null;
+  // The key's permissions, probed live (cached ten minutes). Runs before the error count: a passing probe
+  // resolves error groups a missing permission left behind.
+  const perms = await stripePermissions().catch(() => null);
+  const missingPermission = perms?.missing[0] ?? null;
+  const [errors24] = await d.select({ open: sql<number>`count(*)::int`, lastAt: sql<string | null>`max(last_seen_at)` }).from(schema.errorGroups).where(and(isNull(schema.errorGroups.resolvedAt), gt(schema.errorGroups.lastSeenAt, day)));
   const toIso = (v: string | Date | null | undefined) => (v ? new Date(v).toISOString() : null);
   return {
     now,
@@ -161,11 +161,12 @@ export async function healthSnapshot(): Promise<HealthSnapshot> {
     alerts24: { sent: alerts24?.sent ?? 0, failed: alerts24?.failed ?? 0, pushSent: alerts24?.pushSent ?? 0, emailSent: alerts24?.emailSent ?? 0, lastSentAt: toIso(alerts24?.lastSentAt), lastFailedAt: toIso(alerts24?.lastFailedAt) },
     push: { configured: Boolean(env.vapidPublicKey() && env.vapidPrivateKey()), enabled: push?.enabled ?? 0, disabled: push?.disabled ?? 0, lastSentAt: toIso(push?.lastSentAt) },
     email: { configured: Boolean(env.resendKey()), lastSentAt: toIso(email?.lastSentAt), lastFailedAt: toIso(email?.lastFailedAt) },
-    stripe: { configured: Boolean(env.stripeKey() && env.stripeWebhookSecret() && env.stripePriceMonthly()), lastEventAt: toIso(stripe?.lastEventAt), lastEventType: stripe?.lastEventType ?? null, activeSubs: subs?.active ?? 0, missingPermission },
+    stripe: { configured: Boolean(env.stripeKey() && env.stripeWebhookSecret() && env.stripePriceMonthly()), lastEventAt: toIso(stripe?.lastEventAt), lastEventType: stripe?.lastEventType ?? null, activeSubs: subs?.active ?? 0, missingPermission, permissionsCheckedAt: perms?.checkedAt ?? null },
     cron: { lastTickAt: toIso(cron?.lastTickAt), ticksHour: cron?.ticksHour ?? 0 },
     errors24: { open: errors24?.open ?? 0, lastAt: toIso(errors24?.lastAt) },
     inbox: { lastAt: toIso(inboxRow?.lastAt), worker: Boolean(env.mailWorkerUrl() && env.mailWorkerToken()) },
-    deploy: { commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null, env: process.env.VERCEL_ENV ?? "local", region: process.env.VERCEL_REGION ?? null, node: process.version },
+    deploy: { commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null, env: process.env.VERCEL_ENV ?? "local", region: process.env.VERCEL_REGION ?? null, node: process.version, pollerCode: process.env.POLLER_CODE_HASH || null },
+    deployedAt: process.env.BUILD_AT || null,
     clerkConfigured: Boolean(process.env.CLERK_SECRET_KEY && process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY),
   };
 }

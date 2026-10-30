@@ -3,6 +3,7 @@ import { computeNodes, overallState, type HealthSnapshot } from "@/lib/admin/hea
 import { pollerStrip, appleStrip, cronStrip } from "@/lib/admin/strips";
 import { fillBuckets } from "@/lib/admin/ops";
 import { signAdminToken, verifyAdminToken } from "@/lib/admin/session";
+import { probeOutcome } from "@/lib/admin/stripeCheck";
 
 const NOW = Date.parse("2026-10-29T20:00:00Z");
 const iso = (minAgo: number) => new Date(NOW - minAgo * 60_000).toISOString();
@@ -46,6 +47,33 @@ describe("health rules", () => {
   it("warns when the host runs an older commit than the site", () => {
     const nodes = computeNodes(snap({ deploy: { commit: "94f8306abc", env: "production", region: null, node: "v24" } }));
     expect(nodes.find((n) => n.key === "deploy")?.state).toBe("warn");
+  });
+  it("compares the poller code, not the commit: a pages-only deploy leaves the poller current", () => {
+    const sys = { ...snap().heartbeat!.sys!, commit: "bfbdd8a", codeHash: "3b72225a6556" };
+    const node = (deploy: Partial<HealthSnapshot["deploy"]>, deployedAt: string | null) =>
+      computeNodes(snap({ heartbeat: { ...snap().heartbeat!, sys }, deploy: { commit: "3b1118e219", env: "production", region: null, node: "v24", ...deploy }, deployedAt })).find((n) => n.key === "deploy")!;
+    expect(node({ pollerCode: "3b72225a6556" }, iso(300))).toMatchObject({ state: "ok" });
+    expect(node({ pollerCode: "3b72225a6556" }, iso(300)).detail).toContain("poller code current");
+    // Different code: the host updates itself within ~10 min, so a fresh build only says so …
+    expect(node({ pollerCode: "999999999999" }, iso(5))).toMatchObject({ state: "ok" });
+    expect(node({ pollerCode: "999999999999" }, iso(5)).detail).toContain("updating");
+    // … and one that outlasts the grace period warns.
+    expect(node({ pollerCode: "999999999999" }, iso(60))).toMatchObject({ state: "warn" });
+  });
+  it("reads the Stripe node from the live key probe", () => {
+    const stripe = (over: Partial<HealthSnapshot["stripe"]>) => computeNodes(snap({ stripe: { ...snap().stripe, ...over } })).find((n) => n.key === "stripe")!;
+    expect(stripe({ missingPermission: "Subscriptions Write" })).toMatchObject({ state: "warn" });
+    expect(stripe({ missingPermission: null, permissionsCheckedAt: iso(3) })).toMatchObject({ state: "ok" });
+    expect(stripe({ missingPermission: null, permissionsCheckedAt: iso(3) }).detail).toContain("every permission");
+  });
+  it("classifies Stripe probe errors without guessing", () => {
+    expect(probeOutcome(null)).toBe("ok");
+    expect(probeOutcome({ statusCode: 404, code: "resource_missing", message: "No such subscription" })).toBe("ok");
+    // The "No such …" message quotes the id; an id with "permission" in it once read as a permission error.
+    expect(probeOutcome({ statusCode: 404, code: "resource_missing", message: "No such checkout session: 'cs_permission_probe'" })).toBe("ok");
+    expect(probeOutcome({ type: "StripePermissionError", statusCode: 403, message: "The provided key does not have the required permissions" })).toBe("missing");
+    expect(probeOutcome({ statusCode: 401, type: "StripeAuthenticationError", message: "Invalid API Key provided" })).toBe("unknown");
+    expect(probeOutcome({ type: "StripeConnectionError", message: "socket hang up" })).toBe("unknown");
   });
   it("treats missing VAPID keys as down", () => {
     expect(computeNodes(snap({ push: { configured: false, enabled: 0, disabled: 0, lastSentAt: null } })).find((n) => n.key === "push")?.state).toBe("bad");

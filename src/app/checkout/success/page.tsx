@@ -8,6 +8,7 @@ import { PLANS, isPaidPlan, type PaidPlanKey } from "@/lib/plans";
 import { TrackOnce } from "@/components/site/TrackOnce";
 import { PushSetup } from "@/components/push/PushSetup";
 import { env } from "@/lib/env";
+import { deviceSummary } from "@/lib/devices";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Alerts are on", robots: { index: false } };
@@ -28,11 +29,13 @@ export default async function Success({ searchParams }: PageProps<"/checkout/suc
       }
     } catch { /* webhook will reconcile */ }
   }
-  const watches = u ? await db().select().from(schema.watches).where(eq(schema.watches.userId, u.id)) : [];
+  const [watches, devices] = u ? await Promise.all([db().select().from(schema.watches).where(eq(schema.watches.userId, u.id)), deviceSummary(u.id)]) : [[], null];
   const def = plan ? PLANS[plan] : null;
+  const saved = watches.filter((w) => w.active).length; // deleted and retired rules stay as inactive rows
   return (
     <div className="mx-auto max-w-2xl px-4 pt-16">
-      <TrackOnce event="purchase" props={{ plan, value: def?.priceUsd ?? 5, currency: "USD" }} />
+      {/* FlowGlance's purchase shape: amount in dollars; the Checkout session id makes a reload count once. */}
+      {sessionId && <TrackOnce event="purchase" props={{ amount: def?.priceUsd ?? 5, currency: "usd", item: plan ?? "plus", id: sessionId }} />}
       <div className="pane p-8 text-center">
         <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-accent text-2xl text-accent-ink">✓</div>
         <h1 className="display text-3xl">{synced ? `${def?.name ?? "Your plan"} is on` : "Payment received"}</h1>
@@ -41,10 +44,10 @@ export default async function Success({ searchParams }: PageProps<"/checkout/suc
           <Link href="/account" className="btn btn-primary">Open my alerts</Link>
           <Link href="/#notify" className="btn btn-ghost">Add another alert</Link>
         </div>
-        <p className="mt-6 text-xs text-ink-3">{watches.length} alert{watches.length === 1 ? "" : "s"} saved · receipt from Stripe</p>
+        <p className="mt-6 text-xs text-ink-3">{saved} alert{saved === 1 ? "" : "s"} saved · receipt from Stripe</p>
       </div>
       <div className="mt-4">
-        <PushSetup vapidPublicKey={env.vapidPublicKey()} title="Next: alerts on your phone" />
+        <PushSetup vapidPublicKey={env.vapidPublicKey()} title={devices?.active ? "Notifications" : "Next: alerts on your phone"} account={devices} />
       </div>
     </div>
   );

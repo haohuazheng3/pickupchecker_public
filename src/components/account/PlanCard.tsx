@@ -2,6 +2,7 @@
 /** Current plan, how many rules are in use, and the one or two buttons that change it. */
 import { useState } from "react";
 import { PAID_PLANS, PLANS, comparePlans, type PaidPlanKey, type PlanKey } from "@/lib/plans";
+import { track } from "@/lib/track";
 
 export interface PlanView { key: PlanKey; limit: number; used: number; renewsAt: string | null; cancelAtPeriodEnd: boolean; status: string | null; hasCustomer: boolean }
 
@@ -12,8 +13,9 @@ export function PlanCard({ plan }: { plan: PlanView }) {
     setBusy(target); setErr(null);
     try {
       const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: target }) });
-      const j = (await res.json()) as { url?: string; error?: string };
+      const j = (await res.json()) as { url?: string; changed?: boolean; error?: string };
       if (!res.ok || !j.url) throw new Error(j.error ?? "Checkout unavailable");
+      track(j.changed ? "plan_changed" : "checkout_started", { plan: target, from: plan.key });
       window.location.assign(j.url);
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); setBusy(null); }
   };
@@ -29,7 +31,8 @@ export function PlanCard({ plan }: { plan: PlanView }) {
   const def = PLANS[plan.key];
   const pct = Math.min(100, Math.round((plan.used / Math.max(1, plan.limit)) * 100));
   const over = plan.used > plan.limit;
-  const renews = plan.renewsAt ? new Date(plan.renewsAt).toLocaleDateString() : null;
+  // A fixed locale and zone: the server renders this too, and a reader's own locale ("2026/11/29") would not hydrate.
+  const renews = plan.renewsAt ? new Date(plan.renewsAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : null;
   return (
     <section id="plan" className="pane p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">

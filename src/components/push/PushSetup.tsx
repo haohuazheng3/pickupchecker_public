@@ -1,26 +1,32 @@
 "use client";
 /**
  * "Phone notifications" card: tells the user exactly where they are (installed? signed in?
- * allowed?) and offers the one action that moves them forward.
+ * allowed?) and offers the one action that moves them forward. `account` is what the server knows:
+ * when another device (or the Home Screen app, while this is Safari) already gets the alerts, the
+ * card says so instead of walking the user through a setup they already did.
  */
 import { PendingLink as Link } from "@/components/ui/PendingLink";
+import type { DeviceSummary } from "@/lib/devices";
 import { usePush, type PushState } from "./usePush";
 
-export function PushSetup({ vapidPublicKey, title = "Phone notifications", compact = false }: { vapidPublicKey: string; title?: string; compact?: boolean }) {
+export function PushSetup({ vapidPublicKey, title = "Phone notifications", compact = false, account }: { vapidPublicKey: string; title?: string; compact?: boolean; account?: DeviceSummary | null }) {
   const p = usePush(vapidPublicKey);
+  // This browser is not (or cannot be) the one getting alerts, but the account already has one that is.
+  const elsewhere = account?.active ? account.label : null;
+  const onElsewhere = Boolean(elsewhere) && p.status !== "on" && p.status !== "checking" && p.status !== "needs-signin";
   return (
     <section className={compact ? "pane-2 p-5" : "pane p-5 sm:p-6"} aria-live="polite">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h2 className={compact ? "text-lg font-semibold" : "text-xl font-semibold"}>{title}</h2>
-            <StatusPill status={p.status} />
+            <StatusPill status={onElsewhere ? "on" : p.status} />
           </div>
-          <p className="mt-1 max-w-xl text-sm text-ink-2"><Explain p={p} /></p>
+          <p className="mt-1 max-w-xl text-sm text-ink-2">{onElsewhere ? <Elsewhere p={p} label={elsewhere!} /> : <Explain p={p} />}</p>
         </div>
-        <Actions p={p} />
+        {onElsewhere ? <ElsewhereActions p={p} /> : <Actions p={p} />}
       </div>
-      {p.status === "needs-install" && <IosMiniSteps />}
+      {p.status === "needs-install" && !onElsewhere && <IosMiniSteps />}
       {p.notice && <p className="mt-3 text-sm text-accent">{p.notice}</p>}
       {p.error && <p role="alert" className="mt-3 text-sm text-bad">{p.error}</p>}
     </section>
@@ -63,6 +69,28 @@ function Explain({ p }: { p: PushState }) {
     case "ready": return <>{p.standalone ? "You're in the app. " : ""}Matching restocks land on this device in seconds.</>;
     case "on": return <>Restocks arrive here in seconds, even with the app closed.</>;
   }
+}
+
+function Elsewhere({ p, label }: { p: PushState; label: string }) {
+  switch (p.status) {
+    case "needs-install": return <>Alerts go to your {label}. Safari can&apos;t show them on iPhone; the Home Screen app does.</>;
+    case "ready": return <>Alerts go to your {label}. Turn them on here to get them on this device too.</>;
+    case "denied": return <>Alerts go to your {label}. Notifications are blocked in this browser.</>;
+    default: return <>Alerts go to your {label}.</>;
+  }
+}
+
+/** A test reaches every device on the account, so it works from a browser that is not one of them. */
+function ElsewhereActions({ p }: { p: PushState }) {
+  const spin = p.busy ? <span className="spinner" /> : null;
+  // This device can be added (in the Home Screen app, or a desktop browser): that is the next step.
+  const add = p.status === "ready";
+  return (
+    <div className="flex flex-wrap gap-2">
+      {add && <button type="button" className="btn btn-primary btn-sm" disabled={p.busy || !p.signedIn} onClick={() => void p.turnOn()}>{spin}Turn on here too</button>}
+      <button type="button" className={`btn btn-sm ${add ? "btn-ghost" : "btn-primary"}`} disabled={p.busy} onClick={() => void p.sendTest()}>{add ? null : spin}Send a test</button>
+    </div>
+  );
 }
 
 function Actions({ p }: { p: PushState }) {

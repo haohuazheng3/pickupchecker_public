@@ -137,14 +137,55 @@ write_files:
     permissions: "0755"
     content: |
       #!/bin/bash
-      # Pull the latest main and restart the poller (run by root; also used by the first boot).
+      # Check out main (or the commit given) and restart the poller (run by root; also used by the first
+      # boot and by autoupdate.sh).
       set -euo pipefail
       cd /opt/pickupchecker/app
-      git fetch -q origin main && git reset -q --hard origin/main
+      git fetch -q origin main && git reset -q --hard "${1:-origin/main}"
       /usr/local/bin/npm ci --no-audit --no-fund --omit=dev --ignore-scripts >/dev/null
       /usr/local/bin/npm install --no-save --no-audit --no-fund tsx >/dev/null
       chown -R poller:poller /opt/pickupchecker/app
       systemctl restart pickupchecker-poller
+  - path: /opt/pickupchecker/autoupdate.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # Keeps the poller on the code the site was built from (systemd timer, every 10 min). /api/health names
+      # the deployed commit and the poller-code fingerprint it was built with (poller/codeHash.mjs); when this
+      # checkout's fingerprint differs, check out that commit and restart. A deploy that only touched pages
+      # or docs leaves the poller running. Following the deployed commit, not main, means the build (and its
+      # migrations) succeeded first. One attempt per commit: a failed update is not retried in a loop.
+      set -uo pipefail
+      APP=/opt/pickupchecker/app; LAST=/opt/pickupchecker/.autoupdate-last
+      cd "$APP" || exit 0
+      read -r target want < <(curl -fsS -m 20 "https://pickupchecker.com/api/health?shallow=1" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("commit") or "-", d.get("pollerCode") or "-")') || exit 0
+      [ "$target" != "-" ] && [ "$want" != "-" ] || exit 0
+      have=$(/usr/local/bin/node -e 'import(process.argv[1]).then((m) => console.log(m.pollerCodeHash(process.argv[2]))).catch(() => console.log("-"))' "$APP/poller/codeHash.mjs" "$APP" 2>/dev/null || echo "-")
+      [ "$have" = "$want" ] && exit 0
+      [ "$(cat "$LAST" 2>/dev/null)" = "$target" ] && exit 0
+      git fetch -q origin main || exit 0
+      git cat-file -e "${target}^{commit}" 2>/dev/null || exit 0
+      echo "$target" > "$LAST"
+      echo "poller code ${have} -> ${want}: updating to ${target:0:7}"
+      exec /opt/pickupchecker/update.sh "$target"
+  - path: /etc/systemd/system/pickupchecker-autoupdate.service
+    content: |
+      [Unit]
+      Description=Update the poller when the deployed site expects different poller code
+      [Service]
+      Type=oneshot
+      # git's safe.directory for this root-run tree lives in /root/.gitconfig; systemd sets no HOME.
+      Environment=HOME=/root
+      ExecStart=/opt/pickupchecker/autoupdate.sh
+  - path: /etc/systemd/system/pickupchecker-autoupdate.timer
+    content: |
+      [Unit]
+      Description=Check for poller code changes every 10 minutes
+      [Timer]
+      OnBootSec=10min
+      OnUnitActiveSec=10min
+      [Install]
+      WantedBy=timers.target
 runcmd:
   - sysctl --system
   # Node 24 from the official tarball (the NodeSource apt script silently left Ubuntu's nodejs 18 without npm).
@@ -163,3 +204,4 @@ runcmd:
   - /opt/pickupchecker/update.sh
   - systemctl enable pickupchecker-poller.service
   - systemctl enable --now pickupchecker-probe.timer
+  - systemctl enable --now pickupchecker-autoupdate.timer

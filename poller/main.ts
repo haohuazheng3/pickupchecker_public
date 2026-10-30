@@ -23,6 +23,7 @@ import { prefixFromInterfaces, randomAddressIn } from "./ipv6";
 import type { FetchLike } from "../src/lib/apple/client";
 import { notifyOwner } from "../src/lib/mail/owner";
 import { logOps } from "../src/lib/ops";
+import { pollerCodeHash } from "./codeHash.mjs";
 
 const CADENCE_SEC = Number(process.env.CADENCE_SEC ?? 20);
 const CONCURRENCY = Number(process.env.CONCURRENCY ?? 8);
@@ -55,6 +56,8 @@ function currentCommit(): string | null {
   try { return execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8", timeout: 3000 }).trim(); } catch { return null; }
 }
 const COMMIT = currentCommit();
+/** Fingerprint of the code this process runs (poller/codeHash.mjs); the site's build carries the one it expects. */
+const CODE_HASH = (() => { try { return pollerCodeHash(process.cwd()); } catch { return null; } })();
 
 /** Host vitals that ride along with every heartbeat (the admin status board shows them). */
 function hostVitals() {
@@ -63,7 +66,7 @@ function hostVitals() {
     load1: Math.round(load1 * 100) / 100, load5: Math.round(load5 * 100) / 100, cpus: os.cpus().length,
     memTotalMb: Math.round(os.totalmem() / 1048576), memFreeMb: Math.round(os.freemem() / 1048576),
     rssMb: Math.round(process.memoryUsage().rss / 1048576), uptimeSec: Math.round(os.uptime()), procUptimeSec: Math.round(process.uptime()),
-    node: process.version, commit: COMMIT, pid: process.pid,
+    node: process.version, commit: COMMIT, codeHash: CODE_HASH, pid: process.pid,
   };
 }
 

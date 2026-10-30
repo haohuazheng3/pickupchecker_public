@@ -27,7 +27,7 @@ export function Header() {
         {/* Phones and the Home Screen app (no address bar) still need every section one tap away. */}
         <nav className="-mx-1 mt-2 flex gap-1 overflow-x-auto pb-0.5 text-sm text-ink-2 md:hidden [scrollbar-width:none]" aria-label="Sections">
           {LINKS.map(([href, label]) => <Link key={href} className="shrink-0 rounded-full px-3 py-1.5 hover:bg-ink/5 hover:text-ink" href={href}>{label}</Link>)}
-          <Link className="shrink-0 rounded-full px-3 py-1.5 hover:bg-ink/5 hover:text-ink" href="/install">Get the app</Link>
+          <Link className="not-in-app shrink-0 rounded-full px-3 py-1.5 hover:bg-ink/5 hover:text-ink" href="/install">Get the app</Link>
         </nav>
       </div>
     </header>

@@ -13,6 +13,7 @@ import { DeviceList } from "@/components/account/DeviceList";
 import { PushSetup } from "@/components/push/PushSetup";
 import { timeAgo } from "@/components/stock/StatusBits";
 import { env } from "@/lib/env";
+import { summarizeDevices } from "@/lib/devices";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "My alerts", robots: { index: false } };
@@ -48,9 +49,9 @@ export default async function Account() {
       </div>
 
       <div className="mt-6">
-        <PushSetup vapidPublicKey={env.vapidPublicKey()} />
+        <PushSetup vapidPublicKey={env.vapidPublicKey()} account={summarizeDevices(devices)} />
         {devices.length > 0 && (
-          <DeviceList devices={devices.map((d) => ({ id: d.id, platform: d.platform, standalone: d.standalone, createdAt: d.createdAt.toISOString(), lastSentAt: d.lastSentAt?.toISOString() ?? null, disabledAt: d.disabledAt?.toISOString() ?? null, lastError: d.lastError }))} />
+          <DeviceList devices={devices.map((d) => ({ id: d.id, platform: d.platform, standalone: d.standalone, added: timeAgo(d.createdAt), lastAlert: d.lastSentAt ? timeAgo(d.lastSentAt) : null, disabledAt: d.disabledAt?.toISOString() ?? null, lastError: d.lastError }))} />
         )}
       </div>
 

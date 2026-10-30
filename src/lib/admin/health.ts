@@ -19,7 +19,7 @@ export interface NodeHealth {
 export interface Heartbeat {
   at?: string; host?: string; mode?: string; cadenceSec?: number; requests?: number; failures?: number; throttled?: number;
   storesCovered?: number; durationMs?: number; egress?: string; transitions?: number; held?: number;
-  sys?: { load1?: number; load5?: number; cpus?: number; memTotalMb?: number; memFreeMb?: number; rssMb?: number; uptimeSec?: number; procUptimeSec?: number; node?: string; commit?: string | null; pid?: number };
+  sys?: { load1?: number; load5?: number; cpus?: number; memTotalMb?: number; memFreeMb?: number; rssMb?: number; uptimeSec?: number; procUptimeSec?: number; node?: string; commit?: string | null; codeHash?: string | null; pid?: number };
   sweeps?: number; consecutiveBad?: number;
   ipv6Stats?: { requests: number; throttled: number; errors: number } | null;
 }
@@ -38,11 +38,15 @@ export interface HealthSnapshot {
   alerts24: { sent: number; failed: number; pushSent: number; emailSent: number; lastSentAt: string | null; lastFailedAt: string | null };
   push: { configured: boolean; enabled: number; disabled: number; lastSentAt: string | null };
   email: { configured: boolean; lastSentAt: string | null; lastFailedAt: string | null };
-  stripe: { configured: boolean; lastEventAt: string | null; lastEventType: string | null; activeSubs: number; missingPermission?: string | null };
+  /** missingPermission / permissionsCheckedAt: the live key probe (src/lib/admin/stripeCheck.ts). */
+  stripe: { configured: boolean; lastEventAt: string | null; lastEventType: string | null; activeSubs: number; missingPermission?: string | null; permissionsCheckedAt?: string | null };
   cron: { lastTickAt: string | null; ticksHour: number };
   errors24: { open: number; lastAt: string | null };
   inbox: { lastAt: string | null; worker: boolean };
-  deploy: { commit: string | null; env: string; region: string | null; node: string };
+  /** When this build was made (BUILD_AT). */
+  deployedAt?: string | null;
+  /** pollerCode: fingerprint of the poller code this build was made from (POLLER_CODE_HASH). */
+  deploy: { commit: string | null; env: string; region: string | null; node: string; pollerCode?: string | null };
   clerkConfigured: boolean;
 }
 
@@ -170,7 +174,7 @@ export function computeNodes(s: HealthSnapshot): NodeHealth[] {
     value: s.stripe.configured ? (s.stripe.missingPermission ? "key lacks a permission" : `${s.stripe.activeSubs} active`) : "key missing",
     detail: s.stripe.missingPermission
       ? `the API key is missing “${s.stripe.missingPermission}” — plan changes / Billing fail until it is granted in Stripe → Developers → API keys`
-      : s.stripe.lastEventAt ? `last webhook ${s.stripe.lastEventType ?? ""} ${fmtAge(ageMs(s.stripe.lastEventAt, s.now))}` : "no webhook event received yet",
+      : `${s.stripe.permissionsCheckedAt ? `key has every permission the site uses (checked ${fmtAge(ageMs(s.stripe.permissionsCheckedAt, s.now))}) · ` : ""}${s.stripe.lastEventAt ? `last webhook ${s.stripe.lastEventType ?? ""} ${fmtAge(ageMs(s.stripe.lastEventAt, s.now))}` : "no webhook event received yet"}`,
   });
 
   // 11. errors
@@ -181,15 +185,20 @@ export function computeNodes(s: HealthSnapshot): NodeHealth[] {
     detail: s.errors24.lastAt ? `last ${fmtAge(ageMs(s.errors24.lastAt, s.now))} · grouped by fingerprint, resolve them on the Errors page` : "nothing recorded",
   });
 
-  // 12. deploy
+  // 12. deploy — is the poller running the poller code this site was built from? Compared by code
+  // fingerprint (poller/codeHash.mjs): a commit that only touched pages leaves it current. The host updates
+  // itself within ~10 min of a deploy that changes it, so a difference only warns once it outlasts that.
   const siteCommit = s.deploy.commit?.slice(0, 7) ?? null;
   const pollerCommit = sys?.commit ?? null;
-  const mismatch = siteCommit && pollerCommit && !siteCommit.startsWith(pollerCommit) && !pollerCommit.startsWith(siteCommit);
+  const want = s.deploy.pollerCode || null, have = sys?.codeHash || null;
+  const differs = want && have ? want !== have : Boolean(siteCommit && pollerCommit && !siteCommit.startsWith(pollerCommit) && !pollerCommit.startsWith(siteCommit));
+  const settling = differs && s.deployedAt != null && ageMs(s.deployedAt, s.now) < 25 * MIN;
   nodes.push({
     key: "deploy", name: "Deploy", href: "/admin/system",
-    state: mismatch ? "warn" : "ok",
+    state: differs && !settling ? "warn" : "ok",
     value: siteCommit ? `site @ ${siteCommit}` : s.deploy.env,
-    detail: `${s.deploy.env}${s.deploy.region ? " · " + s.deploy.region : ""} · ${s.deploy.node}${pollerCommit ? ` · poller @ ${pollerCommit}${mismatch ? " (behind — run update.sh)" : ""}` : ""}`,
+    detail: `${s.deploy.env}${s.deploy.region ? " · " + s.deploy.region : ""} · ${s.deploy.node}${pollerCommit ? ` · poller @ ${pollerCommit}` : ""}${
+      !differs ? (want && have ? " · poller code current" : "") : settling ? " · poller updating to this deploy" : " · poller runs older code (auto-update hasn't caught up — see the host's autoupdate log, or run update.sh)"}`,
   });
 
   // 13. mail worker / inbox

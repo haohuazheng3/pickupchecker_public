@@ -253,6 +253,8 @@ a:active { opacity: .7; }
   body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
   header.site-header { top: calc(env(safe-area-inset-top) + .75rem); }
   html { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+  /* "Get the app" inside the app itself. */
+  .not-in-app { display: none !important; }
 }
 
 /* ------------------------------------------------------------------ install guide: phone mocks */

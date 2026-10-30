@@ -5,7 +5,7 @@
  * legend whenever there are two or more series, hairline gridlines, and a hover readout that
  * lists every series at the hovered bucket (values first).
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 export interface Series { key: string; label: string; color: string }
 export interface Point { t: string; [k: string]: number | string }
@@ -50,6 +50,12 @@ function niceMax(v: number): number {
   return n * p;
 }
 
+const noSubscribe = () => () => {};
+/** False while the server renders and the page hydrates, true after: clock labels are the reader's time zone, which the server cannot know. */
+function useIsClient(): boolean {
+  return useSyncExternalStore(noSubscribe, () => true, () => false);
+}
+
 function hhmm(iso: string): string {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -85,6 +91,7 @@ export function StackedBars({ data, series, height = 170, format: fmtName = "com
   const format = FORMATS[fmtName];
   const [ref, w] = useWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
+  const client = useIsClient();
   const n = data.length;
   const plotW = w - PAD.l - PAD.r, plotH = height - PAD.t - PAD.b;
   const totals = data.map((d) => series.reduce((a, s) => a + Number(d[s.key] ?? 0), 0));
@@ -118,7 +125,7 @@ export function StackedBars({ data, series, height = 170, format: fmtName = "com
                 const isTop = acc >= totals[i];
                 return <rect key={s.key} x={x} y={y1 + (isTop ? 0 : 1)} width={bw} height={h} rx={isTop ? 3 : 0} style={{ fill: s.color }} />;
               })}
-              {i % labelEvery === 0 && <text x={x + bw / 2} y={height - 6} fontSize="10" style={{ fill: INK3 }} textAnchor="middle">{hhmm(d.t)}</text>}
+              {i % labelEvery === 0 && <text x={x + bw / 2} y={height - 6} fontSize="10" style={{ fill: INK3 }} textAnchor="middle">{client ? hhmm(d.t) : ""}</text>}
             </g>
           );
         })}
@@ -136,6 +143,7 @@ export function LineChart({ data, series, height = 170, format: fmtName = "compa
   const format = FORMATS[fmtName];
   const [ref, w] = useWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
+  const client = useIsClient();
   const n = data.length;
   const plotW = w - PAD.l - PAD.r, plotH = height - PAD.t - PAD.b;
   const max = niceMax(maxValue ?? Math.max(1, ...data.flatMap((d) => series.map((s) => Number(d[s.key] ?? 0)))));
@@ -162,7 +170,7 @@ export function LineChart({ data, series, height = 170, format: fmtName = "compa
       <svg width={w} height={height} className="block overflow-visible" onPointerMove={onMove} onPointerLeave={() => setHover(null)} role="img" aria-label={series.map((s) => s.label).join(", ")}>
         {ticks.map((t) => <g key={t}><line x1={PAD.l} x2={w - PAD.r} y1={y(t)} y2={y(t)} style={{ stroke: GRID }} /><text x={PAD.l - 6} y={y(t) + 3} fontSize="10" style={{ fill: INK3 }} textAnchor="end">{format(t)}{unit}</text></g>)}
         {paths.map((p) => <g key={p.s.key}>{area && <path d={p.fill} style={{ fill: p.s.color }} opacity="0.1" />}<path d={p.line} fill="none" style={{ stroke: p.s.color }} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" /></g>)}
-        {data.map((d, i) => i % labelEvery === 0 ? <text key={d.t} x={x(i)} y={height - 6} fontSize="10" style={{ fill: INK3 }} textAnchor="middle">{hhmm(d.t)}</text> : null)}
+        {data.map((d, i) => i % labelEvery === 0 ? <text key={d.t} x={x(i)} y={height - 6} fontSize="10" style={{ fill: INK3 }} textAnchor="middle">{client ? hhmm(d.t) : ""}</text> : null)}
         {hover != null && (
           <g>
             <line x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={PAD.t + plotH} style={{ stroke: "var(--chart-cross)" }} />

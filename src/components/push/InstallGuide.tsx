@@ -3,8 +3,9 @@
  * /install — the illustrated "put PickupChecker on your Home Screen" guide. Picks the platform
  * from the device, lets the reader switch, and keeps the live notification switch next to the steps.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
+import { fetchMe } from "@/lib/me";
 import { usePush, type PushState } from "./usePush";
 import {
   LockScreenMock, SafariUrlMock, SafariShareMock, ShareSheetMock, AddDialogMock, HomeScreenMock, IosPermissionMock,
@@ -25,6 +26,14 @@ export function InstallGuide({ vapidPublicKey }: { vapidPublicKey: string }) {
   const installed = p.standalone;
   const signedIn = p.signedIn === true;
   const on = p.status === "on";
+  // A signed-in reader whose alerts already reach a device (often the Home Screen app, while this is Safari).
+  const [already, setAlready] = useState<string | null>(null);
+  useEffect(() => {
+    if (!signedIn) return;
+    let gone = false;
+    void fetchMe().then((me) => { if (!gone && me?.devices?.active) setAlready(me.devices.label); });
+    return () => { gone = true; };
+  }, [signedIn]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-8 sm:pt-12">
@@ -40,7 +49,11 @@ export function InstallGuide({ vapidPublicKey }: { vapidPublicKey: string }) {
               : p.status === "ready" && signedIn ? <button type="button" className="btn btn-ghost btn-lg" disabled={p.busy} onClick={() => void p.turnOn()}>{p.busy && <span className="spinner" />}Turn on notifications</button>
               : null}
           </div>
-          <Progress installed={installed} signedIn={signedIn} on={on} platform={p.platform} status={p.status} />
+          {already && !on ? (
+            <p className="mt-8 rounded-2xl bg-accent/10 px-4 py-3 text-sm text-ink-2">
+              <b className="text-accent">✓ You&apos;re set up.</b> Alerts go to your {already}. The steps below add this device too. <Link href="/account" className="underline">My alerts</Link>
+            </p>
+          ) : <Progress installed={installed} signedIn={signedIn} on={on} platform={p.platform} status={p.status} />}
         </div>
         <LockScreenMock />
       </section>

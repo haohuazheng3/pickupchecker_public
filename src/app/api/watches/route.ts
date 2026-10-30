@@ -8,6 +8,7 @@ import { MODELS, STORE_INDEX, catalogFor, type ModelKey } from "@/lib/apple/cata
 import { userPlan } from "@/lib/billing";
 import { coveredWatchIds, SAVE_CAP } from "@/lib/plans";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { deviceSummary } from "@/lib/devices";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,7 +19,9 @@ const phone = z.object({ model: z.enum(modelKeys), storage: z.string().min(1).ma
 export type Phone = z.infer<typeof phone>;
 /**
  * One rule = one store × one exact phone. A request lists phones (`items`, or the single model/storage/
- * color form) and stores (`storeNumbers`, or one `storeNumber`) and saves every combination.
+ * color form) and stores (`storeNumbers`, or one `storeNumber`) and saves every combination. The store
+ * picker shows the phones' existing stores ticked, so a store the user unticked comes back in
+ * `removeStoreNumbers`: those phones' rules there are switched off in the same request.
  */
 export const Body = z
   .object({
@@ -27,10 +30,11 @@ export const Body = z
     color: z.string().min(1).max(32).optional(),
     items: z.array(phone).min(1).max(SAVE_CAP).optional(),
     storeNumber: storeNumber.optional(),
-    storeNumbers: z.array(storeNumber).min(1).max(SAVE_CAP).optional(),
+    storeNumbers: z.array(storeNumber).max(SAVE_CAP).optional(),
+    removeStoreNumbers: z.array(storeNumber).max(SAVE_CAP).optional(),
   })
   .refine((b) => Boolean(b.items?.length) || Boolean(b.model && b.storage && b.color), { message: "pick a phone", path: ["items"] })
-  .refine((b) => Boolean(b.storeNumber) || Boolean(b.storeNumbers?.length), { message: "pick at least one store", path: ["storeNumbers"] });
+  .refine((b) => Boolean(b.storeNumber) || Boolean(b.storeNumbers?.length) || Boolean(b.removeStoreNumbers?.length), { message: "pick at least one store", path: ["storeNumbers"] });
 
 /** The stores a body asks for, in the order given, without repeats. */
 export function storeNumbersOf(b: { storeNumber?: string; storeNumbers?: string[] }): string[] {
@@ -53,12 +57,12 @@ export function ruleConfig(w: { model: string; storages: string[]; colors: strin
 export async function GET() {
   const u = await ensureUser();
   if (!u) return NextResponse.json({ error: "sign in first" }, { status: 401 });
-  const rows = await db().select().from(schema.watches).where(eq(schema.watches.userId, u.id));
-  const { plan, sub } = await userPlan(u.id);
+  const [rows, { plan, sub }, devices] = await Promise.all([db().select().from(schema.watches).where(eq(schema.watches.userId, u.id)), userPlan(u.id), deviceSummary(u.id)]);
   const covered = coveredWatchIds(rows, plan.limit);
   return NextResponse.json({
     watches: rows.map((w) => ({ ...w, config: ruleConfig(w), covered: covered.has(w.id) })),
     plan: { key: plan.key, limit: plan.limit, used: rows.filter((w) => w.active).length, renewsAt: sub?.currentPeriodEnd ?? null },
+    devices,
   });
 }
 
@@ -68,9 +72,10 @@ const findRule = (rows: Row[], b: { model: string; storage: string; color: strin
   rows.find((w) => w.active && w.model === b.model && w.storages[0] === b.storage && w.colors[0] === b.color && w.storeNumbers[0] === n);
 
 /**
- * Save one rule per phone per store. Each sends once the user has a plan with a free slot (the oldest
- * rules win, so rows are stamped in tick order); otherwise it is saved but silent until they subscribe
- * or upgrade. The same store × phone is never saved twice: the existing active rule is returned instead.
+ * Save one rule per phone per store, and switch off the phones' rules at `removeStoreNumbers`. Each rule
+ * sends once the user has a plan with a free slot (the oldest rules win, so rows are stamped in tick
+ * order); otherwise it is saved but silent until they subscribe or upgrade. The same store × phone is
+ * never saved twice: the existing active rule is returned instead.
  */
 export async function POST(req: Request) {
   const u = await ensureUser();
@@ -86,19 +91,23 @@ export async function POST(req: Request) {
     if (!catalogFor(p.model).find((c) => c.storage === p.storage && c.color === p.color)) return NextResponse.json({ error: `unknown configuration ${p.model} ${p.storage} ${p.color}` }, { status: 400 });
   }
   const wanted = storeNumbersOf(b);
-  const unknown = wanted.find((n) => !STORE_INDEX.has(n));
+  const dropped = [...new Set(b.removeStoreNumbers ?? [])].filter((n) => !wanted.includes(n));
+  const unknown = [...wanted, ...dropped].find((n) => !STORE_INDEX.has(n));
   if (unknown) return NextResponse.json({ error: `unknown store ${unknown}` }, { status: 400 });
   // Store-major, so the first store ticked gets its rules first for every phone.
   const combos = wanted.flatMap((n) => phones.map((p) => ({ ...p, storeNumber: n })));
   if (combos.length > SAVE_CAP) return NextResponse.json({ error: `that is ${combos.length} alerts — at most ${SAVE_CAP} per account` }, { status: 400 });
 
-  const existing: Row[] = await db().select(ROW).from(schema.watches).where(eq(schema.watches.userId, u.id));
-  const { plan, sub } = await userPlan(u.id);
+  const [existing, { plan, sub }, devices] = await Promise.all([db().select(ROW).from(schema.watches).where(eq(schema.watches.userId, u.id)) as Promise<Row[]>, userPlan(u.id), deviceSummary(u.id)]);
   const fresh = combos.filter((c) => !findRule(existing, c, c.storeNumber));
-  const activeNow = existing.filter((w) => w.active).length;
+  const retiring = dropped.flatMap((n) => phones.map((p) => findRule(existing, p, n)?.id)).filter((id): id is string => Boolean(id));
+  const activeNow = existing.filter((w) => w.active).length - retiring.length;
   if (activeNow + fresh.length > SAVE_CAP) {
     const room = Math.max(0, SAVE_CAP - activeNow);
     return NextResponse.json({ error: room === 0 ? `you can keep at most ${SAVE_CAP} alerts — delete some first` : `you can keep at most ${SAVE_CAP} alerts — room for ${room} more; untick some stores or delete alerts first` }, { status: 400 });
+  }
+  if (retiring.length) {
+    await db().update(schema.watches).set({ active: false, updatedAt: new Date() }).where(and(eq(schema.watches.userId, u.id), inArray(schema.watches.id, retiring)));
   }
   let insertedIds: string[] = [];
   if (fresh.length) {
@@ -112,7 +121,7 @@ export async function POST(req: Request) {
       .returning({ id: schema.watches.id });
     insertedIds = inserted.map((r) => r.id);
   }
-  let rows: Row[] = fresh.length ? await db().select(ROW).from(schema.watches).where(eq(schema.watches.userId, u.id)) : existing;
+  let rows: Row[] = fresh.length ? await db().select(ROW).from(schema.watches).where(eq(schema.watches.userId, u.id)) : existing.map((w) => (retiring.includes(w.id) ? { ...w, active: false } : w));
   // Two batches racing past the cap check: retire this request's newest rows until the account fits again.
   const over = rows.filter((w) => w.active).length - SAVE_CAP;
   if (over > 0 && insertedIds.length) {
@@ -130,12 +139,14 @@ export async function POST(req: Request) {
     return row ? { id: row.id, model: c.model, storage: c.storage, color: c.color, storeNumber: c.storeNumber, covered: covered.has(row.id), existing: !fresh.includes(c) } : null;
   });
   if (rules.some((r) => r === null)) return NextResponse.json({ error: "could not save the rules — try again" }, { status: 500 });
-  const first = rules[0]!;
+  const first = rules[0];
   return NextResponse.json({
     rules,
     // The first rule's fields, for callers that still expect a single one.
-    id: first.id, covered: first.covered, existing: first.existing,
+    ...(first ? { id: first.id, covered: first.covered, existing: first.existing } : {}),
+    removed: retiring.length,
     plan: { key: plan.key, limit: plan.limit, used: rows.filter((w) => w.active).length },
+    devices,
   });
 }
 

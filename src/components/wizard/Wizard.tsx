@@ -5,12 +5,17 @@
  * Alerts = phones × stores: one rule per phone per store, saved together when the user presses
  * "Set N alerts". A visitor without a plan can line up what Plus switches on (10); a subscriber the
  * room their plan has left. Model and phone picks advance on their own; the store step waits for the button.
+ * A signed-in user's existing alerts for the chosen phone(s) start ticked ("+ Stores" on the account page
+ * lands here); the nearest five are pre-ticked only when there are none. Unticking one of them switches
+ * that alert off when the change is saved.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
 import { MODELS, COLOR_META, STORAGE_ORDER, STORE_INDEX, stateCodeOf, type ModelKey, appleName } from "@/lib/apple/catalog";
 import { FREE_PICK_LIMIT, PAID_PLANS, PLANS, SAVE_CAP, comparePlans, isPaidPlan, type PaidPlanKey, type PlanKey } from "@/lib/plans";
 import { track } from "@/lib/track";
+import type { DeviceSummary } from "@/lib/devices";
+import { ownedKeys, pickDelta, ruleKey, storesOwnedFor } from "@/lib/alertPicks";
 import { PRETICK, StorePicker, freshPickerMemory, type PickerMemory } from "./StorePicker";
 
 type Step = "model" | "config" | "store" | "email" | "code" | "pay";
@@ -40,9 +45,14 @@ export interface WizardStart {
 /** One exact phone. */
 type Item = { model: ModelKey; storage: string; color: string };
 type PlanInfo = { key: PlanKey; limit: number; used: number };
+/** What a save sends: the phones, the stores ticked, and existing stores unticked (switched off). */
+type Picks = { items: Item[]; storeNumbers: string[]; remove?: string[] };
 /** One saved rule, as /api/watches returns it. */
 type SavedRule = { id: string; model: string; storage: string; color: string; storeNumber: string; covered: boolean; existing: boolean };
+/** A row of GET /api/watches. */
+type WatchRow = { active: boolean; model: string; storages: string[]; colors: string[]; storeNumbers: string[] };
 const sameItem = (a: Item, b: Item) => a.model === b.model && a.storage === b.storage && a.color === b.color;
+const itemKey = (it: Item) => `${it.model}|${it.storage}|${it.color}`;
 const shortName = (key: ModelKey) => MODELS.find((m) => m.key === key)?.short ?? key;
 
 function clerkMessage(e: unknown): string {
@@ -69,8 +79,12 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [results, setResults] = useState<SavedRule[]>([]);
+  const [removedCount, setRemovedCount] = useState(0); // alerts the last save switched off
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null);
   const codeRef = useRef<HTMLInputElement>(null);
+  /** Signed-in users: their active alerts (rule keys) and the devices that get them; null until known. */
+  const [owned, setOwned] = useState<Set<string> | null>(null);
+  const [devices, setDevices] = useState<DeviceSummary | null>(null);
 
   useEffect(() => { if (step === "code") codeRef.current?.focus(); }, [step]);
   useEffect(() => {
@@ -88,15 +102,31 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
   const alerts = phones * storeNumbers.length;
   const coveredCount = results.filter((r) => r.covered).length;
   const allCovered = results.length > 0 && coveredCount === results.length;
+  // Existing alerts for the phones on screen: which stores they cover, and what saving the ticks would change.
+  const ownedHere = useMemo(() => (owned && items.length ? storesOwnedFor(owned, items) : []), [owned, items]);
+  const editing = ownedHere.length > 0;
+  /** New alerts minus switched-off ones, for a set of ticked stores: what the plan has to make room for. */
+  const netFor = useCallback((ticked: string[]) => { const d = pickDelta(items, ticked, owned); return d.added - d.off; }, [items, owned]);
+  const { added: newCount, off: offCount, offStores: removedStores } = pickDelta(items, storeNumbers, owned);
+  const net = newCount - offCount;
+  const changed = newCount > 0 || offCount > 0;
 
   // Signed-in users: how much room their plan has left. Visitors: what Plus will switch on.
   const [slots, setSlots] = useState<PlanInfo | null>(null);
+  const loadAccount = useCallback(async () => {
+    const r = await fetch("/api/watches").catch(() => null);
+    const j = r?.ok ? ((await r.json().catch(() => null)) as { plan?: PlanInfo; watches?: WatchRow[]; devices?: DeviceSummary } | null) : null;
+    if (!j) return;
+    if (j.plan) setSlots(j.plan);
+    setOwned(ownedKeys(j.watches ?? []));
+    if (j.devices) setDevices(j.devices);
+  }, []);
   useEffect(() => {
     if (!authLoaded || !isSignedIn) return;
     let gone = false;
-    fetch("/api/watches").then((r) => (r.ok ? r.json() : null)).then((j: { plan?: PlanInfo } | null) => { if (!gone && j?.plan) setSlots(j.plan); }).catch(() => undefined);
-    return () => { gone = true; };
-  }, [authLoaded, isSignedIn]);
+    const t = window.setTimeout(() => { if (!gone) void loadAccount(); }, 0);
+    return () => { gone = true; window.clearTimeout(t); };
+  }, [authLoaded, isSignedIn, loadAccount]);
   const slotsKnown = !authLoaded || !isSignedIn || slots !== null;
   /** The nearest stores are pre-ticked once per visit — not again after the user cleared them or came back. */
   const [pretickDone, setPretickDone] = useState(Boolean(initialStore));
@@ -107,47 +137,87 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
     if (slots.key === "free") return Math.max(0, Math.min(FREE_PICK_LIMIT, SAVE_CAP - slots.used));
     return Math.max(0, Math.min(slots.limit, SAVE_CAP) - slots.used);
   }, [authLoaded, isSignedIn, slots]);
-  // The plan turned out smaller than what was lined up (slots arrive after a pre-tick): keep what fits.
+  // The plan turned out smaller than what was lined up (slots arrive after a pre-tick): drop the newest
+  // ticks that would be new alerts until it fits. Existing alerts stay ticked.
   useEffect(() => {
     if (step !== "store" && step !== "config") return; // only while the pick is being made
-    if (phones * storeNumbers.length <= room) return;
-    const keep = Math.floor(room / Math.max(1, phones));
-    const t = window.setTimeout(() => { setStoreNumbers((prev) => prev.slice(0, keep)); setNotice(`Trimmed to the ${room} alerts your plan has room for.`); }, 0);
+    if (net <= room) return;
+    const t = window.setTimeout(() => {
+      setStoreNumbers((prev) => {
+        const keep = [...prev];
+        for (let i = keep.length - 1; i >= 0 && netFor(keep) > room; i--) if (!ownedHere.includes(keep[i])) keep.splice(i, 1);
+        return keep;
+      });
+      setNotice(`Trimmed to the ${room} new alerts your plan has room for.`);
+    }, 0);
     return () => window.clearTimeout(t);
-  }, [step, room, phones, storeNumbers.length]);
+  }, [step, room, net, netFor, ownedHere]);
+
+  // Existing alerts for the chosen phone(s) start ticked, once per phone set. An untouched nearest-five
+  // pre-tick (made before the account loaded) gives way to them.
+  const [seededFor, setSeededFor] = useState<string | null>(null);
+  const autoPicked = useRef<string[] | null>(null);
+  const phonesKey = items.map(itemKey).sort().join(",");
+  useEffect(() => {
+    if (step !== "store" || !owned || items.length === 0 || seededFor === phonesKey) return;
+    const mine = storesOwnedFor(owned, items);
+    const t = window.setTimeout(() => {
+      setSeededFor(phonesKey);
+      if (mine.length === 0) return;
+      setPretickDone(true);
+      setStoreNumbers((prev) => {
+        const auto = autoPicked.current;
+        const untouched = auto != null && prev.length === auto.length && prev.every((n) => auto.includes(n));
+        return [...new Set([...(untouched ? [] : prev), ...mine])];
+      });
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [step, owned, items, phonesKey, seededFor]);
 
   const saving = useRef(false);
-  const saveWatch = useCallback(async (v: { items: Item[]; storeNumbers: string[] }): Promise<SavedRule[]> => {
-    if (v.items.length === 0 || v.storeNumbers.length === 0) throw new Error("Pick a phone and at least one store first");
-    const res = await fetch("/api/watches", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(v) });
-    const j = (await res.json().catch(() => ({}))) as { rules?: SavedRule[]; plan?: PlanInfo; error?: string };
-    if (!res.ok || !j.rules?.length) throw new Error(j.error ?? (res.ok ? "Could not save your alerts" : `Could not save your alerts (${res.status})`));
-    setResults(j.rules); setPlanInfo(j.plan ?? null);
+  const saveWatch = useCallback(async (v: Picks): Promise<SavedRule[]> => {
+    const remove = v.remove ?? [];
+    if (v.items.length === 0 || (v.storeNumbers.length === 0 && remove.length === 0)) throw new Error("Pick a phone and at least one store first");
+    const res = await fetch("/api/watches", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ items: v.items, storeNumbers: v.storeNumbers, ...(remove.length ? { removeStoreNumbers: remove } : {}) }) });
+    const j = (await res.json().catch(() => ({}))) as { rules?: SavedRule[]; removed?: number; plan?: PlanInfo; devices?: DeviceSummary; error?: string };
+    if (!res.ok || !j.rules || (j.rules.length === 0 && !j.removed)) throw new Error(j.error ?? (res.ok ? "Could not save your alerts" : `Could not save your alerts (${res.status})`));
+    const rules = j.rules;
+    setResults(rules); setRemovedCount(j.removed ?? 0); setPlanInfo(j.plan ?? null);
     if (j.plan) setSlots(j.plan); // the room left is what the save just reported
+    if (j.devices) setDevices(j.devices);
+    // What the account holds now, so another round for the same phone starts from it.
+    setOwned((prev) => {
+      const next = new Set(prev ?? []);
+      for (const it of v.items) for (const n of remove) next.delete(ruleKey(it, n));
+      for (const r of rules) next.add(ruleKey({ model: r.model as ModelKey, storage: r.storage, color: r.color }, r.storeNumber));
+      return next;
+    });
     // The confirmation describes exactly what was saved.
-    setItems(v.items); setStoreNumbers([...new Set(j.rules.map((r) => r.storeNumber))]);
-    track("watch_saved", { phones: v.items.length, stores: v.storeNumbers.length, rules: j.rules.length, existing: j.rules.filter((r) => r.existing).length });
-    return j.rules;
+    setItems(v.items); setStoreNumbers([...new Set(rules.map((r) => r.storeNumber))]);
+    track("watch_saved", { phones: v.items.length, stores: v.storeNumbers.length, rules: rules.length, existing: rules.filter((r) => r.existing).length, removed: j.removed ?? 0 });
+    return rules;
   }, []);
 
-  const goPay = useCallback(async (plan: PaidPlanKey, id: string | null) => {
+  const goPay = useCallback(async (plan: PaidPlanKey, id: string | null, opts: { stay?: boolean } = {}) => {
     setBusy(true); setError(null);
     try {
       const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan, watchId: id ?? undefined }) });
       const j = (await res.json()) as { url?: string; alreadySubscribed?: boolean; changed?: boolean; error?: string };
       if (!res.ok || !j.url) throw new Error(j.error ?? "Checkout unavailable");
       track(j.alreadySubscribed || j.changed ? "plan_changed" : "checkout_started", { plan });
+      // Switched in place while picking stores: stay on the picks, with the bigger room.
+      if (opts.stay && j.changed) { await loadAccount(); setNotice(`You're on ${PLANS[plan].name} now: ${PLANS[plan].limit} alerts.`); setBusy(false); return; }
       window.location.assign(j.url);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); setBusy(false); }
-  }, []);
+  }, [loadAccount]);
 
   // After the stores: signed-in users save and go to the plan step; signed-out users go to the email
   // step. While Clerk is still loading we hold the pick (busy) instead of guessing.
-  const [held, setHeld] = useState<{ items: Item[]; storeNumbers: string[] } | null>(null);
-  const continueFromStore = useCallback(async (v: { items: Item[]; storeNumbers: string[] }) => {
+  const [held, setHeld] = useState<Picks | null>(null);
+  const continueFromStore = useCallback(async (v: Picks) => {
     setError(null);
     if (v.items.length === 0) { setStep("config"); setError("Pick the storage and color first."); return; }
-    if (v.storeNumbers.length === 0) return;
+    if (v.storeNumbers.length === 0 && !v.remove?.length) return;
     if (!authLoaded) { setHeld(v); setBusy(true); return; }
     if (!isSignedIn) { setStep("email"); return; }
     if (saving.current) return;
@@ -181,7 +251,8 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
   /** Add the phone being picked and go on to the stores. */
   const addItem = (it: Item) => {
     if (busy) return;
-    if (!items.some((x) => sameItem(x, it)) && (phones + 1) * storeNumbers.length > room) { setNotice(`Another phone makes ${(phones + 1) * storeNumbers.length} alerts — over the ${room} you can set. Untick some stores first.`); return; }
+    const more = storeNumbers.filter((n) => !owned?.has(ruleKey(it, n))).length;
+    if (!items.some((x) => sameItem(x, it)) && net + more > room) { setNotice(`Another phone makes ${net + more} new alerts — over the ${room} you can add. Untick some stores first.`); return; }
     setItems((prev) => (prev.some((x) => sameItem(x, it)) ? prev : [...prev, it]));
     setStorage(null); setColor(null);
     track("phone_added", { model: it.model, storage: it.storage, color: it.color });
@@ -195,27 +266,29 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
   };
   const addPhone = () => {
     if (busy) return;
-    if ((phones + 1) * storeNumbers.length > room) { setNotice(`Another phone makes ${(phones + 1) * storeNumbers.length} alerts — over the ${room} you can set. Untick some stores first.`); return; }
+    if (net + storeNumbers.length > room) { setNotice(`Another phone makes up to ${net + storeNumbers.length} new alerts — over the ${room} you can add. Untick some stores first.`); return; }
     setStorage(null); setColor(null); setStep("config");
   };
-  /** Functional update: two quick taps never overwrite each other; the cap is checked on the way in. */
+  /** Functional update: two quick taps never overwrite each other; the plan's room is checked on the way in. */
   const toggleStore = useCallback((n: string) => {
     if (busy) return;
-    if (!storeNumbers.includes(n) && Math.max(1, phones) * (storeNumbers.length + 1) > room) {
-      setNotice(room === 0 ? "No room left on your plan — upgrade or delete alerts first." : `That makes ${Math.max(1, phones) * (storeNumbers.length + 1)} alerts — over the ${room} you can set. Untick one, or remove a phone.`);
+    if (!storeNumbers.includes(n) && netFor([...storeNumbers, n]) > room) {
+      const over = netFor([...storeNumbers, n]);
+      setNotice(room <= 0 || net >= room ? "No room left on your plan." : `That makes ${over} new alerts — over the ${room} you can add. Untick one, or remove a phone.`);
       return;
     }
-    setStoreNumbers((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : Math.max(1, phones) * (prev.length + 1) > room ? prev : [...prev, n]));
-  }, [busy, phones, storeNumbers, room]);
+    setStoreNumbers((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : netFor([...prev, n]) > room ? prev : [...prev, n]));
+  }, [busy, storeNumbers, room, net, netFor]);
   const pretick = useCallback((nearest: string[]) => {
     setPretickDone(true);
     const n = Math.max(0, Math.min(PRETICK, Math.floor(room / Math.max(1, phones))));
-    setStoreNumbers((prev) => (prev.length ? prev : nearest.slice(0, n)));
+    const pick = nearest.slice(0, n);
+    setStoreNumbers((prev) => { if (prev.length) return prev; autoPicked.current = pick; return pick; });
   }, [room, phones]);
   const submitStores = () => {
-    if (busy || saving.current || storeNumbers.length === 0) return;
-    track("stores_submitted", { stores: storeNumbers.length, phones });
-    void continueFromStore({ items, storeNumbers });
+    if (busy || saving.current || (storeNumbers.length === 0 && removedStores.length === 0) || (editing && !changed)) return;
+    track("stores_submitted", { stores: storeNumbers.length, phones, removed: removedStores.length });
+    void continueFromStore({ items, storeNumbers, remove: removedStores });
   };
 
   const sendCode = async () => {
@@ -309,7 +382,7 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
               <button key={m.key} type="button" onClick={() => { setModel(m.key); setStorage(null); setColor(null); setStep("config"); track("model_selected", { model: m.key }); }}
                 className={`pane-2 pane-hover min-w-0 p-4 text-left ${m.key === "duo" ? "border-accent/40" : ""}`}>
                 <div className="text-lg font-semibold">{m.name}</div>
-                <div className="mt-1 text-sm text-ink-3">{m.blurb} · from ${catalog.prices[m.key].toLocaleString()}</div>
+                <div className="mt-1 text-sm text-ink-3">{m.blurb} · from ${catalog.prices[m.key].toLocaleString("en-US")}</div>
               </button>
             ))}
           </div>
@@ -364,7 +437,7 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
           </div>
           {/* The sticky footer belongs to this block, so it only sticks while the list itself is in view. */}
           <div>
-          <div className="mt-4"><StorePicker value={storeNumbers} onToggle={toggleStore} onPretick={slotsKnown && !pretickDone ? pretick : undefined} room={Math.max(0, Math.floor(room / Math.max(1, phones)) - storeNumbers.length)} preferState={initialState} preferCity={initialCity} memory={pickerMemory} onMemory={remember} /></div>
+          <div className="mt-4"><StorePicker value={storeNumbers} onToggle={toggleStore} onPretick={slotsKnown && !pretickDone && (!owned || seededFor === phonesKey) ? pretick : undefined} room={Math.max(0, Math.floor((room - net) / Math.max(1, phones)))} owned={ownedHere} preferState={initialState} preferCity={initialCity} memory={pickerMemory} onMemory={remember} /></div>
           {/* Sticks to the bottom of the screen while the list is taller than it: the way forward is always in view. */}
           <div className="sticky bottom-0 -mx-5 mt-4 px-5 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 sm:-mx-7 sm:px-7" style={{ background: "var(--pane-solid)" }}>
             <div className="flex h-9 items-center gap-2 overflow-x-auto whitespace-nowrap pr-8 [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]" role="group" aria-label="Stores ticked">
@@ -375,15 +448,29 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
             <div className="mt-2 flex items-center justify-between gap-3">
               <div className="min-w-0 text-sm text-ink-2" aria-live="polite">
                 <span className="font-semibold tabular-nums">
-                  {slots && isPaidPlan(slots.key) ? `${alerts} alert${alerts === 1 ? "" : "s"} · ${Math.max(0, room - alerts)} left on ${PLANS[slots.key].name}` : `${alerts} of ${FREE_PICK_LIMIT} alerts`}
+                  {slots && isPaidPlan(slots.key) ? `${alerts} alert${alerts === 1 ? "" : "s"} · ${Math.max(0, room - net)} left on ${PLANS[slots.key].name}` : `${alerts} of ${FREE_PICK_LIMIT} alerts`}
                 </span>
-                <span className="block text-ink-3 sm:inline"><span className="hidden sm:inline"> · </span>{phones} iPhone{phones === 1 ? "" : "s"} × {storeNumbers.length} store{storeNumbers.length === 1 ? "" : "s"}</span>
+                <span className="block text-ink-3 sm:inline"><span className="hidden sm:inline"> · </span>{phones} iPhone{phones === 1 ? "" : "s"} × {storeNumbers.length} store{storeNumbers.length === 1 ? "" : "s"}{editing ? ` · ${newCount} new${offCount ? ` · ${offCount} off` : ""}` : ""}</span>
               </div>
-              <button type="button" className="btn btn-primary btn-lg shrink-0" disabled={busy || alerts === 0} aria-busy={busy} onClick={submitStores}>
-                {busy ? <><span className="spinner" /> Saving</> : alerts === 0 ? "Tick a store" : `Set ${alerts} alert${alerts === 1 ? "" : "s"}`}
+              <button type="button" className="btn btn-primary btn-lg shrink-0" disabled={busy || (alerts === 0 && offCount === 0) || (editing && !changed)} aria-busy={busy} onClick={submitStores}>
+                {busy ? <><span className="spinner" /> Saving</>
+                  : alerts === 0 && offCount === 0 ? "Tick a store"
+                  : editing && !changed ? "No changes"
+                  : alerts === 0 ? `Turn off ${offCount} alert${offCount === 1 ? "" : "s"}`
+                  : offCount > 0 ? "Save changes"
+                  : `Set ${alerts} alert${alerts === 1 ? "" : "s"}`}
               </button>
             </div>
             {(notice || error) && <p role="alert" className={`mt-2 text-sm ${error ? "text-bad" : "text-warn"}`}>{error ?? notice}</p>}
+            {/* A subscriber whose plan is full: the bigger plan is one tap away, in place (prorated), and the ticks stay. */}
+            {slots && isPaidPlan(slots.key) && net >= room && nextPlan(slots.key) && (
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-warn/10 px-3 py-2 text-sm">
+                <span className="text-ink-2">{Math.min(slots.limit, slots.used + net)} of {slots.limit} {PLANS[slots.key].name} alerts used.</span>
+                <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => void goPay(nextPlan(slots.key)!, null, { stay: true })}>
+                  Upgrade to {PLANS[nextPlan(slots.key)!].name} · {PLANS[nextPlan(slots.key)!].limit} alerts · ${PLANS[nextPlan(slots.key)!].priceUsd}/mo
+                </button>
+              </div>
+            )}
           </div>
           </div>
         </section>
@@ -423,16 +510,23 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
       {step === "pay" && (
         <section>
           <h2 className="display text-2xl sm:text-3xl">
-            {allCovered ? (results.length === 1 ? "Alert on" : `${results.length} alerts on`)
+            {results.length === 0 && removedCount > 0 ? `${removedCount} alert${removedCount === 1 ? "" : "s"} off`
+              : allCovered ? (results.length === 1 ? "Alert on" : `${results.length} alerts on`)
               : coveredCount > 0 ? `${coveredCount} of ${results.length} alerts on`
               : planInfo?.key === "free" ? `${results.length} alert${results.length === 1 ? "" : "s"} saved — pick a plan`
               : "Over your plan"}
           </h2>
-          <p className="mt-2 text-ink-2">{summary}</p>
-          {allCovered ? (
+          <p className="mt-2 text-ink-2">{summary}{results.length > 0 && removedCount > 0 ? ` · ${removedCount} switched off` : ""}</p>
+          {allCovered || results.length === 0 ? (
             <div className="mt-6">
-              <p className="text-ink-2">Watching {storeText || "your stores"}{planInfo && planInfo.key !== "free" ? ` · ${planInfo.used} of ${planInfo.limit} ${PLANS[planInfo.key].name} alerts in use` : ""}.</p>
-              <div className="mt-5 flex flex-wrap gap-2"><a href="/install" className="btn btn-primary">Get alerts on your phone</a><a href="/account" className="btn btn-ghost">My alerts</a><button type="button" className="btn btn-ghost" onClick={() => { setStep("model"); setItems([]); setStoreNumbers([]); setStorage(null); setColor(null); setResults([]); setPretickDone(false); setPickerMemory(freshPickerMemory()); }}>Add more</button></div>
+              {results.length > 0 && <p className="text-ink-2">Watching {storeText || "your stores"}{planInfo && planInfo.key !== "free" ? ` · ${planInfo.used} of ${planInfo.limit} ${PLANS[planInfo.key].name} alerts in use` : ""}.</p>}
+              {/* Where alerts go: a device that already has notifications on, or the setup when none does. */}
+              {devices?.active ? <p className="mt-1 text-ink-2">Alerts go to your {devices.label}.</p> : null}
+              <div className="mt-5 flex flex-wrap gap-2">
+                {!devices?.active && <a href="/install" className="btn btn-primary">Get alerts on your phone</a>}
+                <a href="/account" className={`btn ${devices?.active ? "btn-primary" : "btn-ghost"}`}>My alerts</a>
+                <button type="button" className="btn btn-ghost" onClick={() => { setStep("model"); setItems([]); setStoreNumbers([]); setStorage(null); setColor(null); setResults([]); setRemovedCount(0); setPretickDone(false); setSeededFor(null); autoPicked.current = null; setPickerMemory(freshPickerMemory()); }}>Add more</button>
+              </div>
             </div>
           ) : (
             <div className="mt-6">
@@ -462,6 +556,11 @@ export function Wizard({ catalog, initialModel, initialStorage, initialColor, in
       )}
     </div>
   );
+}
+
+/** The next plan up, if there is one. */
+function nextPlan(key: PlanKey): PaidPlanKey | null {
+  return PAID_PLANS.find((k) => comparePlans(k, key) > 0) ?? null;
 }
 
 function Back({ onClick }: { onClick: () => void }) {

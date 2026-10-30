@@ -30,7 +30,7 @@ export function Footer() {
             <div className="eyebrow mb-3">Company</div>
             <ul className="space-y-2 text-ink-2">
               <li><Link href="/how-it-works" className="hover:text-ink">How it works</Link></li>
-              <li><Link href="/install" className="hover:text-ink">Get the app</Link></li>
+              <li className="not-in-app"><Link href="/install" className="hover:text-ink">Get the app</Link></li>
               <li><Link href="/about" className="hover:text-ink">About</Link></li>
               <li><Link href="/contact" className="hover:text-ink">Contact</Link></li>
             </ul>

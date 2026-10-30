@@ -4,7 +4,8 @@
  * device's location (asked on mount), a ZIP / city / state / store typed into the box, the city or state
  * an SEO page handed in, or a store a page pre-ticked — ten at a time, "Show 10 more" at the end. Rows
  * carry miles and a driving estimate from the visitor. Nothing above the list changes height while
- * ticking, so the next row stays where it was.
+ * ticking, so the next row stays where it was. Stores that already have an alert for the phone(s) on
+ * screen are tagged: "on" while ticked, "turning off" once unticked.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { STORES, STORE_INDEX, distanceMiles, stateCodeOf, appleName } from "@/lib/apple/catalog";
@@ -27,6 +28,8 @@ export interface StorePickerProps {
   onPretick?: (storeNumbers: string[]) => void;
   /** How many more stores may be ticked right now. */
   room: number;
+  /** Stores that already have an alert for the phone(s) being set up. */
+  owned?: string[];
   /** Full state name and/or city name to list first (from the state and city pages). */
   preferState?: string;
   preferCity?: string;
@@ -36,7 +39,7 @@ export interface StorePickerProps {
 }
 const GEO_OPTS: PositionOptions = { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 };
 
-export function StorePicker({ value, onToggle, onPretick, room, preferState, preferCity, memory, onMemory }: StorePickerProps) {
+export function StorePicker({ value, onToggle, onPretick, room, owned = [], preferState, preferCity, memory, onMemory }: StorePickerProps) {
   const [mem] = useState(memory); // what the owner remembered from a previous mount
   const [loc, setLocState] = useState<LocState>(mem?.loc === "asking" ? "idle" : (mem?.loc ?? "idle"));
   const [here, setHereState] = useState<{ lat: number; lng: number } | null>(mem?.here ?? null);
@@ -114,7 +117,7 @@ export function StorePicker({ value, onToggle, onPretick, room, preferState, pre
       : `${anchor.label} first, then the nearest beyond`
     : loc === "asking" ? "Finding stores near you…"
       : loc === "denied" || loc === "unavailable" ? "No location — type a ZIP or city, or pick a state"
-      : "Type a ZIP or city, or tap Near me") + (pretickNote && value.length > 0 ? ` · nearest ${Math.min(PRETICK, value.length)} ticked` : "");
+      : "Type a ZIP or city, or tap Near me") + (owned.length ? ` · ${owned.length} already on` : pretickNote && value.length > 0 ? ` · nearest ${Math.min(PRETICK, value.length)} ticked` : "");
 
   return (
     <div>
@@ -137,12 +140,14 @@ export function StorePicker({ value, onToggle, onPretick, room, preferState, pre
         ))}
         {visible.map((s) => {
           const on = value.includes(s.storeNumber);
+          const mine = owned.includes(s.storeNumber);
           const d = origin ? (origin === anchor ? s.distance : distanceMiles(origin.lat, origin.lng, s.lat, s.lng)) : null;
           return (
-            <button key={s.storeNumber} type="button" role="checkbox" aria-checked={on} onClick={() => onToggle(s.storeNumber)} aria-disabled={!on && full}
-              className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-ink/5 ${on ? "bg-accent/8" : full ? "opacity-50" : ""}`}>
+            <button key={s.storeNumber} type="button" role="checkbox" aria-checked={on} onClick={() => onToggle(s.storeNumber)} aria-disabled={!on && !mine && full}
+              className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-ink/5 ${on ? "bg-accent/8" : full && !mine ? "opacity-50" : ""}`}>
               <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs font-bold ${on ? "border-accent bg-accent" : "border-ink/25 bg-pane"}`} style={on ? { color: "var(--accent-ink)" } : undefined} aria-hidden>{on ? "✓" : ""}</span>
               <span className="min-w-0 flex-1"><span className="block truncate font-medium">{s.name}</span><span className="block truncate text-xs text-ink-3">{s.city}, {stateCodeOf(s)}</span></span>
+              {mine && <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${on ? "bg-accent/12 text-accent" : "bg-warn/12 text-warn"}`}>{on ? "on" : "turning off"}</span>}
               {d != null && <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-ink-3">{formatMiles(d)} · {formatDrive(d)}</span>}
             </button>
           );
