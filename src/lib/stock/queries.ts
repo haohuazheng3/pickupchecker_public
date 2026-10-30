@@ -5,8 +5,8 @@ import { PART_INDEX, STORE_INDEX, STORES, MODELS, modelKeyFor, partNumbersFor, t
 import { recordError, errorMessage } from "../errors";
 
 /**
- * Public pages read through this: a transient database failure (Neon "fetch failed" at cold start,
- * a network blip) degrades to an empty widget instead of a 500 for the whole page. The failure is
+ * Public pages read through this: a transient database failure (a dropped connection, a network
+ * blip) degrades to an empty widget instead of a 500 for the whole page. The failure is
  * still recorded for the admin error inbox.
  */
 async function safe<T>(what: string, fallback: T, run: () => Promise<T>): Promise<T> {
@@ -18,7 +18,7 @@ async function safe<T>(what: string, fallback: T, run: () => Promise<T>): Promis
   }
 }
 
-/** One quick retry: Neon's HTTP endpoint occasionally drops a request (a reused socket closed under it). */
+/** One quick retry: a pooled connection the server closed while idle fails the first query on it. */
 async function retried<T>(run: () => Promise<T>): Promise<T> {
   try {
     return await run();
@@ -254,6 +254,36 @@ export async function restockPattern(storeNumbers: string[], parts: string[], ex
     }
     out.stores = [...perStore.entries()].map(([storeNumber, v]) => ({ storeNumber, ...v })).sort((a, b) => b.total - a.total);
     return out;
+  });
+}
+
+/** One store's restock "drops" (its restocks within one 10-minute window count once) in one 15-minute slot of the day. */
+export interface RestockSlotRow { slot: number; store: string; drops: number; mins: number }
+
+/**
+ * The restock timeline's raw material: drops of `parts` at `storeNumbers` over the last `days`, per
+ * 15-minute slot of the day in `tz` and store, with the mean minute of the day of each slot's drops.
+ */
+export async function restockSlots(storeNumbers: string[], parts: string[], tz: string, days = 30): Promise<RestockSlotRow[]> {
+  if (!hasDatabase() || storeNumbers.length === 0 || parts.length === 0) return [];
+  const list = (xs: string[]) => sql.join(xs.map((x) => sql`${x}`), sql`, `);
+  const since = new Date(Date.now() - days * 86400_000);
+  return safe("restock slots", [] as RestockSlotRow[], async () => {
+    // The zone is bound once (in `ev`): a parameter repeated in GROUP BY would be a different expression.
+    const res = await db().execute(sql`
+      with ev as (
+        select store_number as store, (at at time zone ${tz}) as t
+        from availability_events
+        where first_seen = false and kind = 'restock' and at > ${since}
+          and store_number in (${list(storeNumbers)}) and part_number in (${list(parts)})
+      ), drops as (
+        select store, t::date as day, floor((extract(hour from t) * 60 + extract(minute from t)) / 10) as b,
+               min(extract(hour from t) * 60 + extract(minute from t))::int as m
+        from ev group by store, day, b
+      )
+      select floor(m / 15)::int as slot, store, count(*)::int as drops, avg(m)::float8 as mins
+      from drops group by 1, 2`);
+    return (res.rows as unknown as RestockSlotRow[]).map((r) => ({ slot: Number(r.slot), store: String(r.store), drops: Number(r.drops), mins: Number(r.mins) }));
   });
 }
 

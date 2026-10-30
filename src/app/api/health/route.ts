@@ -12,7 +12,7 @@ const HEARTBEAT_STALE_MS = 150_000;
 /**
  * GET /api/health[?shallow=1]
  *  200 when config + database + poller heartbeat are fine; 503 otherwise, with the reason.
- *  shallow=1 skips the database (used by frequent external probes so Neon can sleep).
+ *  shallow=1 skips the database (used by frequent external probes).
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);

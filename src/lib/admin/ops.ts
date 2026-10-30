@@ -299,7 +299,7 @@ const TABLES = ["users", "subscriptions", "watches", "stripe_events", "stores", 
 
 export async function tableStats() {
   const d = db();
-  // neon-http spreads a JS array into one bind parameter per element, so the list is joined by hand.
+  // An array interpolated into sql`` becomes one bind parameter per element, so the list is joined by hand.
   const names = sql.join(TABLES.map((t) => sql`${t}`), sql`, `);
   const sizes = await d.execute(sql`select c.relname as name, pg_total_relation_size(c.oid)::bigint as bytes, coalesce(s.n_live_tup, 0)::bigint as est from pg_class c join pg_namespace n on n.oid = c.relnamespace left join pg_stat_user_tables s on s.relid = c.oid where c.relkind = 'r' and n.nspname = 'public' and c.relname in (${names})`);
   const rows = (sizes.rows as { name: string; bytes: string | number; est: string | number }[]).map((r) => ({ name: r.name, bytes: Number(r.bytes), est: Number(r.est) }));

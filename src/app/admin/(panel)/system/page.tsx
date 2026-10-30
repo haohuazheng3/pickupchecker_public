@@ -6,7 +6,7 @@ import { Section, KV, StatePill } from "@/components/admin/Status";
 import { Table, timeAgo } from "@/components/admin/Bits";
 
 const ENV_KEYS = [
-  ["DATABASE_URL", "Neon (pooled)"], ["DATABASE_URL_UNPOOLED", "Neon (migrations)"], ["CLERK_SECRET_KEY", "Clerk server"], ["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "Clerk client"],
+  ["DATABASE_URL", "Postgres on the poller host"], ["DATABASE_URL_UNPOOLED", "Postgres (migrations)"], ["DATABASE_CA", "Postgres TLS CA"], ["CLERK_SECRET_KEY", "Clerk server"], ["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "Clerk client"],
   ["STRIPE_SECRET_KEY", "Stripe"], ["STRIPE_WEBHOOK_SECRET", "Stripe webhook"], ["STRIPE_PRICE_MONTHLY", "Stripe price · Plus $5"], ["STRIPE_PRICE_PRO", "Stripe price · Pro $10"], ["STRIPE_PMC_ID", "Stripe payment methods (card + Link)"], ["STRIPE_CONTEXT", "Stripe org context"],
   ["RESEND_API_KEY", "Resend"], ["VAPID_PUBLIC_KEY", "Web Push public"], ["VAPID_PRIVATE_KEY", "Web Push private"], ["VAPID_SUBJECT", "Web Push subject"],
   ["CRON_SECRET", "Vercel Cron bearer"], ["POLLER_TOKEN", "Poller → site bearer"], ["INBOX_INGEST_SECRET", "Worker → inbox bearer"], ["MAIL_WORKER_URL", "Mail worker"], ["MAIL_WORKER_TOKEN", "Mail worker bearer"],
@@ -68,7 +68,7 @@ export default async function AdminSystem() {
         <Section title="Environment variables" aside="presence only — values are never shown">
           <Table head={["Variable", "Used for", "Set"]} rows={ENV_KEYS.map(([k, use]) => [<code key="k" className="text-xs">{k}</code>, use, process.env[k] ? <span key="s" className="text-accent">yes</span> : <span key="s" className="text-bad">missing</span>])} />
         </Section>
-        <Section title="Database" aside={`${bytes(tables.dbBytes)} total · Neon free tier is 0.5 GB`}>
+        <Section title="Database" aside={`${bytes(tables.dbBytes)} total · 25 GB disk on the poller host`}>
           <Table head={["Table", "Rows (est.)", "Size"]} rows={tables.tables.sort((a, b) => b.bytes - a.bytes).map((t) => [<code key="n" className="text-xs">{t.name}</code>, t.est.toLocaleString(), bytes(t.bytes)])} />
           <p className="mt-2 text-xs text-ink-3">poll_log grows ~285 k rows/day at 20 s cadence; prune rows older than 7 days if the size matters.</p>
           <h3 className="mt-4 text-sm font-semibold">Migrations</h3>

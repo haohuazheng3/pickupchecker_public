@@ -16,7 +16,7 @@ export default function Privacy() {
       <h2>How we use it</h2>
       <p>To run the service you asked for: checking stock, matching it with your alerts, sending notifications and emails, billing. We don&apos;t sell or rent personal data.</p>
       <h2>Processors</h2>
-      <p>Clerk (authentication), Stripe (payments), Resend (email delivery), Apple, Google and Mozilla push services (delivering notifications to your device), Neon (database), Vercel and Linode (hosting), Cloudflare (DNS and inbound mail), FlowGlance (analytics). Each processes data on our instructions under their own privacy terms.</p>
+      <p>Clerk (authentication), Stripe (payments), Resend (email delivery), Apple, Google and Mozilla push services (delivering notifications to your device), Vercel (hosting) and Linode (our servers, including the database), Cloudflare (DNS and inbound mail), FlowGlance (analytics). Each processes data on our instructions under their own privacy terms.</p>
       <h2>Retention and deletion</h2>
       <p>Alerts and account data are kept while your account exists. Email us from your account address to delete your account; we remove it within 7 days, keeping only what tax law requires about payments.</p>
       <h2>Your rights</h2>

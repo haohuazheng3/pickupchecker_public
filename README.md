@@ -23,6 +23,9 @@ Live at <https://pickupchecker.com>. Independent service, not affiliated with Ap
   wizard (Clerk email code, custom UI), Stripe Checkout, account page with the notification switch
   and device list, and the ops console at `/admin` (password `ADMIN_PASSWORD`): node status board,
   24 h health strips, request/sweep/alert charts, every log with filters, stock, users, errors, system parameters.
+* Postgres 17 on the same host as the poller (`infra/linode/postgres.sh`: TLS from its own CA, one role
+  per environment, nightly dumps). The site reaches it over TLS pinned to that CA (`DATABASE_CA`); the
+  poller over loopback. Drizzle on `pg` (`src/lib/db`).
 * `/api/cron/watchdog` (Vercel Cron, every minute) switches to a serverless degraded mode and
   emails the owner when the poller's heartbeat stops; `infra/workers/mail` is the Cloudflare
   worker that receives test@ mail and probes `/api/health`.
@@ -30,7 +33,7 @@ Live at <https://pickupchecker.com>. Independent service, not affiliated with Ap
 ## Run it yourself
 
 ```bash
-cp .env.example .env.local   # fill in the values
+cp .env.example .env.local   # fill in the values (DATABASE_URL: any Postgres 17)
 npm install
 npx web-push generate-vapid-keys   # → VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY in .env.local
 npm run db:migrate           # applies drizzle/*.sql

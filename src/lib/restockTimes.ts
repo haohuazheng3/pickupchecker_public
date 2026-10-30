@@ -44,3 +44,70 @@ export function nextWindow(hours: number[], nowHour: number): { hour: number; in
   const ahead = hours.map((h) => ({ hour: h, inHours: (h - nowHour + 24) % 24 })).sort((a, b) => a.inHours - b.inHours);
   return ahead[0];
 }
+
+/* ------------------------------------------------------------------ restock timeline */
+
+/** A time of day restocks landed at, over the window: mean minute (rounded to 5), how many drops, at which stores. */
+export interface TimelinePoint { min: number; drops: number; stores: { storeNumber: string; drops: number }[] }
+export interface Timeline { points: TimelinePoint[]; /** Minutes per point: slots merge until few enough remain. */ step: 15 | 30 | 60; total: number; /** Drops left out of the busiest points shown. */ hidden: number }
+
+/**
+ * Drops by 15-minute slot and store into at most `maxPoints` times of day, earliest first. Slots merge into
+ * half hours, then hours, until few enough remain; past that only the busiest hours stay (the rest counted
+ * in `hidden`).
+ */
+export function buildTimeline(rows: { slot: number; store: string; drops: number; mins: number }[], maxPoints = 12): Timeline {
+  const total = rows.reduce((a, r) => a + r.drops, 0);
+  for (const step of [15, 30, 60] as const) {
+    const per = step / 15;
+    const groups = new Map<number, { weighted: number; drops: number; stores: Map<string, number> }>();
+    for (const r of rows) {
+      const k = Math.floor(r.slot / per);
+      const g = groups.get(k) ?? { weighted: 0, drops: 0, stores: new Map<string, number>() };
+      g.weighted += r.mins * r.drops; g.drops += r.drops; g.stores.set(r.store, (g.stores.get(r.store) ?? 0) + r.drops);
+      groups.set(k, g);
+    }
+    if (groups.size > maxPoints && step !== 60) continue;
+    let points: TimelinePoint[] = [...groups.values()].filter((g) => g.drops > 0).map((g) => ({
+      min: Math.min(1435, Math.round(g.weighted / g.drops / 5) * 5),
+      drops: g.drops,
+      stores: [...g.stores].map(([storeNumber, drops]) => ({ storeNumber, drops })).sort((a, b) => b.drops - a.drops || a.storeNumber.localeCompare(b.storeNumber)),
+    }));
+    let hidden = 0;
+    if (points.length > maxPoints) {
+      const kept = [...points].sort((a, b) => b.drops - a.drops || a.min - b.min).slice(0, maxPoints);
+      hidden = total - kept.reduce((a, p) => a + p.drops, 0);
+      points = kept;
+    }
+    return { points: points.sort((a, b) => a.min - b.min), step, total, hidden };
+  }
+  return { points: [], step: 60, total, hidden: 0 };
+}
+
+/** Where "now" falls among the points: how many come before it, and the next one (tomorrow's first after the last). */
+export function placeNow(points: { min: number }[], nowMin: number): { before: number; next: number | null; inMin: number; tomorrow: boolean } {
+  if (points.length === 0) return { before: 0, next: null, inMin: 0, tomorrow: false };
+  const i = points.findIndex((p) => p.min >= nowMin);
+  if (i === -1) return { before: points.length, next: 0, inMin: 1440 - nowMin + points[0].min, tomorrow: true };
+  return { before: i, next: i, inMin: points[i].min - nowMin, tomorrow: false };
+}
+
+/** 565 → "9:25 AM". */
+export function clockLabel(min: number): string {
+  const h = Math.floor(min / 60) % 24, m = min % 60;
+  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
+/** 48 → "48 min", 125 → "2 h 5 min", 180 → "3 h". */
+export function gapLabel(min: number): string {
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  return m ? `${h} h ${m} min` : `${h} h`;
+}
+
+/** Minute of the day (0–1439) in a zone. */
+export function minuteIn(tz: string, now = new Date()): number {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(now);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  return (get("hour") % 24) * 60 + get("minute");
+}

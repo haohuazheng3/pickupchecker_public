@@ -250,11 +250,25 @@ a:active { opacity: .7; }
 
 /* ------------------------------------------------------------------ installed (Home Screen) app */
 @media (display-mode: standalone), (display-mode: fullscreen) {
-  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  /* The header clears the status bar itself (below); the floating card on big screens just sits lower. */
+  body { padding-bottom: env(safe-area-inset-bottom); }
   header.site-header { top: calc(env(safe-area-inset-top) + .75rem); }
   html { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
   /* "Get the app" inside the app itself. */
   .not-in-app { display: none !important; }
+}
+
+/* ------------------------------------------------------------------ site header on phones and tablets
+   A solid bar flush with the top edge whose padding clears the status bar. Safari on iOS 26 and later draws
+   a soft blur under its status bar that reaches into the page, and swaps it for a solid tint only when a
+   fixed or sticky element touches that edge: the floating translucent card, 12 px down, sat half inside
+   the blur, and so did the top of the search sheet opened over it. Wide screens with a mouse keep the card. */
+@media (max-width: 1023px), (hover: none) and (pointer: coarse) {
+  header.site-header { top: 0; padding: env(safe-area-inset-top) 0 0; background: var(--pane-solid); border-bottom: 1px solid var(--line); }
+  header.site-header > .pane {
+    padding-left: 1rem; padding-right: 1rem; background: transparent; border: 0; border-radius: 0; box-shadow: none;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
 }
 
 /* ------------------------------------------------------------------ install guide: phone mocks */

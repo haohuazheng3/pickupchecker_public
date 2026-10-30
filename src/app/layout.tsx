@@ -40,7 +40,11 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
-export const viewport: Viewport = { themeColor: "#f6f7f5", width: "device-width", initialScale: 1, viewportFit: "cover" };
+// Browser chrome that still reads theme-color (Safari before 26, Chrome on Android) matches the header bar.
+export const viewport: Viewport = {
+  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#ffffff" }, { media: "(prefers-color-scheme: dark)", color: "#15171f" }],
+  width: "device-width", initialScale: 1, viewportFit: "cover",
+};
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

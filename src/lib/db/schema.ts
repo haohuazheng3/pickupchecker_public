@@ -1,7 +1,7 @@
 /**
- * PickupChecker database schema (Neon Postgres, Drizzle).
+ * PickupChecker database schema (Postgres 17 on the poller host, Drizzle).
  *
- * Writes are idempotent everywhere (no interactive transactions over the HTTP driver):
+ * Writes are idempotent everywhere (the poller and the site write concurrently, without transactions):
  * unique keys + ON CONFLICT, conditional UPDATEs, and "unknown ≠ unavailable" states.
  */
 import {

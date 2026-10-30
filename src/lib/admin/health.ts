@@ -126,7 +126,7 @@ export function computeNodes(s: HealthSnapshot): NodeHealth[] {
 
   // 5. database
   nodes.push({
-    key: "db", name: "Database (Neon)", href: "/admin/system",
+    key: "db", name: "Database", href: "/admin/system",
     state: s.dbError ? "bad" : s.dbLatencyMs == null ? "idle" : s.dbLatencyMs > 1500 ? "bad" : s.dbLatencyMs > 400 ? "warn" : "ok",
     value: s.dbError ? "error" : s.dbLatencyMs != null ? `${s.dbLatencyMs} ms` : "—",
     detail: s.dbError ?? "round trip of `select 1` from this request",
