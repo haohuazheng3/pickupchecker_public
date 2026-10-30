@@ -13,12 +13,12 @@ export async function StockBoard({ model, storage, color, limit = 60 }: { model:
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-3">
-        <span className="inline-flex items-center gap-2"><Dot state={inStock.length ? "ok" : "idle"} live={inStock.length > 0} /> {inStock.length} of {checked || 269} stores have the {meta.short} in stock for pickup</span>
+        <span className="inline-flex items-center gap-2"><Dot state={inStock.length ? "ok" : "idle"} live={inStock.length > 0} /> {inStock.length} of {checked || 269} stores have the {meta.short} in stock</span>
         {rows[0]?.lastCheckedAt && <span>Last check <LiveAgo iso={rows[0].lastCheckedAt} /></span>}
       </div>
       {inStock.length === 0 ? (
         <div className="pane-2 p-6 text-ink-2">
-          {checked === 0 ? "First sweep in progress — stock appears here within a minute." : `No Apple Store currently lists the ${meta.name}${storage ? ` ${storage}` : ""}${color ? ` in ${color}` : ""} for pickup. Set an alert and we'll notify you the second that changes.`}
+          {checked === 0 ? "First sweep in progress." : `No store lists the ${meta.name}${storage ? ` ${storage}` : ""}${color ? ` in ${color}` : ""} right now.`}
         </div>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

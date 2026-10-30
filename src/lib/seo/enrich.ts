@@ -122,7 +122,7 @@ export function fullAddress(store: Store): string {
   return `${(store.street ?? "").trim()}, ${store.city}, ${stateCodeOf(store)} ${store.postalCode ?? ""}`.replace(/\s+/g, " ").trim();
 }
 
-/** Wizard deep link: one alert is one store × one model × one storage × one colour. */
+/** Wizard deep link: one alert is one store × one model × one storage × one color. */
 export function alertHref(o: { model?: ModelKey; storage?: string; color?: string; store?: string; state?: string; city?: string } = {}): string {
   const q = new URLSearchParams();
   q.set("model", o.model ?? DEFAULT_MODEL);
@@ -216,28 +216,30 @@ export interface NarrativeInput {
   stats: NarrativeStats;
 }
 
-/** One paragraph of real numbers that reads well at zero. The "latest restock" sentence is rendered separately (it ticks). */
+/** Two sentences of real numbers that read well at zero: stock now, then restocks / sell-outs / how long stock lasts. The "latest restock" clause is rendered separately (it ticks). */
 export function narrative(i: NarrativeInput): string {
   const n = i.stats.days;
+  const st = i.stats;
   const s: string[] = [];
+  const where = i.kind === "store" ? `at ${i.place}` : i.kind === "model" ? `for the ${i.place}` : `in ${i.place}`;
   if (i.kind === "model") {
     const m = modelByKey(MODELS.find((x) => x.name === i.place)?.key ?? DEFAULT_MODEL) ?? MODELS[0];
     const now = i.stockNow[m.key] ?? 0;
-    s.push(now === 0 ? `No Apple Store in the US lists the ${i.place} for in-store pickup at the moment — all ${i.stores} stores are re-checked every 20 seconds, so this changes within seconds of a restock.` : `${plural(now, "Apple Store")} of ${i.stores} in the US ${now === 1 ? "lists" : "list"} the ${i.place} for in-store pickup right now; every store is re-checked every 20 seconds.`);
-    s.push(i.stats.month === 0 ? `No ${i.place} restock has been logged anywhere in the last ${n} days.` : `${plural(i.stats.month, `${i.place} restock`)} ${i.stats.month === 1 ? "was" : "were"} logged across the country in the last ${n} days (${i.stats.week} this week, ${i.stats.day} in the last 24 hours)${i.stats.soldouts ? `, along with ${plural(i.stats.soldouts, "sell-out")}` : ""}.`);
+    s.push(now === 0 ? `No US Apple Store lists the ${i.place} for pickup right now.` : `${now} of ${i.stores} US Apple Stores ${now === 1 ? "lists" : "list"} the ${i.place} for pickup right now.`);
+  } else if (i.kind === "store") {
+    const bits = MODELS.map((m) => `${i.stockNow[m.key] ?? 0} of ${i.configs?.[m.key] ?? 0} ${m.name}`);
+    s.push(`Right now ${i.place} lists ${bits[0]} configurations, ${listWords(bits.slice(1))} for pickup.`);
+  } else if (i.stores === 1) {
+    const have = MODELS.filter((m) => (i.stockNow[m.key] ?? 0) > 0).map((m) => `the ${m.name}`);
+    const lack = MODELS.filter((m) => (i.stockNow[m.key] ?? 0) === 0).map((m) => `the ${m.name}`);
+    s.push(have.length === 0 ? `Right now the one Apple Store in ${i.place} lists none of ${listWords(MODELS.map((m) => `the ${m.name}`)).replace(" and ", " or ")} for pickup.` : `Right now the one Apple Store in ${i.place} lists ${listWords(have)} for pickup${lack.length ? `, but not ${listWords(lack)}` : ""}.`);
   } else {
-    const where = i.kind === "store" ? `at ${i.place}` : `in ${i.place}`;
-    s.push(i.stats.month === 0 ? `No restock has been logged ${where} in the last ${n} days${i.stats.soldouts ? `, though ${plural(i.stats.soldouts, "sell-out")} ${i.stats.soldouts === 1 ? "was" : "were"}` : ""}.` : `${plural(i.stats.month, "restock")} ${i.stats.month === 1 ? "has" : "have"} been logged ${where} in the last ${n} days (${i.stats.week} this week, ${i.stats.day} in the last 24 hours)${i.stats.soldouts ? `, along with ${plural(i.stats.soldouts, "sell-out")}` : ""}.`);
-    if (i.kind === "store") {
-      const bits = MODELS.map((m) => `the ${m.name} in ${i.stockNow[m.key] ?? 0} of ${i.configs?.[m.key] ?? 0} configurations`);
-      s.push(`Right now it lists ${listWords(bits)}; we re-check it every 20 seconds.`);
-    } else {
-      const subject = i.kind === "state" ? `The ${plural(i.stores, "Apple Store")} in ${i.place}${i.cities && i.cities.length > 1 ? ` (${listWords(i.cities, 5)})` : ""}` : `The ${plural(i.stores, "Apple Store")} in ${i.place}`;
-      const bits = MODELS.map((m) => { const k = i.stockNow[m.key] ?? 0; return `${k === 0 ? "none" : k === i.stores ? (i.stores === 1 ? "it" : "all of them") : k} ${k === 1 || i.stores === 1 ? "lists" : "list"} the ${m.name}`; });
-      s.push(`${subject} ${i.stores === 1 ? "is" : "are"} re-checked every 20 seconds; right now ${listWords(bits)} for pickup.`);
-    }
+    const bits = MODELS.map((m, k) => `the ${m.name}${k === 0 ? " is listed for pickup" : ""} at ${i.stockNow[m.key] ?? 0}${k === 0 ? ` of the ${plural(i.stores, "Apple Store")} in ${i.place}` : ""}`);
+    s.push(`Right now ${listWords(bits)}.`);
   }
-  s.push(i.stats.medianMs == null ? `There are not enough restock-to-sell-out pairs yet to say how long stock lasts here.` : `Once a configuration comes back it typically stays available for about ${fmtDuration(i.stats.medianMs)} before selling out again.`);
+  const lasts = st.medianMs == null ? "too few sell-outs yet to say how long stock lasts" : `restocked configurations stay available about ${fmtDuration(st.medianMs)}`;
+  if (st.month === 0) s.push(`No restock logged ${where} in the last ${n} days${st.soldouts ? ` (${plural(st.soldouts, "sell-out")})` : ""}; ${lasts}.`);
+  else s.push(`${plural(st.month, "restock")} and ${plural(st.soldouts, "sell-out")} ${where} in the last ${n} days; ${lasts}.`);
   return s.join(" ");
 }
 
@@ -259,16 +261,15 @@ export function peakOf(stats: { byHour: number[]; byWeekday: number[]; total: nu
 
 export interface FaqItem { q: string; a: string }
 
-export const ALERT_RULE = "One alert covers one store, one model, one storage size and one colour — the exact configuration you will buy. Plus holds 10 alerts for $5 a month and Pro 20 for $10 a month; a push notification (or email) goes out within seconds of apple.com flipping to available.";
+export const ALERT_RULE = "One alert = one store, one model, one storage size, one color; a push (or email) goes out within seconds of apple.com flipping to available.";
 
-/** "How in-store pickup works at Apple {place}", 4–5 sentences. */
+/** "In-store pickup at Apple {place}": three short, place-interpolated paragraphs. */
 export function explainer(kind: "state" | "city" | "store" | "model", place: string): string[] {
-  const at = kind === "store" ? place : kind === "model" ? "any Apple Store" : `Apple Stores in ${place}`;
+  const at = kind === "store" ? place : kind === "model" ? "every US Apple Store" : `Apple Stores in ${place}`;
   return [
-    `Apple sells the iPhone for in-store pickup through apple.com: you choose a configuration, pick a store at checkout and pay online, then collect it at the Pickup counter — usually the same day. Stock for pickup is separate from the shelves and from carrier stores, and it appears store by store, often in small batches.`,
-    `PickupChecker asks apple.com for the pickup status of every tracked configuration at ${at} every 20 seconds and keeps the answer: available, unavailable or unknown. A change only counts after a second confirming check, so a one-off glitch never becomes a false restock or a false sell-out.`,
-    `Every real change is logged with its time, which is where the restock patterns and history on this page come from. "Checked … ago" counts the seconds since the last successful check${kind === "model" ? " of each store" : ""}.`,
-    `When a configuration becomes available, the window is short — popular ones sell out in minutes — so the fastest route is an alert for the exact store and configuration you want, opened straight into apple.com checkout.`,
+    `Pickup stock is sold on apple.com: pick a configuration and a store at checkout, pay online, collect in store, often the same day. It is separate from shelf stock and from carrier stores.`,
+    `PickupChecker checks every tracked configuration at ${at} every 20 seconds; a change counts only after a second confirming check, so a glitch never becomes a false restock or sell-out.`,
+    `Every confirmed change is logged; that log feeds the restock chart and history on this page.`,
   ];
 }
 
@@ -289,42 +290,41 @@ export interface FaqContext {
   prices?: { low: number; high: number; storages: string[]; colors: string[] };
 }
 
-/** 4–6 data-driven questions per page type. */
+/** Up to 5 data-driven questions per page type; every answer is one sentence. */
 export function faq(c: FaqContext): FaqItem[] {
   const duo = modelByKey(DEFAULT_MODEL)!;
   const n = c.stats.days;
   const out: FaqItem[] = [];
-  const restockA = `${c.stats.month === 0 ? `No restock has been logged ${c.kind === "store" ? "at" : c.kind === "model" ? "for" : "in"} ${c.place} in the last ${n} days` : `In the last ${n} days we logged ${plural(c.stats.month, "restock")} ${c.kind === "store" ? "at" : c.kind === "model" ? "for" : "in"} ${c.place}, ${c.stats.week} of them this week`}. ${c.peak ? `Most of the ${c.peak.total} restocks arrived around ${c.peak.hour} local time, and ${c.peak.day}s were the busiest day.` : "There are too few events to call a time-of-day pattern yet; the chart on this page fills in as restocks happen."} Apple does not publish a restock schedule.`;
-  const lastsA = c.stats.medianMs == null ? `We have not seen enough restock-to-sell-out pairs here to measure it yet. Nationwide, popular configurations are usually gone within minutes, which is why an alert matters more than refreshing.` : `Over the last ${n} days a configuration that came back stayed available for about ${fmtDuration(c.stats.medianMs)} (median) before selling out again. Nationwide, popular configurations are usually gone within minutes.`;
-  const alertA = `Set an alert for the exact configuration and store. ${ALERT_RULE}`;
+  const prep = c.kind === "store" ? "at" : c.kind === "model" ? "for the" : "in";
+  const restockA = `${c.stats.month === 0 ? `No restock logged ${prep} ${c.place} in the last ${n} days` : `${plural(c.stats.month, "restock")} ${prep} ${c.place} in the last ${n} days, ${c.stats.week} this week`}${c.peak ? `, most of them around ${c.peak.hour} local time and most often on ${c.peak.day}s` : ""}; Apple publishes no schedule.`;
+  const lastsA = c.stats.medianMs == null ? `Too few restock-to-sell-out pairs ${prep} ${c.place} yet to measure.` : `Over the last ${n} days a restocked configuration stayed available about ${fmtDuration(c.stats.medianMs)} (median) before selling out again.`;
+  const nearestA = (list: StoreWithDistance[]) => `${listWords(list.slice(0, 3).map((x) => `Apple ${x.name} in ${x.city}, ${stateCodeOf(x)} (${Math.round(x.distance)} mi)`))}.`;
   if (c.kind === "model") {
     const now = c.stockNow[MODELS.find((m) => m.name === c.place)?.key ?? "duo"] ?? 0;
-    out.push({ q: `Which Apple Stores have the ${c.place} in stock right now?`, a: now === 0 ? `As of the last check (every store is re-checked every 20 seconds), no Apple Store in the US lists the ${c.place} for in-store pickup. The list on this page updates as soon as one does.` : `As of the last check, ${plural(now, "Apple Store")} in the US ${now === 1 ? "lists" : "list"} the ${c.place} for in-store pickup; the list on this page names each one and the configurations it has.` });
-    if (c.prices) out.push({ q: `How much does the ${c.place} cost?`, a: `The ${c.place} ranges from ${fmtPrice(c.prices.low)} to ${fmtPrice(c.prices.high)} unlocked, depending on storage (${c.prices.storages.join(", ")}). It comes in ${listWords(c.prices.colors)}. Pickup orders are paid on apple.com at the same price as shipping.` });
+    out.push({ q: `Which Apple Stores have the ${c.place} in stock right now?`, a: now === 0 ? `None at the last check; the list on this page updates as soon as a US Apple Store lists the ${c.place} for pickup.` : `${plural(now, "US Apple Store")} at the last check, each named on this page with the configurations it has.` });
+    if (c.prices) out.push({ q: `How much does the ${c.place} cost?`, a: `From ${fmtPrice(c.prices.low)} to ${fmtPrice(c.prices.high)} unlocked depending on storage (${c.prices.storages.join(", ")}), in ${listWords(c.prices.colors)}.` });
     out.push({ q: `How often does the ${c.place} restock?`, a: restockA });
     out.push({ q: `How long does ${c.place} stock last once it appears?`, a: lastsA });
-    out.push({ q: `How do I get notified when the ${c.place} is available for pickup near me?`, a: alertA });
-    out.push({ q: `Can I reserve the ${c.place} for pickup?`, a: `Apple does not take reservations without payment. When a store lists a configuration as available, you buy it on apple.com with in-store pickup selected and pick a time slot; it is then held for you. If checkout fails, someone else took the last unit.` });
+    out.push({ q: `Can I reserve the ${c.place} for pickup?`, a: `No; once a store lists a configuration you buy it on apple.com with in-store pickup selected, and it is then held for your time slot.` });
     return out;
   }
   if (c.kind === "store") {
     const s = c.stores[0];
-    out.push({ q: `Does ${c.place} have the ${duo.name} in stock?`, a: c.stockNow.duo > 0 ? `Yes — as of the last check, ${c.place} lists the ${duo.name} in ${plural(c.stockNow.duo, "configuration")} for in-store pickup. The table on this page shows exactly which storage and colour.` : `Not at the moment: the last check found no ${duo.name} configuration available for pickup at ${c.place}. ${c.stockNow["18-pro"] + c.stockNow["18-pro-max"] > 0 ? `It does list ${c.stockNow["18-pro"]} iPhone 18 Pro and ${c.stockNow["18-pro-max"]} 18 Pro Max configurations.` : "No 18 Pro or 18 Pro Max configuration is available either."}` });
-    out.push({ q: `What are ${c.place}'s hours?`, a: `${c.hours ?? "Hours are listed on this page"}. ${c.todayText ? `Today: ${c.todayText}.` : ""} Pickup orders are collected during opening hours; the store is at ${fullAddress(s)}${s.phone ? `, phone ${s.phone}` : ""}.` });
+    const others = c.stockNow["18-pro"] + c.stockNow["18-pro-max"];
+    out.push({ q: `Does ${c.place} have the ${duo.name} in stock?`, a: c.stockNow.duo > 0 ? `Yes, ${plural(c.stockNow.duo, "configuration")} at the last check; the table on this page shows which storage and color.` : `Not at the last check${others > 0 ? `, though it lists ${c.stockNow["18-pro"]} iPhone 18 Pro and ${c.stockNow["18-pro-max"]} 18 Pro Max configurations` : ", and no 18 Pro or 18 Pro Max configuration either"}.` });
+    out.push({ q: `What are ${c.place}'s hours?`, a: `${c.hours ?? "Hours are listed on this page"}${c.todayText ? `; today ${c.todayText}` : ""}; ${fullAddress(s)}${s.phone ? `, ${s.phone}` : ""}.` });
     out.push({ q: `How often does ${c.place} restock the iPhone?`, a: restockA });
     out.push({ q: `How long does stock last at ${c.place}?`, a: lastsA });
-    if (c.nearest?.length) out.push({ q: `What is the nearest other Apple Store to ${c.place}?`, a: `${listWords(c.nearest.slice(0, 3).map((x) => `Apple ${x.name} in ${x.city}, ${stateCodeOf(x)} (${Math.round(x.distance)} mi)`))}. Each has its own page with live stock, and a Pro plan can watch several stores at once.` });
-    out.push({ q: `How do I get an alert for ${c.place}?`, a: alertA });
+    if (c.nearest?.length) out.push({ q: `What is the nearest other Apple Store to ${c.place}?`, a: nearestA(c.nearest) });
     return out;
   }
-  const label = c.kind === "state" ? c.place : c.place;
+  const label = c.place;
   const duoNow = c.duoStores ?? [];
-  out.push({ q: `Which Apple Stores in ${label} have the ${duo.name} in stock right now?`, a: duoNow.length === 0 ? `None at the last check: no Apple Store in ${label} currently lists the ${duo.name} for in-store pickup. Every store is re-checked every 20 seconds and this page updates the moment one does.` : `As of the last check, ${plural(duoNow.length, "store")} in ${label} ${duoNow.length === 1 ? "lists" : "list"} the ${duo.name} for pickup: ${listWords(duoNow.map((x) => `Apple ${x.name}`))}.` });
-  out.push({ q: `How many Apple Stores are there in ${label}?`, a: `${plural(c.stores.length, "Apple Store")}: ${listWords(c.stores.map((x) => `Apple ${x.name}${c.kind === "state" ? ` in ${x.city}` : ""}`), 8)}. All of them offer in-store pickup for the iPhone and all are tracked here.` });
+  out.push({ q: `Which Apple Stores in ${label} have the ${duo.name} in stock right now?`, a: duoNow.length === 0 ? `None at the last check; this page updates the moment a store in ${label} lists the ${duo.name} for pickup.` : `${plural(duoNow.length, "store")} at the last check: ${listWords(duoNow.map((x) => `Apple ${x.name}`))}.` });
+  out.push({ q: `How many Apple Stores are there in ${label}?`, a: `${plural(c.stores.length, "Apple Store")}${c.stores.length > 1 ? `, including ${listWords(c.stores.slice(0, 3).map((x) => `Apple ${x.name}${c.kind === "state" ? ` in ${x.city}` : ""}`), 3)}` : `: Apple ${c.stores[0]?.name ?? ""}`}.` });
   out.push({ q: `How often do ${label} Apple Stores restock the iPhone?`, a: restockA });
   out.push({ q: `How long does stock last in ${label}?`, a: lastsA });
-  if (c.nearest?.length) out.push({ q: `What is the closest Apple Store outside ${label}?`, a: `${listWords(c.nearest.slice(0, 3).map((x) => `Apple ${x.name} in ${x.city}, ${stateCodeOf(x)} (${Math.round(x.distance)} mi)`))}. Those stores restock independently, so watching one of them widens your chances.` });
-  out.push({ q: `How do I get notified when a store in ${label} gets the ${duo.name}?`, a: alertA });
+  if (c.nearest?.length) out.push({ q: `What is the closest Apple Store outside ${label}?`, a: nearestA(c.nearest) });
   return out;
 }
 

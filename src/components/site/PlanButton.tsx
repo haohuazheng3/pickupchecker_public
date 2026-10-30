@@ -2,8 +2,9 @@
 /** Pricing-page CTA for a paid plan: starts checkout, or sends a signed-out visitor to sign in first. */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { PaidPlanKey } from "@/lib/plans";
 
-export function PlanButton({ plan, label, primary }: { plan: "plus" | "pro"; label: string; primary?: boolean }) {
+export function PlanButton({ plan, label, primary }: { plan: PaidPlanKey; label: string; primary?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);

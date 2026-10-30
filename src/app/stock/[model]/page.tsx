@@ -3,15 +3,13 @@ import Link from "next/link";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { MODELS, STORES, modelBySlug, storagesFor, colorsFor, catalogFor, partNumbersFor, type ModelKey } from "@/lib/apple/catalog";
-import { alertHref, faq, peakOf, modelTitle, productJsonLd, fmtPrice } from "@/lib/seo/enrich";
+import { alertHref, faq, peakOf, modelTitle, fitTitle, productJsonLd, fmtPrice } from "@/lib/seo/enrich";
 import { stockByStore, restockFeed, restockStats, placeStats } from "@/lib/stock/queries";
 import { ConfigMatrix, ByStateTable, PriceTable, ModelStoreList } from "@/components/seo/ModelMatrix";
 import { BrowseStates, BrowsePopular } from "@/components/seo/Browse";
 import { LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaceStatStrip } from "@/components/seo/StatStrip";
-import { Narrative } from "@/components/seo/Narrative";
-import { Explainer } from "@/components/seo/Explainer";
 import { Faq } from "@/components/seo/Faq";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
@@ -43,7 +41,10 @@ export async function generateMetadata({ params }: PageProps<"/stock/[model]">):
   if (!m) return {};
   const d = await load(m.key);
   const title = modelTitle(m.name, d.storesNow);
-  const description = `${d.storesNow} of ${STORES.length} US Apple Stores list the ${m.name} for in-store pickup right now; ${d.pstats.week} restocks this week. Every store checked every 20 seconds, by storage and colour, with prices, restock times and alerts.`;
+  const description = fitTitle([
+    `${d.storesNow} of ${STORES.length} US Apple Stores list the ${m.name} for pickup right now; ${d.pstats.week} restocks this week. Live stock by storage and color, prices, restock times and alerts.`,
+    `${d.storesNow} of ${STORES.length} US Apple Stores list the ${m.name} for pickup now; ${d.pstats.week} restocks this week. Live stock by storage and color, prices and alerts.`,
+  ], 155);
   return { title, description, alternates: { canonical: `/stock/${m.slug}` }, openGraph: { type: "website", siteName: "PickupChecker", title, description, url: `/stock/${m.slug}` } };
 }
 
@@ -71,7 +72,7 @@ export default async function StockModelPage({ params, searchParams }: PageProps
         ))}
       </nav>
       <h1 className="display text-3xl sm:text-5xl">{m.name} pickup stock, live</h1>
-      <p className="mt-3 max-w-2xl text-ink-2">Every Apple Store in the US, checked every 20 seconds. Green means a store currently lists the {m.short} for in-store pickup on apple.com. From {fmtPrice(Math.min(...prices))}, {storagesFor(key).join(" / ")}, in {colorsFor(key).length} colours.</p>
+      <p className="mt-3 max-w-2xl text-ink-2">Every US Apple Store, checked every 20 seconds; green = listed for in-store pickup on apple.com now. From {fmtPrice(Math.min(...prices))} · {storagesFor(key).join(" / ")} · {colorsFor(key).length} colors.</p>
       <div className="mt-5 flex flex-wrap gap-2 text-sm">
         <Link href={`/stock/${m.slug}`} className="chip" data-on={!storage && !color}>All</Link>
         {storagesFor(key).map((s) => <Link key={s} href={`/stock/${m.slug}?storage=${encodeURIComponent(s)}${color ? `&color=${encodeURIComponent(color)}` : ""}`} className="chip" data-on={storage === s}>{s}</Link>)}
@@ -80,7 +81,6 @@ export default async function StockModelPage({ params, searchParams }: PageProps
       </div>
 
       <div className="mt-6"><PlaceStatStrip stores={STORES.length} stockNow={d.stockNow} stats={d.pstats} model={key} /></div>
-      <Narrative className="mt-4" input={{ kind: "model", place: m.name, stores: STORES.length, stockNow: d.stockNow, stats: d.pstats }} stats={d.pstats} />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
         <section className="pane p-5 sm:p-6">
@@ -89,7 +89,7 @@ export default async function StockModelPage({ params, searchParams }: PageProps
         <aside className="space-y-4">
           <div className="pane p-5">
             <div className="eyebrow">Alerts</div>
-            <p className="mt-2 text-ink-2">Don&apos;t refresh this page. Get a notification the second a {m.short} appears at your store — one alert per store, storage and colour.</p>
+            <p className="mt-2 text-ink-2">A push the second a {m.short} appears at your stores.</p>
             <Link href={alert} className="btn btn-primary mt-4 w-full">Get notified</Link>
           </div>
           <div className="pane p-5">
@@ -105,13 +105,12 @@ export default async function StockModelPage({ params, searchParams }: PageProps
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section>
-          <h2 className="text-xl font-semibold">Stores with stock by storage and colour</h2>
-          <p className="mt-1 text-sm text-ink-3">How many stores list each configuration right now.</p>
+          <h2 className="text-xl font-semibold">Stock by storage and color</h2>
+          <p className="mt-1 text-sm text-ink-3">Stores with each configuration now.</p>
           <div className="mt-3"><ConfigMatrix model={key} rows={d.rows} /></div>
         </section>
         <section>
           <h2 className="text-xl font-semibold">{m.short} stock by state</h2>
-          <p className="mt-1 text-sm text-ink-3">Stores per state and how many have the {m.short} right now.</p>
           <div className="mt-3"><ByStateTable model={key} rows={d.rows} /></div>
         </section>
       </div>
@@ -129,10 +128,9 @@ export default async function StockModelPage({ params, searchParams }: PageProps
           <h2 className="text-xl font-semibold">Restocks by configuration</h2>
           <div className="mt-3"><RestocksByConfig stats={d.pstats} label="across the US" /></div>
         </section>
-        <Explainer kind="model" place={m.name} alertHref={alert} />
       </div>
 
-      <div className="mt-6"><Faq items={questions} title={`Questions about ${m.name} pickup`} /></div>
+      <div className="mt-6"><Faq items={questions} title={`${m.name} pickup FAQ`} /></div>
 
       <RelatedBlock title={`${m.name} by place`}>
         <LinkRow title="This model" links={[{ href: `/restocks?model=${key}`, label: `${m.short} restock log` }, { href: `/map?model=${key}`, label: `${m.short} on the map` }, { href: alert, label: `${m.short} alert` }, ...MODELS.filter((x) => x.key !== key).map((x) => ({ href: `/stock/${x.slug}`, label: `${x.name} stock` }))]} />

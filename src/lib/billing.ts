@@ -97,7 +97,7 @@ async function checkoutSession(userId: string, email: string, plan: PaidPlanKey,
     metadata: meta,
     subscription_data: { metadata: meta },
     custom_text: {
-      submit: { message: `${PLANS[plan].name}: ${PLANS[plan].limit} alert rules. Renews monthly; cancel anytime from your account.` },
+      submit: { message: `${PLANS[plan].name}: ${PLANS[plan].limit} alerts. Monthly, cancel anytime.` },
     },
     // Per-session branding: the Stripe account is shared with sibling products, so the brand is set here.
     branding_settings: { display_name: "PickupChecker", background_color: "#f6f7f5", button_color: "#0a7f49", border_style: "rounded" },

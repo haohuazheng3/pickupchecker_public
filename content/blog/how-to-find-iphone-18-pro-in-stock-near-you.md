@@ -19,4 +19,4 @@ On any iPhone buy page, choose your configuration, then **Pick up** and enter a 
 
 - Decide your acceptable configurations in advance: two colors and two storage sizes multiply your chances.
 - Keep your Apple ID signed in on your phone and a card ready in Apple Pay.
-- Use an alert instead of refreshing. [Set one up](/#notify): one email, seconds after the flip, with the store and a reserve link.
+- Use an alert instead of refreshing. [Set one up](/#notify): one notification, seconds after the flip, with the store and a reserve link.

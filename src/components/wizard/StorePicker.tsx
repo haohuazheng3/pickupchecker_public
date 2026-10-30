@@ -1,37 +1,54 @@
 "use client";
 /**
- * Tick one or more Apple Stores — each one becomes its own alert. On mount we ask for the location
- * straight away (no extra tap) and list the nearest stores; a city or state handed in from an SEO page
- * lists those stores first and skips the location prompt. A search box (store, city, state, ZIP) is
- * always there as the fallback. Ticks survive a new search: they show as chips above the list.
+ * Tick the Apple Stores to watch. Every store in the country is ranked by distance from an anchor — the
+ * device's location (asked on mount), a ZIP / city / state / store typed into the box, the city or state
+ * an SEO page handed in, or a store a page pre-ticked — ten at a time, "Show 10 more" at the end. Rows
+ * carry miles and a driving estimate from the visitor. Nothing above the list changes height while
+ * ticking, so the next row stays where it was.
  */
-import { useEffect, useMemo, useState } from "react";
-import { STORES, STORE_INDEX, stateCodeOf, storesNear, type Store } from "@/lib/apple/catalog";
-import { norm } from "@/lib/search";
-import { SAVE_CAP } from "@/lib/plans";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { STORES, STORE_INDEX, distanceMiles, stateCodeOf } from "@/lib/apple/catalog";
+import { centroid, formatDrive, formatMiles, rankStores, searchAnchor, type Anchor } from "@/lib/geo";
 
-type Located = { lat: number; lng: number };
+const PAGE = 10;
+/** How many of the nearest stores start ticked, and how far away they may be. */
+export const PRETICK = 5;
+const PRETICK_MILES = 75;
+
 type LocState = "idle" | "asking" | "ok" | "denied" | "unavailable";
+/** What the picker remembers while the user steps away (adds a phone) and comes back. */
+export interface PickerMemory { q: string; here: { lat: number; lng: number } | null; loc: LocState; state: string }
+export const freshPickerMemory = (): PickerMemory => ({ q: "", here: null, loc: "idle", state: "" });
 
 export interface StorePickerProps {
   value: string[];
-  /** Tick or untick one store. The owner updates from its latest state, so taps never overwrite each other. */
   onToggle: (storeNumber: string) => void;
-  /** Most stores that can be ticked at once (the per-account save cap). */
-  max?: number;
+  /** Called once with the nearest stores when a ranked list first appears and nothing is ticked. */
+  onPretick?: (storeNumbers: string[]) => void;
+  /** How many more stores may be ticked right now. */
+  room: number;
   /** Full state name and/or city name to list first (from the state and city pages). */
   preferState?: string;
   preferCity?: string;
+  /** Owner-held memory so a remount keeps the location, search text and picked state. */
+  memory?: PickerMemory;
+  onMemory?: (patch: Partial<PickerMemory>) => void;
 }
-
 const GEO_OPTS: PositionOptions = { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 };
 
-export function StorePicker({ value, onToggle, max = 30, preferState, preferCity }: StorePickerProps) {
-  const [loc, setLoc] = useState<LocState>("idle");
-  const [here, setHere] = useState<Located | null>(null);
-  const [q, setQ] = useState("");
-  const [state, setState] = useState<string>(preferState ?? "");
+export function StorePicker({ value, onToggle, onPretick, room, preferState, preferCity, memory, onMemory }: StorePickerProps) {
+  const [mem] = useState(memory); // what the owner remembered from a previous mount
+  const [loc, setLocState] = useState<LocState>(mem?.loc === "asking" ? "idle" : (mem?.loc ?? "idle"));
+  const [here, setHereState] = useState<{ lat: number; lng: number } | null>(mem?.here ?? null);
+  const [q, setQState] = useState(mem?.q ?? "");
+  const [state, setStateState] = useState(mem?.state || (preferState ?? ""));
+  const [more, setMore] = useState<{ key: string; n: number }>({ key: "", n: PAGE });
+  const [seed] = useState(() => (value[0] ? STORE_INDEX.get(value[0]) : undefined)); // a store the page pre-ticked
   const preferred = Boolean(preferCity || preferState);
+  const setLoc = (v: LocState) => { setLocState(v); onMemory?.({ loc: v }); };
+  const setHere = (v: { lat: number; lng: number } | null) => { setHereState(v); onMemory?.({ here: v }); };
+  const setQ = (v: string) => { setQState(v); onMemory?.({ q: v }); };
+  const setState = (v: string) => { setStateState(v); onMemory?.({ state: v }); };
 
   const locate = () => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) { setLoc("unavailable"); return; }
@@ -42,88 +59,99 @@ export function StorePicker({ value, onToggle, max = 30, preferState, preferCity
       GEO_OPTS,
     );
   };
-  // Ask immediately unless an SEO page already told us where the user is looking (or a store is pre-ticked).
+  // Ask right away unless a page already said where to look, or we asked before (remount).
   useEffect(() => {
-    if (preferred || value.length) return;
+    if (preferred || seed || here || (mem && mem.loc !== "idle")) return;
     const t = window.setTimeout(locate, 0);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const states = useMemo(() => [...new Set(STORES.map((s) => s.state))].sort(), []);
-  const list = useMemo<(Store & { distance?: number })[]>(() => {
-    const needle = norm(q);
-    if (needle) {
-      const zip = /^\d{3,5}$/.test(needle);
-      return STORES.filter((s) => (zip ? (s.postalCode ?? "").startsWith(needle) : `${norm(s.name)} ${norm(s.city)} ${norm(s.state)} ${stateCodeOf(s).toLowerCase()}`.includes(needle))).slice(0, 12);
-    }
-    if (here) return storesNear(here.lat, here.lng, 400).slice(0, 8);
+  // A typed place beats everything; then the device; then what the page handed in; then a picked state.
+  const anchor = useMemo<Anchor | null>(() => {
+    if (q.trim()) return searchAnchor(q);
+    if (here) return { ...here, label: "you", kind: "here" };
     if (preferCity && preferState) {
-      // The city's own stores come first (nearest to each other), then neighbours by distance with miles shown.
       const inCity = STORES.filter((s) => s.state === preferState && s.city === preferCity);
-      if (inCity.length) return storesNear(inCity[0].lat, inCity[0].lng, 400).slice(0, 12);
+      const c = centroid(inCity);
+      if (c) return { ...c, label: preferCity, kind: "place", first: new Set(inCity.map((s) => s.storeNumber)) };
     }
-    if (state) return STORES.filter((s) => s.state === state).sort((a, b) => a.city.localeCompare(b.city) || a.name.localeCompare(b.name));
-    // A store handed in by a page (store page, map, "Set it up again"): offer its neighbours, so adding a second
-    // store is one tap. Anchored on the FIRST tick so the list holds still while more are ticked.
-    const anchor = value.length ? STORE_INDEX.get(value[0]) : undefined;
-    if (anchor) return storesNear(anchor.lat, anchor.lng, 400).slice(0, 8);
-    return [];
-  }, [q, here, state, preferCity, preferState, value]);
+    if (seed) return { lat: seed.lat, lng: seed.lng, label: `Apple ${seed.name}`, kind: "store" };
+    if (state) {
+      const inState = STORES.filter((s) => s.state === state);
+      const c = centroid(inState);
+      if (c) return { ...c, label: state, kind: "state", first: new Set(inState.map((s) => s.storeNumber)) };
+    }
+    return null;
+  }, [q, here, preferCity, preferState, state, seed]);
+  const ranked = useMemo(() => (anchor ? rankStores(anchor) : []), [anchor]);
+  const key = anchor ? `${anchor.kind}:${anchor.label}` : "";
+  const shown = more.key === key ? more.n : PAGE;
+  const visible = ranked.slice(0, shown);
+  // Distances are from the visitor when known, else from the anchor (none for a whole state).
+  const origin = here ?? (anchor && anchor.kind !== "state" ? anchor : null);
 
-  const full = value.length >= max;
-  const toggle = (n: string) => { if (value.includes(n) || !full) onToggle(n); };
-  const chosen = value.map((n) => STORE_INDEX.get(n)).filter((s): s is Store => Boolean(s));
-  // A whole state can be 50+ rows: fold past 12 until asked.
-  const [showAll, setShowAll] = useState(false);
-  const FOLD = 12;
-  const folded = !showAll && !q && list.length > FOLD;
-  const visible = folded ? list.slice(0, FOLD) : list;
+  // The nearest few start ticked — once, the first time a ranked list appears with nothing ticked.
+  // Never from a whole state or a guessed ZIP area (that would save rules for the wrong town).
+  const preticked = useRef(value.length > 0);
+  const [pretickNote, setPretickNote] = useState(false);
+  useEffect(() => {
+    if (preticked.current || !onPretick || value.length > 0 || ranked.length === 0 || !anchor || anchor.kind === "state" || anchor.approx) return;
+    // Only stores within a sensible drive start ticked; in a sparse area that may be just the nearest one.
+    const near = ranked.filter((s) => s.distance <= PRETICK_MILES);
+    const pick = (near.length ? near : ranked.slice(0, 1)).slice(0, PRETICK).map((s) => s.storeNumber);
+    const t = window.setTimeout(() => { preticked.current = true; setPretickNote(pick.length > 0); onPretick(pick); }, 0);
+    return () => window.clearTimeout(t);
+  }, [ranked, anchor, value.length, onPretick]);
+
+  const states = useMemo(() => [...new Set(STORES.map((s) => s.state))].sort(), []);
+  const full = room <= 0;
+  const status = (anchor
+    ? anchor.kind === "here" ? "Nearest to you"
+      : anchor.approx ? `No store in that ZIP area — nearest we know of`
+      : anchor.kind === "zip" || anchor.kind === "store" ? `Nearest to ${anchor.label}`
+      : anchor.kind === "state" ? `${anchor.label} A–Z, then the nearest beyond`
+      : `${anchor.label} first, then the nearest beyond`
+    : loc === "asking" ? "Finding stores near you…"
+      : loc === "denied" || loc === "unavailable" ? "No location — type a ZIP or city, or pick a state"
+      : "Type a ZIP or city, or tap Near me") + (pretickNote && value.length > 0 ? ` · nearest ${Math.min(PRETICK, value.length)} ticked` : "");
 
   return (
     <div>
-      {chosen.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Stores you ticked">
-          {chosen.map((s) => (
-            <button key={s.storeNumber} type="button" className="chip" data-on="true" onClick={() => toggle(s.storeNumber)} title="Remove" aria-label={`Remove Apple ${s.name}`}>
-              {s.name} <span className="opacity-70">· {stateCodeOf(s)}</span> <span aria-hidden>×</span>
-            </button>
-          ))}
-        </div>
-      )}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
-        <input className="input" placeholder="Search store, city, state or ZIP" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search stores" autoComplete="off" />
+      <div className="grid grid-cols-[1fr_auto] gap-2">
+        <input className="input" inputMode="search" placeholder="ZIP, city, state or store" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Find stores" autoComplete="off" />
         <button type="button" className="btn btn-ghost" onClick={locate} disabled={loc === "asking"} aria-busy={loc === "asking"}>
-          {loc === "asking" ? <><span className="spinner" /> Locating…</> : "📍 Near me"}
+          {loc === "asking" ? <><span className="spinner" /> Locating</> : <><span aria-hidden>📍</span> Near me</>}
         </button>
       </div>
-      {loc === "denied" && !q && <p className="mt-2 text-sm text-warn">Location is off for this site — search above or pick a state.</p>}
-      {loc === "unavailable" && !q && <p className="mt-2 text-sm text-warn">Could not get your location — search above or pick a state.</p>}
-      {!q && !here && !preferred && (
+      <p className="mt-2 h-5 truncate text-xs text-ink-3" aria-live="polite">{status}</p>
+      {(!anchor || anchor.kind === "state") && !q.trim() && loc !== "asking" && (
         <select className="input mt-2" value={state} onChange={(e) => setState(e.target.value)} aria-label="State">
-          <option value="">{loc === "asking" ? "Finding stores near you…" : "Pick a state"}</option>
+          <option value="">Pick a state</option>
           {states.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
       )}
       <div className="mt-3 overflow-hidden rounded-2xl border border-line" role="group" aria-label="Stores">
-        {loc === "asking" && !q && list.length === 0 && Array.from({ length: 5 }, (_, i) => <div key={i} className="flex items-center gap-3 px-4 py-3"><div className="skeleton h-5 w-5 rounded-md" /><div className="skeleton h-4 w-2/3" /><div className="skeleton ml-auto h-3 w-10" /></div>)}
+        {loc === "asking" && ranked.length === 0 && Array.from({ length: 6 }, (_, i) => (
+          <div key={i} className="flex items-center gap-3 px-4 py-3"><div className="skeleton h-5 w-5 rounded-md" /><div className="skeleton h-4 w-1/2" /><div className="skeleton ml-auto h-3 w-16" /></div>
+        ))}
         {visible.map((s) => {
           const on = value.includes(s.storeNumber);
+          const d = origin ? (origin === anchor ? s.distance : distanceMiles(origin.lat, origin.lng, s.lat, s.lng)) : null;
           return (
-            <button key={s.storeNumber} type="button" role="checkbox" aria-checked={on} onClick={() => toggle(s.storeNumber)} disabled={!on && full}
-              className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-ink/5 disabled:opacity-50 ${on ? "bg-accent/8" : ""}`}>
+            <button key={s.storeNumber} type="button" role="checkbox" aria-checked={on} onClick={() => onToggle(s.storeNumber)} aria-disabled={!on && full}
+              className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-ink/5 ${on ? "bg-accent/8" : full ? "opacity-50" : ""}`}>
               <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs font-bold ${on ? "border-accent bg-accent" : "border-ink/25 bg-pane"}`} style={on ? { color: "var(--accent-ink)" } : undefined} aria-hidden>{on ? "✓" : ""}</span>
-              <span className="min-w-0 flex-1"><span className="font-medium">{s.name}</span> <span className="text-ink-3">· {s.city}, {stateCodeOf(s)}</span></span>
-              <span className="shrink-0 text-xs text-ink-3">{s.distance != null ? `${s.distance < 10 ? s.distance.toFixed(1) : Math.round(s.distance)} mi` : ""}</span>
+              <span className="min-w-0 flex-1"><span className="block truncate font-medium">{s.name}</span><span className="block truncate text-xs text-ink-3">{s.city}, {stateCodeOf(s)}</span></span>
+              {d != null && <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-ink-3">{formatMiles(d)} · {formatDrive(d)}</span>}
             </button>
           );
         })}
-        {folded && <button type="button" className="w-full px-4 py-3 text-center text-sm font-medium text-ink-2 hover:bg-ink/5" onClick={() => setShowAll(true)}>Show all {list.length} stores</button>}
-        {loc !== "asking" && list.length === 0 && <div className="px-4 py-6 text-center text-sm text-ink-3">{q ? "No store matches — try the city or ZIP." : "Search for your store, tap Near me, or pick a state."}</div>}
+        {ranked.length > shown && (
+          <button type="button" className="w-full px-4 py-3 text-center text-sm font-medium text-ink-2 hover:bg-ink/5" onClick={() => setMore({ key, n: shown + PAGE })}>Show {Math.min(PAGE, ranked.length - shown)} more</button>
+        )}
+        {!anchor && q.trim() !== "" && <div className="px-4 py-6 text-center text-sm text-ink-3">No match — try a ZIP, city or state.</div>}
       </div>
-      {full && (value.length === 0
-        ? <p className="mt-2 text-sm text-warn">Your account already holds the most alert rules it can ({SAVE_CAP}). <a className="underline" href="/account">Delete some</a> to add more.</p>
-        : <p className="mt-2 text-sm text-ink-3">That is as many stores as your account has room for ({max}). Untick one to pick another.</p>)}
     </div>
   );
 }

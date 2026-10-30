@@ -4,13 +4,11 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import { STORES, MODELS, DEFAULT_MODEL, statesWithStores, citiesWithStores, storePath, cityPath, storeTimeZone, type ModelKey } from "@/lib/apple/catalog";
 import { neighborStates } from "@/lib/seo/links";
-import { nearestOutsideState, centroid, alertHref, faq, peakOf, stateTitle, itemListJsonLd } from "@/lib/seo/enrich";
+import { nearestOutsideState, centroid, alertHref, faq, peakOf, stateTitle, fitTitle, itemListJsonLd } from "@/lib/seo/enrich";
 import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { BrowseModels, BrowseStates } from "@/components/seo/Browse";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaceStatStrip } from "@/components/seo/StatStrip";
-import { Narrative } from "@/components/seo/Narrative";
-import { Explainer } from "@/components/seo/Explainer";
 import { Faq } from "@/components/seo/Faq";
 import { storesStock, storesStatusFull, restockFeed, restockStats, placeStats } from "@/lib/stock/queries";
 import { ModelStoreMatrix } from "@/components/stores/ModelStoreMatrix";
@@ -59,7 +57,10 @@ export async function generateMetadata({ params }: PageProps<"/stores/[state]">)
   if (!d) return {};
   const { s } = d;
   const title = stateTitle(s.name, d.stockNow.duo, s.count);
-  const description = `${s.count} Apple Store${s.count > 1 ? "s" : ""} in ${s.name} with live iPhone Duo, 18 Pro and 18 Pro Max in-store pickup stock: ${d.stockNow.duo} with the Duo now, ${d.pstats.week} restocks this week, hours, addresses, restock times and history by city.`;
+  const description = fitTitle([
+    `Live iPhone pickup stock at ${s.count} Apple Store${s.count > 1 ? "s" : ""} in ${s.name}: ${d.stockNow.duo} with the Duo now, ${d.pstats.week} restocks this week, plus hours, addresses and history.`,
+    `${s.count} Apple Store${s.count > 1 ? "s" : ""} in ${s.name}: ${d.stockNow.duo} with iPhone Duo pickup stock now, ${d.pstats.week} restocks this week, hours and history.`,
+  ], 155);
   return { title, description, alternates: { canonical: `/stores/${s.slug}` }, openGraph: { type: "website", siteName: "PickupChecker", title, description, url: `/stores/${s.slug}` } };
 }
 
@@ -78,7 +79,7 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="display text-3xl sm:text-5xl">Apple Stores in {s.name}</h1>
-          <p className="mt-2 text-ink-2">{stores.length} store{stores.length > 1 ? "s" : ""} in {cities.length} cit{cities.length > 1 ? "ies" : "y"} · <b className="text-ink">{d.stockNow.duo}</b> with an iPhone Duo for pickup right now · {d.pstats.day} restock{d.pstats.day === 1 ? "" : "s"} in 24 h · every store re-checked every 20 s.</p>
+          <p className="mt-2 text-ink-2">{stores.length} store{stores.length > 1 ? "s" : ""} · {cities.length} cit{cities.length > 1 ? "ies" : "y"} · <b className="text-ink">{d.stockNow.duo}</b> with iPhone Duo pickup stock now · checked every 20 s</p>
           <div className="mt-3 flex flex-wrap gap-1.5">{cities.map((c) => <Link key={c.slug} href={cityPath(c.state, c.name)} className="chip px-3 py-1.5 text-xs">{c.name}<span className="text-ink-3"> · {c.stores.length}</span></Link>)}</div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -88,7 +89,6 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
       </div>
 
       <div className="mt-6"><PlaceStatStrip stores={stores.length} cities={cities.length} stockNow={d.stockNow} stats={d.pstats} /></div>
-      <Narrative className="mt-4" input={{ kind: "state", place: s.name, stores: stores.length, cities: cities.map((c) => c.name), stockNow: d.stockNow, stats: d.pstats }} stats={d.pstats} />
 
       {d.thin ? (
         <div className="mt-8 space-y-10">
@@ -97,7 +97,7 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
       ) : (
         <section className="mt-8" aria-label="Stock by store">
           <h2 className="text-xl font-semibold">Stock by store and model</h2>
-          <p className="mt-1 text-sm text-ink-3">Configurations available now / tracked, per model. Tap a store for every configuration, hours and history.</p>
+          <p className="mt-1 text-sm text-ink-3">In stock now / tracked, per model.</p>
           {cities.map((c) => (
             <div key={c.slug} className="mt-5">
               <div className="flex items-baseline justify-between gap-3"><h3 className="text-lg font-semibold"><Link href={cityPath(c.state, c.name)} className="hover:underline">{c.name}</Link> <span className="text-sm font-normal text-ink-3">· {c.stores.length}</span></h3><Link href={cityPath(c.state, c.name)} className="text-xs text-ink-3 hover:text-ink">City page →</Link></div>
@@ -122,15 +122,14 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
         </section>
         <section className="pane p-5">
           <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-semibold">Latest restocks in {s.name}</h2><Link href={`/restocks?model=all&state=${s.slug}`} className="text-sm text-ink-3 hover:text-ink">Full log →</Link></div>
-          <RestockFeed rows={d.feed} showModel emptyText={`No restock recorded in ${s.name} yet — the first one shows here within seconds of being confirmed.`} />
+          <RestockFeed rows={d.feed} showModel emptyText={`No restock recorded in ${s.name} yet.`} />
         </section>
       </div>
 
-      {!d.thin && <div className="mt-6"><NearbyStores title={`Closest Apple Stores outside ${s.name}`} stores={d.outside} stock={d.stock} hint="Measured from the middle of the state's stores; each restocks on its own." /></div>}
+      {!d.thin && <div className="mt-6"><NearbyStores title={`Closest Apple Stores outside ${s.name}`} stores={d.outside} stock={d.stock} hint={`Distance from the center of ${s.name}'s stores.`} /></div>}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Explainer kind="state" place={s.name} alertHref={alert} />
-        <Faq items={questions} title={`Questions about Apple Stores in ${s.name}`} />
+        <Faq items={questions} title={`Apple Stores in ${s.name}: FAQ`} />
       </div>
 
       <RelatedBlock title={`Beyond ${s.name}`}>

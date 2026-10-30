@@ -44,7 +44,7 @@ export function ConfigTable({ store, rows, title = "Every configuration at this 
   return (
     <section className="pane p-5 sm:p-6" aria-label={title}>
       <h2 className="text-xl font-semibold">{title}</h2>
-      <p className="mt-1 text-sm text-ink-3">{rows.length ? `${rows.length} configurations tracked` : "First sweep in progress — statuses appear within a minute"} · one alert covers one configuration at this store.</p>
+      <p className="mt-1 text-sm text-ink-3">{rows.length ? `${rows.length} configurations tracked` : "First sweep in progress — statuses appear within a minute"}</p>
       <div className="mt-3 grid gap-5 lg:grid-cols-3">
         {MODELS.map((m) => {
           const items = sortConfigs(catalogFor(m.key)).map((item) => ({ item, status: byPart.get(item.partNumber) }));

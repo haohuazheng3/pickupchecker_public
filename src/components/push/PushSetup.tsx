@@ -54,14 +54,14 @@ function StatusPill({ status }: { status: PushState["status"] }) {
 
 function Explain({ p }: { p: PushState }) {
   switch (p.status) {
-    case "checking": return <>Looking at this device…</>;
-    case "in-app-browser": return <>This page is open inside another app. Tap the ··· menu and choose <b>Open in Safari</b> (or Chrome), then come back here.</>;
-    case "needs-install": return <>On iPhone and iPad, notifications only work from the Home Screen app. Add PickupChecker to your Home Screen, open it from there and tap <b>Turn on notifications</b>. Takes 20 seconds.</>;
-    case "unsupported": return <>This browser can&apos;t receive push notifications. Use Safari on iPhone (as a Home Screen app), Chrome on Android, or Chrome, Edge or Safari on a computer. Until then you&apos;ll get alerts by email.</>;
-    case "needs-signin": return <>Sign in on this device to link its notifications to your alerts.</>;
-    case "denied": return <>Notifications are blocked for PickupChecker. {p.platform === "ios" ? <>Open <b>Settings → Notifications → PickupChecker</b> and allow them,</> : <>Allow them in your browser&apos;s site settings for pickupchecker.com,</>} then reload this page.</>;
-    case "ready": return <>{p.standalone ? "You're in the app. " : ""}One tap and every restock that matches your alerts lands on this device within seconds. No email to open.</>;
-    case "on": return <>Restocks that match your alerts arrive here within seconds, even with the app closed or the phone locked. <b>Send a test notification</b> goes through our servers and Apple/Google exactly like a real alert; the banner names the device and the time it was sent, so you can check it from another device too.</>;
+    case "checking": return <>Checking this device…</>;
+    case "in-app-browser": return <>Tap ··· and choose <b>Open in Safari</b> (or Chrome).</>;
+    case "needs-install": return <>On iPhone and iPad, notifications only work from the Home Screen app.</>;
+    case "unsupported": return <>This browser can&apos;t receive notifications, so alerts go to your email.</>;
+    case "needs-signin": return <>Sign in on this device to turn on notifications.</>;
+    case "denied": return <>{p.platform === "ios" ? <>Allow in <b>Settings → Notifications → PickupChecker</b>,</> : <>Allow in your browser&apos;s site settings,</>} then reload.</>;
+    case "ready": return <>{p.standalone ? "You're in the app. " : ""}Matching restocks land on this device in seconds.</>;
+    case "on": return <>Restocks arrive here in seconds, even with the app closed.</>;
   }
 }
 
@@ -82,8 +82,8 @@ function Actions({ p }: { p: PushState }) {
     case "on":
       return (
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="btn btn-primary btn-sm" disabled={p.busy} onClick={() => void p.sendTest()}>{spin}Send a test notification</button>
-          <button type="button" className="btn btn-ghost btn-sm" disabled={p.busy} onClick={() => void previewLocally()}>Preview on this device</button>
+          <button type="button" className="btn btn-primary btn-sm" disabled={p.busy} onClick={() => void p.sendTest()}>{spin}Send a test</button>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={p.busy} onClick={() => void previewLocally()}>Preview here</button>
           <button type="button" className="btn btn-ghost btn-sm" disabled={p.busy} onClick={() => void p.turnOff()}>Turn off</button>
         </div>
       );

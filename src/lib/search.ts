@@ -4,25 +4,26 @@
  */
 import { MODELS, STORES, statePath, cityPath, storePath, stateCodeOf, type ModelKey } from "./apple/catalog";
 import { stateRefs, cityRefs } from "./seo/links";
+import { rankStores, zipAnchor } from "./geo";
+import { norm } from "./text";
+
+export { norm };
 
 export type SearchKind = "store" | "city" | "state" | "model" | "page";
 /** k = kind, l = label, s = sub-label, h = href, q = normalised searchable words. */
 export interface SearchEntry { k: SearchKind; l: string; s: string; h: string; q: string }
 
-export function norm(s: string): string {
-  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
-}
 
 const PAGES: [string, string, string, string][] = [
-  ["Live stock map", "Every US Apple Store, live", "/map", "map live stock stores near me"],
-  ["Restock log", "Every restock and sell-out, newest first", "/restocks", "restocks restock log history sold out feed"],
-  ["Get the app", "Phone notifications from your Home Screen", "/install", "install app home screen notifications push alerts iphone android get the app"],
-  ["Set up an alert", "Tick your stores — one alert each, one exact configuration", "/#notify", "alert alerts notify get notified new watch"],
-  ["My alerts", "Your rules, devices and plan", "/account", "account my alerts rules devices plan billing sign in"],
-  ["Pricing", "Plus $5 · Pro $10, monthly", "/pricing", "pricing plans plus pro price cost subscription upgrade"],
+  ["Live stock map", "All 269 stores, live", "/map", "map live stock stores near me"],
+  ["Restock log", "Restocks and sell-outs, newest first", "/restocks", "restocks restock log history sold out feed"],
+  ["Get the app", "Home Screen app for phone notifications", "/install", "install app home screen notifications push alerts iphone android get the app"],
+  ["Set up an alert", "One store × one exact phone per alert", "/#notify", "alert alerts notify get notified new watch"],
+  ["My alerts", "Alerts, devices, plan", "/account", "account my alerts rules devices plan billing sign in"],
+  ["Pricing", "$5 · $10 · $20 a month", "/pricing", "pricing plans plus pro max price cost subscription upgrade"],
   ["How it works", "What we check and how fast", "/how-it-works", "how it works faq about speed"],
   ["Stores by state", "All 269 US Apple Stores", "/stores", "stores states cities all list directory"],
-  ["Contact", "Write to us", "/contact", "contact support help email"],
+  ["Contact", "hello@pickupchecker.com", "/contact", "contact support help email"],
 ];
 
 export function buildSearchIndex(): SearchEntry[] {
@@ -47,20 +48,17 @@ const KIND_WEIGHT: Record<SearchKind, number> = { page: 5, model: 4, state: 3, c
 
 /**
  * Every token must match; label matches outrank word matches, which outrank substrings; ties go to
- * broader pages, then to index order. A bare ZIP code lists the stores in that ZIP, then the rest of
- * its sectional area (same first three digits), nearest ZIP first.
+ * broader pages, then to index order. A bare ZIP code lists the nearest stores by distance.
  */
 export function searchIndex(entries: SearchEntry[], query: string, limit = 9): SearchEntry[] {
   const raw = query.trim();
   if (/^\d{5}$/.test(raw)) {
-    const zip = Number(raw);
-    return entries
-      .filter((e) => e.k === "store" && e.q.includes(raw.slice(0, 3)))
-      .map((e) => ({ e, d: Math.min(...e.q.split(" ").filter((w) => /^\d{5}$/.test(w) && w.startsWith(raw.slice(0, 3))).map((w) => Math.abs(Number(w) - zip)), Infinity) }))
-      .filter((x) => x.d !== Infinity)
-      .sort((a, b) => a.d - b.d || a.e.l.localeCompare(b.e.l))
-      .slice(0, limit)
-      .map((x) => x.e);
+    // A ZIP lists the nearest stores by distance (the same ranking as the wizard), even when no store
+    // shares its sectional area.
+    const a = zipAnchor(raw);
+    if (!a) return [];
+    const byHref = new Map(entries.filter((e) => e.k === "store").map((e) => [e.h, e]));
+    return rankStores(a).map((st) => byHref.get(storePath(st))).filter((e): e is SearchEntry => Boolean(e)).slice(0, limit);
   }
   const tokens = norm(query).split(" ").filter(Boolean);
   if (tokens.length === 0) return [];

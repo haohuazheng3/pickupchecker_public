@@ -159,7 +159,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
           const f = e.features?.[0];
           if (!f || f.geometry.type !== "Point") return;
           const p = f.properties as { name: string; city: string; code: string; count: number };
-          popup.setLngLat(f.geometry.coordinates as [number, number]).setHTML(`<b>Apple ${esc(p.name)}</b><span>${esc(p.city)}, ${esc(p.code)} · ${p.count ? `${p.count} in stock` : "none"} · click for details</span>`).addTo(map);
+          popup.setLngLat(f.geometry.coordinates as [number, number]).setHTML(`<b>Apple ${esc(p.name)}</b><span>${esc(p.city)}, ${esc(p.code)} · ${p.count ? `${p.count} in stock` : "none"}</span>`).addTo(map);
         });
         map.on("mouseleave", "dots", () => { map.getCanvas().style.cursor = ""; popup.remove(); });
         map.on("click", "dots", (e: maplibregl.MapLayerMouseEvent) => { const f = e.features?.[0]; if (f) setSelected(String((f.properties as { n: string }).n)); });
@@ -223,7 +223,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="display text-3xl sm:text-5xl">Pickup stock map</h1>
-          <p className="mt-2 max-w-2xl text-ink-2">Every US Apple Store, live. Green dots list the {modelMeta ? modelMeta.short : "iPhone Duo, 18 Pro or Pro Max"} for in-store pickup right now; bigger means more configurations. Click any dot for the store&apos;s page.</p>
+          <p className="mt-2 max-w-2xl text-ink-2">All {stores.length} US Apple Stores, live. Bigger dot = more {modelMeta ? modelMeta.short : "iPhone"} configurations in stock.</p>
         </div>
         <div className="inline-flex items-center gap-2 text-sm text-ink-3"><span className={`dot ${stats.newest ? "dot-ok dot-live" : "dot-warn"}`} /> {stats.newest ? <>Updated <LiveAgo iso={stats.newest} /></> : "Waiting for the first sweep"}</div>
       </div>
@@ -251,7 +251,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
           {/* explicit size, not inset-0: maplibre's own CSS sets position: relative on the container */}
           <div ref={mapEl} className="h-full w-full" aria-label="Map of US Apple Stores" role="application" />
           {!ready && !mapError && <div className="absolute inset-0 flex items-center justify-center bg-bg-2 text-sm text-ink-3"><span className="spinner mr-2" /> Loading map…</div>}
-          {mapError && <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-ink-2">{mapError}. The list on the right still works.</div>}
+          {mapError && <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-ink-2">{mapError}. The store list still works.</div>}
           <div className="absolute right-3 top-3 flex flex-wrap justify-end gap-1.5">
             <button type="button" className="rounded-full border border-accent/50 bg-pane px-2.5 py-1 text-[11px] font-medium text-accent backdrop-blur hover:bg-ink/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={nearMe} disabled={locating}>{locating ? "Locating…" : "📍 Near me"}</button>
             {Object.entries(REGIONS).map(([name, b]) => <button key={name} type="button" className="rounded-full border border-line-2 bg-pane px-2.5 py-1 text-[11px] font-medium backdrop-blur hover:bg-ink/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={() => flyTo(b)}>{name}</button>)}
@@ -267,7 +267,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
           <div className="pane p-5">
             <div className="eyebrow">Right now</div>
             <div className="mt-2 flex items-baseline gap-2"><span className="display text-5xl">{stats.withStock}</span><span className="text-ink-3">of {stores.length} stores</span></div>
-            <p className="mt-1 text-sm text-ink-2">{stats.configs} {modelMeta ? modelMeta.short : "iPhone"} configuration{stats.configs === 1 ? "" : "s"} available for pickup{filter.storage ? ` · ${filter.storage}` : ""}{filter.color ? ` · ${filter.color}` : ""}.</p>
+            <p className="mt-1 text-sm text-ink-2">{stats.configs} {modelMeta ? modelMeta.short : "iPhone"} configuration{stats.configs === 1 ? "" : "s"} in stock{filter.storage ? ` · ${filter.storage}` : ""}{filter.color ? ` · ${filter.color}` : ""}.</p>
             {stats.states.length > 0 && stats.withStock > 0 && (
               <ol className="mt-4 space-y-1.5">
                 {stats.states.filter((s) => s.withStock > 0).slice(0, 8).map((s) => (
@@ -281,7 +281,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
                 ))}
               </ol>
             )}
-            {stats.withStock === 0 && <p className="mt-3 text-sm text-ink-3">{stats.checked ? "No store lists this configuration right now. Set an alert and we'll notify you the second one does." : "First sweep in progress."}</p>}
+            {stats.withStock === 0 && <p className="mt-3 text-sm text-ink-3">{stats.checked ? "No store lists this configuration right now." : "First sweep in progress."}</p>}
           </div>
 
           <div className="pane p-5">
@@ -300,12 +300,12 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
                   <Link href={sel.path} className="btn btn-primary btn-sm">Open store page →</Link>
                   <Link href={`/?model=${modelMeta?.key ?? "duo"}&store=${sel.n}#notify`} className="btn btn-ghost btn-sm">Alert me here</Link>
                 </div>
-                <p className="mt-2 text-xs text-ink-3">The store page has restock times, history, hours and nearby stores. Also: <Link href={sel.cityHref} className="underline hover:text-ink">{sel.city}</Link> · <Link href={sel.stateHref} className="underline hover:text-ink">{sel.state}</Link>.</p>
+                <p className="mt-2 text-xs text-ink-3"><Link href={sel.cityHref} className="underline hover:text-ink">{sel.city}</Link> · <Link href={sel.stateHref} className="underline hover:text-ink">{sel.state}</Link></p>
               </>
             ) : (
               <>
                 <div className="eyebrow">Stores with stock</div>
-                {stats.withStock === 0 ? <p className="mt-2 text-sm text-ink-3">Tap any dot to see what a store lists.</p> : (
+                {stats.withStock === 0 ? <p className="mt-2 text-sm text-ink-3">Tap a dot for details.</p> : (
                   <ul className="mt-2 max-h-72 divide-y divide-line overflow-auto text-sm">
                     {views.filter((v) => v.parts.length).sort((a, b) => b.parts.length - a.parts.length || a.state.localeCompare(b.state)).slice(0, 60).map((v) => (
                       <li key={v.n}><button type="button" className="flex w-full items-center justify-between gap-2 py-2 text-left hover:text-accent" onClick={() => focusStore(v.n)}><span><span className="font-medium">{v.name}</span> <span className="text-ink-3">· {v.city}, {v.code}</span></span><span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs text-accent">{v.parts.length}</span></button></li>
@@ -321,7 +321,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
       <section className="pane mt-8 p-5 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <h2 className="text-xl font-semibold">By state</h2>
-          <p className="text-sm text-ink-3">{stats.states.filter((s) => s.withStock).length} of {stats.states.length} states and territories have {modelMeta ? `the ${modelMeta.short}` : "an iPhone"} in stock somewhere.</p>
+          <p className="text-sm text-ink-3">{stats.states.filter((s) => s.withStock).length} of {stats.states.length} states and territories have {modelMeta ? modelMeta.short : "iPhone"} stock.</p>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
@@ -346,7 +346,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
 
 function SelectedParts({ parts }: { parts: string[] }) {
   const items = parts.map((p) => PART_INDEX.get(p)!).filter(Boolean);
-  if (items.length === 0) return <p className="mt-3 text-sm text-ink-3">Nothing matching your filter is listed here right now — the store page shows when it usually restocks.</p>;
+  if (items.length === 0) return <p className="mt-3 text-sm text-ink-3">Nothing matching your filter right now.</p>;
   const groups = MODELS.map((m) => ({ m, items: items.filter((i) => modelKeyFor(i.model) === m.key).sort((a, b) => STORAGE_ORDER.indexOf(a.storage) - STORAGE_ORDER.indexOf(b.storage) || a.color.localeCompare(b.color)) })).filter((g) => g.items.length);
   return (
     <div className="mt-3 space-y-3">

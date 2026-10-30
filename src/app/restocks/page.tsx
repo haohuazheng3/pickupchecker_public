@@ -9,7 +9,7 @@ import { RelatedBlock } from "@/components/seo/Related";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "iPhone restock log — every US Apple Store, live",
-  description: "Every time an Apple Store in the US gets the iPhone Duo, 18 Pro or 18 Pro Max back in stock for in-store pickup, with the exact date and time, the configuration and a map.",
+  description: "Every iPhone Duo, 18 Pro and Pro Max restock at US Apple Stores for in-store pickup, with exact time, configuration and map.",
   alternates: { canonical: "/restocks" },
 };
 
@@ -34,7 +34,7 @@ export default async function Restocks({ searchParams }: PageProps<"/restocks">)
   return (
     <div className="mx-auto max-w-4xl px-4 pt-8">
       <h1 className="display text-3xl sm:text-5xl">Restock log</h1>
-      <p className="mt-2 text-ink-2">{counts.day} restock{counts.day === 1 ? "" : "s"} in the last 24 hours, {counts.week} this week{model ? ` for the ${modelByKey(model)!.name}` : ""}{state ? ` in ${state}` : ""}. Times are shown in your time zone.</p>
+      <p className="mt-2 text-ink-2">{counts.day} restock{counts.day === 1 ? "" : "s"} in 24 hours · {counts.week} this week{model ? ` · ${modelByKey(model)!.name}` : ""}{state ? ` · ${state}` : ""}. Times in your time zone.</p>
       <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
         <Link href={base({ model: "all", page: undefined })} className="chip px-3 py-1.5 text-xs" data-on={!model}>All models</Link>
         {MODELS.map((m) => <Link key={m.key} href={base({ model: m.key, page: undefined })} className="chip px-3 py-1.5 text-xs" data-on={model === m.key}>{m.name}</Link>)}
@@ -61,8 +61,8 @@ export default async function Restocks({ searchParams }: PageProps<"/restocks">)
         <Link href={`/map${model ? `?model=${model}` : ""}`} className="btn btn-ghost btn-sm">Live map</Link>
         <Link href={`/?model=${model ?? DEFAULT_MODEL}#notify`} className="btn btn-primary btn-sm">Get alerts</Link>
       </div>
-      <RelatedBlock title="Browse restocks by place">
-        <BrowseStates current={state} title="Restock pages by state" />
+      <RelatedBlock title="Restocks by place">
+        <BrowseStates current={state} title="By state" />
         <BrowseModels current={model} />
       </RelatedBlock>
     </div>

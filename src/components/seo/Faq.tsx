@@ -2,7 +2,7 @@ import { faqJsonLd, type FaqItem } from "@/lib/seo/enrich";
 import { JsonLd } from "./JsonLd";
 
 /** Questions as native details/summary (no JS) plus FAQPage structured data. */
-export function Faq({ items, title = "Questions people ask" }: { items: FaqItem[]; title?: string }) {
+export function Faq({ items, title = "FAQ" }: { items: FaqItem[]; title?: string }) {
   if (items.length === 0) return null;
   return (
     <section className="pane p-5 sm:p-6" aria-labelledby="faq">

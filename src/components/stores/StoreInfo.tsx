@@ -47,7 +47,7 @@ export function HoursTable({ store, now = new Date() }: { store: Store; now?: Da
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-xs text-ink-3">Local time ({storeTimeZone(store).split("/").pop()?.replace(/_/g, " ")}). Pickup orders are collected during these hours.</p>
+      <p className="mt-2 text-xs text-ink-3">Local time · {storeTimeZone(store).split("/").pop()?.replace(/_/g, " ")}</p>
     </div>
   );
 }

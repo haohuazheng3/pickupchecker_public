@@ -71,8 +71,8 @@ export default async function Account() {
       </section>
 
       <section className="pane mt-6 p-5 sm:p-6">
-        <h2 className="text-xl font-semibold">Recent alerts</h2>
-        {sent.length === 0 ? <p className="mt-2 text-sm text-ink-3">Nothing sent yet — the first restock that matches will show here.</p> : (
+        <h2 className="text-xl font-semibold">Sent alerts</h2>
+        {sent.length === 0 ? <p className="mt-2 text-sm text-ink-3">Nothing sent yet.</p> : (
           <ul className="mt-3 divide-y divide-line text-sm">
             {sent.map((n) => {
               const item = PART_INDEX.get(n.partNumber); const store = STORE_INDEX.get(n.storeNumber);

@@ -117,25 +117,24 @@ describe("formatters", () => {
 describe("narrative", () => {
   it("reads well when every number is zero", () => {
     const t = narrative({ kind: "state", place: "Alabama", stores: 2, cities: ["Birmingham", "Huntsville"], stockNow: zeroStock, stats: zeroStats });
-    expect(t).toContain("No restock has been logged in Alabama in the last 30 days.");
-    expect(t).toContain("The 2 Apple Stores in Alabama (Birmingham and Huntsville) are re-checked every 20 seconds; right now none list the iPhone Duo, none list the iPhone 18 Pro and none list the iPhone 18 Pro Max for pickup.");
-    expect(t).toContain("not enough restock-to-sell-out pairs");
+    expect(t).toContain("No restock logged in Alabama in the last 30 days; too few sell-outs yet to say how long stock lasts.");
+    expect(t).toContain("Right now the iPhone Duo is listed for pickup at 0 of the 2 Apple Stores in Alabama, the iPhone 18 Pro at 0 and the iPhone 18 Pro Max at 0.");
+    expect(t.split(/(?<=\.) /)).toHaveLength(2);
     expect(t).not.toMatch(/undefined|NaN|\b0 of 0\b/);
     const store = narrative({ kind: "store", place: "Apple The Summit", stores: 1, stockNow: zeroStock, configs: { duo: 8, "18-pro": 16, "18-pro-max": 16 }, stats: zeroStats });
-    expect(store).toContain("No restock has been logged at Apple The Summit in the last 30 days.");
-    expect(store).toContain("Right now it lists the iPhone Duo in 0 of 8 configurations, the iPhone 18 Pro in 0 of 16 configurations and the iPhone 18 Pro Max in 0 of 16 configurations; we re-check it every 20 seconds.");
+    expect(store).toContain("No restock logged at Apple The Summit in the last 30 days");
+    expect(store).toContain("Right now Apple The Summit lists 0 of 8 iPhone Duo configurations, 0 of 16 iPhone 18 Pro and 0 of 16 iPhone 18 Pro Max for pickup.");
     const model = narrative({ kind: "model", place: "iPhone Duo", stores: 269, stockNow: zeroStock, stats: zeroStats });
-    expect(model).toContain("No Apple Store in the US lists the iPhone Duo for in-store pickup at the moment");
-    expect(model).toContain("No iPhone Duo restock has been logged anywhere in the last 30 days.");
+    expect(model).toContain("No US Apple Store lists the iPhone Duo for pickup right now.");
+    expect(model).toContain("No restock logged for the iPhone Duo in the last 30 days");
   });
   it("uses the real numbers when there are some", () => {
     const t = narrative({ kind: "city", place: "Birmingham", stores: 1, stockNow: { duo: 1, "18-pro": 0, "18-pro-max": 1 }, stats: someStats });
-    expect(t).toContain("31 restocks have been logged in Birmingham in the last 30 days (9 this week, 2 in the last 24 hours), along with 28 sell-outs.");
-    expect(t).toContain("The 1 Apple Store in Birmingham is re-checked every 20 seconds; right now it lists the iPhone Duo, none lists the iPhone 18 Pro and it lists the iPhone 18 Pro Max for pickup.");
-    expect(t).toContain("stays available for about 2 h 15 min");
+    expect(t).toContain("31 restocks and 28 sell-outs in Birmingham in the last 30 days; restocked configurations stay available about 2 h 15 min.");
+    expect(t).toContain("Right now the one Apple Store in Birmingham lists the iPhone Duo and the iPhone 18 Pro Max for pickup, but not the iPhone 18 Pro.");
     const one = narrative({ kind: "state", place: "Texas", stores: 20, stockNow: { duo: 3, "18-pro": 20, "18-pro-max": 1 }, stats: { ...someStats, month: 1, soldouts: 0 } });
-    expect(one).toContain("1 restock has been logged in Texas");
-    expect(one).toContain("right now 3 list the iPhone Duo, all of them list the iPhone 18 Pro and 1 lists the iPhone 18 Pro Max for pickup");
+    expect(one).toContain("1 restock and 0 sell-outs in Texas in the last 30 days");
+    expect(one).toContain("Right now the iPhone Duo is listed for pickup at 3 of the 20 Apple Stores in Texas, the iPhone 18 Pro at 20 and the iPhone 18 Pro Max at 1.");
   });
 });
 
@@ -149,22 +148,22 @@ describe("explainer and FAQ", () => {
     }
     expect(explainer("state", "Alabama")[1]).toContain("Apple Stores in Alabama");
   });
-  it("FAQs have 4–6 data-driven questions for every page type, with zero data", () => {
+  it("FAQs have 4–5 one-sentence, data-driven questions for every page type, with zero data", () => {
     const al = STORES.filter((s) => s.state === "Alabama");
     const state = faq({ kind: "state", place: "Alabama", stores: al, stockNow: zeroStock, duoStores: [], stats: zeroStats, peak: null, nearest: nearestOutsideState(al[0], 3) });
     expect(state.length).toBeGreaterThanOrEqual(4);
-    expect(state.length).toBeLessThanOrEqual(6);
+    expect(state.length).toBeLessThanOrEqual(5);
     expect(state[0].a).toContain("None at the last check");
-    expect(state.find((q) => q.q.startsWith("How many"))!.a).toContain("2 Apple Stores: Apple The Summit in Birmingham and Apple Bridge Street in Huntsville");
+    expect(state.find((q) => q.q.startsWith("How many"))!.a).toContain("2 Apple Stores, including Apple The Summit in Birmingham");
     const store = faq({ kind: "store", place: "Apple The Summit", stores: [al[0]], stockNow: zeroStock, stats: zeroStats, peak: null, nearest: nearestOutsideState(al[0], 3), hours: "Mon–Sat 10:00–21:00 · Sun 11:00–18:00", todayText: "10:00–21:00 (open now)" });
-    expect(store.length).toBe(6);
+    expect(store.length).toBe(5);
     expect(store[1].a).toContain("Mon–Sat 10:00–21:00");
     expect(store[1].a).toContain("211 Summit Boulevard, Birmingham, AL 35243");
     const model = faq({ kind: "model", place: "iPhone Duo", stores: STORES, stockNow: zeroStock, stats: someStats, peak: { hour: "10 AM", day: "Tuesday", total: 31 }, prices: { low: 1999, high: 2499, storages: ["256GB", "512GB", "1TB"], colors: ["Night Sky", "Star White"] } });
-    expect(model.length).toBe(6);
+    expect(model.length).toBe(5);
     expect(model[1].a).toContain("$1,999 to $2,499");
     expect(model[2].a).toContain("around 10 AM local time");
-    for (const q of [...state, ...store, ...model]) { expect(q.a).not.toMatch(/undefined|NaN/); expect(q.a).not.toContain("free alert"); }
+    for (const q of [...state, ...store, ...model]) { expect(q.a).not.toMatch(/undefined|NaN/); expect(q.a).not.toContain("free alert"); expect(q.a.split(/(?<=[a-z)])\. [A-Z]/)).toHaveLength(1); }
     const ld = faqJsonLd(state);
     expect(ld["@type"]).toBe("FAQPage");
     expect(ld.mainEntity).toHaveLength(state.length);

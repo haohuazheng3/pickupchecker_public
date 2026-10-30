@@ -1,14 +1,14 @@
 "use client";
 /** Current plan, how many rules are in use, and the one or two buttons that change it. */
 import { useState } from "react";
-import { PLANS, type PlanKey } from "@/lib/plans";
+import { PAID_PLANS, PLANS, comparePlans, type PaidPlanKey, type PlanKey } from "@/lib/plans";
 
 export interface PlanView { key: PlanKey; limit: number; used: number; renewsAt: string | null; cancelAtPeriodEnd: boolean; status: string | null; hasCustomer: boolean }
 
 export function PlanCard({ plan }: { plan: PlanView }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const go = async (target: "plus" | "pro") => {
+  const go = async (target: PaidPlanKey) => {
     setBusy(target); setErr(null);
     try {
       const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: target }) });
@@ -41,20 +41,26 @@ export function PlanCard({ plan }: { plan: PlanView }) {
           </div>
           <p className="mt-1 text-sm text-ink-2">
             {plan.key === "free"
-              ? `${plan.used} alert rule${plan.used === 1 ? "" : "s"} saved — not sending until you pick a plan.`
-              : <>{plan.used} of {plan.limit} alert rules in use{over ? ` — ${plan.used - plan.limit} over the limit and not sending` : ""}.{renews ? (plan.cancelAtPeriodEnd ? ` Ends ${renews}.` : ` Renews ${renews}.`) : ""}</>}
+              ? `${plan.used} alert${plan.used === 1 ? "" : "s"} saved · off until you pick a plan`
+              : <>{plan.used} of {plan.limit} alerts{over ? ` · ${plan.used - plan.limit} over the limit, off` : ""}{renews ? (plan.cancelAtPeriodEnd ? ` · ends ${renews}` : ` · renews ${renews}`) : ""}</>}
           </p>
           {plan.key !== "free" && <div className="mt-3 h-2 w-64 max-w-full overflow-hidden rounded-full bg-ink/6"><div className={`h-full rounded-full ${over ? "bg-warn" : "bg-accent"}`} style={{ width: `${pct}%` }} /></div>}
         </div>
         <div className="flex flex-wrap gap-2">
-          {plan.key === "free" && <><button className="btn btn-primary btn-sm" disabled={busy != null} onClick={() => void go("plus")}>{busy === "plus" && <span className="spinner" />}Plus · 10 alerts · $5/mo</button><button className="btn btn-ghost btn-sm" disabled={busy != null} onClick={() => void go("pro")}>{busy === "pro" && <span className="spinner" />}Pro · 20 alerts · $10/mo</button></>}
-          {plan.key === "plus" && <button className="btn btn-primary btn-sm" disabled={busy != null} onClick={() => void go("pro")}>{busy === "pro" && <span className="spinner" />}Upgrade to Pro · 20 alerts · $10/mo</button>}
-          {plan.key === "pro" && <button className="btn btn-ghost btn-sm" disabled={busy != null} onClick={() => void go("plus")}>{busy === "plus" && <span className="spinner" />}Switch to Plus · $5/mo</button>}
+          {PAID_PLANS.filter((k) => k !== plan.key).map((k) => {
+            const up = comparePlans(k, plan.key) > 0;
+            const first = PAID_PLANS.find((x) => comparePlans(x, plan.key) > 0) === k;
+            return (
+              <button key={k} className={`btn btn-sm ${up && first ? "btn-primary" : "btn-ghost"}`} disabled={busy != null} onClick={() => void go(k)}>
+                {busy === k && <span className="spinner" />}{plan.key === "free" ? `${PLANS[k].name} · ${PLANS[k].limit} alerts · $${PLANS[k].priceUsd}/mo` : up ? `Upgrade · ${PLANS[k].name} · ${PLANS[k].limit} alerts · $${PLANS[k].priceUsd}/mo` : `${PLANS[k].name} · $${PLANS[k].priceUsd}/mo`}
+              </button>
+            );
+          })}
           {plan.hasCustomer && <button className="btn btn-ghost btn-sm" disabled={busy != null} onClick={() => void portal()}>{busy === "portal" && <span className="spinner" />}Billing</button>}
         </div>
       </div>
       {err && <p role="alert" className="mt-3 text-sm text-bad">{err}</p>}
-      <p className="mt-3 text-xs text-ink-3">Paid plans renew monthly until you cancel (from Billing). Changing plans is prorated on the spot.</p>
+      <p className="mt-3 text-xs text-ink-3">Monthly, cancel anytime. Plan changes are prorated.</p>
     </section>
   );
 }

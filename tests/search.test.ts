@@ -22,12 +22,16 @@ describe("site search", () => {
     expect(top("Fifth Avenue").h).toBe("/stores/new-york/new-york/fifthavenue");
     expect(top("ann arbor").h).toBe("/stores/michigan/ann-arbor");
   });
-  it("a ZIP code lists the stores in its area, nearest ZIP first", () => {
+  it("a ZIP code lists the nearest stores by distance, even one with no store nearby", () => {
     const r = searchIndex(index, "10001");
     expect(r.length).toBeGreaterThan(3);
-    expect(r.every((e) => e.k === "store" && /\b100\d\d\b/.test(e.q))).toBe(true);
+    expect(r.every((e) => e.k === "store")).toBe(true);
     expect(r[0].s).toContain("New York, NY");
-    expect(searchIndex(index, "99999")).toEqual([]);
+    expect(r.slice(0, 4).every((e) => e.s.includes("New York, NY"))).toBe(true); // Manhattan first (Fifth Avenue is 10153)
+    const far = searchIndex(index, "36104"); // Montgomery, AL: no store in its sectional
+    expect(far.length).toBeGreaterThan(0);
+    expect(far[0].s).toMatch(/AL\b/);
+    expect(searchIndex(index, "00000")).toEqual([]); // not a US sectional
   });
   it("models and pages are reachable by plain words", () => {
     expect(top("duo").h).toBe("/stock/iphone-duo");

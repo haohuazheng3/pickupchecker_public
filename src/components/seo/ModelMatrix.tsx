@@ -7,7 +7,7 @@ import { Swatch } from "@/components/stores/ConfigTable";
 import { Dot } from "@/components/stock/StatusBits";
 import { LiveAgo } from "@/components/site/LiveAgo";
 
-/** storage × colour → number of stores with that configuration in stock now, each cell linking to the filtered view. */
+/** storage × color → number of stores with that configuration in stock now, each cell linking to the filtered view. */
 export function ConfigMatrix({ model, rows }: { model: ModelKey; rows: StoreStockRow[] }) {
   const m = modelByKey(model)!;
   const storages = storagesFor(model);
@@ -19,7 +19,7 @@ export function ConfigMatrix({ model, rows }: { model: ModelKey; rows: StoreStoc
   return (
     <div className="pane-2 overflow-hidden">
       <div className="grid gap-x-2 border-b border-line px-3 py-2 text-[0.65rem] font-semibold uppercase tracking-wider text-ink-3 sm:px-4" style={{ gridTemplateColumns: `minmax(0,1fr) repeat(${storages.length}, minmax(3rem, 4.5rem))` }}>
-        <span>Colour</span>
+        <span>Color</span>
         {storages.map((s) => <span key={s} className="text-center">{s}</span>)}
       </div>
       <ul className="divide-y divide-line">
@@ -39,7 +39,7 @@ export function ConfigMatrix({ model, rows }: { model: ModelKey; rows: StoreStoc
           </li>
         ))}
       </ul>
-      <p className="px-3 py-2 text-xs text-ink-3 sm:px-4">{total === 0 ? `No configuration of the ${m.name} is listed for pickup anywhere right now.` : `${total} store × configuration pairs in stock right now; tap a number for the stores.`}</p>
+      <p className="px-3 py-2 text-xs text-ink-3 sm:px-4">{total === 0 ? `No ${m.name} configuration is listed for pickup anywhere right now.` : `${total} store × configuration pairs in stock; tap a number for the stores.`}</p>
     </div>
   );
 }
@@ -65,7 +65,7 @@ export function ByStateTable({ model, rows }: { model: ModelKey; rows: StoreStoc
   );
 }
 
-/** Storage → price with the colours available at that size. */
+/** Storage → price with the colors available at that size. */
 export function PriceTable({ model }: { model: ModelKey }) {
   const m = modelByKey(model)!;
   const items = catalogFor(model);
@@ -84,7 +84,7 @@ export function PriceTable({ model }: { model: ModelKey }) {
           );
         })}
       </ul>
-      <p className="mt-2 text-xs text-ink-3">Unlocked prices on apple.com; pickup costs the same as delivery.</p>
+      <p className="mt-2 text-xs text-ink-3">Unlocked prices on apple.com.</p>
     </div>
   );
 }
@@ -97,12 +97,12 @@ export function ModelStoreList({ model, rows, storage, color, limit = 60 }: { mo
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-3">
-        <span className="inline-flex items-center gap-2"><Dot state={inStock.length ? "ok" : "idle"} live={inStock.length > 0} /> {inStock.length} of {checked || STORES.length} stores have the {m.short}{storage ? ` ${storage}` : ""}{color ? ` in ${color}` : ""} in stock for pickup</span>
+        <span className="inline-flex items-center gap-2"><Dot state={inStock.length ? "ok" : "idle"} live={inStock.length > 0} /> {inStock.length} of {checked || STORES.length} stores list the {m.short}{storage ? ` ${storage}` : ""}{color ? ` ${color}` : ""} for pickup</span>
         {rows[0]?.lastCheckedAt && <span>Last check <LiveAgo iso={rows[0].lastCheckedAt} /></span>}
       </div>
       {inStock.length === 0 ? (
         <div className="pane-2 p-6 text-ink-2">
-          {checked === 0 ? "First sweep in progress — stock appears here within a minute." : `No Apple Store currently lists the ${m.name}${storage ? ` ${storage}` : ""}${color ? ` in ${color}` : ""} for pickup. Set an alert and we'll notify you the second that changes.`}
+          {checked === 0 ? "First sweep in progress; stock appears here within a minute." : `No Apple Store lists the ${m.name}${storage ? ` ${storage}` : ""}${color ? ` ${color}` : ""} for pickup right now.`}
         </div>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

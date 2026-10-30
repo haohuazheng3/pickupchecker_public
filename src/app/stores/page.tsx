@@ -8,8 +8,6 @@ import { BrowseModels, BrowsePopular } from "@/components/seo/Browse";
 import { LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaceStatStrip } from "@/components/seo/StatStrip";
-import { Narrative } from "@/components/seo/Narrative";
-import { Explainer } from "@/components/seo/Explainer";
 import { Faq } from "@/components/seo/Faq";
 import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestockClock } from "@/components/restocks/RestockClock";
@@ -26,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const d = await load();
   const states = statesWithStores();
   const title = `Apple Stores by state: ${d.stockNow.duo} of ${STORES.length} have the iPhone Duo now`;
-  const description = `All ${STORES.length} US Apple Stores in ${states.length} states, grouped by city, each with live iPhone Duo, 18 Pro and Pro Max in-store pickup stock: ${d.stockNow.duo} stores with the Duo now, ${d.pstats.week} restocks this week, hours, restock times and history.`;
+  const description = `${STORES.length} US Apple Stores in ${states.length} states by city, live iPhone Duo, 18 Pro and Pro Max pickup stock: ${d.stockNow.duo} have the Duo now, ${d.pstats.week} restocks this week.`;
   return { title: title.length <= 60 ? title : "Apple Stores by state and city – iPhone Duo pickup stock", description, alternates: { canonical: "/stores" }, openGraph: { type: "website", siteName: "PickupChecker", title, description, url: "/stores" } };
 }
 
@@ -41,11 +39,10 @@ export default async function StoresIndex() {
     <div className="mx-auto max-w-6xl px-4 pt-8">
       <JsonLd data={itemListJsonLd("Apple Stores in the US", STORES)} />
       <h1 className="display text-3xl sm:text-5xl">Apple Stores by state and city</h1>
-      <p className="mt-3 max-w-2xl text-ink-2">{STORES.length} stores in {cities.length} cities across {states.length} states and territories. Every store page shows live pickup stock for all 40 configurations, when it usually restocks, its hours and its restock history.</p>
+      <p className="mt-3 max-w-2xl text-ink-2">{STORES.length} stores · {cities.length} cities · {states.length} states and territories.</p>
       <div className="mt-6 flex flex-wrap gap-2"><Link href={`/map?model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Live map</Link><Link href="/restocks" className="btn btn-ghost btn-sm">Restock log</Link><Link href={alert} className="btn btn-primary btn-sm">Alert me</Link></div>
 
       <div className="mt-6"><PlaceStatStrip stores={STORES.length} cities={cities.length} stockNow={d.stockNow} stats={d.pstats} /></div>
-      <Narrative className="mt-4" input={{ kind: "state", place: "the US", stores: STORES.length, stockNow: d.stockNow, stats: d.pstats }} stats={d.pstats} />
 
       <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {states.map((s) => {
@@ -63,20 +60,19 @@ export default async function StoresIndex() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="pane p-5">
-          <h2 className="text-xl font-semibold">When do US Apple Stores restock?</h2>
+          <h2 className="text-xl font-semibold">When do stores restock?</h2>
           <div className="mt-3"><RestockClock stats={d.stats} label="across the US" /></div>
         </section>
         <section className="pane p-5">
-          <h2 className="text-xl font-semibold">Last {d.pstats.days} days, day by day</h2>
+          <h2 className="text-xl font-semibold">Last {d.pstats.days} days</h2>
           <div className="mt-3"><DailyBars stats={d.pstats} label="across the US" /></div>
         </section>
-        <Explainer kind="state" place="the US" alertHref={alert} />
-        <Faq items={questions} title="Questions about Apple Store pickup" />
+        <Faq items={questions} title="FAQ" />
       </div>
 
       <RelatedBlock>
         <BrowsePopular />
-        <LinkRow title="States with one or two stores" links={thin.map((n) => ({ href: statePath(n), label: n }))} />
+        <LinkRow title="States with 1–2 stores" links={thin.map((n) => ({ href: statePath(n), label: n }))} />
         <BrowseModels />
         <LinkRow title="More" links={[{ href: "/restocks", label: "Restock log" }, { href: "/map", label: "Live map" }, { href: "/install", label: "Get the app" }, { href: "/how-it-works", label: "How it works" }, { href: "/pricing", label: "Pricing" }, ...MODELS.map((m) => ({ href: `/stock/${m.slug}`, label: `${m.name} stock` }))]} />
       </RelatedBlock>

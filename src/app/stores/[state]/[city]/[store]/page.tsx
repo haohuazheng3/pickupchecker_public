@@ -4,13 +4,11 @@ import { cache } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 import { STORES, MODELS, DEFAULT_MODEL, modelByKey, citySlug, stateSlug, stateCodeOf, storePath, cityPath, statePath, storeTimeZone, modelKeyFor, catalogFor, type ModelKey, type Store } from "@/lib/apple/catalog";
 import { nearestStores, nearbyCities, neighborStates, cityRef, cityLabel } from "@/lib/seo/links";
-import { normalizeHours, compressHours, todayLabel, hoursText, storeJsonLd, nearestOutsideState, nearestInState, alertHref, faq, peakOf, storeTitle } from "@/lib/seo/enrich";
+import { normalizeHours, compressHours, todayLabel, hoursText, storeJsonLd, nearestOutsideState, nearestInState, alertHref, faq, peakOf, storeTitle, fitTitle } from "@/lib/seo/enrich";
 import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { BrowseModels } from "@/components/seo/Browse";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaceStatStrip } from "@/components/seo/StatStrip";
-import { Narrative } from "@/components/seo/Narrative";
-import { Explainer } from "@/components/seo/Explainer";
 import { Faq } from "@/components/seo/Faq";
 import { storesStock, storeStatus, restockFeed, restockStats, placeStats } from "@/lib/stock/queries";
 import { StockByModel } from "@/components/stores/StockByModel";
@@ -60,7 +58,11 @@ export async function generateMetadata({ params }: PageProps<"/stores/[state]/[c
   if (!s) return {};
   const d = await load(s);
   const title = storeTitle(s, stateCodeOf(s), d.stockNow.duo);
-  const description = `Live in-store pickup stock for all 40 iPhone Duo, 18 Pro and 18 Pro Max configurations at Apple ${s.name} (${s.street?.trim()}, ${s.city}, ${stateCodeOf(s)}): ${d.stockNow.duo} Duo, ${d.stockNow["18-pro"]} 18 Pro and ${d.stockNow["18-pro-max"]} Pro Max configurations available now, ${d.pstats.week} restocks this week, hours, restock times and history.`;
+  const description = fitTitle([
+    `Live iPhone pickup stock at Apple ${s.name}, ${s.city} ${stateCodeOf(s)}: ${d.stockNow.duo} Duo, ${d.stockNow["18-pro"]} 18 Pro and ${d.stockNow["18-pro-max"]} Pro Max configurations in stock now, ${d.pstats.week} restocks this week, hours and history.`,
+    `Apple ${s.name}, ${s.city} ${stateCodeOf(s)}: ${d.stockNow.duo} Duo, ${d.stockNow["18-pro"]} 18 Pro and ${d.stockNow["18-pro-max"]} Pro Max configurations in stock for pickup now; ${d.pstats.week} restocks this week.`,
+    `Apple ${s.name}, ${s.city}: ${d.stockNow.duo} Duo, ${d.stockNow["18-pro"]} 18 Pro, ${d.stockNow["18-pro-max"]} Pro Max configurations in stock for pickup; ${d.pstats.week} restocks this week.`,
+  ], 155);
   return { title, description, alternates: { canonical: storePath(s) }, openGraph: { type: "website", siteName: "PickupChecker", title, description, url: storePath(s) } };
 }
 
@@ -94,7 +96,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
         <div className="min-w-0">
           <h1 className="display text-3xl sm:text-5xl">{place}</h1>
           <div className="mt-3"><StoreInfo store={s} showMapLink={false} /></div>
-          <p className="mt-2 text-sm text-ink-3">Last checked <LiveAgo iso={d.summary?.lastCheckedAt ?? null} /> · re-checked every 20 s</p>
+          <p className="mt-2 text-sm text-ink-3">Checked <LiveAgo iso={d.summary?.lastCheckedAt ?? null} /> · every 20 s</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/map?store=${s.storeNumber}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>
@@ -103,7 +105,6 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
       </div>
 
       <div className="mt-6"><PlaceStatStrip stores={1} stockNow={d.stockNow} stats={d.pstats} storeMode /></div>
-      <Narrative className="mt-4" input={{ kind: "store", place, stores: 1, stockNow: d.stockNow, configs: d.configs, stats: d.pstats }} stats={d.pstats} hideStore />
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold">Pickup stock right now</h2>
@@ -128,7 +129,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
           </section>
           <section className="pane p-5">
             <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-semibold">Restock history</h2><Link href={`/restocks?model=all&state=${stateSlug(s.state)}`} className="text-sm text-ink-3 hover:text-ink">All of {s.state} →</Link></div>
-            <RestockFeed rows={d.feed} showModel emptyText="No restock or sell-out has been recorded here yet. Every change is logged the second it is confirmed." />
+            <RestockFeed rows={d.feed} showModel emptyText="No restock or sell-out recorded here yet." />
           </section>
         </div>
         <aside className="space-y-4">
@@ -136,7 +137,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
           <div className="pane p-5"><HoursTable store={s} /></div>
           <NearbyStores title="Nearby stores" stores={d.nearby} stock={d.stock} />
           {d.inState.length > 0 && <NearbyStores title={`Elsewhere in ${s.state}`} stores={d.inState} stock={d.stock} />}
-          <NearbyStores title="Across the state line" stores={d.outside} stock={d.stock} hint="Each store restocks on its own; a Pro plan can watch several at once." />
+          <NearbyStores title="Across the state line" stores={d.outside} stock={d.stock} />
           {s.image && (
             // eslint-disable-next-line @next/next/no-img-element -- Apple CDN image, already sized by its query string
             <img src={s.image} alt={place} className="w-full rounded-[20px] border border-line" loading="lazy" />
@@ -145,8 +146,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Explainer kind="store" place={place} alertHref={alert} />
-        <Faq items={questions} title={`Questions about ${place}`} />
+        <Faq items={questions} title={`${place} FAQ`} />
       </div>
 
       <RelatedBlock title={`Around ${place}`}>
@@ -157,7 +157,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
         <BrowseModels />
         <LinkRow title="Restock logs" links={[{ href: `/restocks?model=all&state=${stateSlug(s.state)}`, label: `${s.state} restocks` }, { href: "/restocks", label: "All US restocks" }, { href: `/map?state=${code}&model=${DEFAULT_MODEL}`, label: `${s.state} on the map` }]} />
       </RelatedBlock>
-      <p className="mt-8 text-xs text-ink-3">Availability is what apple.com shows for in-store pickup at this store, as of the last check. {MODELS.map((m) => m.name).join(", ")} are tracked; Apple, iPhone and Apple Store are trademarks of Apple Inc.</p>
+      <p className="mt-8 text-xs text-ink-3">Availability as shown on apple.com for in-store pickup, as of the last check.</p>
     </div>
   );
 }

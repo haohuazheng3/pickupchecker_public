@@ -6,7 +6,7 @@ import { StockMap, type MapStore, type MapFocus } from "@/components/map/StockMa
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "iPhone Duo pickup stock map — every US Apple Store, live",
-  description: "A live map of all 269 US Apple Stores showing where the iPhone Duo, 18 Pro and 18 Pro Max are available for in-store pickup right now, by storage and color. Tap any store for its page, restock times and history.",
+  description: "Live map of all 269 US Apple Stores with iPhone Duo, 18 Pro and Pro Max in-store pickup stock right now, by storage and color.",
   alternates: { canonical: "/map" },
 };
 

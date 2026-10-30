@@ -11,7 +11,7 @@ import { logOps } from "@/lib/ops";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const Body = z.object({ plan: z.enum(["plus", "pro"]), watchId: z.string().min(1).optional() });
+const Body = z.object({ plan: z.enum(["plus", "pro", "max"]), watchId: z.string().min(1).optional() });
 
 /**
  * Pick a paid plan. No subscription yet → Stripe Checkout (card or Link). Already on a paid plan →

@@ -10,9 +10,9 @@ export function Footer() {
           <div>
             <Logo />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-3">
-              A notification on your phone the moment an iPhone 18 Pro, Pro Max or iPhone Duo shows up for in-store pickup at any of the 269 Apple Stores in the US.
+              iPhone pickup restock alerts for all 269 US Apple Stores, checked every 20 seconds.
             </p>
-            <p className="mt-3 text-xs text-ink-3">Independent service. Not affiliated with or endorsed by Apple Inc. Apple, iPhone and Apple Store are trademarks of Apple Inc.</p>
+            <p className="mt-3 text-xs text-ink-3">Not affiliated with or endorsed by Apple Inc. Apple, iPhone and Apple Store are trademarks of Apple Inc.</p>
           </div>
           <div className="text-sm">
             <div className="eyebrow mb-3">Product</div>
@@ -21,8 +21,8 @@ export function Footer() {
               <li><Link href="/stock/iphone-18-pro" className="hover:text-ink">iPhone 18 Pro stock</Link></li>
               <li><Link href="/stock/iphone-18-pro-max" className="hover:text-ink">iPhone 18 Pro Max stock</Link></li>
               <li><Link href="/restocks" className="hover:text-ink">Restock log</Link></li>
-              <li><Link href="/map" className="hover:text-ink">Live stock map</Link></li>
-              <li><Link href="/stores" className="hover:text-ink">Apple Stores by state</Link></li>
+              <li><Link href="/map" className="hover:text-ink">Live map</Link></li>
+              <li><Link href="/stores" className="hover:text-ink">Stores by state</Link></li>
               <li><Link href="/pricing" className="hover:text-ink">Pricing</Link></li>
             </ul>
           </div>
@@ -54,7 +54,7 @@ export function Footer() {
         </div>
         <div className="hairline mt-8 flex flex-wrap items-center justify-between gap-3 pt-5 text-xs text-ink-3">
           <span>© {new Date().getFullYear()} PickupChecker</span>
-          <span>Status: <Link href="/api/health" className="hover:text-ink">/api/health</Link></span>
+          <Link href="/api/health" className="hover:text-ink">Status</Link>
         </div>
       </div>
     </footer>

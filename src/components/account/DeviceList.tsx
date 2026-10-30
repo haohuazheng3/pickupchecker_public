@@ -24,7 +24,7 @@ export function DeviceList({ devices }: { devices: DeviceView[] }) {
           <span>
             <span className="font-medium">{platformLabel(d.platform as Platform)}</span>
             <span className="text-ink-3"> · {d.standalone ? "Home Screen app" : "browser"} · added {timeAgo(d.createdAt)}{d.lastSentAt ? ` · last alert ${timeAgo(d.lastSentAt)}` : ""}</span>
-            {d.disabledAt && <span className="ml-2 rounded-full bg-bad/15 px-2 py-0.5 text-xs text-bad">stopped — turn notifications on again on that device</span>}
+            {d.disabledAt && <span className="ml-2 rounded-full bg-bad/15 px-2 py-0.5 text-xs text-bad">stopped — turn on again on that device</span>}
           </span>
           <button type="button" className="text-ink-3 hover:text-ink" disabled={busy === d.id} onClick={() => void remove(d.id)}>Remove</button>
         </li>
