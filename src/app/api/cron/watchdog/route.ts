@@ -49,7 +49,19 @@ export async function GET(req: Request) {
     }
     return NextResponse.json({ degraded: false, ageMs: age });
   } catch (e) {
-    await recordError("web", `watchdog failed: ${errorMessage(e)}`);
+    await recordError("web", `watchdog failed: ${errorMessage(e)}`).catch(() => undefined);
+    await probeFromWorker();
     return NextResponse.json({ error: errorMessage(e) }, { status: 500 });
   }
+}
+
+/**
+ * The database lives on the poller host, so when it is unreachable this route can neither keep state nor
+ * mail on schedule — and the host that normally triggers the outside probe may be the thing that is down.
+ * The mail worker's probe checks /api/health and keeps its own down/recovery state, so it mails once.
+ */
+async function probeFromWorker(): Promise<void> {
+  const url = env.mailWorkerUrl(), token = env.mailWorkerToken();
+  if (!url || !token) return;
+  await fetch(`${url.replace(/\/$/, "")}/probe`, { method: "POST", headers: { authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(20_000) }).catch(() => undefined);
 }

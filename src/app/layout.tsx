@@ -7,7 +7,7 @@ import { Footer } from "@/components/site/Footer";
 import { AlertBar } from "@/components/site/AlertBar";
 import { AlertDialogHost } from "@/components/wizard/AlertDialog";
 import { buildWizardCatalog } from "@/components/wizard/WizardServer";
-import { THEME_BOOT } from "@/lib/theme";
+import { THEME_BOOT, THEME_COLORS } from "@/lib/theme";
 import { Analytics } from "@/components/site/Analytics";
 import { PwaBoot } from "@/components/pwa/PwaBoot";
 import { NavSkeleton } from "@/components/ui/NavSkeleton";
@@ -40,11 +40,9 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
-// Browser chrome that still reads theme-color (Safari before 26, Chrome on Android) matches the header bar.
-export const viewport: Viewport = {
-  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#ffffff" }, { media: "(prefers-color-scheme: dark)", color: "#15171f" }],
-  width: "device-width", initialScale: 1, viewportFit: "cover",
-};
+// theme-color matches the header bar (browsers that still read it: Safari before 26, Chrome on Android);
+// THEME_BOOT and the toggle switch it with the theme.
+export const viewport: Viewport = { themeColor: THEME_COLORS.light, width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
