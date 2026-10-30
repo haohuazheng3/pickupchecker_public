@@ -8,7 +8,8 @@ import { BrowseModels } from "@/components/seo/Browse";
 import { storesStock, restockFeed, restockStats, restockCounts } from "@/lib/stock/queries";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
-import { Dot, timeAgo } from "@/components/stock/StatusBits";
+import { Dot } from "@/components/stock/StatusBits";
+import { LiveAgo } from "@/components/site/LiveAgo";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +65,7 @@ export default async function CityPage({ params }: PageProps<"/stores/[state]/[c
           const st = stock.get(s.storeNumber);
           return (
             <Link key={s.storeNumber} href={storePath(s)} className="pane-2 pane-hover block p-4">
-              <div className="flex items-start justify-between gap-2"><div className="font-semibold">Apple {s.name}</div><span className="text-xs text-ink-3">checked {timeAgo(st?.lastCheckedAt ?? null)}</span></div>
+              <div className="flex items-start justify-between gap-2"><div className="font-semibold">Apple {s.name}</div><span className="text-xs text-ink-3">checked <LiveAgo iso={st?.lastCheckedAt ?? null} /></span></div>
               <div className="text-sm text-ink-3">{s.street?.trim()}</div>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                 {MODELS.map((m) => { const n = st?.perModel[m.key].available ?? 0; return <span key={m.key} className="inline-flex items-center gap-1.5 text-ink-2"><Dot state={n ? "ok" : "idle"} live={n > 0} /> {m.short}{n ? ` · ${n}` : ""}</span>; })}

@@ -5,6 +5,7 @@
  */
 import { useEffect, useState } from "react";
 import { timeAgo } from "@/components/stock/StatusBits";
+import { LiveAgo } from "./LiveAgo";
 
 export function formatLocal(iso: string, now = new Date()): string {
   const d = new Date(iso);
@@ -26,7 +27,7 @@ export function LocalTime({ iso, withAgo = true, className = "" }: { iso: string
   return (
     <time dateTime={iso} className={className} suppressHydrationWarning>
       {text ?? timeAgo(iso)}
-      {text && withAgo && <span className="text-ink-3"> · {timeAgo(iso)}</span>}
+      {text && withAgo && <span className="text-ink-3"> · <LiveAgo iso={iso} /></span>}
     </time>
   );
 }

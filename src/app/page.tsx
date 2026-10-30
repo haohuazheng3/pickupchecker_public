@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { MODELS, DEFAULT_MODEL, modelByKey, STORE_INDEX, appleFamilyUrl, type ModelKey } from "@/lib/apple/catalog";
+import { MODELS, DEFAULT_MODEL, modelByKey, STORE_INDEX, STORES, appleFamilyUrl, type ModelKey } from "@/lib/apple/catalog";
 import { restockFeed, restockCounts, stockByStore } from "@/lib/stock/queries";
 import { WizardServer } from "@/components/wizard/WizardServer";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
-import { Dot, timeAgo } from "@/components/stock/StatusBits";
+import { Dot } from "@/components/stock/StatusBits";
+import { LiveAgo } from "@/components/site/LiveAgo";
 import { BrowseModels, BrowsePopular } from "@/components/seo/Browse";
 import { RelatedBlock } from "@/components/seo/Related";
 
@@ -16,7 +17,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const requested = typeof sp.model === "string" && modelByKey(sp.model) ? (sp.model as ModelKey) : null;
   const model: ModelKey = requested ?? DEFAULT_MODEL;
   const meta = modelByKey(model)!;
-  const initialStore = typeof sp.store === "string" && STORE_INDEX.has(sp.store) ? sp.store : undefined;
+  // ?store= takes a store number (R123) or the store slug the AlertBar reads off a store page URL.
+  const initialStore = typeof sp.store === "string" ? (STORE_INDEX.has(sp.store) ? sp.store : STORES.find((s) => s.slug === sp.store)?.storeNumber) : undefined;
   const startSignIn = sp.signin === "1";
   const next = typeof sp.next === "string" ? sp.next : undefined;
   const faq = [
@@ -107,7 +109,7 @@ async function Board({ model }: { model: ModelKey }) {
           <div className="mt-1 flex items-baseline gap-2"><span className="display text-4xl">{inStock.length}</span><span className="text-ink-2">store{inStock.length === 1 ? "" : "s"} with pickup stock</span></div>
         </div>
         <div className="text-right text-xs text-ink-3">
-          <div className="inline-flex items-center gap-1.5"><Dot state={newest ? "ok" : "warn"} live={Boolean(newest)} /> checked {timeAgo(newest)}</div>
+          <div className="inline-flex items-center gap-1.5"><Dot state={newest ? "ok" : "warn"} live={Boolean(newest)} /> checked <LiveAgo iso={newest} /></div>
           <div>{counts.day} restock{counts.day === 1 ? "" : "s"} in 24 h · {counts.week} this week</div>
         </div>
       </div>

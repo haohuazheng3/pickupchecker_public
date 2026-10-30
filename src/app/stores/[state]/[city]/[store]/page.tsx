@@ -10,7 +10,8 @@ import { StockByModel } from "@/components/stores/StockByModel";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
 import { MiniMap } from "@/components/stores/MiniMap";
-import { Dot, timeAgo } from "@/components/stock/StatusBits";
+import { Dot } from "@/components/stock/StatusBits";
+import { LiveAgo } from "@/components/site/LiveAgo";
 
 export const dynamic = "force-dynamic";
 
@@ -69,7 +70,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
         <div>
           <h1 className="display text-3xl sm:text-5xl">Apple {s.name}</h1>
           <p className="mt-2 text-ink-2">{s.street?.trim()}, {s.city}, {code} {s.postalCode}{s.phone ? ` · ${s.phone}` : ""}</p>
-          <p className="mt-1 text-sm text-ink-3">Last checked {timeAgo(summary?.lastCheckedAt ?? null)} · re-checked every 20 s · <a className="underline" href={s.url} rel="nofollow noopener" target="_blank">apple.com store page</a></p>
+          <p className="mt-1 text-sm text-ink-3">Last checked <LiveAgo iso={summary?.lastCheckedAt ?? null} /> · re-checked every 20 s · <a className="underline" href={s.url} rel="nofollow noopener" target="_blank">apple.com store page</a></p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/map?store=${s.storeNumber}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>

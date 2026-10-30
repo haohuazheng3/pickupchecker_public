@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { PART_INDEX, STORE_INDEX, storePath, type ModelKey, MODELS } from "@/lib/apple/catalog";
 import { stockByStore } from "@/lib/stock/queries";
-import { Dot, timeAgo } from "./StatusBits";
+import { Dot } from "./StatusBits";
+import { LiveAgo } from "@/components/site/LiveAgo";
 
 export async function StockBoard({ model, storage, color, limit = 60 }: { model: ModelKey; storage?: string; color?: string; limit?: number }) {
   const rows = await stockByStore(model, { storage, color });
@@ -12,7 +13,7 @@ export async function StockBoard({ model, storage, color, limit = 60 }: { model:
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-3">
         <span className="inline-flex items-center gap-2"><Dot state={inStock.length ? "ok" : "idle"} live={inStock.length > 0} /> {inStock.length} of {checked || 269} stores have the {meta.short} in stock for pickup</span>
-        {rows[0]?.lastCheckedAt && <span>Last check {timeAgo(rows[0].lastCheckedAt)}</span>}
+        {rows[0]?.lastCheckedAt && <span>Last check <LiveAgo iso={rows[0].lastCheckedAt} /></span>}
       </div>
       {inStock.length === 0 ? (
         <div className="pane-2 p-6 text-ink-2">
@@ -38,7 +39,7 @@ export async function StockBoard({ model, storage, color, limit = 60 }: { model:
                     {items.slice(0, 6).map((i) => <span key={i.partNumber} className="rounded-full bg-ink/6 px-2 py-0.5 text-xs text-ink-2">{i.storage} {i.color}</span>)}
                     {items.length > 6 && <span className="text-xs text-ink-3">+{items.length - 6}</span>}
                   </div>
-                  <div className="mt-2 text-xs text-ink-3">Seen {timeAgo(r.lastAvailableAt)}</div>
+                  <div className="mt-2 text-xs text-ink-3">Seen <LiveAgo iso={r.lastAvailableAt} /></div>
                 </Link>
               </li>
             );

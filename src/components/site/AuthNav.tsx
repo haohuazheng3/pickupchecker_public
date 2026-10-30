@@ -7,7 +7,7 @@ export function AuthNav() {
   const { isLoaded, isSignedIn } = useAuth();
   if (!isLoaded || !isSignedIn) return null;
   return (
-    <Link href="/account" className="btn btn-ghost btn-sm hidden sm:inline-flex">
+    <Link href="/account" className="btn btn-ghost btn-sm">
       My alerts
     </Link>
   );

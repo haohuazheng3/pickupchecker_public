@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type * as maplibregl from "maplibre-gl";
 import { MODELS, PART_INDEX, modelKeyFor, storagesFor, colorsFor, STORAGE_ORDER, COLOR_META, type ModelKey } from "@/lib/apple/catalog";
 import type { MapSnapshot } from "@/lib/stock/queries";
-import { timeAgo } from "@/components/stock/StatusBits";
+import { LiveAgo } from "@/components/site/LiveAgo";
 import { MAP_STYLE as STYLE, MAP_WORKER_URL as WORKER_URL } from "@/lib/map";
 
 export interface MapStore { n: string; name: string; city: string; state: string; code: string; path: string; cityHref: string; stateHref: string; lat: number; lng: number }
@@ -208,7 +208,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
           <h1 className="display text-3xl sm:text-5xl">Pickup stock map</h1>
           <p className="mt-2 max-w-2xl text-ink-2">Every US Apple Store, live. Green dots list the {modelMeta ? modelMeta.short : "iPhone Duo, 18 Pro or Pro Max"} for in-store pickup right now; bigger means more configurations. Click any dot for the store&apos;s page.</p>
         </div>
-        <div className="inline-flex items-center gap-2 text-sm text-ink-3"><span className={`dot ${stats.newest ? "dot-ok dot-live" : "dot-warn"}`} /> {stats.newest ? `Updated ${timeAgo(stats.newest)}` : "Waiting for the first sweep"}</div>
+        <div className="inline-flex items-center gap-2 text-sm text-ink-3"><span className={`dot ${stats.newest ? "dot-ok dot-live" : "dot-warn"}`} /> {stats.newest ? <>Updated <LiveAgo iso={stats.newest} /></> : "Waiting for the first sweep"}</div>
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
@@ -274,7 +274,7 @@ export function StockMap({ stores, initial, focus }: { stores: MapStore[]; initi
                   <div>
                     <div className="eyebrow">Selected store</div>
                     <h2 className="mt-1 text-xl font-semibold">Apple {sel.name}</h2>
-                    <div className="text-sm text-ink-3">{sel.city}, {sel.state} · checked {timeAgo(sel.checked)}</div>
+                    <div className="text-sm text-ink-3">{sel.city}, {sel.state} · checked <LiveAgo iso={sel.checked} /></div>
                   </div>
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSelected(null)} aria-label="Close">✕</button>
                 </div>

@@ -86,6 +86,9 @@ button { cursor: pointer; }
 .pane-hover:hover { transform: translateY(-2px); border-color: var(--line-2); }
 .pane-hover:active { transform: translateY(0) scale(.995); }
 .hairline { border-top: 1px solid var(--line); }
+/* Grid tracks size to their items' min-content by default, so one truncated (nowrap) line inside a
+   pane made the whole page 526 px wide on phones and Mobile Safari zoomed out. Items may shrink. */
+.grid > *, .pane { min-width: 0; }
 
 /* ------------------------------------------------------------------ buttons: instant feedback */
 .btn {
@@ -94,7 +97,12 @@ button { cursor: pointer; }
   border: 1px solid transparent; white-space: nowrap; user-select: none;
   transition: transform .08s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
 }
-.btn:active { transform: scale(.97); }
+/* Instant feedback: the pressed state applies with no transition, so a tap lights up on the same frame. */
+.btn, .chip, a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.btn:active { transform: scale(.97); filter: brightness(.9); transition-duration: 0s; }
+.btn-ghost:active { background: rgba(13,20,17,.1); }
+.chip:active { filter: brightness(.9); transition-duration: 0s; }
+a:active { opacity: .7; }
 .btn[disabled], .btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; transform: none; }
 .btn-primary { background: var(--accent); color: var(--accent-ink); }
 .btn-primary:hover { background: #0c9354; }
@@ -103,6 +111,17 @@ button { cursor: pointer; }
 .btn-ink { background: var(--ink); color: var(--on-ink); }
 .btn-ink:hover { background: #000; }
 .btn-sm { padding: .55rem .9rem; font-size: .875rem; }
+/* The product's one button: raised, lit from above, presses down. */
+/* The floating bar sits over scrolling content: a solid surface, not the frosted pane. */
+.alert-bar .pane { background: rgba(255,255,255,.96); }
+.btn-hero {
+  padding: .95rem 1.6rem; font-size: 1.05rem; color: #fff; border: 0;
+  background: linear-gradient(180deg, #19a85f 0%, var(--accent) 60%, #086b3d 100%);
+  box-shadow: 0 3px 0 #06552f, 0 14px 34px -12px rgba(10,127,73,.75), inset 0 1px 0 rgba(255,255,255,.35);
+  text-shadow: 0 1px 0 rgba(0,0,0,.18); transform: translateY(0);
+}
+.btn-hero:hover { background: linear-gradient(180deg, #22b86a 0%, #0c9354 60%, #086b3d 100%); }
+.btn-hero:active { transform: translateY(3px); box-shadow: 0 0 0 #06552f, 0 6px 16px -10px rgba(10,127,73,.6), inset 0 1px 0 rgba(255,255,255,.25); }
 .btn-lg { padding: 1rem 1.6rem; font-size: 1.05rem; }
 
 /* chips (storage / color / store selection) */

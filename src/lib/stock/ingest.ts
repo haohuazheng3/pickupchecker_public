@@ -22,12 +22,14 @@ export type StockStatus = "available" | "unavailable" | "unknown";
  * for `minMs`. Any observation that agrees with the committed status cancels the pending change.
  *  • restock: two responses must agree (same sweep via overlap, else the next one ≈ 20 s later) —
  *    an alert is late by seconds, and never sent for a one-off "available"
- *  • soldout: must persist 2 minutes — the public status lags a real sell-out by that much, which
- *    nobody notices, while a blip never becomes a soldout and therefore never a fake restock
+ *  • soldout: two observations at least 15 s apart — i.e. the next sweep must still say unavailable.
+ *    A blip is one response taken back within seconds, so the second observation refutes it; a real
+ *    sell-out shows on the public pages within ~20–40 s instead of the 2 minutes the first version
+ *    waited (users compared us against other trackers and saw stale "available").
  */
 export const CONFIRM = {
   restock: { seen: 2, minMs: 0 },
-  soldout: { seen: 2, minMs: 120_000 },
+  soldout: { seen: 2, minMs: 15_000 },
 } as const;
 
 export interface Transition {

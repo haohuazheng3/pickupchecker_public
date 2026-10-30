@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { MODELS, PART_INDEX, STORAGE_ORDER, COLOR_META } from "@/lib/apple/catalog";
 import type { StoreStockSummary } from "@/lib/stock/queries";
-import { Dot, timeAgo } from "@/components/stock/StatusBits";
+import { Dot } from "@/components/stock/StatusBits";
+import { LiveAgo } from "@/components/site/LiveAgo";
 
 /** Per-model stock at one store, Duo first: count, the available configurations as chips, and an alert CTA. */
 export function StockByModel({ summary, storeNumber }: { summary: StoreStockSummary | undefined; storeNumber: string }) {
@@ -22,7 +23,7 @@ export function StockByModel({ summary, storeNumber }: { summary: StoreStockSumm
               </div>
             )}
             <div className="mt-auto flex items-center justify-between pt-3 text-xs text-ink-3">
-              <span>checked {timeAgo(summary?.lastCheckedAt ?? null)}</span>
+              <span>checked <LiveAgo iso={summary?.lastCheckedAt ?? null} /></span>
               <Link href={`/?model=${m.key}&store=${storeNumber}#notify`} className="font-medium text-ink hover:underline">Alert me →</Link>
             </div>
           </div>

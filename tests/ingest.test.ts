@@ -26,18 +26,17 @@ describe("decide — one response never flips a status on its own", () => {
     expect(d).toMatchObject({ status: "available", quote: "Available Tomorrow", pendingStatus: null, pendingSince: null, pendingSeen: 0, commit: null, held: false });
   });
 
-  it("holds a lone 'unavailable' and only sells out after two observations over two minutes", () => {
+  it("holds a lone 'unavailable'; the next sweep (≥ 15 s later) confirms the sell-out", () => {
     const first = decide(row(), gone, t0);
     expect(first).toMatchObject({ status: "available", quote: "Available Today", pendingStatus: "unavailable", pendingSince: t0, pendingSeen: 1, commit: null, held: true });
-    const second = decide(rowAfter(first), gone, at(20));
-    expect(second).toMatchObject({ status: "available", pendingSeen: 2, pendingSince: t0, held: true, commit: null });
-    const early = decide(rowAfter(second), gone, at(100));
-    expect(early.status).toBe("available");
-    const late = decide(rowAfter(early), gone, at(CONFIRM.soldout.minMs / 1000));
-    expect(late.status).toBe("unavailable");
-    expect(late.quote).toBe("Currently unavailable");
-    expect(late.commit).toEqual({ kind: "soldout", firstSeen: false, since: t0 });
-    expect(late.pendingStatus).toBeNull();
+    // a second response within the same sweep (seconds later) is not enough — the blip window
+    const tooSoon = decide(rowAfter(first), gone, at(4));
+    expect(tooSoon).toMatchObject({ status: "available", pendingSeen: 2, pendingSince: t0, held: true, commit: null });
+    const confirmed = decide(rowAfter(tooSoon), gone, at(CONFIRM.soldout.minMs / 1000 + 5));
+    expect(confirmed.status).toBe("unavailable");
+    expect(confirmed.quote).toBe("Currently unavailable");
+    expect(confirmed.commit).toEqual({ kind: "soldout", firstSeen: false, since: t0 });
+    expect(confirmed.pendingStatus).toBeNull();
   });
 
   it("the 21:46 blip — unavailable, then available 8 s later — leaves no trace", () => {
