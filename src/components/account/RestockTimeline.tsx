@@ -81,7 +81,7 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, m
   if (rows.length > 0 && at.before === rows.length) items.push(nowLine(gapPx(now - rows[rows.length - 1].min)));
 
   return (
-    <section className="pane mt-6 p-5 sm:p-6" aria-labelledby="restock-timeline">
+    <section className="pane p-5 sm:p-6" aria-labelledby="restock-timeline">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
         <h2 id="restock-timeline" className="text-xl font-semibold">Restock timeline</h2>
         <span className="rounded-full border border-line-2 px-2.5 py-0.5 text-[11px] font-medium text-ink-2">Past restocks · not a forecast</span>

@@ -1,13 +1,11 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { desc, eq } from "drizzle-orm";
 import { ensureUser } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { activeSubscriptionsFor } from "@/lib/billing";
-import { effectivePlan, coveredWatchIds } from "@/lib/plans";
-import { STORE_INDEX, PART_INDEX, stateCodeOf, storePath } from "@/lib/apple/catalog";
-import { WatchList } from "@/components/account/WatchList";
-import { PlanCard } from "@/components/account/PlanCard";
+import { effectivePlan, PAID_PLANS, PLANS } from "@/lib/plans";
+import { STORE_INDEX, PART_INDEX } from "@/lib/apple/catalog";
+import { alertSetOf } from "@/lib/alertSet";
 import { Identify } from "@/components/account/Identify";
 import { SignOutButton } from "@/components/account/SignOutButton";
 import { DeviceList } from "@/components/account/DeviceList";
@@ -17,10 +15,18 @@ import { env } from "@/lib/env";
 import { summarizeDevices } from "@/lib/devices";
 import { RestockTimes, RestockTimesSkeleton } from "@/components/account/RestockTimes";
 import { RefreshOnAlertsChange } from "@/components/account/RefreshOnAlertsChange";
+import { AlertEditor } from "@/components/alerts/AlertEditor";
+import { Section } from "@/components/alerts/Section";
+import { PlanPanel } from "@/components/alerts/PlanPanel";
+import { buildPhoneCatalog } from "@/components/alerts/catalog";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "My alerts", robots: { index: false } };
 
+/**
+ * The dashboard, one page of sections: alerts (phones × stores, ticked in place), plan, notifications,
+ * restock patterns, alerts sent. Nothing opens a dialog or another page except Stripe's own checkout.
+ */
 export default async function Account() {
   const u = await ensureUser();
   if (!u) return null; // proxy redirects signed-out users
@@ -32,65 +38,53 @@ export default async function Account() {
   ]);
   const row = await db().select().from(schema.users).where(eq(schema.users.id, u.id)).limit(1);
   const { plan, sub } = effectivePlan(subs);
-  const covered = coveredWatchIds(watches, plan.limit);
+  const active = watches.filter((w) => w.active).length;
+  const renews = sub?.currentPeriodEnd ? sub.currentPeriodEnd.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : null;
+  const deviceInfo = summarizeDevices(devices);
+  const fit = PAID_PLANS.find((k) => PLANS[k].limit >= active) ?? "max";
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-8">
+    <div className="mx-auto max-w-5xl space-y-4 px-4 pt-8">
       <Identify userRef={u.id} email={u.email} />
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <RefreshOnAlertsChange />
+      <div className="flex flex-wrap items-end justify-between gap-4 pb-2">
         <div>
           <div className="eyebrow">Signed in as {u.email}</div>
           <h1 className="display mt-1 text-3xl sm:text-4xl">My alerts</h1>
         </div>
-        <div className="flex gap-2">
-          <Link href="/#notify" className="btn btn-primary btn-sm">New alert</Link>
-          <SignOutButton />
-        </div>
+        <SignOutButton />
       </div>
 
-      <div className="mt-6">
-        <PlanCard plan={{ key: plan.key, limit: plan.limit, used: watches.filter((w) => w.active).length, renewsAt: sub?.currentPeriodEnd?.toISOString() ?? null, cancelAtPeriodEnd: Boolean(sub?.cancelAtPeriodEnd), status: sub?.status ?? null, hasCustomer: Boolean(row[0]?.stripeCustomerId) }} />
-      </div>
+      <AlertEditor variant="page" catalog={buildPhoneCatalog()} account={{ set: alertSetOf(watches), plan: { key: plan.key, limit: plan.limit, used: active } }} />
 
-      <div className="mt-6">
-        <PushSetup vapidPublicKey={env.vapidPublicKey()} account={summarizeDevices(devices)} />
+      <Section id="plan" title="Plan" defaultOpen={plan.key === "free"}
+        summary={plan.key === "free" ? "No plan yet: alerts are off" : `${PLANS[plan.key].name} · ${Math.min(active, plan.limit)} of ${plan.limit} alerts on${renews ? (sub?.cancelAtPeriodEnd ? ` · ends ${renews}` : ` · renews ${renews}`) : ""}`}>
+        <PlanPanel recommend={plan.key === "free" ? fit : active > plan.limit ? PAID_PLANS.find((k) => PLANS[k].limit >= active) ?? "max" : null}
+          plan={{ key: plan.key, limit: plan.limit, used: active, renewsAt: sub?.currentPeriodEnd?.toISOString() ?? null, cancelAtPeriodEnd: Boolean(sub?.cancelAtPeriodEnd), status: sub?.status ?? null, hasCustomer: Boolean(row[0]?.stripeCustomerId) }} />
+      </Section>
+
+      <Section id="notifications" title="Notifications" defaultOpen={!deviceInfo.active}
+        summary={deviceInfo.active ? `On for your ${deviceInfo.label ?? "devices"}` : "Not on any device yet"}>
+        <PushSetup vapidPublicKey={env.vapidPublicKey()} account={deviceInfo} />
         {devices.length > 0 && (
           <DeviceList devices={devices.map((d) => ({ id: d.id, platform: d.platform, standalone: d.standalone, added: timeAgo(d.createdAt), lastAlert: d.lastSentAt ? timeAgo(d.lastSentAt) : null, disabledAt: d.disabledAt?.toISOString() ?? null, lastError: d.lastError }))} />
         )}
-      </div>
+      </Section>
 
-      <RefreshOnAlertsChange />
       {/* Streams in after the rest: thirty days of events for every store the user watches. */}
-      <Suspense fallback={watches.some((w) => w.active) ? <RestockTimesSkeleton /> : null}>
+      <Suspense fallback={active ? <RestockTimesSkeleton /> : null}>
         <RestockTimes watches={watches} />
       </Suspense>
 
-      <section className="pane mt-6 p-5 sm:p-6">
-        <h2 className="text-xl font-semibold">Alerts</h2>
-        <WatchList
-          watches={watches.map((w) => {
-            const s = w.storeNumbers.length === 1 ? STORE_INDEX.get(w.storeNumbers[0]) : undefined;
-            const legacyWhere = w.storeNumbers.length > 1 ? `${w.storeNumbers.length} stores` : w.zip ? `within ${w.radiusMiles ?? 50} mi of ${w.zip}` : w.lat != null ? `within ${w.radiusMiles ?? 50} mi of your location` : w.storeNumbers.length === 0 ? "every US store" : null;
-            return {
-              id: w.id, model: w.model, storage: w.storages[0] ?? null, color: w.colors[0] ?? null, paused: w.paused, active: w.active, covered: covered.has(w.id), createdAt: w.createdAt.toISOString(),
-              store: s ? { number: s.storeNumber, name: s.name, city: s.city, code: stateCodeOf(s), href: storePath(s) } : null,
-              deactivatedReason: w.deactivatedReason ?? null,
-              legacy: { storages: w.storages, colors: w.colors, where: legacyWhere },
-            };
-          })}
-        />
-      </section>
-
-      <section className="pane mt-6 p-5 sm:p-6">
-        <h2 className="text-xl font-semibold">Sent alerts</h2>
-        {sent.length === 0 ? <p className="mt-2 text-sm text-ink-3">Nothing sent yet.</p> : (
-          <ul className="mt-3 divide-y divide-line text-sm">
+      <Section id="sent" title="Sent alerts" defaultOpen={false} summary={sent.length ? `Last one ${timeAgo(sent[0].createdAt)}` : "Nothing sent yet"}>
+        {sent.length === 0 ? <p className="text-sm text-ink-3">Nothing sent yet.</p> : (
+          <ul className="divide-y divide-line text-sm">
             {sent.map((n) => {
               const item = PART_INDEX.get(n.partNumber); const store = STORE_INDEX.get(n.storeNumber);
-              return <li key={n.id} className="flex justify-between gap-3 py-2"><span>{item ? `${item.model} ${item.storage} ${item.color}` : n.partNumber} · Apple {store?.name ?? n.storeNumber}</span><span className="text-ink-3">{n.channel === "push" ? "notification" : "email"} · {n.status} · {timeAgo(n.createdAt)}</span></li>;
+              return <li key={n.id} className="flex justify-between gap-3 py-2"><span>{item ? `${item.model} ${item.storage} ${item.color}` : n.partNumber} · Apple {store?.name ?? n.storeNumber}</span><span className="shrink-0 text-ink-3">{n.channel === "push" ? "notification" : "email"} · {n.status} · {timeAgo(n.createdAt)}</span></li>;
             })}
           </ul>
         )}
-      </section>
+      </Section>
     </div>
   );
 }

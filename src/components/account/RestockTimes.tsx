@@ -68,7 +68,7 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
 
   return (
     <>
-      <section className="pane mt-6 p-5 sm:p-6" aria-labelledby="restock-times">
+      <section className="pane p-5 sm:p-6" aria-labelledby="restock-times">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <h2 id="restock-times" className="text-xl font-semibold">When your stores restock</h2>
           <span className="text-xs text-ink-3">{what} · {plural(own.length, "store")} · last {mine.days} days · {zone} time</span>
@@ -133,13 +133,13 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
 export function RestockTimesSkeleton() {
   return (
     <>
-      <section className="pane mt-6 p-5 sm:p-6" aria-hidden>
+      <section className="pane p-5 sm:p-6" aria-hidden>
         <div className="skeleton h-6 w-56" />
         <div className="skeleton mt-3 h-4 w-full max-w-xl" />
         <div className="mt-4 flex h-32 items-end gap-[3px]">{Array.from({ length: 24 }, (_, i) => <div key={i} className="skeleton flex-1" style={{ height: `${20 + ((i * 37) % 60)}%` }} />)}</div>
         <div className="skeleton mt-6 h-16 w-full" />
       </section>
-      <section className="pane mt-6 p-5 sm:p-6" aria-hidden>
+      <section className="pane p-5 sm:p-6" aria-hidden>
         <div className="skeleton h-6 w-44" />
         <div className="skeleton mt-3 h-4 w-full max-w-lg" />
         <div className="mt-5 space-y-3">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton h-6 w-full" />)}</div>

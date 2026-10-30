@@ -20,7 +20,7 @@ Live at <https://pickupchecker.com>. Independent service, not affiliated with Ap
   notification click, subscription rotation), VAPID keys (`VAPID_*`), install guide components.
 * `src/app/` — the Next.js 16 site: live stock pages (public, SEO), the live map (`/map`, MapLibre +
   OpenFreeMap tiles, no key), the illustrated install guide (`/install`), a single-surface sign-up
-  wizard (Clerk email code, custom UI), Stripe Checkout, account page with the notification switch
+  alert setup (two sections, phones × stores; Clerk email code, custom UI), Stripe Checkout, account page with the notification switch
   and device list, and the ops console at `/admin` (password `ADMIN_PASSWORD`): node status board,
   24 h health strips, request/sweep/alert charts, every log with filters, stock, users, errors, system parameters.
 * Postgres 17 on the same host as the poller (`infra/linode/postgres.sh`: TLS from its own CA, one role

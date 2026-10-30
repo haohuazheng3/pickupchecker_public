@@ -30,6 +30,7 @@ import { SourceList } from "@/components/content/RichFaq";
 import { emptyFacts } from "@/lib/content/facts";
 import { storePhotos } from "@/content/store-photos";
 import { SALES_TAX, SALES_TAX_SOURCE, withTax } from "@/content/sales-tax";
+import { AlertPanelFor } from "@/components/alerts/AlertPanelServer";
 
 export const dynamic = "force-dynamic";
 
@@ -153,6 +154,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
           <Link href={alert} className="btn btn-primary btn-sm">Alert me for {duo.short} here</Link>
         </div>
       </div>
+      <AlertPanelFor href={alert} summary={`For Apple ${s.name}: pick the phones, tick this store and any nearby`} />
 
       <div className="mt-6"><ModelPlaceCards place={storePlace(s)} stockNow={d.stockNow} of={Object.fromEntries(MODELS.map((m) => [m.key, catalogFor(m.key).length])) as Record<ModelKey, number>} unit="configs in stock" /></div>
       <div className="mt-3"><PlaceStatStrip stores={1} stockNow={d.stockNow} stats={d.pstats} storeMode /></div>

@@ -30,6 +30,7 @@ import { SourceList } from "@/components/content/RichFaq";
 import { emptyFacts } from "@/lib/content/facts";
 import { SALES_TAX_SOURCE } from "@/content/sales-tax";
 import { placePhotos } from "@/content/place-photos";
+import { AlertPanelFor } from "@/components/alerts/AlertPanelServer";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +114,7 @@ export default async function CityPage({ params }: PageProps<"/stores/[state]/[c
           <Link href={alert} className="btn btn-primary btn-sm">Alert me in {c.name}</Link>
         </div>
       </div>
+      <AlertPanelFor href={alert} summary={`Pick the phones and tick the ${c.name} stores you can get to`} />
 
       <div className="mt-6"><ModelPlaceCards place={cityPlace(c.state, c.name) ?? storePlace(stores[0])} stockNow={d.stockNow} of={stores.length} unit="stores with it" /></div>
       <div className="mt-3"><PlaceStatStrip stores={stores.length} stockNow={d.stockNow} stats={d.pstats} /></div>

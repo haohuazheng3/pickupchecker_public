@@ -1,7 +1,8 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { MODELS, modelByKey, STORE_INDEX, appleFamilyUrl, type ModelKey } from "@/lib/apple/catalog";
 import { restockFeed, restockCounts, stockByStore } from "@/lib/stock/queries";
-import { WizardServer } from "@/components/wizard/WizardServer";
+import { HomeAlertSetup } from "@/components/alerts/AlertSetup";
+import { buildPhoneCatalog } from "@/components/alerts/catalog";
 import { wizardStartFrom } from "@/lib/wizardStart";
 import { productFor, productPath, storePlace } from "@/lib/seo/products";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: { type: "website", siteName: "PickupChecker", title: HOME_TITLES.main.title, description: HOME_TITLES.description, url: "/" },
 };
 
-/** Home: the Duo restock board first (that is what visitors come for), the alert wizard beside it, the pitch below. */
+/** Home: the Duo restock board first (that is what visitors come for), the alert setup (phones × stores) beside it, the pitch below. */
 export default async function Home({ searchParams }: PageProps<"/">) {
   const sp = await searchParams;
   const start = wizardStartFrom((k) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined));
@@ -56,10 +57,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <section className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
         <div className="min-w-0">
           {/* Rendered with the page, not behind Suspense: a 288 px fallback swapped for the full board (1,148 px on
-              a phone) pushed the wizard down 860 px after the first paint (PSI CLS 0.149 in some runs). */}
+              a phone) pushed the alert setup down 860 px after the first paint (PSI CLS 0.149 in some runs). */}
           <Board model={model} />
         </div>
-        <WizardServer initialModel={start.initialModel} initialStorage={start.initialStorage} initialColor={start.initialColor} initialStore={start.initialStore} initialState={start.initialState} initialCity={start.initialCity} startSignIn={startSignIn} next={next} />
+        <HomeAlertSetup catalog={buildPhoneCatalog()} signInOnly={startSignIn} next={next}
+          start={{ model: start.requested ? start.initialModel : undefined, storage: start.initialStorage, color: start.initialColor, store: start.initialStore, state: start.initialState, city: start.initialCity }} />
       </section>
 
       <section className="mt-6 flex flex-wrap items-center gap-2 text-sm text-ink-3">

@@ -9,6 +9,7 @@ import { userPlan } from "@/lib/billing";
 import { coveredWatchIds, SAVE_CAP } from "@/lib/plans";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { deviceSummary } from "@/lib/devices";
+import { alertSetOf, reconcile } from "@/lib/alertSet";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -147,6 +148,49 @@ export async function POST(req: Request) {
     removed: retiring.length,
     plan: { key: plan.key, limit: plan.limit, used: rows.filter((w) => w.active).length },
     devices,
+  });
+}
+
+/** The whole alert set at once (the dashboard and the alert panels): phones × stores, ticked in place. */
+export const SetBody = z.object({ phones: z.array(phone).max(30), stores: z.array(storeNumber).max(SAVE_CAP) });
+
+/**
+ * Make the account's active rules exactly phones × stores: create what is missing (store-major, a
+ * millisecond apart, so the plan's "oldest rules send" follows tick order) and switch off the rest. Every
+ * tick on the dashboard sends the whole set, so a burst of taps settles on the last one.
+ */
+export async function PUT(req: Request) {
+  const u = await ensureUser();
+  if (!u) return NextResponse.json({ error: "sign in first" }, { status: 401 });
+  if (!(await rateLimit(`alert-set:${u.id}`, 600, 60 * 60 * 1000))) return NextResponse.json({ error: "too many changes — wait a minute" }, { status: 429 });
+  const parsed = SetBody.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "bad request", issues: parsed.error.issues }, { status: 400 });
+  const phones = phonesOf({ items: parsed.data.phones });
+  const stores = [...new Set(parsed.data.stores)];
+  for (const p of phones) {
+    if (!catalogFor(p.model).find((c) => c.storage === p.storage && c.color === p.color)) return NextResponse.json({ error: `unknown configuration ${p.model} ${p.storage} ${p.color}` }, { status: 400 });
+  }
+  const unknown = stores.find((n) => !STORE_INDEX.has(n));
+  if (unknown) return NextResponse.json({ error: `unknown store ${unknown}` }, { status: 400 });
+  if (phones.length * stores.length > SAVE_CAP) return NextResponse.json({ error: `that is ${phones.length * stores.length} alerts — at most ${SAVE_CAP} per account` }, { status: 400 });
+
+  const [existing, { plan, sub }] = await Promise.all([db().select(ROW).from(schema.watches).where(eq(schema.watches.userId, u.id)) as Promise<Row[]>, userPlan(u.id)]);
+  const { add, retire } = reconcile(existing, { phones, stores });
+  if (retire.length) await db().update(schema.watches).set({ active: false, updatedAt: new Date() }).where(and(eq(schema.watches.userId, u.id), inArray(schema.watches.id, retire)));
+  if (add.length) {
+    await db()
+      .insert(schema.watches)
+      .values(add.map((c, i) => ({ id: randomUUID(), userId: u.id, subscriptionId: sub?.id ?? null, model: c.model, storages: [c.storage], colors: [c.color], storeNumbers: [c.storeNumber], createdAt: sql`now() + ${i} * interval '1 millisecond'` })))
+      .onConflictDoNothing();
+  }
+  const rows = add.length || retire.length ? ((await db().select(ROW).from(schema.watches).where(eq(schema.watches.userId, u.id))) as Row[]) : existing;
+  const active = rows.filter((w) => w.active).length;
+  return NextResponse.json({
+    set: alertSetOf(rows),
+    plan: { key: plan.key, limit: plan.limit, used: active },
+    covered: Math.min(active, plan.limit),
+    added: add.length,
+    removed: retire.length,
   });
 }
 

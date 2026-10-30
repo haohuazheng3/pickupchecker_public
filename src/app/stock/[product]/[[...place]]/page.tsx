@@ -27,6 +27,7 @@ import { Figure } from "@/components/content/Figure";
 import { QuickCheckServer } from "@/components/content/QuickCheckServer";
 import { KeywordSections, slugId } from "@/components/content/KeywordSections";
 import { RichFaq, SourceList } from "@/components/content/RichFaq";
+import { AlertPanelFor } from "@/components/alerts/AlertPanelServer";
 
 export const dynamic = "force-dynamic";
 
@@ -155,6 +156,7 @@ export default async function ProductPlacePage({ params }: { params: Promise<Par
         {configItem && !atStore && <a href={appleBuyUrl(configItem)} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm">Buy on apple.com</a>}
         <Link href={placePagePath(place)} className="btn btn-ghost btn-sm max-w-full truncate">{place.level === "us" ? "All stores" : atStore ? "Every iPhone here" : `Every iPhone ${inPlace(place)}`}</Link>
       </div>
+      <AlertPanelFor href={placeAlert(product, place)} summary={`For ${product.name}${place.level === "us" ? "" : ` ${inPlace(place)}`}: tick the configurations and stores`} />
 
       {place.level === "us" && <div className="mt-5 max-w-3xl"><QuickCheckServer model={product.model} product={product} /></div>}
 

@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "./db";
 import { stripe } from "./stripe";
 import { env } from "./env";
-import { PLANS, planFromPrice, priceIdFor, effectivePlan, type PaidPlanKey } from "./plans";
+import { PLANS, comparePlans, planFromPrice, priceIdFor, effectivePlan, type PaidPlanKey } from "./plans";
 
 /** Upsert a subscription row from a Stripe subscription object (idempotent). */
 export async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
@@ -116,29 +116,106 @@ export class BillingPermissionError extends Error {
   constructor(public missing: string) { super(`Stripe key lacks ${missing}`); }
 }
 
+/** What switching plans would do, shown before the user confirms. Money in cents (USD). */
+export interface PlanChangePreview {
+  from: PaidPlanKey; to: PaidPlanKey; upgrade: boolean;
+  /** Charged today (upgrade) or credited to the account (downgrade, negative). */
+  nowCents: number;
+  /** Stripe's own figure (invoice preview) or our estimate from the days left in the period. */
+  exact: boolean;
+  /** The monthly price from the next renewal on, after any lasting discount. */
+  monthlyCents: number;
+  renewsAt: string | null;
+  daysLeft: number;
+  /** "Visa ·· 4242" when Stripe lets us read it. */
+  card: string | null;
+  /** Unix seconds: the moment the preview prices, sent back on confirm so the charge matches it. */
+  prorationDate: number;
+}
+
+type Disc = { coupon?: Coupon | string | null; source?: { coupon?: Coupon | string | null } | null; end?: number | null };
+type Coupon = { percent_off?: number | null; amount_off?: number | null; duration?: string | null };
+
+/** The share of a price that is still paid under the subscription's discounts (1 = none, 0 = free). */
+function paidShare(discounts: unknown[]): number {
+  let share = 1;
+  for (const d of discounts) {
+    if (!d || typeof d !== "object") continue;
+    const c = ((d as Disc).coupon ?? (d as Disc).source?.coupon) as Coupon | string | null | undefined;
+    if (c && typeof c === "object" && c.percent_off) share *= 1 - c.percent_off / 100;
+  }
+  return Math.max(0, share);
+}
+
+export async function previewPlanChange(subscriptionId: string, to: PaidPlanKey): Promise<PlanChangePreview> {
+  const s = stripe();
+  // Discounts with their coupons (a promo code may take some or all of the price), when the key may read them.
+  const sub = await s.subscriptions.retrieve(subscriptionId, { expand: ["discounts.source.coupon"] })
+    .catch(() => s.subscriptions.retrieve(subscriptionId, { expand: ["discounts"] }))
+    .catch(() => s.subscriptions.retrieve(subscriptionId));
+  const item = sub.items.data[0];
+  if (!item) throw new Error("subscription has no item");
+  const from = planFromPrice({ id: item.price.id, metadata: item.price.metadata, unit_amount: item.price.unit_amount });
+  const now = Math.floor(Date.now() / 1000);
+  const start = item.current_period_start, end = item.current_period_end;
+  const left = Math.max(0, Math.min(1, (end - now) / Math.max(1, end - start)));
+  const share = paidShare((sub.discounts ?? []) as unknown[]);
+  const oldCents = item.price.unit_amount ?? PLANS[from].priceUsd * 100, newCents = PLANS[to].priceUsd * 100;
+  let nowCents = Math.round((newCents - oldCents) * left * share), exact = false;
+  try {
+    // Exact, when the key may read invoices: the invoice Stripe would raise right now for the switch.
+    const inv = await s.invoices.createPreview({
+      customer: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
+      subscription: sub.id,
+      subscription_details: { items: [{ id: item.id, price: priceIdFor(to) }], proration_behavior: "always_invoice", proration_date: now },
+    });
+    nowCents = inv.total; exact = true;
+  } catch { /* estimate stands */ }
+  let card: string | null = null;
+  const pm = sub.default_payment_method ?? null;
+  if (pm) {
+    try {
+      const m = typeof pm === "string" ? await s.paymentMethods.retrieve(pm) : pm;
+      if (m.card) card = `${m.card.brand.charAt(0).toUpperCase()}${m.card.brand.slice(1)} ·· ${m.card.last4}`;
+      else if (m.type === "link") card = "Link";
+    } catch { /* not readable with this key */ }
+  }
+  return {
+    from, to, upgrade: comparePlans(to, from) > 0, nowCents, exact,
+    monthlyCents: Math.round(newCents * share), renewsAt: end ? new Date(end * 1000).toISOString() : null,
+    daysLeft: Math.round(((end - now) / 86400) * 10) / 10, card, prorationDate: now,
+  };
+}
+
 /**
- * Move an existing subscription to another paid plan. In place and prorated when the key may update
- * subscriptions; otherwise through Stripe's hosted plan-change page (customer portal), whose URL is
- * returned for the browser to open. Throws BillingPermissionError when neither is allowed.
+ * Move an existing subscription to another paid plan, after the user confirmed the preview. The difference
+ * is invoiced at once (an upgrade is charged, a downgrade becomes account credit), and with
+ * pending_if_incomplete the new plan only takes hold once that payment succeeds: a card that needs the
+ * bank's confirmation (3-D Secure) or is declined leaves the old plan in place ({ pending: true }).
  */
-export async function changePlan(subscriptionId: string, plan: PaidPlanKey, customerId?: string | null): Promise<{ url?: string }> {
+export async function changePlan(subscriptionId: string, plan: PaidPlanKey, prorationDate?: number): Promise<{ pending?: boolean }> {
   const s = stripe();
   try {
     const sub = await s.subscriptions.retrieve(subscriptionId);
     const item = sub.items.data[0];
     if (!item) throw new Error("subscription has no item");
+    // A plan change keeps the subscription going (pending updates take no other parameters, so separately).
+    if (sub.cancel_at_period_end) await s.subscriptions.update(subscriptionId, { cancel_at_period_end: false });
+    const now = Math.floor(Date.now() / 1000);
+    const at = prorationDate && prorationDate <= now && now - prorationDate < 30 * 60 && prorationDate >= item.current_period_start ? prorationDate : now;
     const updated = await s.subscriptions.update(subscriptionId, {
       items: [{ id: item.id, price: priceIdFor(plan) }],
-      proration_behavior: "create_prorations",
-      cancel_at_period_end: false,
-      metadata: { ...sub.metadata, plan },
+      proration_behavior: "always_invoice",
+      proration_date: at,
+      payment_behavior: "pending_if_incomplete",
     });
-    await syncSubscription(updated);
+    if (updated.pending_update) return { pending: true };
+    const tagged = await s.subscriptions.update(subscriptionId, { metadata: { ...updated.metadata, plan } }).catch(() => updated);
+    await syncSubscription(tagged);
     return {};
   } catch (e) {
-    if (!isPermissionError(e)) throw e;
-    if (!customerId) throw new BillingPermissionError("Subscriptions write");
-    throw new BillingPermissionError("Subscriptions write");
+    if (isPermissionError(e)) throw new BillingPermissionError("Subscriptions write");
+    throw e;
   }
 }
 

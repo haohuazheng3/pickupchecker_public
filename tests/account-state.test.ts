@@ -1,37 +1,20 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { ownedKeys, pickDelta, ruleKey, storesOwnedFor } from "@/lib/alertPicks";
 import { summarizeDevices } from "@/lib/devices";
-import { Body } from "@/app/api/watches/route";
+import { Body, SetBody } from "@/app/api/watches/route";
 import { identify, track } from "@/lib/track";
 
 const nightSky = { model: "duo", storage: "512GB", color: "Night Sky" };
-const starWhite = { model: "duo", storage: "512GB", color: "Star White" };
-const row = (p: typeof nightSky, store: string, active = true) => ({ active, model: p.model, storages: [p.storage], colors: [p.color], storeNumbers: [store] });
 
-describe("store picks for a signed-in user (+ Stores)", () => {
-  const owned = ownedKeys([row(nightSky, "R1"), row(nightSky, "R2"), row(starWhite, "R3"), row(nightSky, "R9", false), { active: true, model: "duo", storages: [], colors: [], storeNumbers: ["R5"] }]);
-  it("keeps only active one-store rules", () => {
-    expect([...owned]).toEqual([ruleKey(nightSky, "R1"), ruleKey(nightSky, "R2"), ruleKey(starWhite, "R3")]);
-  });
-  it("starts the phone's own stores ticked, in the order they were set up", () => {
-    expect(storesOwnedFor(owned, [nightSky])).toEqual(["R1", "R2"]);
-    expect(storesOwnedFor(owned, [starWhite, nightSky])).toEqual(["R1", "R2", "R3"]);
-    expect(storesOwnedFor(owned, [{ ...nightSky, color: "Silver" }])).toEqual([]);
-  });
-  it("counts what saving would change: nothing, additions, and unticked stores switched off", () => {
-    expect(pickDelta([nightSky], ["R1", "R2"], owned)).toEqual({ added: 0, off: 0, offStores: [] });
-    expect(pickDelta([nightSky], ["R1", "R2", "R4"], owned)).toEqual({ added: 1, off: 0, offStores: [] });
-    expect(pickDelta([nightSky], ["R2", "R4"], owned)).toEqual({ added: 1, off: 1, offStores: ["R1"] });
-    // Two phones: each ticked store is one alert per phone that lacks it.
-    expect(pickDelta([nightSky, starWhite], ["R1", "R2", "R3"], owned)).toEqual({ added: 3, off: 0, offStores: [] });
-    // No account data (visitor): every tick is new.
-    expect(pickDelta([nightSky], ["R1", "R4"], null)).toEqual({ added: 2, off: 0, offStores: [] });
-  });
-  it("accepts a save that only switches stores off, and still needs some store", () => {
+describe("alert requests", () => {
+  it("adds and switches off stores for some phones (POST)", () => {
     expect(Body.safeParse({ items: [nightSky], storeNumbers: [], removeStoreNumbers: ["R123"] }).success).toBe(true);
-    expect(Body.safeParse({ items: [nightSky], storeNumbers: ["R124"], removeStoreNumbers: ["R123"] }).success).toBe(true);
     expect(Body.safeParse({ items: [nightSky], storeNumbers: [], removeStoreNumbers: [] }).success).toBe(false);
-    expect(Body.safeParse({ items: [nightSky], removeStoreNumbers: ["X1"] }).success).toBe(false);
+  });
+  it("sets the whole phones × stores set (PUT), empty lists included", () => {
+    expect(SetBody.safeParse({ phones: [nightSky], stores: ["R095", "R415"] }).success).toBe(true);
+    expect(SetBody.safeParse({ phones: [], stores: [] }).success).toBe(true);
+    expect(SetBody.safeParse({ phones: [{ ...nightSky, model: "galaxy" }], stores: [] }).success).toBe(false);
+    expect(SetBody.safeParse({ phones: [nightSky], stores: ["Fifth"] }).success).toBe(false);
   });
 });
 

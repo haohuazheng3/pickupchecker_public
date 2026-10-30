@@ -1,8 +1,9 @@
 "use client";
 /**
  * The one button of the product, floating over every page: "Alert me". It carries the page's context
- * into the wizard — a store page pre-ticks that store, a model page that model. Hidden inside the ops
- * console, at checkout, and while the wizard itself is on screen (the home page's #notify).
+ * into the alert setup — a store page pre-ticks that store, a model page that model; on a page with its
+ * own alert section the link opens that section in place (AlertLinkHost). Hidden inside the ops console,
+ * at checkout, on the dashboard, and while an alert setup is on screen (#notify).
  */
 import { useEffect, useState } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
@@ -55,7 +56,8 @@ export function AlertBar() {
     io.observe(el);
     return () => io.disconnect();
   }, [pathname, wizardMounted]);
-  if (pathname.startsWith("/admin") || pathname.startsWith("/checkout")) return null;
+  // The dashboard is the alert setup itself.
+  if (pathname.startsWith("/admin") || pathname.startsWith("/checkout") || pathname.startsWith("/account")) return null;
   return (
     <div className={`pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),1rem)] transition-[transform,opacity] duration-200 ${wizardVisible ? "translate-y-4 opacity-0" : ""}`} aria-hidden={wizardVisible}>
       <Link href={alertHref(pathname)} className={`btn btn-hero ${wizardVisible ? "pointer-events-none" : "pointer-events-auto"}`} tabIndex={wizardVisible ? -1 : undefined}>

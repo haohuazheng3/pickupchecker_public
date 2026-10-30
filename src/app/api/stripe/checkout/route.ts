@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { ensureUser } from "@/lib/auth";
-import { BillingPermissionError, createCheckout, changePlan, userPlan } from "@/lib/billing";
+import { BillingPermissionError, createCheckout, changePlan, portalUrl, userPlan } from "@/lib/billing";
 import { userById } from "@/lib/auth";
 import { comparePlans, isPaidPlan } from "@/lib/plans";
 import { db, schema } from "@/lib/db";
@@ -12,11 +12,14 @@ import { logOps } from "@/lib/ops";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const Body = z.object({ plan: z.enum(["plus", "pro", "max"]), watchId: z.string().min(1).optional() });
+const Body = z.object({ plan: z.enum(["plus", "pro", "max"]), watchId: z.string().min(1).optional(), confirm: z.boolean().optional(), prorationDate: z.number().int().positive().optional() });
 
 /**
- * Pick a paid plan. No subscription yet → Stripe Checkout (card or Link). Already on a paid plan →
- * switch it in place (upgrade or downgrade, prorated). Same plan → nothing to do.
+ * Pick a paid plan. No subscription yet → Stripe Checkout (card or Link; Stripe's page is the review).
+ * Already on a paid plan → switch only with `confirm: true`, after the user saw the preview
+ * (POST /api/billing/preview); a request without it gets { needsConfirm } and changes nothing. The
+ * difference is charged now; if the bank wants to confirm it, the old plan stays and the user is sent to
+ * Stripe's billing page to finish. Same plan → nothing to do.
  */
 export async function POST(req: Request) {
   const u = await ensureUser();
@@ -32,11 +35,16 @@ export async function POST(req: Request) {
     const current = await userPlan(u.id);
     if (current.sub && isPaidPlan(current.plan.key)) {
       if (comparePlans(plan, current.plan.key) === 0) return NextResponse.json({ alreadySubscribed: true, url: "/account" });
-      const row = await userById(u.id);
-      const r = await changePlan(current.sub.id, plan, row?.stripeCustomerId);
-      if (r.url) return NextResponse.json({ url: r.url }); // Stripe's hosted plan-change page
+      if (!parsed.data.confirm) return NextResponse.json({ needsConfirm: true, url: "/account#plan" });
+      const r = await changePlan(current.sub.id, plan, parsed.data.prorationDate);
+      if (r.pending) {
+        const row = await userById(u.id);
+        await logOps("web", "warn", `plan change ${current.plan.key} → ${plan} waits for payment`, { userId: u.id });
+        const url = row?.stripeCustomerId ? await portalUrl(row.stripeCustomerId).catch(() => null) : null;
+        return NextResponse.json({ pending: true, url, error: "Your bank needs to confirm the payment. Your plan stays as it is until it goes through." }, { status: 402 });
+      }
       await logOps("web", "info", `plan changed ${current.plan.key} → ${plan}`, { userId: u.id });
-      return NextResponse.json({ changed: true, url: `/account?plan=${plan}` });
+      return NextResponse.json({ changed: true, plan });
     }
     const url = await createCheckout(u.id, u.email, plan, watchId ?? null);
     return NextResponse.json({ url });

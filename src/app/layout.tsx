@@ -5,8 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { AlertBar } from "@/components/site/AlertBar";
-import { AlertDialogHost } from "@/components/wizard/AlertDialog";
-import { buildWizardCatalog } from "@/components/wizard/WizardServer";
+import { AlertLinkHost } from "@/components/alerts/AlertLinkHost";
 import { THEME_BOOT, THEME_COLORS } from "@/lib/theme";
 import { Analytics } from "@/components/site/Analytics";
 import { PwaBoot } from "@/components/pwa/PwaBoot";
@@ -63,7 +62,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <main className="flex-1 pb-24 sm:pb-28"><NavSkeleton>{children}</NavSkeleton></main>
           <Footer />
           <AlertBar />
-          <AlertDialogHost catalog={buildWizardCatalog()} />
+          <AlertLinkHost />
           <FreshOnReturn />
         </ClerkProvider>
         <Analytics />
