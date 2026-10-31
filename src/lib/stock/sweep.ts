@@ -38,12 +38,29 @@ export interface SweepOptions {
   host: string;
   /** Called after each request (for metrics / adaptive pacing). */
   onResult?: (r: { task: SweepTask; status: number; ok: boolean; ms: number; label: string }) => void;
+  /**
+   * Retry each failed task once at the end of the sweep, through a fresh egress identity (default on).
+   * 147 stores sit under a single anchor, so a failed request otherwise leaves half their phones a round
+   * behind. Skipped when the first pass mostly failed or ran long: that is an outage, not a blip.
+   */
+  retryFailed?: boolean;
+}
+
+/** Retry pass rules: only when failures are a minority and the first pass left time for it. */
+export function shouldRetry(failed: number, tasks: number, firstPassMs: number): boolean {
+  return failed > 0 && failed <= tasks / 2 && firstPassMs < 40_000;
 }
 
 export interface SweepSummary {
   id: string;
   requests: number;
+  /** Failed requests, retries included. */
   failures: number;
+  /** Tasks that failed, were retried, and then succeeded. */
+  recovered: number;
+  /** Tasks still without an answer after the sweep (their pairs wait for the next round). */
+  unresolved: number;
+  tasks: number;
   throttled: number;
   timeouts: number;
   storesCovered: number;
@@ -70,10 +87,12 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
   let requests = 0, failures = 0, throttled = 0, timeouts = 0, held = 0, exhausted = false;
   const logRows: (typeof schema.pollLog.$inferInsert)[] = [];
 
-  let cursor = 0;
+  let queue = tasks, cursor = 0;
+  const failed: SweepTask[] = [];
+  let retrying = false, recovered = 0;
   const worker = async () => {
-    while (cursor < tasks.length && !exhausted) {
-      const task = tasks[cursor++];
+    while (cursor < queue.length && !exhausted) {
+      const task = queue[cursor++];
       const slot = await opts.egress.acquire();
       if (!slot) { exhausted = true; cursor--; break; }
       const t0 = Date.now();
@@ -89,7 +108,8 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
       slot.release(status);
       requests++;
       const ok = Boolean(res?.ok);
-      if (!ok) failures++;
+      if (!ok) { failures++; if (!retrying) failed.push(task); }
+      else if (retrying) recovered++;
       if (status === 541 || status === 429 || status === 403) throttled++;
       logRows.push({
         at: new Date(), sweepId: id, egress: slot.label, anchor: task.anchor.location, batch: task.batchIndex,
@@ -121,6 +141,13 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
   const notified = { matched: 0, sent: 0, failed: 0, skipped: 0 };
   const notifyJobs: Promise<void>[] = [];
   await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, worker));
+  const firstPassMs = Date.now() - started.getTime();
+  const notAttempted = exhausted ? tasks.length - cursor : 0;
+  if (opts.retryFailed !== false && !exhausted && shouldRetry(failed.length, tasks.length, firstPassMs)) {
+    queue = failed; cursor = 0; retrying = true;
+    await Promise.all(Array.from({ length: Math.min(concurrency, failed.length) }, worker));
+  }
+  const unresolved = failed.length - recovered + notAttempted;
   // Give in-flight alerts a moment to land in this sweep's numbers; stragglers finish in the background.
   await Promise.race([Promise.allSettled(notifyJobs), new Promise((r) => setTimeout(r, 5000))]);
 
@@ -134,7 +161,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
     .update(schema.sweeps)
     .set({ finishedAt: finished, requests, failures, storesCovered: covered.size, transitions: allTransitions.length, durationMs: finished.getTime() - started.getTime() })
     .where((await import("drizzle-orm")).eq(schema.sweeps.id, id));
-  return { id, requests, failures, throttled, timeouts, storesCovered: covered.size, transitions: allTransitions.length, held, notified, durationMs: finished.getTime() - started.getTime(), exhausted };
+  return { id, requests, failures, recovered, unresolved, tasks: tasks.length, throttled, timeouts, storesCovered: covered.size, transitions: allTransitions.length, held, notified, durationMs: finished.getTime() - started.getTime(), exhausted };
 }
 
 /** Heartbeat written after every sweep; the watchdog and the admin page read it. */

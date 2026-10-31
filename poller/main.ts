@@ -4,8 +4,12 @@
  *  • every CADENCE_SEC (15) a sweep: 42 anchors × 2 part batches = 84 requests, CONCURRENCY at once (14)
  *  • egress "ipv6": each request binds a fresh random address inside IPV6_PREFIX (/64 or /56) that
  *    was routed to this host (AnyIP) — Apple counts per /128, so the per-IP budget never bites
- *  • adaptive: 541 share > 25% ⇒ pause 60 s and alert; 100% ⇒ switch to "vercel" egress
- *  • heartbeat after every sweep (the Vercel watchdog alerts when it stops)
+ *  • a failed request is retried once at the end of the sweep from a fresh address (sweep.ts)
+ *  • adaptive: 541 share > 25% ⇒ back off and alert; ≥ 90% failing for 2 rounds (541s, a dead route,
+ *    anything) ⇒ switch to the spare egress — the host's own IPv4, then the Vercel function — spent on
+ *    watched stores first (fallback.ts); full mode is probed again every 15 min
+ *  • heartbeat after every sweep (the Vercel watchdog alerts when it stops, or when the data goes stale)
+ *  • a sweep stuck for STUCK_MS exits the process, and systemd starts a fresh one
  *
  *  Env: DATABASE_URL, RESEND_API_KEY, IPV6_PREFIX (e.g. 2600:3c0a:e000:1b::/56, or "auto" = read
  *       IPV6_PREFIX_FILE written by anyip.sh, else derive the /64 of the first global address), SITE_URL,
@@ -16,7 +20,8 @@ import os from "node:os";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { Agent, fetch as undiciFetch } from "undici";
-import { runSweep, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
+import { buildTasks, runSweep, singleIdentityEgress, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
+import { fallbackOrder } from "../src/lib/stock/fallback";
 import { expireStale } from "../src/lib/stock/ingest";
 import { recordError, errorMessage } from "../src/lib/errors";
 import { prefixFromInterfaces, randomAddressIn } from "./ipv6";
@@ -31,6 +36,8 @@ const HOST = process.env.HOST_LABEL ?? os.hostname();
 const PREFIX = resolvePrefix(process.env.IPV6_PREFIX ?? "");
 const SITE = process.env.SITE_URL ?? "https://pickupchecker.com";
 const POLLER_TOKEN = process.env.POLLER_TOKEN ?? "";
+/** Longer than the worst honest sweep (84 requests all timing out: 6 waves × 15 s), short enough to matter. */
+const STUCK_MS = 180_000;
 
 /**
  * IPV6_PREFIX=auto → the prefix anyip.sh routed to lo (IPV6_PREFIX_FILE, default
@@ -101,6 +108,19 @@ class Ipv6Egress implements Egress {
   }
 }
 
+/* ---------------- egress: the host's own IPv4 (spare) ---------------- */
+
+const ipv4Agent = new Agent({ connect: { family: 4, timeout: 10_000 }, keepAliveTimeout: 1_000 });
+const fetchIpv4: FetchLike = async (url, init) => {
+  const res = await undiciFetch(url, { headers: init.headers, signal: init.signal, dispatcher: ipv4Agent });
+  return { status: res.status, text: () => res.text() };
+};
+
+/** Spare identities in order: whichever still has budget answers. */
+function firstAvailable(name: string, pool: Egress[]): Egress {
+  return { name, async acquire() { for (const e of pool) { const slot = await e.acquire(); if (slot) return slot; } return null; } };
+}
+
 /* ---------------- egress: vercel function (fallback) ---------------- */
 
 class VercelEgress implements Egress {
@@ -150,10 +170,12 @@ function rewrap(j: { ok: boolean; location?: string; stores?: { storeNumber: str
 async function main() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL missing");
   const ipv6 = PREFIX ? new Ipv6Egress(PREFIX) : null;
-  const vercel = new VercelEgress();
+  const spare = firstAvailable("spare", [singleIdentityEgress("ipv4", { used: 0, windowStart: Date.now(), cooldownUntil: 0 }, fetchIpv4), new VercelEgress()]);
   let mode: "full" | "degraded" = ipv6 ? "full" : "degraded";
   let consecutiveBad = 0;
   let lastAlert = 0;
+  /** When the spare egress took over; full mode is tried again 15 min later (not on the next round). */
+  let degradedSince = 0;
   console.log(`[poller] start host=${HOST} mode=${mode} cadence=${CADENCE_SEC}s prefix=${PREFIX || "(none)"}`);
   await writeState("poller:config", { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, prefix: PREFIX || null, startedAt: new Date().toISOString(), commit: COMMIT, node: process.version });
   await logOps("poller", "info", `poller started (${mode})`, { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, prefix: PREFIX || null, commit: COMMIT, node: process.version });
@@ -164,47 +186,65 @@ async function main() {
     });
   }
   let sweepsSinceStart = 0;
+  // A sweep that never returns (a hung socket, a stuck query) would keep the process alive and silent:
+  // exit instead, and systemd (Restart=always) starts a clean one.
+  let lastProgress = Date.now();
+  setInterval(() => {
+    if (Date.now() - lastProgress < STUCK_MS) return;
+    console.error(`[poller] no sweep finished for ${Math.round((Date.now() - lastProgress) / 1000)} s — exiting for a restart`);
+    void logOps("poller", "error", "sweep stuck — restarting the process", { host: HOST, stuckSec: Math.round((Date.now() - lastProgress) / 1000) }).catch(() => undefined);
+    setTimeout(() => process.exit(1), 2000);
+  }, 10_000);
 
   for (;;) {
     const t0 = Date.now();
     try {
-      const egress = mode === "full" && ipv6 ? ipv6 : vercel;
-      const before = ipv6 ? { ...ipv6.stats } : null;
-      const r = await runSweep({ egress, concurrency: mode === "full" ? CONCURRENCY : 1, mode, host: HOST });
+      const egress = mode === "full" && ipv6 ? ipv6 : spare;
+      // Spare identities have a few requests per half hour: spend them on watched, stale pairs first.
+      // About 50 requests per 35 min between the two (25 each): one every 40 s spreads them evenly.
+      const tasks = egress === spare ? (await fallbackOrder(buildTasks()).catch(() => buildTasks())).slice(0, 1) : undefined;
+      const r = await runSweep({ egress, tasks, concurrency: mode === "full" ? CONCURRENCY : 1, mode, host: HOST, retryFailed: egress !== spare });
       const throttledShare = r.requests ? r.throttled / r.requests : 0;
+      const failedShare = r.tasks ? r.unresolved / r.tasks : 0;
       await writeHeartbeat({
         at: new Date().toISOString(), host: HOST, mode, cadenceSec: CADENCE_SEC, lastSweepId: r.id,
-        requests: r.requests, failures: r.failures, throttled: r.throttled, storesCovered: r.storesCovered,
+        requests: r.requests, failures: r.failures, recovered: r.recovered, unresolved: r.unresolved, throttled: r.throttled, storesCovered: r.storesCovered,
         transitions: r.transitions, held: r.held, notified: r.notified, durationMs: r.durationMs, egress: egress.name,
         ipv6Stats: ipv6 ? ipv6.stats : null, sys: hostVitals(), sweeps: ++sweepsSinceStart, consecutiveBad,
       });
-      void before;
-      console.log(`[sweep ${r.id.slice(0, 8)}] ${mode}/${egress.name} req=${r.requests} fail=${r.failures} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} held=${r.held} sent=${r.notified.sent} ${r.durationMs}ms`);
+      lastProgress = Date.now();
+      console.log(`[sweep ${r.id.slice(0, 8)}] ${mode}/${egress.name} req=${r.requests} fail=${r.failures} recovered=${r.recovered} unresolved=${r.unresolved} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} held=${r.held} sent=${r.notified.sent} ${r.durationMs}ms`);
 
-      if (mode === "full" && throttledShare >= 0.25) {
+      if (mode === "full" && (throttledShare >= 0.25 || failedShare >= 0.5)) {
         consecutiveBad++;
-        await logOps("poller", "warn", `Apple throttling ${Math.round(throttledShare * 100)}% of requests`, { sweepId: r.id, throttled: r.throttled, requests: r.requests, consecutiveBad });
+        const what = throttledShare >= 0.25 ? `Apple throttling ${Math.round(throttledShare * 100)}% of requests` : `${Math.round(failedShare * 100)}% of requests failing`;
+        await logOps("poller", "warn", what, { sweepId: r.id, throttled: r.throttled, unresolved: r.unresolved, requests: r.requests, consecutiveBad });
         if (consecutiveBad >= 3 && Date.now() - lastAlert > 30 * 60_000) {
           lastAlert = Date.now();
-          await notifyOwner(`[PickupChecker] Apple throttling ${Math.round(throttledShare * 100)}% of IPv6 requests`, `Host ${HOST}: ${r.throttled}/${r.requests} requests returned 541 in the last sweep. The poller slows down automatically; if this persists Apple may be counting the whole /64 — see docs/architecture.md.`).catch(() => undefined);
+          await notifyOwner(`[PickupChecker] ${what} (IPv6)`, `Host ${HOST}: ${r.throttled} of ${r.requests} requests returned 541 and ${r.unresolved} of ${r.tasks} tasks got no answer in the last sweep. The poller backs off, and switches to its spare egress when nearly everything fails; if this persists Apple may be counting the whole range, or the IPv6 route is gone — see docs/architecture.md.`).catch(() => undefined);
         }
-        if (throttledShare >= 0.9 && consecutiveBad >= 3) { mode = "degraded"; console.warn("[poller] switching to degraded (vercel egress)"); await logOps("poller", "error", "switched to degraded mode (Vercel egress)", { host: HOST, consecutiveBad }); }
+        if ((throttledShare >= 0.9 || failedShare >= 0.9) && consecutiveBad >= 2) {
+          mode = "degraded"; degradedSince = Date.now();
+          console.warn("[poller] switching to degraded (spare egress: host IPv4, then Vercel)");
+          await logOps("poller", "error", "switched to degraded mode (spare egress: host IPv4, then Vercel)", { host: HOST, consecutiveBad, throttledShare, failedShare });
+        }
       } else if (mode === "full") {
         consecutiveBad = 0;
-      } else if (mode === "degraded" && ipv6 && Date.now() - lastAlert > 15 * 60_000) {
+      } else if (mode === "degraded" && ipv6 && Date.now() - degradedSince > 15 * 60_000) {
         // probe: try full mode again every 15 min
-        mode = "full"; consecutiveBad = 0; lastAlert = Date.now();
+        mode = "full"; consecutiveBad = 0;
         await logOps("poller", "info", "probing full mode again (IPv6 egress)", { host: HOST });
       }
       // Statuses nobody has confirmed for 30 minutes become unknown (never "sold out" by silence).
       if (Math.random() < 0.05) await expireStale(30 * 60_000).catch(() => 0);
     } catch (e) {
+      lastProgress = Date.now(); // a failing sweep is progress of a kind: it returned
       console.error("[poller] sweep failed:", e);
       await recordError("poller", `sweep failed: ${errorMessage(e)}`, { host: HOST }).catch(() => undefined);
       await logOps("poller", "error", `sweep failed: ${errorMessage(e)}`, { host: HOST }).catch(() => undefined);
     }
     const elapsed = Date.now() - t0;
-    const pause = Math.max(2_000, (mode === "full" ? CADENCE_SEC : 60) * 1000 - elapsed + (consecutiveBad ? 40_000 : 0));
+    const pause = mode === "full" ? Math.max(2_000, CADENCE_SEC * 1000 - elapsed + (consecutiveBad ? 40_000 : 0)) : Math.max(2_000, 40_000 - elapsed);
     await new Promise((r) => setTimeout(r, pause));
   }
 }

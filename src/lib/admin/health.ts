@@ -142,7 +142,7 @@ export function computeNodes(s: HealthSnapshot): NodeHealth[] {
     key: "cron", name: "Watchdog cron (Vercel)", href: "/admin/logs?t=ops&source=cron",
     state: cronAge < 3 * MIN ? (s.watchdog?.down ? "warn" : "ok") : cronAge < 15 * MIN ? "warn" : "bad",
     value: s.watchdog?.down ? `degraded since ${fmtAge(ageMs(s.watchdog.since, s.now))}` : `tick ${fmtAge(cronAge)}`,
-    detail: `${s.cron.ticksHour} runs in the last hour (expected 60) · switches to serverless polling when the heartbeat is 2 min old`,
+    detail: `${s.cron.ticksHour} runs in the last hour (expected 60) · switches to serverless polling when the heartbeat is 75 s old, mails when stock checks stop landing`,
   });
 
   // 7. alerts

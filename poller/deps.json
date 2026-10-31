@@ -18,6 +18,7 @@
   "src/lib/push/payload.ts",
   "src/lib/push/policy.ts",
   "src/lib/push/server.ts",
+  "src/lib/stock/fallback.ts",
   "src/lib/stock/ingest.ts",
   "src/lib/stock/notify.ts",
   "src/lib/stock/sweep.ts"
