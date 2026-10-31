@@ -1,7 +1,7 @@
 /**
  * PickupChecker poller — runs on the VPS host (Linode or Hetzner, systemd), full mode.
  *
- *  • every CADENCE_SEC (20) a sweep: 33 anchors × 2 part batches = 66 requests, concurrency 8
+ *  • every CADENCE_SEC (15) a sweep: 42 anchors × 2 part batches = 84 requests, CONCURRENCY at once (14)
  *  • egress "ipv6": each request binds a fresh random address inside IPV6_PREFIX (/64 or /56) that
  *    was routed to this host (AnyIP) — Apple counts per /128, so the per-IP budget never bites
  *  • adaptive: 541 share > 25% ⇒ pause 60 s and alert; 100% ⇒ switch to "vercel" egress
@@ -25,8 +25,8 @@ import { notifyOwner } from "../src/lib/mail/owner";
 import { logOps } from "../src/lib/ops";
 import { pollerCodeHash } from "./codeHash.mjs";
 
-const CADENCE_SEC = Number(process.env.CADENCE_SEC ?? 20);
-const CONCURRENCY = Number(process.env.CONCURRENCY ?? 8);
+const CADENCE_SEC = Number(process.env.CADENCE_SEC ?? 15);
+const CONCURRENCY = Number(process.env.CONCURRENCY ?? 14);
 const HOST = process.env.HOST_LABEL ?? os.hostname();
 const PREFIX = resolvePrefix(process.env.IPV6_PREFIX ?? "");
 const SITE = process.env.SITE_URL ?? "https://pickupchecker.com";

@@ -97,7 +97,7 @@ export default async function StatePage({ params }: PageProps<"/stores/[state]">
         <div className="min-w-0">
           <h1 className="display text-3xl sm:text-5xl">{placeTitle(d.copy)}</h1>
           <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2"><Inline text={placeIntro(d.copy)} facts={facts} /></p>
-          <p className="mt-1 text-sm text-ink-3">{stores.length} stores · {cities.length} cit{cities.length > 1 ? "ies" : "y"} · checked every 20 s</p>
+          <p className="mt-1 text-sm text-ink-3">{stores.length} stores · {cities.length} cit{cities.length > 1 ? "ies" : "y"} · checked every 15 s</p>
           <div className="mt-3 flex flex-wrap gap-1.5">{cities.map((c) => <Link key={c.slug} href={cityPath(c.state, c.name)} className="chip px-3 py-1.5 text-xs">{c.name}<span className="text-ink-3"> · {c.stores.length}</span></Link>)}</div>
         </div>
         <div className="flex flex-wrap gap-2">

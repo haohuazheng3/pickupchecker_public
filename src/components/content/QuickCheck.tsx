@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { STORES, stateCodeOf, appleName, type ModelKey } from "@/lib/apple/catalog";
-import { rankStores, searchAnchor, formatDrive, formatMiles, type Anchor } from "@/lib/geo";
+import { rankStores, searchAnchor, formatDrive, formatMiles, zipAt, type Anchor } from "@/lib/geo";
+import { useZipPoint } from "@/lib/useZipPoint";
 import { productBySlug, productFor, productPath, storePlace } from "@/lib/seo/products";
 
 export interface QuickCheckData {
@@ -38,11 +39,15 @@ export function QuickCheck({ data, initialModel }: { data: QuickCheckData; initi
   const product = productBySlug(data.slugs[model]) ?? productFor(model);
   const what = data.label ?? meta.name;
 
+  const zipPt = useZipPoint(q);
   const anchor = useMemo<Anchor | null>(() => {
+    if (zipPt) return zipAt(zipPt.zip, zipPt);
     if (q.trim()) return searchAnchor(q);
     if (here) return { ...here, label: "you", kind: "here" };
     return null;
-  }, [q, here]);
+  }, [zipPt, q, here]);
+  // Miles only from the visitor (the device or their ZIP), never from a city or store centre.
+  const fromVisitor = anchor?.kind === "here" || (anchor?.kind === "zip" && !anchor.approx);
 
   const rows = useMemo(() => {
     if (anchor) return rankStores(anchor).slice(0, 6);
@@ -90,7 +95,7 @@ export function QuickCheck({ data, initialModel }: { data: QuickCheckData; initi
                 <Link href={productPath(product, storePlace(s))} className="flex items-center justify-between gap-3 py-2.5">
                   <span className="min-w-0">
                     <span className="block truncate font-medium text-ink">{appleName(s)}</span>
-                    <span className="block truncate text-xs text-ink-3">{s.city}, {stateCodeOf(s)}{s.distance >= 0 ? ` · ${formatMiles(s.distance)} · ${formatDrive(s.distance)}` : ""}</span>
+                    <span className="block truncate text-xs text-ink-3">{s.city}, {stateCodeOf(s)}{s.distance >= 0 && fromVisitor ? ` · ≈${formatMiles(s.distance)} · ${formatDrive(s.distance)}` : ""}</span>
                   </span>
                   <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${n > 0 ? "bg-accent text-[var(--accent-ink)]" : "bg-ink/10 text-ink-2"}`}>{n > 0 ? `${n}/${total} in stock` : "Sold out"}</span>
                 </Link>

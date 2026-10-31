@@ -8,7 +8,7 @@ export function GET() {
   const lines = [
     "# PickupChecker",
     "",
-    `> Live in-store pickup stock for the iPhone Duo, iPhone 18 Pro and iPhone 18 Pro Max at all ${STORES.length} US Apple Stores, checked about every 20 seconds, with phone alerts the moment a store lists a configuration. Browsing is free; alerts are Plus $5/month (10 alerts), Pro $10 (20), Max $20 (50).`,
+    `> Live in-store pickup stock for the iPhone Duo, iPhone 18 Pro and iPhone 18 Pro Max at all ${STORES.length} US Apple Stores, checked about every 15 seconds, with phone alerts the moment a store lists a configuration. Browsing is free; alerts are Plus $5/month (10 alerts), Pro $10 (20), Max $20 (50).`,
     "",
     "PickupChecker is independent and not affiliated with Apple. Stock means what apple.com lists for in-store pickup at the last check. A change counts only after a second confirming check, so a single glitchy response never becomes a restock or a sell-out. Every confirmed change is logged with a timestamp; restock counts, median time in stock and restock-hour charts on the site come from that log (tracking of all stores began October 29, 2026).",
     "",

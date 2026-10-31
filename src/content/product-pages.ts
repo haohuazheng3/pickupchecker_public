@@ -39,7 +39,7 @@ const PRO_PRICES: [string, string][] = [["256GB", "$1,199"], ["512GB", "$1,399"]
 
 export const PRODUCT_COPY: Record<string, ProductCopy> = {
   "iphone-duo": {
-    intro: "Right now **{{duo.storesNow}} of 269** US Apple Stores list an iPhone Duo for in-store pickup. We check all eight Night Sky and Star White configurations at every store about every 20 seconds, so this page shows what apple.com would tell you if you tried every store by hand.",
+    intro: "Right now **{{duo.storesNow}} of 269** US Apple Stores list an iPhone Duo for in-store pickup. We check all eight Night Sky and Star White configurations at every store about every 15 seconds, so this page shows what apple.com would tell you if you tried every store by hand.",
     sections: {
       "apple store duo": {
         lead: "Pickup is the dependable way to get a Duo from an Apple Store. Walk-in sales and pickup orders come out of the same store inventory, which is exactly what apple.com's pickup check reads, so a store that lists no Duo online has none to sell you at the counter either.",

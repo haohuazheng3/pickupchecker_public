@@ -90,8 +90,8 @@ write_files:
       MAIL_WORKER_TOKEN=__MAIL_WORKER_TOKEN__
       OWNER_EMAIL=haohuazheng001@gmail.com
       IPV6_PREFIX=auto
-      CADENCE_SEC=20
-      CONCURRENCY=10
+      CADENCE_SEC=15
+      CONCURRENCY=14
       HOST_LABEL=linode-1
   - path: /opt/pickupchecker/probe.sh
     permissions: "0755"

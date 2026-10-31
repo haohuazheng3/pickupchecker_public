@@ -268,7 +268,7 @@ export function explainer(kind: "state" | "city" | "store" | "model", place: str
   const at = kind === "store" ? place : kind === "model" ? "every US Apple Store" : `Apple Stores in ${place}`;
   return [
     `Pickup stock is sold on apple.com: pick a configuration and a store at checkout, pay online, collect in store, often the same day. It is separate from shelf stock and from carrier stores.`,
-    `PickupChecker checks every tracked configuration at ${at} every 20 seconds; a change counts only after a second confirming check, so a glitch never becomes a false restock or sell-out.`,
+    `PickupChecker checks every tracked configuration at ${at} every 15 seconds; a change counts only after a second confirming check, so a glitch never becomes a false restock or sell-out.`,
     `Every confirmed change is logged; that log feeds the restock chart and history on this page.`,
   ];
 }
@@ -355,7 +355,7 @@ export function productJsonLd(model: ModelKey, inStockStores: number) {
   const prices = items.map((i) => i.price);
   return {
     "@context": "https://schema.org", "@type": "Product", name: m.name, brand: { "@type": "Brand", name: "Apple" }, url: `${BASE}/stock/${m.slug}`,
-    description: `${m.name} in-store pickup availability at every US Apple Store, checked every 20 seconds.`,
+    description: `${m.name} in-store pickup availability at every US Apple Store, checked every 15 seconds.`,
     offers: { "@type": "AggregateOffer", priceCurrency: "USD", lowPrice: Math.min(...prices), highPrice: Math.max(...prices), offerCount: items.length, availability: inStockStores > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", seller: { "@type": "Organization", name: "Apple" } },
   };
 }

@@ -32,7 +32,7 @@ export const PRODUCT_TITLES: Record<string, EntryTitles> = {
       { keyword: "iphone 18 pro max in stock near me", title: "iPhone 18 Pro Max in stock near me: closest stores first" },
       { keyword: "iphone 18 pro max stock", title: "iPhone 18 Pro Max stock by storage and color" },
     ],
-    description: "Which Apple Stores have the iPhone 18 Pro Max right now? Live pickup stock for every storage and color at all 269 US stores, checked every 20 seconds.",
+    description: "Which Apple Stores have the iPhone 18 Pro Max right now? Live pickup stock for every storage and color at all 269 US stores, checked every 15 seconds.",
   },
   "iphone-18-pro-max-burgundy": {
     main: { keyword: "iphone 18 pro max burgundy", title: "iPhone 18 Pro Max Burgundy: Live Stock & Price", h1: "iPhone 18 Pro Max Burgundy: live stock and price" },
@@ -87,12 +87,12 @@ export const PRODUCT_TITLES: Record<string, EntryTitles> = {
 
 /** Home page (the category tool). */
 export const HOME_TITLES: EntryTitles = {
-  main: { keyword: "iphone stock checker", title: "iPhone Stock Checker: 269 Apple Stores, Checked Every 20s", h1: "iPhone stock checker for all 269 US Apple Stores" },
+  main: { keyword: "iphone stock checker", title: "iPhone Stock Checker: 269 Apple Stores, Checked Every 15s", h1: "iPhone stock checker for all 269 US Apple Stores" },
   h2: [
     { keyword: "apple inventory checker", title: "Apple inventory checker: Duo, 18 Pro and Pro Max by store" },
     { keyword: "apple store stock checker", title: "Apple Store stock checker with restock alerts" },
   ],
-  description: "Check iPhone Duo, 18 Pro and 18 Pro Max pickup stock at all 269 US Apple Stores, live every 20 seconds. Free to browse; get a push when your store restocks.",
+  description: "Check iPhone Duo, 18 Pro and 18 Pro Max pickup stock at all 269 US Apple Stores, live every 15 seconds. Free to browse; get a push when your store restocks.",
 };
 
 /** Store pages bound to measured keywords, keyed by store slug. `city` is set when a one-store city's query is bound too. */

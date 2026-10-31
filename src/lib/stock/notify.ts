@@ -4,7 +4,7 @@
  *
  *  match: active, unpaused rules of the same store × exact configuration (model, storage, colour)
  *  dedupe: one notification per (watch, event) — unique index; plus a per-(watch, store, part)
- *          cool-down so a flapping store does not mail every 20 s
+ *          cool-down so a flapping store does not mail every 15 s
  */
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";

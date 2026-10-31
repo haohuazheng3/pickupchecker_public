@@ -147,7 +147,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[state]/[
           <h1 className="display text-3xl sm:text-5xl">{title}</h1>
           <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2">{place}{street ? ` at ${street}` : ""} lists <b className="text-ink">{d.stockNow.duo} of {d.configs.duo}</b> iPhone Duo, <b className="text-ink">{d.stockNow["18-pro"]} of {d.configs["18-pro"]}</b> iPhone 18 Pro and <b className="text-ink">{d.stockNow["18-pro-max"]} of {d.configs["18-pro-max"]}</b> iPhone 18 Pro Max configurations for pickup right now. {today.label}. {taxLine}</p>
           <div className="mt-3"><StoreInfo store={s} showMapLink={false} /></div>
-          <p className="mt-2 text-sm text-ink-3">Checked <LiveAgo iso={d.summary?.lastCheckedAt ?? null} /> · every 20 s</p>
+          <p className="mt-2 text-sm text-ink-3">Checked <LiveAgo iso={d.summary?.lastCheckedAt ?? null} /> · every 15 s</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/map?store=${s.storeNumber}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>

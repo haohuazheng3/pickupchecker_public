@@ -62,13 +62,13 @@ export default async function Account() {
           plan={{ key: plan.key, limit: plan.limit, used: active, renewsAt: sub?.currentPeriodEnd?.toISOString() ?? null, cancelAtPeriodEnd: Boolean(sub?.cancelAtPeriodEnd), status: sub?.status ?? null, hasCustomer: Boolean(row[0]?.stripeCustomerId) }} />
       </Section>
 
-      <Section id="notifications" title="Notifications" defaultOpen={!deviceInfo.active}
-        summary={deviceInfo.active ? `On for your ${deviceInfo.label ?? "devices"}` : "Not on any device yet"}>
+      {/* Always shown, never folded: where alerts land is part of every visit. */}
+      <div>
         <PushSetup vapidPublicKey={env.vapidPublicKey()} account={deviceInfo} />
         {devices.length > 0 && (
           <DeviceList devices={devices.map((d) => ({ id: d.id, platform: d.platform, standalone: d.standalone, added: timeAgo(d.createdAt), lastAlert: d.lastSentAt ? timeAgo(d.lastSentAt) : null, disabledAt: d.disabledAt?.toISOString() ?? null, lastError: d.lastError }))} />
         )}
-      </Section>
+      </div>
 
       {/* Streams in after the rest: thirty days of events for every store the user watches. */}
       <Suspense fallback={active ? <RestockTimesSkeleton /> : null}>

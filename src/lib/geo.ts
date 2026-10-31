@@ -139,11 +139,29 @@ export function searchAnchor(query: string): Anchor | null {
   return loose.length === 1 ? one(loose) : many(loose, "place");
 }
 
-/** Door-to-door driving estimate: city speeds for short hops, highway speeds for long ones. */
+/**
+ * Road miles from straight-line miles. US roads wind: about 20 % longer than the crow flies on long trips,
+ * a third longer across town (circuity studies put the US average near 1.2–1.4).
+ */
+export function roadMiles(straight: number): number {
+  return straight * (1.2 + 0.15 * Math.exp(-straight / 15));
+}
+
+/**
+ * Door-to-door driving estimate from straight-line miles: about five minutes to get going and park, then
+ * an average speed that climbs from city traffic (~22 mph) to highway (~60 mph) as the trip gets longer.
+ * An estimate; the row links to real directions.
+ */
 export function driveMinutes(miles: number): number {
   if (miles <= 0.2) return 0;
-  const mph = miles < 8 ? 22 : miles < 25 ? 32 : miles < 80 ? 48 : 62;
-  return Math.max(3, Math.round(4 + (miles / mph) * 60));
+  const road = roadMiles(miles);
+  const mph = 22 + 40 * (1 - Math.exp(-road / 30));
+  return Math.max(3, Math.round(5 + (road / mph) * 60));
+}
+
+/** A typed five-digit ZIP placed at its Census centroid (see useZipPoint): the visitor's own area. */
+export function zipAt(zip: string, pt: { lat: number; lng: number }): Anchor {
+  return { lat: pt.lat, lng: pt.lng, label: `ZIP ${zip}`, kind: "zip" };
 }
 
 export function formatDrive(miles: number): string {
@@ -156,6 +174,8 @@ export function formatDrive(miles: number): string {
   return r === 0 ? `${h} h` : `${h} h ${String(r).padStart(2, "0")}`;
 }
 
+/** By road (estimated), from straight-line miles. */
 export function formatMiles(miles: number): string {
-  return miles < 10 ? `${miles.toFixed(1)} mi` : `${Math.round(miles)} mi`;
+  const r = roadMiles(miles);
+  return r < 10 ? `${r.toFixed(1)} mi` : `${Math.round(r)} mi`;
 }

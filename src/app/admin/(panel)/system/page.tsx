@@ -70,7 +70,7 @@ export default async function AdminSystem() {
         </Section>
         <Section title="Database" aside={`${bytes(tables.dbBytes)} total · 25 GB disk on the poller host`}>
           <Table head={["Table", "Rows (est.)", "Size"]} rows={tables.tables.sort((a, b) => b.bytes - a.bytes).map((t) => [<code key="n" className="text-xs">{t.name}</code>, t.est.toLocaleString(), bytes(t.bytes)])} />
-          <p className="mt-2 text-xs text-ink-3">poll_log grows ~285 k rows/day at 20 s cadence; prune rows older than 7 days if the size matters.</p>
+          <p className="mt-2 text-xs text-ink-3">poll_log grows ~380 k rows/day at 15 s cadence; prune rows older than 7 days if the size matters.</p>
           <h3 className="mt-4 text-sm font-semibold">Migrations</h3>
           <ul className="mt-1 text-xs text-ink-2">{tables.migrations.map((m) => <li key={m.name} className="flex justify-between py-0.5"><code>{m.name}</code><span className="text-ink-3">{timeAgo(m.applied_at)}</span></li>)}</ul>
         </Section>

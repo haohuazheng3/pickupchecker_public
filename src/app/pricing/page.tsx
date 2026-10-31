@@ -11,7 +11,7 @@ export default function Pricing() {
   return (
     <div className="mx-auto max-w-5xl px-4 pt-10">
       <h1 className="display text-3xl sm:text-5xl">Pricing</h1>
-      <p className="mt-3 text-lg text-ink-2">One alert = one store × one exact iPhone. All 269 US Apple Stores, every 20 s, notification within seconds. Browsing is free.</p>
+      <p className="mt-3 text-lg text-ink-2">One alert = one store × one exact iPhone. All 269 US Apple Stores, every 15 s, notification within seconds. Browsing is free.</p>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {PAID_PLANS.map((k) => {
           const plan = PLANS[k];

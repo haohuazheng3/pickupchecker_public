@@ -21,7 +21,7 @@ export function StoreBlock({ store, summary, rows, stock }: { store: Store; summ
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-2xl font-semibold"><Link href={storePath(store)} className="hover:underline">Apple {store.name}</Link></h2>
-          <p className="text-sm text-ink-3">Checked <LiveAgo iso={summary?.lastCheckedAt ?? null} /> · every 20 s</p>
+          <p className="text-sm text-ink-3">Checked <LiveAgo iso={summary?.lastCheckedAt ?? null} /> · every 15 s</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/map?store=${store.storeNumber}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>

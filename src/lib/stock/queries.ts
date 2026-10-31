@@ -106,7 +106,7 @@ export interface MapSnapshot {
   stores: Record<string, { a: string[]; c: string | null }>;
 }
 
-/** One aggregated row per store for the map: cheap enough to poll every 20 s from every open tab. */
+/** One aggregated row per store for the map: cheap enough to poll every 15 s from every open tab. */
 export async function mapSnapshot(): Promise<MapSnapshot> {
   const at = new Date().toISOString();
   if (!hasDatabase()) return { at, stores: {} };
@@ -498,7 +498,7 @@ const cachedModelStock = unstable_cache(
     return rows.map((r) => [r.s, r.p, r.st === "available" ? 1 : r.st === "unavailable" ? 0 : 2, r.st === "available" ? r.q : null, sec(r.since), sec(r.lc), sec(r.la)]);
   },
   ["seo-model-stock-v2"],
-  // The poller sweeps every ~20 s: a 15 s cache keeps thousands of product pages to one read per model.
+  // The poller sweeps every ~15 s: a 15 s cache keeps thousands of product pages to one read per model.
   { revalidate: 15 },
 );
 

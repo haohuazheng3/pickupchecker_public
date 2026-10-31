@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { STORES, stateCodeOf } from "@/lib/apple/catalog";
-import { driveMinutes, formatDrive, formatMiles, rankStores, searchAnchor, zipAnchor } from "@/lib/geo";
+import { driveMinutes, formatDrive, formatMiles, rankStores, roadMiles, searchAnchor, zipAnchor, zipAt } from "@/lib/geo";
 
 const summit = STORES.find((s) => s.slug === "thesummit")!; // Birmingham, AL 35243
 
@@ -72,7 +72,20 @@ describe("drive time", () => {
     expect(formatDrive(0)).toBe("here");
     expect(formatDrive(3)).toMatch(/^\d+ min$/);
     expect(formatDrive(120)).toMatch(/^\d+ h( \d\d)?$/);
-    expect(formatMiles(0.84)).toBe("0.8 mi");
-    expect(formatMiles(12.4)).toBe("12 mi");
+    // By road: straight-line miles × 1.2–1.35.
+    expect(formatMiles(0.84)).toBe("1.1 mi");
+    expect(formatMiles(12.4)).toBe("16 mi");
+  });
+  it("estimates road miles and door-to-door time in a realistic range", () => {
+    for (const d of [1, 5, 15, 40, 120]) { expect(roadMiles(d) / d).toBeGreaterThan(1.19); expect(roadMiles(d) / d).toBeLessThan(1.36); }
+    expect(driveMinutes(3)).toBeGreaterThanOrEqual(10);   // across town: ~4 road miles, city speeds
+    expect(driveMinutes(3)).toBeLessThanOrEqual(18);
+    expect(driveMinutes(30)).toBeGreaterThanOrEqual(40);  // ~36 road miles
+    expect(driveMinutes(30)).toBeLessThanOrEqual(60);
+    expect(driveMinutes(100)).toBeGreaterThanOrEqual(105); // ~120 road miles, mostly highway
+    expect(driveMinutes(100)).toBeLessThanOrEqual(135);
+  });
+  it("places a typed ZIP at its own point, not an area guess", () => {
+    expect(zipAt("07030", { lat: 40.7454, lng: -74.0279 })).toEqual({ lat: 40.7454, lng: -74.0279, label: "ZIP 07030", kind: "zip" });
   });
 });

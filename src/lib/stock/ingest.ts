@@ -20,7 +20,7 @@ export type StockStatus = "available" | "unavailable" | "unknown";
  * Confirmation rules. A pending change is committed once it has been observed `seen` times in a row
  * (responses from overlapping anchors count, so the same sweep usually confirms) and has persisted
  * for `minMs`. Any observation that agrees with the committed status cancels the pending change.
- *  • restock: two responses must agree (same sweep via overlap, else the next one ≈ 20 s later) —
+ *  • restock: two responses must agree (same sweep via overlap, else the next one ≈ 15 s later) —
  *    an alert is late by seconds, and never sent for a one-off "available"
  *  • soldout: two observations at least 15 s apart — i.e. the next sweep must still say unavailable.
  *    A blip is one response taken back within seconds, so the second observation refutes it; a real

@@ -29,7 +29,7 @@ export function SourceList({ sources, facts }: { sources: Source[]; facts: Facts
     <section className="text-sm" aria-labelledby="src-h">
       <h2 id="src-h" className="text-lg font-semibold">Sources</h2>
       <ol className="mt-2 list-decimal space-y-1 pl-5 text-ink-2">
-        <li>PickupChecker live tracker: every iPhone Duo, 18 Pro and 18 Pro Max configuration at all 269 US Apple Stores, checked about every 20 seconds since <Inline text="{{trackingSince}}" facts={facts} />; numbers on this page as of <Inline text="{{asOf}}" facts={facts} />.</li>
+        <li>PickupChecker live tracker: every iPhone Duo, 18 Pro and 18 Pro Max configuration at all 269 US Apple Stores, checked about every 15 seconds since <Inline text="{{trackingSince}}" facts={facts} />; numbers on this page as of <Inline text="{{asOf}}" facts={facts} />.</li>
         {sources.map((s) => <li key={s.url}><a href={s.url} target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-ink">{s.label}</a></li>)}
       </ol>
     </section>

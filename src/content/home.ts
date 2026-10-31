@@ -1,11 +1,11 @@
 /** Home page copy (seo.md P01): the category tool. Titles live in titles.ts (HOME_TITLES). */
 import type { Block, Faq, Source } from "@/lib/content/types";
 
-export const HOME_INTRO = "Right now the iPhone Duo is in stock for pickup at **{{duo.storesNow}} of 269** US Apple Stores, the iPhone 18 Pro at **{{pro.storesNow}}** and the iPhone 18 Pro Max at **{{pm.storesNow}}**. Every store is re-checked about every 20 seconds. Browse for free, or pick your stores and exact phone and get a push the moment one lists it.";
+export const HOME_INTRO = "Right now the iPhone Duo is in stock for pickup at **{{duo.storesNow}} of 269** US Apple Stores, the iPhone 18 Pro at **{{pro.storesNow}}** and the iPhone 18 Pro Max at **{{pm.storesNow}}**. Every store is re-checked about every 15 seconds. Browse for free, or pick your stores and exact phone and get a push the moment one lists it.";
 
 export const HOME_SECTIONS: Record<string, { lead: string; blocks: Block[] }> = {
   "apple inventory checker": {
-    lead: "This is an Apple inventory checker for the three phones people actually hunt for. It reads apple.com's in-store pickup availability for all 40 configurations at every US Apple Store, about every 20 seconds, and shows the answer by store, by state and by configuration.",
+    lead: "This is an Apple inventory checker for the three phones people actually hunt for. It reads apple.com's in-store pickup availability for all 40 configurations at every US Apple Store, about every 15 seconds, and shows the answer by store, by state and by configuration.",
     blocks: [
       { t: "table", head: ["Model", "Configurations", "Stores with stock now", "Restocks logged"], rows: [["[iPhone Duo](/stock/iphone-duo)", "8", "{{duo.storesNow}}", "{{duo.restocks}}"], ["[iPhone 18 Pro](/stock/iphone-18-pro)", "16", "{{pro.storesNow}}", "{{pro.restocks}}"], ["[iPhone 18 Pro Max](/stock/iphone-18-pro-max)", "16", "{{pm.storesNow}}", "{{pm.restocks}}"]], caption: "What the checker sees right now (restocks since {{trackingSince}})", source: "PickupChecker live tracker of all 269 US Apple Stores" },
       { t: "p", text: "A change only counts after a second check confirms it, so one glitchy response from apple.com never shows up as a fake restock or a fake sell-out. Every confirmed change goes into the [restock log](/restocks), which is where the restock-time charts on store pages come from." },
@@ -28,7 +28,7 @@ export const HOME_SECTIONS: Record<string, { lead: string; blocks: Block[] }> = 
 };
 
 export const HOME_FAQ: Faq[] = [
-  { q: "How fast are the alerts?", a: "Every US Apple Store is re-checked about every 20 seconds, and the push goes out seconds after a store flips to available. Duo restocks stay listed for a median of {{duo.medianStay}}, which is why speed matters." },
+  { q: "How fast are the alerts?", a: "Every US Apple Store is re-checked about every 15 seconds, and the push goes out seconds after a store flips to available. Duo restocks stay listed for a median of {{duo.medianStay}}, which is why speed matters." },
   { q: "What is one alert?", a: "One Apple Store × one exact phone (model, storage and color). Watching three stores for one configuration is three alerts." },
   { q: "What does it cost?", a: "Live stock, the map and the restock log are free. Alerts are Plus $5/month for 10, Pro $10 for 20 and Max $20 for 50; cancel anytime ([pricing](/pricing))." },
   { q: "How do I get notifications on my iPhone?", a: "Open pickupchecker.com in Safari, add it to your Home Screen, open it from there, sign in and allow notifications ([step by step](/install))." },

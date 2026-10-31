@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: { default: "PickupChecker — iPhone pickup alerts, every US Apple Store", template: "%s · PickupChecker" },
   description:
-    "A phone notification the moment an iPhone Duo, 18 Pro or 18 Pro Max is in stock for pickup at any US Apple Store. Checked every 20 seconds. From $5 a month.",
+    "A phone notification the moment an iPhone Duo, 18 Pro or 18 Pro Max is in stock for pickup at any US Apple Store. Checked every 15 seconds. From $5 a month.",
   applicationName: "PickupChecker",
   robots: INDEXABLE ? { index: true, follow: true } : { index: false, follow: false },
   openGraph: { type: "website", siteName: "PickupChecker", url: SITE },

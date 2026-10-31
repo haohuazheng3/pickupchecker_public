@@ -139,7 +139,7 @@ export function StatusCard({ line }: { line: StoreLine }) {
         {on ? <>{st?.quote ?? "Available for pickup"}{st?.since && <> · since <LiveAgo iso={st.since} /></>}</> : st?.lastAvailableAt ? <>Last in stock <LiveAgo iso={st.lastAvailableAt} /></> : st ? "Never seen in stock here yet" : "First check within a minute"}
       </p>
       {on && item && <a href={appleBuyUrl(item)} target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-4">Buy on apple.com</a>}
-      <p className="mt-3 text-xs text-ink-3">Checked <LiveAgo iso={line.lastCheckedAt} /> · every 20 s</p>
+      <p className="mt-3 text-xs text-ink-3">Checked <LiveAgo iso={line.lastCheckedAt} /> · every 15 s</p>
     </div>
   );
 }
