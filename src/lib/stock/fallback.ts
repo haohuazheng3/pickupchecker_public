@@ -19,6 +19,11 @@ import { coveredWatchIds, effectivePlan } from "../plans";
 import type { SweepTask } from "./sweep";
 
 export const HEARTBEAT_STALE_MS = 75_000;
+/**
+ * A heartbeat this old *and* stale data means the poller is gone, not blind: fill in a minute sooner.
+ * Normal rounds beat every ~15–30 s, the poller's own spare mode every ~40 s, so this never fires on them.
+ */
+export const HEARTBEAT_LATE_MS = 60_000;
 /** A pair counts as fresh when it was checked this recently (cadence 15 s, so ~4 rounds of slack). */
 export const FRESH_SEC = 60;
 /** A store unchecked this long means its requests keep failing, not a blip. */
@@ -54,12 +59,12 @@ export async function freshness(): Promise<Freshness> {
 export type PollerState = "ok" | "silent" | "blind" | "partial";
 
 export function pollerVerdict(heartbeatAgeMs: number, f: Freshness | null): { state: PollerState; fill: boolean; summary: string } {
-  if (!(heartbeatAgeMs <= HEARTBEAT_STALE_MS)) {
+  const share = f && f.pairs > 0 ? f.freshPairs / f.pairs : null;
+  if (!(heartbeatAgeMs <= HEARTBEAT_STALE_MS) || (heartbeatAgeMs > HEARTBEAT_LATE_MS && share != null && share < 0.5)) {
     const age = Number.isFinite(heartbeatAgeMs) ? `${Math.round(heartbeatAgeMs / 1000)} s` : "ever";
     return { state: "silent", fill: true, summary: `no poller heartbeat for ${age}` };
   }
-  if (f && f.pairs > 0) {
-    const share = f.freshPairs / f.pairs;
+  if (f && share != null) {
     if (share < 0.5) return { state: "blind", fill: false, summary: `poller alive, but only ${Math.round(share * 100)}% of store × phone pairs checked in the last minute` };
     if (f.staleStores.length > 0) return { state: "partial", fill: false, summary: `${f.staleStores.length} store${f.staleStores.length === 1 ? "" : "s"} not checked for over ${PARTIAL_SEC} s: ${f.staleStores.slice(0, 10).join(", ")}${f.staleStores.length > 10 ? " …" : ""}` };
   }

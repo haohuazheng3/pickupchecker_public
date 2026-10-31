@@ -15,6 +15,14 @@ describe("pollerVerdict — judged by the data, not only the heartbeat", () => {
       expect(v.fill).toBe(true);
     }
   });
+  it("silent a minute sooner when the heartbeat is late and the data has gone stale too", () => {
+    // Seen in the 2026-10-31 drill: poller stopped, heartbeat 71 s old, nothing fresh — that is gone, not blind.
+    expect(pollerVerdict(71_000, fresh({ freshPairs: 0 })).state).toBe("silent");
+    // …but a late heartbeat with fresh data is just a slow round.
+    expect(pollerVerdict(71_000, fresh()).state).toBe("ok");
+    // …and the poller's own spare mode (beats every ~40 s, data stale) stays "blind": Vercel keeps out.
+    expect(pollerVerdict(42_000, fresh({ freshPairs: 10 })).state).toBe("blind");
+  });
   it("blind when the poller beats but under half the pairs are fresh — no Vercel fill-in", () => {
     const v = pollerVerdict(5_000, fresh({ freshPairs: 30 }));
     expect(v.state).toBe("blind");
