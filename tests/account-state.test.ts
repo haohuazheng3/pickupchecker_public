@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { summarizeDevices } from "@/lib/devices";
 import { Body, SetBody } from "@/app/api/watches/route";
-import { identify, track } from "@/lib/track";
+import { holdAnalytics, identify, releaseAnalytics, track } from "@/lib/track";
 
 const nightSky = { model: "duo", storage: "512GB", color: "Night Sky" };
 
@@ -43,6 +43,25 @@ describe("analytics calls", () => {
     g.window!.fw = ((...a: unknown[]) => { calls.push(a); }) as Fw;
     track("purchase", { amount: 20, currency: "usd", item: "max", id: "cs_1" });
     expect(calls).toEqual([["event", "purchase", { amount: 20, currency: "usd", item: "max", id: "cs_1" }]]);
+  });
+  it("sends nothing after Decline / Do not track me, and drops what was waiting", () => {
+    track("watch_saved");
+    holdAnalytics();
+    expect(g.window!.fw!.q).toEqual([]);
+    track("purchase");
+    identify("user_1", "a@b.c");
+    expect(g.window!.fw!.q).toEqual([]);
+    releaseAnalytics();
+    track("purchase");
+    expect(g.window!.fw!.q).toEqual([["event", "purchase", undefined]]);
+  });
+  it("honours a declined cookie even before the loader has run", () => {
+    const d = globalThis as unknown as { document?: { cookie: string } };
+    d.document = { cookie: "pc_region=default; pc_consent=declined" };
+    try {
+      track("watch_saved");
+      expect(g.window!.fw?.q ?? []).toEqual([]);
+    } finally { delete d.document; }
   });
 });
 

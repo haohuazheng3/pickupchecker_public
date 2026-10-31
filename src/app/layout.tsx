@@ -7,7 +7,7 @@ import { Footer } from "@/components/site/Footer";
 import { AlertBar } from "@/components/site/AlertBar";
 import { AlertLinkHost } from "@/components/alerts/AlertLinkHost";
 import { THEME_BOOT, THEME_COLORS } from "@/lib/theme";
-import { Analytics } from "@/components/site/Analytics";
+import { Consent } from "@/components/site/Consent";
 import { PwaBoot } from "@/components/pwa/PwaBoot";
 import { NavSkeleton } from "@/components/ui/NavSkeleton";
 import { FreshOnReturn } from "@/components/site/FreshOnReturn";
@@ -65,7 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <AlertLinkHost />
           <FreshOnReturn />
         </ClerkProvider>
-        <Analytics />
+        <Consent />
         <PwaBoot />
       </body>
     </html>

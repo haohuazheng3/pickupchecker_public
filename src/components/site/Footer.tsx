@@ -1,6 +1,7 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { Logo } from "./Logo";
 import { topStates } from "@/lib/seo/links";
+import { TrackingChoice } from "./Consent";
 
 export function Footer() {
   return (
@@ -48,6 +49,7 @@ export function Footer() {
               <li><Link href="/privacy" className="hover:text-ink">Privacy</Link></li>
               <li><Link href="/terms" className="hover:text-ink">Terms</Link></li>
               <li><Link href="/refunds" className="hover:text-ink">Refunds</Link></li>
+              <li><TrackingChoice /></li>
             </ul>
           </div>
         </div>
