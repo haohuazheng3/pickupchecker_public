@@ -219,6 +219,22 @@ export async function changePlan(subscriptionId: string, plan: PaidPlanKey, pror
   }
 }
 
+/**
+ * Cancel at the end of the paid period — the plan keeps working until then and nothing more is charged —
+ * or take that back before the period ends. Same as the customer portal's "cancel at period end".
+ */
+export async function setCancelAtPeriodEnd(subscriptionId: string, cancel: boolean): Promise<{ endsAt: string | null }> {
+  try {
+    const updated = await stripe().subscriptions.update(subscriptionId, { cancel_at_period_end: cancel });
+    await syncSubscription(updated);
+    const end = updated.items.data[0]?.current_period_end;
+    return { endsAt: end ? new Date(end * 1000).toISOString() : null };
+  } catch (e) {
+    if (isPermissionError(e)) throw new BillingPermissionError("Subscriptions write");
+    throw e;
+  }
+}
+
 let portalConfig: string | null = null;
 /** PickupChecker's own customer-portal configuration (invoices, card, cancel at period end), found or created once. */
 async function portalConfiguration(): Promise<string> {

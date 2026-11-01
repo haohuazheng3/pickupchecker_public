@@ -3,6 +3,8 @@
  * The plan, and changing it. No plan yet: pick one → Stripe Checkout (Stripe's page is the review). On a
  * plan: "Upgrade" or "Switch" opens a confirmation in place — what is charged today (or credited), the
  * monthly price from the next renewal, how many alerts it holds, the card — and only "Confirm" changes it.
+ * "Cancel subscription" works the same way: it says until when the plan keeps working and what stops after,
+ * and only the second button cancels (at the end of the paid period). Until then "Resume" takes it back.
  */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -96,12 +98,52 @@ export function ChangeConfirm({ to, used, onDone, onCancel }: { to: PaidPlanKey;
   );
 }
 
+/** Second step of "Cancel subscription": what keeps working, until when, and what stops after. */
+function CancelConfirm({ plan, onDone, onKeep }: { plan: PlanView; onDone: (endsAt: string | null) => void; onKeep: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const def = PLANS[plan.key];
+  const until = day(plan.renewsAt);
+  const confirm = async () => {
+    setBusy(true); setError(null);
+    try {
+      const r = await fetch("/api/billing/cancel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "cancel", confirm: true }) });
+      const j = (await r.json().catch(() => ({}))) as { ok?: boolean; endsAt?: string | null; error?: string };
+      if (!r.ok || !j.ok) throw new Error(j.error ?? "The subscription wasn't cancelled. Try again in a minute.");
+      track("subscription_canceled", { plan: plan.key });
+      forgetMe();
+      onDone(j.endsAt ?? plan.renewsAt);
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); setBusy(false); }
+  };
+  return (
+    <div className="mt-3 rounded-2xl border border-line-2 p-4" role="group" aria-label="Cancel subscription">
+      <div className="font-semibold">Cancel your {def.name} plan?</div>
+      <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+        <dt className="text-ink-3">Until {until}</dt>
+        <dd>{def.name} keeps working: <b>{Math.min(plan.used, plan.limit)} alert{Math.min(plan.used, plan.limit) === 1 ? "" : "s"}</b> on, as now.</dd>
+        <dt className="text-ink-3">After</dt>
+        <dd>Alerts stop and <b>you won&apos;t be charged again</b>.</dd>
+        <dt className="text-ink-3">Your alerts</dt>
+        <dd>Stay saved. Pick a plan again any time and they turn back on.</dd>
+      </dl>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button type="button" className="btn btn-sm" style={{ background: "var(--bad)", color: "#fff" }} disabled={busy} aria-busy={busy} onClick={() => void confirm()}>
+          {busy && <span className="spinner" />}Cancel subscription
+        </button>
+        <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={onKeep}>Keep my plan</button>
+      </div>
+      {error && <p role="alert" className="mt-3 text-sm text-bad">{error}</p>}
+    </div>
+  );
+}
+
 export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: PaidPlanKey | null }) {
   const router = useRouter();
   const [open, setOpen] = useState<PaidPlanKey | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
   const paid = plan.key !== "free";
   const def = PLANS[plan.key];
   const over = plan.used > plan.limit;
@@ -109,6 +151,19 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
     setBusy(k); setError(null);
     try { const url = await openUrl("/api/stripe/checkout", { plan: k }); track("checkout_started", { plan: k, from: plan.key }); window.location.assign(url); }
     catch (e) { setError(e instanceof Error ? e.message : String(e)); setBusy(null); }
+  };
+  const resume = async () => {
+    setBusy("resume"); setError(null); setDone(null);
+    try {
+      const r = await fetch("/api/billing/cancel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "resume" }) });
+      const j = (await r.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!r.ok || !j.ok) throw new Error(j.error ?? "The subscription wasn't resumed. Try again in a minute.");
+      track("subscription_resumed", { plan: plan.key });
+      forgetMe();
+      setDone(`${def.name} continues. It renews on ${day(plan.renewsAt)} at $${def.priceUsd}/month.`);
+      router.refresh();
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { setBusy(null); }
   };
   const portal = async () => {
     setBusy("portal"); setError(null);
@@ -126,6 +181,14 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
           </div>
           <p className="mt-1 text-sm text-ink-2">{Math.min(plan.used, plan.limit)} of {plan.limit} alerts on{over ? ` · ${plan.used - plan.limit} over the limit, off` : ""}{plan.renewsAt ? (plan.cancelAtPeriodEnd ? ` · ends ${day(plan.renewsAt)}` : ` · renews ${day(plan.renewsAt)}`) : ""}</p>
           <div className="mt-3 h-2 w-full max-w-sm overflow-hidden rounded-full bg-ink/6"><div className={`h-full rounded-full ${over ? "bg-warn" : "bg-accent"}`} style={{ width: `${Math.min(100, Math.round((plan.used / Math.max(1, plan.limit)) * 100))}%` }} /></div>
+          {plan.cancelAtPeriodEnd && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-warn/10 px-3 py-2.5 text-sm">
+              <span>Cancelled: {def.name} ends on <b>{day(plan.renewsAt)}</b>. Alerts stop then, and you won&apos;t be charged again.</span>
+              <button type="button" className="btn btn-primary btn-sm" disabled={busy != null} aria-busy={busy === "resume"} onClick={() => void resume()}>
+                {busy === "resume" && <span className="spinner" />}Resume subscription
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <p className="text-sm text-ink-2">{plan.used > 0 ? `Your ${plan.used} alert${plan.used === 1 ? " is" : "s are"} saved but off until a plan is active.` : "Alerts start the moment a plan is active."} Monthly, cancel anytime.</p>
@@ -147,7 +210,7 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
                 </div>
                 {mine ? <span className="text-sm font-semibold text-accent">Your plan</span>
                   : paid ? (
-                    <button type="button" className={`btn btn-sm ${up ? "btn-primary" : "btn-ghost"}`} disabled={busy != null} aria-expanded={open === k} onClick={() => { setOpen(open === k ? null : k); setDone(null); }}>
+                    <button type="button" className={`btn btn-sm ${up ? "btn-primary" : "btn-ghost"}`} disabled={busy != null} aria-expanded={open === k} onClick={() => { setOpen(open === k ? null : k); setDone(null); setCancelling(false); }}>
                       {up ? "Upgrade" : "Switch"}
                     </button>
                   ) : (
@@ -162,8 +225,15 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
         })}
       </ul>
       {error && <p role="alert" className="mt-3 text-sm text-bad">{error}</p>}
+      {paid && cancelling && (
+        <CancelConfirm plan={plan} onKeep={() => setCancelling(false)}
+          onDone={(endsAt) => { setCancelling(false); setDone(`Cancelled. ${def.name} keeps working until ${day(endsAt)}, and you won't be charged again.`); router.refresh(); }} />
+      )}
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-        {plan.hasCustomer && <button type="button" className="underline-offset-4 hover:underline" style={{ color: "var(--ink-2)" }} disabled={busy != null} onClick={() => void portal()}>{busy === "portal" && <span className="spinner" />}Billing, invoices and cancelling</button>}
+        {paid && !plan.cancelAtPeriodEnd && !cancelling && (
+          <button type="button" className="btn btn-ghost btn-sm" disabled={busy != null} onClick={() => { setCancelling(true); setOpen(null); setDone(null); }}>Cancel subscription</button>
+        )}
+        {plan.hasCustomer && <button type="button" className="underline-offset-4 hover:underline" style={{ color: "var(--ink-2)" }} disabled={busy != null} onClick={() => void portal()}>{busy === "portal" && <span className="spinner" />}Billing and invoices</button>}
         <span className="text-xs text-ink-3">{paid ? "Upgrades are charged for the days left; switching down turns the rest into credit." : "Stripe checkout, card or Link."}</span>
       </div>
     </div>
