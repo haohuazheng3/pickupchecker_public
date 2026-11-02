@@ -137,7 +137,9 @@ export async function sellouts(opts: { storeNumbers?: string[]; model?: ModelKey
   // else by its store list (Germany and Austria share part numbers).
   const scope = countryScope(cc, opts.storeNumbers?.length ? opts.storeNumbers : null, parts);
   try {
-    return await cached(scope.stores ? [...scope.stores].sort() : null, scope.parts ? [...scope.parts].sort() : null, days, opts.limit ?? 12);
+    const d = await cached(scope.stores ? [...scope.stores].sort() : null, scope.parts ? [...scope.parts].sort() : null, days, opts.limit ?? 12);
+    // The data cache stores JSON: dates come back as ISO strings. Callers get real Dates either way.
+    return { ...d, recent: d.recent.map((r) => ({ ...r, at: new Date(r.at) })) };
   } catch (e) {
     await recordError("web", `sellouts: ${errorMessage(e)}`).catch(() => undefined);
     return EMPTY(days);

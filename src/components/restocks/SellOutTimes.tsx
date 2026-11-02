@@ -14,7 +14,8 @@ const secs = (s: number | null) => (s == null ? "–" : s < 120 ? `${s} s` : `${
 function headline(d: Sellouts, label: string): string {
   const duo = d.byModel.duo;
   if (duo && duo.n >= 3 && duo.medianSec != null) {
-    return `A typical iPhone Duo restock ${label} sold out in about ${medianBand(duo.medianSec)}: half were gone within ${duo.medianSec} seconds, ${pct(duo.within30)} within 30 seconds${duo.fastestSec != null ? `, and the fastest lasted ${duo.fastestSec} seconds` : ""} (${duo.n} sold-out restocks, last ${duo.days} days).`;
+    const quick = duo.within30 > 0 ? `, ${pct(duo.within30)} within 30 seconds` : "";
+    return `A typical iPhone Duo restock ${label} sold out in about ${medianBand(duo.medianSec)}: half were gone within ${duo.medianSec} seconds${quick}${duo.fastestSec != null ? `, and the fastest was gone within ${duo.fastestSec} seconds` : ""} (${duo.n} sold-out restocks, last ${duo.days} days).`;
   }
   const s = d.summary;
   if (s.n > 0 && s.medianSec != null) return `Half of the restocks ${label} sold out within ${secs(s.medianSec)}, ${pct(s.within60)} within a minute (${s.n} sold-out restocks, last ${s.days} days).`;
@@ -70,7 +71,8 @@ export function SellOutTimes({ data, label, showStore = false, limit = 10 }: { d
               const store = STORE_INDEX.get(r.storeNumber);
               if (!item || !store) return null;
               const model = modelByKey(modelKeyFor(item.model));
-              const when = new Intl.DateTimeFormat("en-US", { timeZone: storeTimeZone(store), month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(r.at);
+              // new Date(): from the data cache `at` comes back as an ISO string (it is stored as JSON).
+              const when = new Intl.DateTimeFormat("en-US", { timeZone: storeTimeZone(store), month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(r.at));
               return (
                 <li key={r.id} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-2">
                   <span className="min-w-0">

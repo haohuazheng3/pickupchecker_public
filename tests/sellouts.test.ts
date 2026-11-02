@@ -2,8 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 vi.mock("@vercel/functions", () => ({ attachDatabasePool: () => undefined }));
+vi.mock("@/components/ui/PendingLink", () => ({ PendingLink: ({ children }: { children: unknown }) => children }));
 const { fmtLife, lifeBounds, medianBand, summarize, ROUND_SEC } = await import("@/lib/stock/sellouts");
 const { duoSelloutFrom } = await import("@/lib/content/siteFacts");
+const { renderToStaticMarkup } = await import("react-dom/server");
+const { SellOutTimes } = await import("@/components/restocks/SellOutTimes");
 
 const t = (s: number) => new Date(Date.UTC(2026, 10, 2, 15, 0, 0) + s * 1000);
 
@@ -47,5 +50,24 @@ describe("duoSelloutFrom — the site-wide Duo facts", () => {
     // a 5-minute tracker sees an 80-second listing 80/300 of the time
     expect(f.caught.m5).toBeCloseTo((18 * 80 / 300 + 20 / 300 + 25 / 300) / 20, 5);
     expect(f.caught.m1).toBeLessThan(1);
+  });
+});
+
+describe("SellOutTimes renders data that went through the data cache", () => {
+  it("formats times that come back from the cache as ISO strings (a 500 on 2026-11-02)", () => {
+    const data = {
+      summary: { n: 2, medianSec: 70, within30: 0.5, within60: 0.5, within120: 1, fastestSec: 25, days: 30 },
+      byModel: { duo: { n: 3, medianSec: 70, within30: 0.34, within60: 0.67, within120: 1, fastestSec: 25, days: 30 } },
+      recent: [
+        { id: 1, at: new Date("2026-11-02T13:48:00Z"), storeNumber: "R095", partNumber: "MJWE4LL/A", lowSec: 45, highSec: 60, exact: true, listedSec: null },
+        { id: 2, at: new Date("2026-11-02T13:40:00Z"), storeNumber: "R095", partNumber: "MJWD4LL/A", lowSec: null, highSec: null, exact: false, listedSec: 300 },
+      ],
+    };
+    const cached = JSON.parse(JSON.stringify(data));
+    const html = renderToStaticMarkup(SellOutTimes({ data: cached, label: "here", showStore: true }));
+    expect(html).toContain("sold out in 45–60 s");
+    expect(html).toContain("still listed");
+    expect(html).toContain("Nov 2, 8:48 AM");
+    expect(html).toContain("about 50–70 seconds: half were gone within 70 seconds, 34% within 30 seconds, and the fastest was gone within 25 seconds");
   });
 });
