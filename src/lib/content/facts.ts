@@ -169,7 +169,7 @@ export function tokensIn(text: string): string[] {
   return [...text.matchAll(/\{\{([a-zA-Z.:0-9 ]+)\}\}/g)].map((m) => m[1].trim());
 }
 
-/** For token-free copy that still renders through Inline (store pages): only the global tokens work. */
-export function emptyFacts(): Facts {
-  return { at: new Date().toISOString(), models: {} as Record<ModelKey, ModelFacts> };
+/** For token-free copy that still renders through Inline (store pages): only the global tokens work ({{asOf}} in the country's zone). */
+export function emptyFacts(country: CountryCode = "us"): Facts {
+  return { at: new Date().toISOString(), models: {} as Record<ModelKey, ModelFacts>, ...(country === "us" ? {} : { country }) };
 }

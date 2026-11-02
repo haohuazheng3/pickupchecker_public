@@ -5,6 +5,14 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    rules: {
+      // The /[cc] country segment (src/app/[cc]) matches every one-segment path, so this rule now reads each
+      // deliberate full-page <a href="/account"> or "/install" as a client route. In-site navigation uses
+      // PendingLink; a plain <a> here is a chosen full load.
+      "@next/next/no-html-link-for-pages": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     ".claude/**",

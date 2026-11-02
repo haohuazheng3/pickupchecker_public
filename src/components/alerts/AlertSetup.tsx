@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertEditor } from "./AlertEditor";
 import { Section } from "./Section";
 import type { PhoneCatalog } from "./PhoneMatrix";
-import { startFrom, type AlertStart } from "@/lib/alertStart";
+import { startFrom, startFromPool, type AlertStart } from "@/lib/alertStart";
 
 
 
@@ -47,12 +47,14 @@ export function AlertPanel({ catalog, start, title, summary }: { catalog: PhoneC
   useEffect(() => {
     const on = (e: Event) => {
       const q = new URLSearchParams((e as CustomEvent<string>).detail ?? "");
-      setS({ ...start, ...Object.fromEntries(Object.entries(startFrom((k) => q.get(k))).filter(([, v]) => v)) });
+      // Another country's page resolves the link against its own stores and catalogue.
+      const next = catalog.stores ? startFromPool((k) => q.get(k), catalog.stores, catalog.configs) : startFrom((k) => q.get(k));
+      setS({ ...start, ...Object.fromEntries(Object.entries(next).filter(([, v]) => v)) });
       setRun((n) => n + 1);
     };
     window.addEventListener("pc:alert", on);
     return () => window.removeEventListener("pc:alert", on);
-  }, [start]);
+  }, [start, catalog]);
   return (
     <div data-alert-panel>
       <Section id="notify" title={title} summary={summary} defaultOpen={false} onOpen={show}>

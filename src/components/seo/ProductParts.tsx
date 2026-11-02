@@ -5,14 +5,21 @@
 import { CHECK_NOTE } from "@/lib/plans";
 import { LiveChecked } from "@/components/site/LiveChecked";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
-import { appleBuyUrl, stateCodeOf } from "@/lib/apple/catalog";
+import { appleBuyUrl, cityLine } from "@/lib/apple/catalog";
+import { COUNTRIES, formatDistance, formatPrice } from "@/lib/apple/countries";
 import { productPath, storePlace, type Place, type Product } from "@/lib/seo/products";
 import type { Facet, Facets, GridCell, PlaceCount, StoreLine } from "@/lib/seo/productData";
-import { formatDrive, formatMiles } from "@/lib/geo";
+import { formatDrive, formatMiles, roadMiles } from "@/lib/geo";
 import { fmtPrice } from "@/lib/seo/enrich";
 import { Swatch } from "@/components/stores/ConfigTable";
 import { Dot } from "@/components/stock/StatusBits";
 import { LiveAgo } from "@/components/site/LiveAgo";
+
+/** Road distance from straight-line miles, in the country's unit ("12 mi" / "19 km"). */
+function distLabel(miles: number, cc: keyof typeof COUNTRIES | undefined): string {
+  if (!cc || cc === "us") return formatMiles(miles);
+  return COUNTRIES[cc].unit === "mi" ? formatMiles(miles) : formatDistance(COUNTRIES[cc], roadMiles(miles));
+}
 
 function Count({ n }: { n: number }) {
   return <span className={`tabular-nums ${n > 0 ? "font-semibold text-accent" : "opacity-50"}`}>{n}</span>;
@@ -63,7 +70,7 @@ export function ProductStoreList({ product, lines, showCity = true, emptyText }:
               <Dot state={on ? "ok" : l.tracked ? "idle" : "warn"} live={on} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-medium text-ink">{l.store.name}</span>
-                <span className="block truncate text-xs text-ink-3">{showCity ? `${l.store.city}, ${stateCodeOf(l.store)}${l.distance != null ? ` · ${formatMiles(l.distance)}` : ""} · ` : ""}{on ? <>seen <LiveAgo iso={l.lastAvailableAt} /></> : l.lastAvailableAt ? <>last <LiveAgo iso={l.lastAvailableAt} /></> : l.tracked ? "not seen yet" : "first check pending"}</span>
+                <span className="block truncate text-xs text-ink-3">{showCity ? `${cityLine(l.store)}${l.distance != null ? ` · ${distLabel(l.distance, l.store.country)}` : ""} · ` : ""}{on ? <>seen <LiveAgo iso={l.lastAvailableAt} /></> : l.lastAvailableAt ? <>last <LiveAgo iso={l.lastAvailableAt} /></> : l.tracked ? "not seen yet" : "first check pending"}</span>
               </span>
               <span className={`shrink-0 text-sm tabular-nums ${on ? "font-semibold text-accent" : "text-ink-3"}`}>{one ? (on ? "In stock" : "—") : `${l.available.length}/${l.tracked || product.parts.length}`}</span>
               <span className="shrink-0 text-ink-3" aria-hidden>›</span>
@@ -96,7 +103,7 @@ export function ProductGrid({ grid, place, current }: { grid: { storages: string
               // Outline the row / column a storage or color page covers; a model page covers everything, so nothing.
               const scoped = cell.inScope && (current.kind === "storage" || current.kind === "color");
               return (
-                <Link key={s} href={productPath(cell.product, place)} scroll={false} title={`${cell.product.name} · ${fmtPrice(cell.item.price)}`}
+                <Link key={s} href={productPath(cell.product, place)} scroll={false} title={`${cell.product.name} · ${place.country && place.country !== "us" ? formatPrice(COUNTRIES[place.country], cell.item.price) : fmtPrice(cell.item.price)}`}
                   className={`inline-flex h-8 items-center justify-center gap-1 rounded-full text-sm tabular-nums ${on ? "bg-accent/15 font-semibold text-accent" : "text-ink-3"} ${here ? "ring-2 ring-ink" : scoped ? "ring-1 ring-ink/25" : ""}`}>
                   {atStore ? (on ? "✓" : "–") : <><Dot state={on ? "ok" : "idle"} live={on} />{cell.count}</>}
                 </Link>
@@ -117,8 +124,8 @@ export function PlaceCountList({ product, items, max = 60 }: { product: Product;
       {items.slice(0, max).map((p) => (
         <li key={p.place.segments.join("/")}>
           <Link href={productPath(product, p.place)} className="flex items-center gap-3 py-2 text-sm hover:bg-ink/[0.03]">
-            <span className="min-w-0 flex-1 truncate font-medium text-ink">{p.place.level === "store" ? p.place.label : p.place.name}{p.place.level === "store" && <span className="font-normal text-ink-3"> · {p.place.city}, {p.place.stateCode}</span>}</span>
-            {p.distance != null && <span className="shrink-0 text-xs tabular-nums text-ink-3">{formatMiles(p.distance)} · {formatDrive(p.distance)}</span>}
+            <span className="min-w-0 flex-1 truncate font-medium text-ink">{p.place.level === "store" ? p.place.label : p.place.name}{p.place.level === "store" && <span className="font-normal text-ink-3"> · {p.place.country && p.place.country !== "us" ? p.place.city : `${p.place.city}, ${p.place.stateCode}`}</span>}</span>
+            {p.distance != null && <span className="shrink-0 text-xs tabular-nums text-ink-3">{distLabel(p.distance, p.place.country)} · {formatDrive(p.distance)}</span>}
             <span className={`inline-flex shrink-0 items-center gap-1.5 tabular-nums ${p.inStock ? "font-semibold text-accent" : "text-ink-3"}`}>
               <Dot state={p.inStock ? "ok" : "idle"} live={p.inStock > 0} />{p.place.level === "store" ? (p.inStock ? "in stock" : "none") : `${p.inStock}/${p.stores}`}
             </span>
@@ -140,7 +147,7 @@ export function StatusCard({ line }: { line: StoreLine }) {
       <p className="mt-1 text-sm text-ink-2">
         {on ? <>{st?.quote ?? "Available for pickup"}{st?.since && <> · since <LiveAgo iso={st.since} /></>}</> : st?.lastAvailableAt ? <>Last in stock <LiveAgo iso={st.lastAvailableAt} /></> : st ? "Never seen in stock here yet" : "First check within a minute"}
       </p>
-      {on && item && <a href={appleBuyUrl(item)} target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-4">Buy on apple.com</a>}
+      {on && item && <a href={appleBuyUrl(item, line.store.country)} target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-4">Buy on apple.com</a>}
       <p className="mt-3 text-xs text-ink-3">Checked <LiveChecked iso={line.lastCheckedAt} stores={[line.store.storeNumber]} /> · {CHECK_NOTE}</p>
     </div>
   );

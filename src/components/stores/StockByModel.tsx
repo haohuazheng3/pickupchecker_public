@@ -1,6 +1,7 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { MODELS, PART_INDEX, STORAGE_ORDER, COLOR_META, STORE_INDEX, modelKeyFor } from "@/lib/apple/catalog";
 import { productFor, productPath, storePlace } from "@/lib/seo/products";
+import { alertHref } from "@/lib/seo/enrich";
 import type { StoreStockSummary } from "@/lib/stock/queries";
 import { Dot } from "@/components/stock/StatusBits";
 import { LiveChecked } from "@/components/site/LiveChecked";
@@ -27,7 +28,7 @@ export function StockByModel({ summary, storeNumber }: { summary: StoreStockSumm
             )}
             <div className="mt-auto flex items-center justify-between pt-3 text-xs text-ink-3">
               <span>checked <LiveChecked iso={summary?.lastCheckedAt ?? null} model={m.key} stores={[storeNumber]} /></span>
-              <Link href={`/?model=${m.key}&store=${storeNumber}#notify`} className="font-medium text-ink hover:underline">Alert me →</Link>
+              <Link href={store && store.country !== "us" ? alertHref({ model: m.key, store: storeNumber, country: store.country }) : `/?model=${m.key}&store=${storeNumber}#notify`} className="font-medium text-ink hover:underline">Alert me →</Link>
             </div>
           </div>
         );

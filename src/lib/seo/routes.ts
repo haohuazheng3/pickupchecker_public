@@ -1,7 +1,18 @@
-import { MODELS, STORES, citySlug, citiesWithStores, stateSlug, statesWithStores, storePath, statePath, hasStatePage } from "@/lib/apple/catalog";
+import { MODELS, STORES, citySlug, citiesWithStores, stateSlug, statesWithStores, storePath, statePath, hasStatePage, storesOf, placeTarget } from "@/lib/apple/catalog";
+import { countryFromPrefix, type CountryCode } from "@/lib/apple/countries";
 import { productBySlug, productFor, productPath, resolvePlace } from "./products";
+import { treeOf } from "./tree";
 /** The old blog had one thin post; its topic lives on the 18 Pro stock page. Everything else under /blog goes home. */
 const RETIRED: Record<string, string> = { "/blog/how-to-find-iphone-18-pro-in-stock-near-you": "/stock/iphone-18-pro" };
+
+/**
+ * First path segments that are not another country: the app's own top-level routes, metadata routes without an
+ * extension, and the public/ folders (a test keeps this in step with src/app and public/).
+ */
+export const TOP_LEVEL: ReadonlySet<string> = new Set([
+  "about", "account", "admin", "api", "checkout", "contact", "how-it-works", "install", "map", "pricing", "privacy", "refunds", "restocks", "stock", "stores", "terms",
+  "blog", "opengraph-image", "_not-found", "icons", "img", "vendor", "zip",
+]);
 
 /** Every public place address, built once per process. */
 let known: { states: Set<string>; oneStoreStates: Map<string, string>; cities: Set<string>; oneStoreCities: Map<string, string>; stores: Set<string>; legacy: Map<string, string>; models: Set<string> } | null = null;
@@ -27,6 +38,14 @@ function knownPaths() {
  */
 export function publicRouteCheck(pathname: string, search = ""): { notFound: true } | { redirect: string } | null {
   const parts = pathname.split("/").filter(Boolean);
+  // Any other unknown first segment would land on the /[cc] route and render its 404 late: answer it here.
+  if (parts[0] && !/^[a-z]{2}$/.test(parts[0]) && !TOP_LEVEL.has(parts[0]) && !parts[parts.length - 1].includes(".")) return { notFound: true };
+  // Two letters first: another country's tree (/ca, /uk/stores/…). No top-level route of the site has two letters.
+  if (parts[0] && /^[a-z]{2}$/.test(parts[0])) {
+    if (parts[0] === "us") return { redirect: `/${parts.slice(1).join("/")}${search}` }; // the US has no prefix
+    const c = countryFromPrefix(parts[0]);
+    return c ? countryRouteCheck(c.cc, parts.slice(1), search) : { notFound: true };
+  }
   if (parts[0] === "blog") return { redirect: RETIRED[`/${parts.join("/")}`] ?? "/" };
   if (parts[0] === "stores" && parts.length > 1) {
     const k = knownPaths();
@@ -65,4 +84,45 @@ export function publicRouteCheck(pathname: string, search = ""): { notFound: tru
     return null;
   }
   return null;
+}
+
+/**
+ * /{cc}/… of another country: its home, store tree (one indexable page per place, placeTarget), product tree,
+ * restock log and map. Anything else under the prefix is a 404; a place URL that is not its place's page 308s
+ * to the one that is (Glasgow's region → its city, Austria's store index → its only store, Tokyo → Tokyo city…).
+ */
+function countryRouteCheck(cc: CountryCode, rest: string[], search: string): { notFound: true } | { redirect: string } | null {
+  if (rest.length === 0) return null;
+  const [head, ...tail] = rest;
+  if (head === "stores") {
+    if (tail.length <= 2) {
+      const t = placeTarget(cc, tail[0], tail[1]);
+      if (!t) {
+        // The old shape /{cc}/stores/{region}/{store}: its store.
+        const legacy = tail.length === 2 ? storesOf(cc).find((s) => s.slug === tail[1] && stateSlug(s.state) === tail[0]) : undefined;
+        return legacy ? { redirect: storePath(legacy) + search } : { notFound: true };
+      }
+      return t.indexable ? null : { redirect: t.path + search };
+    }
+    if (tail.length === 3) return storesOf(cc).some((s) => stateSlug(s.state) === tail[0] && citySlug(s.city) === tail[1] && s.slug === tail[2]) ? null : { notFound: true };
+    return { notFound: true };
+  }
+  if (head === "stock" && tail.length > 0) {
+    const t = treeOf(cc);
+    const product = t.productBySlug(tail[0]);
+    if (!product) return { notFound: true };
+    const q = new URLSearchParams(search);
+    if (tail.length === 1 && product.kind === "model" && (q.has("storage") || q.has("color"))) {
+      const to = t.productFor(product.model, q.get("storage") ?? undefined, q.get("color") ?? undefined);
+      q.delete("storage"); q.delete("color");
+      const left = q.toString();
+      return { redirect: `${productPath(to)}${left ? `?${left}` : ""}` };
+    }
+    const place = t.resolvePlace(tail.slice(1));
+    if (!place) return { notFound: true };
+    if ("redirect" in place) return { redirect: `${productPath(product, { segments: place.redirect, country: cc })}${search}` };
+    return null;
+  }
+  if ((head === "restocks" || head === "map") && tail.length === 0) return null;
+  return { notFound: true };
 }

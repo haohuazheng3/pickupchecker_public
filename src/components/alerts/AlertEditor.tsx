@@ -13,7 +13,7 @@ import { fetchMe } from "@/lib/me";
 import type { AlertStart } from "@/lib/alertStart";
 import { track } from "@/lib/track";
 import { Count, Section, openSection } from "./Section";
-import { PhoneMatrix, phoneName, type PhoneCatalog } from "./PhoneMatrix";
+import { PhoneMatrix, phoneName, type PhoneCatalog, type PickerStore } from "./PhoneMatrix";
 import { StoreChooser } from "./StoreChooser";
 import { EmailSignIn } from "./EmailSignIn";
 import { useAlertSet, type PlanInfo } from "./useAlertSet";
@@ -23,19 +23,22 @@ const MOST = PLANS.max.limit;
 const fitPlan = (n: number): PaidPlanKey | null => PAID_PLANS.find((k) => PLANS[k].limit >= n) ?? null;
 const union = <T,>(a: T[], b: T[], key: (x: T) => string) => [...a, ...b.filter((x) => !a.some((y) => key(y) === key(x)))];
 const phonesText = (ps: Phone[]) => (ps.length === 0 ? "None yet: tick a configuration" : ps.length <= 2 ? ps.map((p) => phoneName(p, true)).join(", ") : `${phoneName(ps[0], true)} +${ps.length - 1}`);
-const storesText = (ns: string[]) => {
+const storesText = (ns: string[], names: Map<string, string>) => {
   if (ns.length === 0) return "None yet: tick the stores you can get to";
-  const names = ns.map((n) => STORE_INDEX.get(n)?.name ?? n);
-  return names.length <= 3 ? names.join(", ") : `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
+  const list = ns.map((n) => names.get(n) ?? STORE_INDEX.get(n)?.name ?? n);
+  return list.length <= 3 ? list.join(", ") : `${list.slice(0, 2).join(", ")} +${list.length - 2}`;
 };
 
 function startSet(catalog: PhoneCatalog, s: AlertStart = {}): AlertSet {
   const ok = s.model && s.storage && s.color && catalog.configs[s.model]?.some((c) => c.storage === s.storage && c.color === s.color);
-  return { phones: ok ? [{ model: s.model!, storage: s.storage!, color: s.color! }] : [], stores: s.store && STORE_INDEX.has(s.store) ? [s.store] : [] };
+  const known = catalog.stores ? catalog.stores.some((x) => x.storeNumber === s.store) : Boolean(s.store && STORE_INDEX.has(s.store));
+  return { phones: ok ? [{ model: s.model!, storage: s.storage!, color: s.color! }] : [], stores: s.store && known ? [s.store] : [] };
 }
 
-export function AlertEditor({ catalog, account, start = {}, variant = "panel", signInOnly = false, next }: {
+export function AlertEditor({ catalog, account, start = {}, variant = "panel", signInOnly = false, next, known }: {
   catalog: PhoneCatalog;
+  /** Chosen stores of any country (the dashboard: an account may watch stores in several countries). */
+  known?: PickerStore[];
   /** The dashboard hands the account's set and plan in; elsewhere a signed-in visitor's set is fetched. */
   account?: { set: AlertSet; plan: PlanInfo };
   start?: AlertStart; variant?: "page" | "panel"; signInOnly?: boolean; next?: string;
@@ -138,6 +141,7 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
   const fit = fitPlan(count);
   const startModel = (start.model ?? set.phones[0]?.model) as ModelKey | undefined;
   const storeRoom = Math.max(0, Math.floor(max / Math.max(1, set.phones.length)) - set.stores.length);
+  const names = useMemo(() => new Map([...(catalog.stores ?? []), ...(known ?? [])].map((x) => [x.storeNumber, x.name])), [catalog.stores, known]);
   const summaryLine = useMemo(() => `${set.phones.length} phone${set.phones.length === 1 ? "" : "s"} × ${set.stores.length} store${set.stores.length === 1 ? "" : "s"} = ${count} alert${count === 1 ? "" : "s"}`, [set, count]);
 
   if (signInOnly && !signedIn) {
@@ -177,8 +181,9 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
       <Section id={inner ? "alert-phones" : "phones"} inner={inner} title="Phones" badge={<Count n={set.phones.length} />} summary={phonesText(set.phones)} defaultOpen>
         <PhoneMatrix catalog={catalog} selected={set.phones} onToggle={onPhone} initialModel={startModel ?? MODELS[0].key} disabled={mode === "account" && !loaded} />
       </Section>
-      <Section id={inner ? "alert-stores" : "stores"} inner={inner} title="Stores" badge={<Count n={set.stores.length} />} summary={storesText(set.stores)} defaultOpen>
-        <StoreChooser selected={set.stores} onToggle={onStore} onPretick={mode === "draft" && !start.store ? pretick : undefined} room={storeRoom} preferState={start.state} preferCity={start.city} />
+      <Section id={inner ? "alert-stores" : "stores"} inner={inner} title="Stores" badge={<Count n={set.stores.length} />} summary={storesText(set.stores, names)} defaultOpen>
+        <StoreChooser selected={set.stores} onToggle={onStore} onPretick={mode === "draft" && !start.store ? pretick : undefined} room={storeRoom} preferState={start.state} preferCity={start.city}
+          pool={catalog.stores} country={catalog.country} known={known} switchable={variant === "page"} />
       </Section>
 
       {mode === "draft" && count > 0 && (

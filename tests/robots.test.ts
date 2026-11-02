@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import robots from "@/app/robots";
+import sitemap from "@/app/sitemap";
+import { INTL_CODES } from "@/lib/apple/countries";
 import { STORES, statesWithStores, citiesWithStores, hasStatePage, storePath, cityPath, MODELS } from "@/lib/apple/catalog";
 import { PRODUCTS, US, productPath } from "@/lib/seo/products";
 
@@ -37,9 +39,19 @@ describe("robots.txt once the site is indexable", () => {
     }
   });
 
+  it("lets every country's sitemap pages be crawled too", async () => {
+    const urls = (await sitemap()).map((e) => new URL(e.url).pathname).filter((u) => INTL_CODES.some((cc) => u === `/${cc}` || u.startsWith(`/${cc}/`)));
+    expect(urls.length).toBeGreaterThan(300);
+    for (const ua of ["*", "GPTBot", "ClaudeBot"]) {
+      const g = group(ua);
+      expect(urls.filter((u) => !allowed(g, u)), ua).toEqual([]);
+    }
+  });
+
   it("keeps crawlers out of filtered views and private areas", () => {
     const g = group("*");
-    for (const u of ["/stock/iphone-duo/california", "/stock/iphone-duo/new-york/new-york/fifthavenue", "/stock/iphone-18-pro-256gb-black/new-york/new-york/fifthavenue", "/map?state=CA&model=duo", "/restocks?model=all&state=california", "/admin", "/account", "/api/search-index", "/checkout/success"]) {
+    for (const u of ["/stock/iphone-duo/california", "/stock/iphone-duo/new-york/new-york/fifthavenue", "/stock/iphone-18-pro-256gb-black/new-york/new-york/fifthavenue", "/map?state=CA&model=duo", "/restocks?model=all&state=california", "/admin", "/account", "/api/search-index", "/checkout/success",
+      "/uk/stock/iphone-duo/greater-london", "/ca/stock/iphone-duo-256gb/ontario/toronto/eatoncentre", "/jp/map?model=duo", "/de/restocks?model=all", "/at/stock/iphone-duo/vienna/vienna/kaerntnerstrasse"]) {
       expect(allowed(g, u), u).toBe(false);
     }
   });

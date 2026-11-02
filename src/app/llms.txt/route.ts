@@ -1,4 +1,5 @@
-import { MODELS, STORES } from "@/lib/apple/catalog";
+import { MODELS, STORES, storesOf, placeTarget } from "@/lib/apple/catalog";
+import { COUNTRIES, INTL_CODES } from "@/lib/apple/countries";
 
 export const dynamic = "force-static";
 
@@ -17,6 +18,15 @@ export function GET() {
     ...MODELS.map((m) => `- [${m.name} in stock](${base}/stock/${m.slug}): which of the ${STORES.length} stores have it now, by storage and color, with restock history`),
     `- [Restock log](${base}/restocks): every confirmed restock and sell-out with time, store and configuration`,
     `- [Apple Stores by state](${base}/stores): every state, city and store page, each with hours, address and live iPhone stock`,
+    "",
+    "## Countries",
+    "The same live stock, store pages and restock log for 18 more countries, in English, with Apple's local prices and that country's tax rule; every store checked every 15 seconds.",
+    ...INTL_CODES.map((cc) => {
+      const c = COUNTRIES[cc];
+      const n = storesOf(cc).length;
+      const index = placeTarget(cc);
+      return `- [iPhone stock checker ${c.name}](${base}/${cc}): ${n === 1 ? "the Apple Store" : `all ${n} Apple Stores`} ${c.inName}, prices in ${c.currency} (${c.taxNote})${index?.indexable ? `; [every store](${base}${index.path})` : `; [the store](${base}${index?.path})`}`;
+    }),
     "",
     "## Optional",
     `- [How it works](${base}/how-it-works)`,

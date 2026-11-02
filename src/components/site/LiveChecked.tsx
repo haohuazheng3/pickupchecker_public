@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { formatAgo } from "./LiveAgo";
 import { liveKey } from "@/lib/liveScope";
 import type { ModelKey } from "@/lib/apple/catalog";
+import type { CountryCode } from "@/lib/apple/countries";
 
 const POLL_MS = 5000;
 const listeners = new Map<string, Set<(iso: string) => void>>();
@@ -59,9 +60,9 @@ function onVisible() {
   if (!document.hidden) void poll();
 }
 
-export function LiveChecked({ iso, model, stores, className = "", never = "never" }: { iso: Date | string | null | undefined; model?: ModelKey | null; stores?: string[] | null; className?: string; never?: string }) {
+export function LiveChecked({ iso, model, stores, country, className = "", never = "never" }: { iso: Date | string | null | undefined; model?: ModelKey | null; stores?: string[] | null; country?: CountryCode | null; className?: string; never?: string }) {
   const initial = iso instanceof Date ? iso.toISOString() : iso ?? null;
-  const key = liveKey({ model, stores });
+  const key = liveKey({ model, stores, country });
   // The polled value only ever moves forward; the rendered one is the later of it and the server's.
   const [polled, setPolled] = useState<string | null>(() => (key ? latest.get(key) ?? null : null));
   const [now, setNow] = useState(() => Date.now());

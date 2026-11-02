@@ -1,9 +1,13 @@
 /**
  * Where a visitor is looking from, and how far every store is. The store step ranks all 269 Apple
  * Stores by distance from an anchor: the device's location, a ZIP, a typed city / state / store, the
- * place an SEO page handed in, or a store a page pre-ticked.
+ * place an SEO page handed in, or a store a page pre-ticked. Another country's pages hand in their own
+ * store list (`pool`): ranking and search then run over it, without ZIPs.
  */
 import { STORES, distanceMiles, stateCodeOf, type Store } from "@/lib/apple/catalog-us";
+
+/** The fields ranking and search read: a whole Store, or the slim copy another country's page sends the browser. */
+export type GeoStore = Pick<Store, "storeNumber" | "name" | "city" | "state" | "lat" | "lng"> & Partial<Pick<Store, "slug" | "country" | "region" | "regionCode" | "stateCode" | "street" | "postalCode">>;
 import { norm } from "@/lib/text";
 
 export type AnchorKind = "here" | "zip" | "place" | "store" | "state";
@@ -17,20 +21,20 @@ export interface Anchor {
   /** The point is a guess (a ZIP area with no store): rank by it, but never pre-tick from it. */
   approx?: boolean;
 }
-export type Ranked = Store & { distance: number };
+export type Ranked<S extends GeoStore = Store> = S & { distance: number };
 
-export function centroid(stores: Store[]): { lat: number; lng: number } | null {
+export function centroid(stores: Pick<Store, "lat" | "lng">[]): { lat: number; lng: number } | null {
   if (stores.length === 0) return null;
   return { lat: stores.reduce((a, s) => a + s.lat, 0) / stores.length, lng: stores.reduce((a, s) => a + s.lng, 0) / stores.length };
 }
 
-/** Every store, nearest first; the anchor's own stores (a searched city or state) stay ahead of the rest. */
-export function rankStores(anchor: Anchor): Ranked[] {
+/** Every store (of `pool`, default the US), nearest first; the anchor's own stores (a searched city or state) stay ahead of the rest. */
+export function rankStores<S extends GeoStore = Store>(anchor: Anchor, pool: S[] = STORES as unknown as S[]): Ranked<S>[] {
   const first = anchor.first;
-  const inFirst = (s: Store) => Boolean(first?.has(s.storeNumber));
+  const inFirst = (s: S) => Boolean(first?.has(s.storeNumber));
   // A whole state has no meaningful centre: its own stores go A–Z by city, the rest follow by distance.
   const byPlace = anchor.kind === "state";
-  return STORES.map((s) => ({ ...s, distance: distanceMiles(anchor.lat, anchor.lng, s.lat, s.lng) })).sort((a, b) => {
+  return pool.map((s) => ({ ...s, distance: distanceMiles(anchor.lat, anchor.lng, s.lat, s.lng) })).sort((a, b) => {
     const fa = inFirst(a), fb = inFirst(b);
     if (fa !== fb) return Number(fb) - Number(fa);
     if (byPlace && fa) return a.city.localeCompare(b.city) || a.name.localeCompare(b.name);
@@ -105,20 +109,25 @@ export function zipAnchor(raw: string): Anchor | null {
   return c ? { lat: c[0], lng: c[1], label: `ZIP ${z} area (${state})`, kind: "zip", approx: true } : null;
 }
 
-/** A typed place: ZIP, store name, city, or state (name or code). The matched stores lead the list. */
-export function searchAnchor(query: string): Anchor | null {
+/**
+ * A typed place: ZIP, store name, city, or state (name or code). The matched stores lead the list. With
+ * another country's `stores` there are no ZIPs: a typed postcode matches nothing rather than a US state.
+ */
+export function searchAnchor(query: string, stores?: GeoStore[]): Anchor | null {
   const raw = query.trim();
-  if (/^\d{3,5}(\D|$)/.test(raw)) return zipAnchor(raw.match(/^\d{3,5}/)![0]); // "78701", "787", "78701-1234"
+  const us = !stores;
+  if (us && /^\d{3,5}(\D|$)/.test(raw)) return zipAnchor(raw.match(/^\d{3,5}/)![0]); // "78701", "787", "78701-1234"
   let needle = norm(raw).replace(/^apple( store)?(\s+|$)/, ""); // people type "Apple Fifth Avenue"
   if (!needle) return null;
-  const codeOf = (s: Store) => stateCodeOf(s).toLowerCase();
+  const all: GeoStore[] = stores ?? STORES;
+  const codeOf = (s: GeoStore) => stateCodeOf(s as Store).toLowerCase();
   // "New York, NY" / "Austin TX": a trailing state code narrows the search to that state.
-  let pool: Store[] = STORES;
+  let pool: GeoStore[] = all;
   const m = needle.match(/^(.+?)\s+([a-z]{2})$/);
-  if (m && STORES.some((s) => codeOf(s) === m[2])) { pool = STORES.filter((s) => codeOf(s) === m[2]); needle = m[1]; }
+  if (m && all.some((s) => codeOf(s) === m[2])) { pool = all.filter((s) => codeOf(s) === m[2]); needle = m[1]; }
   const n = needle;
-  const one = (hits: Store[]): Anchor => ({ lat: hits[0].lat, lng: hits[0].lng, label: `Apple ${hits[0].name}`, kind: "store" });
-  const many = (hits: Store[], kind: AnchorKind): Anchor => ({ ...centroid(hits)!, label: kind === "state" ? hits[0].state : kind === "place" && hits.every((s) => s.city === hits[0].city) ? `${hits[0].city}, ${stateCodeOf(hits[0])}` : raw, kind, first: new Set(hits.map((s) => s.storeNumber)) });
+  const one = (hits: GeoStore[]): Anchor => ({ lat: hits[0].lat, lng: hits[0].lng, label: `Apple ${hits[0].name}`, kind: "store" });
+  const many = (hits: GeoStore[], kind: AnchorKind): Anchor => ({ ...centroid(hits)!, label: kind === "state" ? hits[0].state : kind === "place" && hits.every((s) => s.city === hits[0].city) ? (us ? `${hits[0].city}, ${stateCodeOf(hits[0] as Store)}` : hits[0].city) : raw, kind, first: new Set(hits.map((s) => s.storeNumber)) });
   // Exact matches win: a store name, a city, a state name or code.
   const exactStore = pool.filter((s) => norm(s.name) === n);
   if (exactStore.length === 1) return one(exactStore);
@@ -178,4 +187,11 @@ export function formatDrive(miles: number): string {
 export function formatMiles(miles: number): string {
   const r = roadMiles(miles);
   return r < 10 ? `${r.toFixed(1)} mi` : `${Math.round(r)} mi`;
+}
+
+/** By road (estimated), in the country's unit: formatMiles, or kilometres where the country signs them. */
+export function formatRoad(miles: number, unit: "mi" | "km" = "mi"): string {
+  if (unit === "mi") return formatMiles(miles);
+  const r = roadMiles(miles) * 1.609344;
+  return r < 10 ? `${r.toFixed(1)} km` : `${Math.round(r)} km`;
 }

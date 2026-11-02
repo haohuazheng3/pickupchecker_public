@@ -1,5 +1,6 @@
 /** Titles, descriptions, FAQ and structured data for the product × place pages. Short, and only what the data says. */
-import { PART_INDEX, catalogFor, modelByKey, stateCodeOf, appleName } from "../apple/catalog";
+import { catalogFor, itemFor, modelByKey, stateCodeOf, storeLocality, appleName } from "../apple/catalog";
+import { COUNTRIES, formatDistance, formatPrice, type CountryCode } from "../apple/countries";
 import type { PlaceStats, RestockStats } from "../stock/queries";
 import { fitTitle, fmtDuration, fmtPrice, listWords, peakOf, plural, type FaqItem } from "./enrich";
 import { inPlace, productPath, type Place, type Product } from "./products";
@@ -7,9 +8,14 @@ import type { StoreLine } from "./productData";
 
 const BASE = "https://pickupchecker.com";
 
+const ccOf = (p: { country?: CountryCode }) => p.country ?? "us";
+/** "34 mi" in the US, "55 km" where the country signs in km. */
+const dist = (place: Place, miles: number) => (ccOf(place) === "us" ? `${Math.round(miles)} mi` : formatDistance(COUNTRIES[ccOf(place)], miles));
+
 export function productTitle(product: Product, place: Place, inStock: number): string {
   const n = place.stores.length;
-  if (place.level === "us") return fitTitle([...(inStock > 0 ? [`${product.name} in stock at ${plural(inStock, "Apple Store")} now`] : []), `${product.name} in-store pickup stock, live`, `${product.name} pickup stock, live`, `${product.short} pickup stock`]);
+  if (place.level === "country" && ccOf(place) !== "us") return fitTitle([...(inStock > 0 ? [`${product.name} in stock at ${plural(inStock, "Apple Store")} ${COUNTRIES[ccOf(place)].inName}`] : []), `${product.name} pickup stock ${COUNTRIES[ccOf(place)].inName}, live`, `${product.short} pickup stock ${COUNTRIES[ccOf(place)].inName}`, `${product.short} pickup stock`]);
+  if (place.level === "country") return fitTitle([...(inStock > 0 ? [`${product.name} in stock at ${plural(inStock, "Apple Store")} now`] : []), `${product.name} in-store pickup stock, live`, `${product.name} pickup stock, live`, `${product.short} pickup stock`]);
   if (place.level === "store") {
     const s = place.store!;
     const now = inStock > 0 ? "in stock now" : "pickup stock";
@@ -23,11 +29,11 @@ export function productDescription(product: Product, place: Place, inStock: numb
   if (place.level === "store") {
     const s = place.store!;
     return fitTitle([
-      `${product.name} pickup stock at ${appleName(s)}, ${s.city} ${stateCodeOf(s)}: ${inStock > 0 ? "in stock now" : "not in stock right now"}, ${week}. Live status, restock times and alerts.`,
+      `${product.name} pickup stock at ${appleName(s)}, ${ccOf(place) === "us" ? `${s.city} ${stateCodeOf(s)}` : storeLocality(s)}: ${inStock > 0 ? "in stock now" : "not in stock right now"}, ${week}. Live status, restock times and alerts.`,
       `${product.name} at ${appleName(s)}: ${inStock > 0 ? "in stock now" : "not in stock now"}, ${week}. Live status and alerts.`,
     ], 155);
   }
-  const where = place.level === "us" ? "US Apple Stores" : `Apple Stores in ${place.name}`;
+  const where = place.level === "country" ? (ccOf(place) === "us" ? "US Apple Stores" : `Apple Stores ${COUNTRIES[ccOf(place)].inName}`) : `Apple Stores in ${place.name}`;
   return fitTitle([
     `${product.name} pickup stock: ${inStock} of ${place.stores.length} ${where} have it now, ${week}. Live by store, restock times and alerts.`,
     `${product.name}: ${inStock} of ${place.stores.length} ${where} have it now, ${week}. Live by store and alerts.`,
@@ -45,13 +51,13 @@ export function productFaq(product: Product, place: Place, lines: StoreLine[], s
       q: `Is the ${product.name} in stock ${at}?`,
       a: l && l.available.length > 0
         ? `Yes${product.parts.length > 1 ? `, ${listWords(l.available.map((i) => `${i.storage} ${i.color}`), 4)}` : ""} at the last check.`
-        : `Not at the last check${nearest ? `; the nearest store with it is ${appleName(nearest)} in ${nearest.city}, ${Math.round(nearest.distance)} mi away` : ""}.`,
+        : `Not at the last check${nearest ? `; the nearest store with it is ${appleName(nearest)} in ${nearest.city}, ${dist(place, nearest.distance)} away` : ""}.`,
     });
   } else {
     out.push({
       q: `Which Apple Stores ${at} have the ${product.name}?`,
       a: inStock.length === 0
-        ? `None at the last check${nearest ? `; the nearest with it is ${appleName(nearest)} in ${nearest.city}, ${Math.round(nearest.distance)} mi away` : ""}.`
+        ? `None at the last check${nearest ? `; the nearest with it is ${appleName(nearest)} in ${nearest.city}, ${dist(place, nearest.distance)} away` : ""}.`
         : `${plural(inStock.length, "store")} at the last check: ${listWords(inStock.map((l) => `${appleName(l.store)}`), 4)}.`,
     });
   }
@@ -66,22 +72,26 @@ export function productFaq(product: Product, place: Place, lines: StoreLine[], s
 
 export function productJsonLdFor(product: Product, place: Place, inStock: number) {
   const m = modelByKey(product.model)!;
-  const items = catalogFor(product.model).filter((c) => product.parts.includes(c.partNumber));
+  const cc = ccOf(product);
+  const items = catalogFor(product.model, cc).filter((c) => product.parts.includes(c.partNumber));
   const prices = items.map((i) => i.price);
   const availability = inStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
-  const one = product.parts.length === 1 ? PART_INDEX.get(product.parts[0]) : undefined;
+  const one = product.parts.length === 1 ? itemFor(product.parts[0], cc) : undefined;
+  const currency = COUNTRIES[cc].currency;
   return {
     "@context": "https://schema.org", "@type": "Product", name: product.name, brand: { "@type": "Brand", name: "Apple" }, model: m.name,
     ...(one ? { sku: one.partNumber, color: one.color } : {}),
     url: `${BASE}${productPath(product, place)}`,
     offers: one
-      ? { "@type": "Offer", priceCurrency: "USD", price: one.price, availability, seller: { "@type": "Organization", name: "Apple" } }
-      : { "@type": "AggregateOffer", priceCurrency: "USD", lowPrice: Math.min(...prices), highPrice: Math.max(...prices), offerCount: items.length, availability, seller: { "@type": "Organization", name: "Apple" } },
+      ? { "@type": "Offer", priceCurrency: currency, price: one.price, availability, seller: { "@type": "Organization", name: "Apple" } }
+      : { "@type": "AggregateOffer", priceCurrency: currency, lowPrice: Math.min(...prices), highPrice: Math.max(...prices), offerCount: items.length, availability, seller: { "@type": "Organization", name: "Apple" } },
   };
 }
 
 export function priceLabel(product: Product): string {
-  const prices = catalogFor(product.model).filter((c) => product.parts.includes(c.partNumber)).map((c) => c.price);
+  const cc = ccOf(product);
+  const prices = catalogFor(product.model, cc).filter((c) => product.parts.includes(c.partNumber)).map((c) => c.price);
   const lo = Math.min(...prices), hi = Math.max(...prices);
-  return lo === hi ? fmtPrice(lo) : `${fmtPrice(lo)}–${fmtPrice(hi)}`;
+  const f = (v: number) => (cc === "us" ? fmtPrice(v) : formatPrice(COUNTRIES[cc], v));
+  return lo === hi ? f(lo) : `${f(lo)}–${f(hi)}`;
 }

@@ -16,7 +16,8 @@ export default clerkMiddleware(async (auth, req) => {
   const check = publicRouteCheck(req.nextUrl.pathname, req.nextUrl.search);
   if (check) {
     if ("redirect" in check) return NextResponse.redirect(new URL(check.redirect, req.url), 308);
-    return NextResponse.rewrite(new URL("/__not_found__", req.url), { status: 404 });
+    // Two segments: no route matches it (a single one would match another country's /[cc] home).
+    return NextResponse.rewrite(new URL("/__not_found__/404", req.url), { status: 404 });
   }
   if (isAdmin(req) && !isAdminPublic(req)) {
     const ok = await verifyAdminToken(adminTokenFrom(req), process.env.ADMIN_SESSION_SECRET ?? "");
@@ -39,5 +40,5 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 export const config = {
-  matcher: ["/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|txt|xml|mjs)).*)", "/(api|trpc)(.*)", "/stock/:path*", "/stores/:path*"],
+  matcher: ["/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|txt|xml|mjs)).*)", "/(api|trpc)(.*)", "/stock/:path*", "/stores/:path*", "/:cc/stock/:path*", "/:cc/stores/:path*"],
 };

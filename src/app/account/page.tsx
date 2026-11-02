@@ -18,7 +18,8 @@ import { RefreshOnAlertsChange } from "@/components/account/RefreshOnAlertsChang
 import { AlertEditor } from "@/components/alerts/AlertEditor";
 import { Section } from "@/components/alerts/Section";
 import { PlanPanel } from "@/components/alerts/PlanPanel";
-import { buildPhoneCatalog } from "@/components/alerts/catalog";
+import { buildPhoneCatalog, pickerStoresFor } from "@/components/alerts/catalog";
+import type { CountryCode } from "@/lib/apple/countries";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "My alerts", robots: { index: false } };
@@ -42,6 +43,13 @@ export default async function Account() {
   const renews = sub?.currentPeriodEnd ? sub.currentPeriodEnd.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : null;
   const deviceInfo = summarizeDevices(devices);
   const fit = PAID_PLANS.find((k) => PLANS[k].limit >= active) ?? "max";
+  // An account may watch stores in several countries: the picker opens on the country most of them are in,
+  // and every chosen store keeps its name (grouped by country) whatever list is showing.
+  const set = alertSetOf(watches);
+  const chosen = pickerStoresFor(set.stores);
+  const counts = new Map<CountryCode, number>();
+  for (const s of chosen) counts.set(s.country, (counts.get(s.country) ?? 0) + 1);
+  const home = [...counts.entries()].sort((a, b) => b[1] - a[1] || (a[0] === "us" ? -1 : b[0] === "us" ? 1 : 0))[0]?.[0] ?? "us";
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-4 pt-8">
       <Identify userRef={u.id} email={u.email} />
@@ -54,7 +62,7 @@ export default async function Account() {
         <SignOutButton />
       </div>
 
-      <AlertEditor variant="page" catalog={buildPhoneCatalog()} account={{ set: alertSetOf(watches), plan: { key: plan.key, limit: plan.limit, used: active } }} />
+      <AlertEditor variant="page" catalog={buildPhoneCatalog(home)} known={chosen} account={{ set, plan: { key: plan.key, limit: plan.limit, used: active } }} />
 
       <Section id="plan" title="Plan" defaultOpen={plan.key === "free"}
         summary={plan.key === "free" ? "No plan yet: alerts are off" : `${PLANS[plan.key].name} · ${Math.min(active, plan.limit)} of ${plan.limit} alerts on${renews ? (sub?.cancelAtPeriodEnd ? ` · ends ${renews}` : ` · renews ${renews}`) : ""}`}>

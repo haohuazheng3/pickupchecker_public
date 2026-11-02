@@ -45,12 +45,12 @@ export interface Country {
   taxNote: string;
   /** Default IANA zone for country-level copy; each store carries its own. */
   timeZone: string;
-  /** How often the public sweep asks each store: the US anchors every 15 s, other countries per store. */
+  /** How often the public sweep asks each store: the US by anchors, other countries store by store; both every 15 s. */
   cadenceSec: number;
 }
 
 const C = (c: Omit<Country, "cadenceSec" | "regionNounPlural" | "short"> & { cadenceSec?: number; regionNounPlural?: string | null; short?: string }): Country => ({
-  cadenceSec: 30,
+  cadenceSec: 15,
   regionNounPlural: c.regionNoun ? `${c.regionNoun}s` : null,
   short: c.name,
   ...c,
@@ -84,10 +84,10 @@ export const INTL_CODES: Exclude<CountryCode, "us">[] = ["ca", "uk", "au", "de",
 export const ALL_CODES: CountryCode[] = ["us", ...INTL_CODES];
 /**
  * Countries whose page tree ({prefix}/stores/…) is live. Links the site generates for a store (push
- * notifications) point at its page only here; until a country's pages ship they open /account, never a 404.
- * The country-pages work adds each country as it launches.
+ * notifications) point at its page only here; a country without pages would open /account, never a 404.
+ * Every country has its pages since 2026-11-02.
  */
-export const COUNTRIES_WITH_PAGES: ReadonlySet<CountryCode> = new Set<CountryCode>(["us"]);
+export const COUNTRIES_WITH_PAGES: ReadonlySet<CountryCode> = new Set<CountryCode>(ALL_CODES);
 
 const BY_ISO = new Map(Object.values(COUNTRIES).map((c) => [c.iso, c]));
 
@@ -116,12 +116,22 @@ export function appleShopUrl(c: Country, familySlug: string): string {
   const p = c.buyPath ?? c.shopPath;
   return p ? `https://www.apple.com/${p}/shop/buy-iphone/${familySlug}` : `https://www.apple.com/shop/buy-iphone/${familySlug}`;
 }
-/** A price in the country's currency, English digits, no decimals when whole (JPY/KRW never have them). */
+/** Dollars that are not US dollars, written so a reader of a site with US prices never mistakes them. */
+const DOLLAR: Record<string, string> = { CAD: "C$", AUD: "A$", SGD: "S$", TWD: "NT$" };
+
+/** A price in the country's currency, English digits, no decimals when whole (JPY/KRW never have them); C$, A$, S$, NT$ for other dollars. */
 export function formatPrice(c: Country, amount: number): string {
   const whole = Number.isInteger(amount);
-  return new Intl.NumberFormat(c.priceLocale ?? c.locale, { style: "currency", currency: c.currency, minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 }).format(amount);
+  const s = new Intl.NumberFormat(c.priceLocale ?? c.locale, { style: "currency", currency: c.currency, minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 }).format(amount);
+  const d = DOLLAR[c.currency];
+  return d ? s.replace(/^(-?)\$/, `$1${d}`) : s;
 }
 /** Road distance text in the country's unit from a figure in miles. */
 export function formatDistance(c: Country, miles: number): string {
   return c.unit === "mi" ? `${Math.round(miles)} mi` : `${Math.round(miles * 1.609344)} km`;
+}
+
+/** "the UK", "Canada", "the Netherlands": the country as the object of "in". */
+export function theName(c: Country): string {
+  return c.inName.replace(/^in /, "");
 }

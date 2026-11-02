@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { searchIndex, type SearchEntry, type SearchKind } from "@/lib/search";
 import { track } from "@/lib/track";
 
-const KIND_LABEL: Record<SearchKind, string> = { store: "Store", city: "City", state: "State", model: "Model", page: "Page" };
+const KIND_LABEL: Record<SearchKind, string> = { store: "Store", city: "City", state: "State", model: "Model", page: "Page", country: "Country" };
 const EXAMPLES = ["Texas", "Houston", "Fifth Avenue", "10001", "Duo"];
 const SHORTCUTS: [string, string][] = [["/stock/iphone-duo", "iPhone Duo stock"], ["/restocks", "Restock log"], ["/map", "Live map"], ["/stores", "All 269 stores"]];
 

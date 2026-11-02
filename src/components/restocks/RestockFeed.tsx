@@ -1,5 +1,5 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
-import { stateCodeOf, modelKeyFor, appleBuyUrl, type ModelKey, appleName } from "@/lib/apple/catalog";
+import { cityLine, mapPath, modelKeyFor, appleBuyUrl, type ModelKey, appleName } from "@/lib/apple/catalog";
 import type { RestockRow } from "@/lib/stock/queries";
 import { productFor, productPath, storePlace } from "@/lib/seo/products";
 import { LocalTime } from "@/components/site/LocalTime";
@@ -33,7 +33,7 @@ export function RestockFeed({ rows, model, showModel = true, emptyText = "No res
             </div>
             <Link href={productPath(productFor(key), here)} className="block min-w-0 truncate">
               <span className="font-semibold text-ink hover:underline">{r.store.name}</span>
-              <span className="text-xs text-ink-3"> · {r.store.city}, {stateCodeOf(r.store)}</span>
+              <span className="text-xs text-ink-3"> · {cityLine(r.store)}</span>
             </Link>
             <div className="flex items-center justify-between gap-2">
               <Link href={productPath(config, here)} className="inline-flex min-w-0 items-center gap-1.5 text-sm text-ink-2 hover:text-ink hover:underline">
@@ -41,8 +41,8 @@ export function RestockFeed({ rows, model, showModel = true, emptyText = "No res
                 <span className="truncate">{showModel ? `${r.item.model.replace("iPhone ", "")} ` : ""}{r.item.storage} {r.item.color}</span>
               </Link>
               <span className="flex shrink-0 gap-1">
-                <Link href={`/map?store=${r.storeNumber}&model=${model ?? key}`} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-2 hover:bg-ink/5" aria-label={`Show ${appleName(r.store)} on the map`} title="Map"><MapIcon /></Link>
-                {available && <a href={appleBuyUrl(r.item)} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-2 hover:bg-ink/5" aria-label={`Buy the ${r.item.model} ${r.item.storage} ${r.item.color} on apple.com`} title="Buy on apple.com"><BagIcon /></a>}
+                <Link href={`${mapPath(r.store.country)}?store=${r.storeNumber}&model=${model ?? key}`} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-2 hover:bg-ink/5" aria-label={`Show ${appleName(r.store)} on the map`} title="Map"><MapIcon /></Link>
+                {available && <a href={appleBuyUrl(r.item, r.store.country)} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-2 hover:bg-ink/5" aria-label={`Buy the ${r.item.model} ${r.item.storage} ${r.item.color} on apple.com`} title="Buy on apple.com"><BagIcon /></a>}
               </span>
             </div>
           </li>

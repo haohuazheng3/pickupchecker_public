@@ -11,7 +11,7 @@
  *  • adaptive: 541 share > 25% ⇒ back off and alert; ≥ 90% failing for 2 rounds (541s, a dead route,
  *    anything) ⇒ switch to the spare egress — the host's own IPv4, then the Vercel function — spent on
  *    watched stores first (fallback.ts); full mode is probed again every 15 min
- *  • the other countries (docs/i18n.md), opt-in through POLL_COUNTRIES: every INTL_CADENCE_SEC (30) each of
+ *  • the other countries (docs/i18n.md), opt-in through POLL_COUNTRIES: every INTL_CADENCE_SEC (15) each of
  *    their stores on its own (`store=R###`, the country's 40 part numbers in 2 batches), INTL_CONCURRENCY at once
  *    (12), through the same IPv6 egress, ingest, instant confirm and alerts; failed requests retried once in the
  *    round. A country whose round mostly failed (any reason) is paused on its own, 60 s doubling to 16 min.
@@ -25,7 +25,7 @@
  *       IPV6_PREFIX_FILE written by anyip.sh, else derive the /64 of the first global address), SITE_URL,
  *       POLLER_TOKEN (for the vercel egress fallback), CADENCE_SEC, CONCURRENCY, HOST_LABEL,
  *       FAST_CADENCE_SEC (5; 0 disables the fast lane), FAST_CONCURRENCY (8), FAST_TIMEOUT_MS (4500),
- *       POLL_COUNTRIES (unset or "" = none; "ca,uk" = those; "all" = all 18), INTL_CADENCE_SEC (30),
+ *       POLL_COUNTRIES (unset or "" = none; "ca,uk" = those; "all" = all 18), INTL_CADENCE_SEC (15),
  *       INTL_CONCURRENCY (12), INTL_TIMEOUT_MS (6000)
  */
 import "dotenv/config";
@@ -50,7 +50,7 @@ const FAST_CADENCE_SEC = Number(process.env.FAST_CADENCE_SEC ?? 5);
 const FAST_CONCURRENCY = Number(process.env.FAST_CONCURRENCY ?? 8);
 const FAST_TIMEOUT_MS = Number(process.env.FAST_TIMEOUT_MS ?? 4500);
 const POLL_COUNTRIES = parsePollCountries(process.env.POLL_COUNTRIES);
-const INTL_CADENCE_SEC = Number(process.env.INTL_CADENCE_SEC ?? 30);
+const INTL_CADENCE_SEC = Number(process.env.INTL_CADENCE_SEC ?? 15);
 const INTL_CONCURRENCY = Number(process.env.INTL_CONCURRENCY ?? 12);
 const INTL_TIMEOUT_MS = Number(process.env.INTL_TIMEOUT_MS ?? 6000);
 const HOST = process.env.HOST_LABEL ?? os.hostname();

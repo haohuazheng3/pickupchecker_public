@@ -3,6 +3,8 @@ import { Logo } from "./Logo";
 import { AuthNav } from "./AuthNav";
 import { SiteSearch } from "./SiteSearch";
 import { ThemeToggle } from "./ThemeToggle";
+import { CountrySwitcher } from "./CountrySwitcher";
+import { switchCountries } from "./countries";
 
 const LINKS: [string, string][] = [["/stock/iphone-duo", "Duo stock"], ["/restocks", "Restocks"], ["/map", "Map"], ["/stores", "Stores"], ["/pricing", "Pricing"]];
 
@@ -21,6 +23,7 @@ export function Header() {
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <AuthNav />
             <SiteSearch />
+            <CountrySwitcher countries={switchCountries()} />
             <ThemeToggle />
           </div>
         </div>

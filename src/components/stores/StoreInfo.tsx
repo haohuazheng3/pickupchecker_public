@@ -1,6 +1,6 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
-import { stateCodeOf, storeTimeZone, storePath, DEFAULT_MODEL, type Store } from "@/lib/apple/catalog";
-import { normalizeHours, compressHours, todayLabel, directionsUrl, telHref, hoursText, type OpenStatus } from "@/lib/seo/enrich";
+import { stateCodeOf, storeTimeZone, storePath, mapPath, DEFAULT_MODEL, type Store } from "@/lib/apple/catalog";
+import { normalizeHours, compressHours, todayLabel, directionsUrl, telHrefFor, hoursText, fullAddress, type OpenStatus } from "@/lib/seo/enrich";
 
 function statusClass(s: OpenStatus): string {
   return s === "open" ? "text-accent" : s === "before" ? "text-warn" : "text-ink-3";
@@ -11,12 +11,13 @@ export function StoreInfo({ store, showMapLink = true, compact = false, now = ne
   const week = normalizeHours(store.hours);
   const tz = storeTimeZone(store);
   const today = todayLabel(week, tz, now);
-  const tel = telHref(store.phone);
+  const tel = telHrefFor(store.phone, store.country);
+  const us = (store.country ?? "us") === "us";
   const code = stateCodeOf(store);
   return (
     <div className={compact ? "text-sm" : ""}>
       <address className="not-italic text-ink-2">
-        {(store.street ?? "").trim()}, {store.city}, {code} {store.postalCode}
+        {us ? <>{(store.street ?? "").trim()}, {store.city}, {code} {store.postalCode}</> : fullAddress(store)}
         {store.phone && <> · {tel ? <a href={tel} className="underline decoration-line-2 hover:text-ink">{store.phone}</a> : store.phone}</>}
       </address>
       <p className="mt-1 text-ink-2">
@@ -26,7 +27,7 @@ export function StoreInfo({ store, showMapLink = true, compact = false, now = ne
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
         <a href={directionsUrl(store)} target="_blank" rel="noopener noreferrer" className="underline decoration-line-2 hover:text-ink">Directions</a>
         {store.url && <a href={store.url} target="_blank" rel="nofollow noopener noreferrer" className="underline decoration-line-2 hover:text-ink">apple.com store page</a>}
-        {showMapLink && <Link href={`/map?store=${store.storeNumber}&model=${DEFAULT_MODEL}`} className="underline decoration-line-2 hover:text-ink">Live map</Link>}
+        {showMapLink && <Link href={`${mapPath(store.country)}?store=${store.storeNumber}&model=${DEFAULT_MODEL}`} className="underline decoration-line-2 hover:text-ink">Live map</Link>}
         {compact && <Link href={storePath(store)} className="underline decoration-line-2 hover:text-ink">Store page</Link>}
       </div>
     </div>

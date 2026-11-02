@@ -41,9 +41,9 @@ describe("places", () => {
   });
   it("the breadcrumb chain skips one-store cities", () => {
     const s = single.stores[0];
-    expect(placeChain(storePlace(s)).map((p) => p.level)).toEqual(["us", "state", "store"]);
+    expect(placeChain(storePlace(s)).map((p) => p.level)).toEqual(["country", "state", "store"]);
     const m = multi.stores[0];
-    expect(placeChain(storePlace(m)).map((p) => p.level)).toEqual(["us", "state", "city", "store"]);
+    expect(placeChain(storePlace(m)).map((p) => p.level)).toEqual(["country", "state", "city", "store"]);
   });
 });
 

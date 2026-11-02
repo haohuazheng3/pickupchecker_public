@@ -10,7 +10,8 @@ import { norm } from "./text";
 
 export { norm };
 
-export type SearchKind = "store" | "city" | "state" | "model" | "page";
+/** "country" = another country's home; its regions, cities and stores use the same kinds as the US ones. */
+export type SearchKind = "store" | "city" | "state" | "model" | "page" | "country";
 /** k = kind, l = label, s = sub-label, h = href, q = normalised searchable words. */
 export interface SearchEntry { k: SearchKind; l: string; s: string; h: string; q: string }
 
@@ -46,7 +47,7 @@ export function buildSearchIndex(): SearchEntry[] {
   return out;
 }
 
-const KIND_WEIGHT: Record<SearchKind, number> = { page: 5, model: 4, state: 3, city: 2, store: 1 };
+const KIND_WEIGHT: Record<SearchKind, number> = { page: 5, model: 4, country: 4, state: 3, city: 2, store: 1 };
 
 /**
  * Every token must match; label matches outrank word matches, which outrank substrings; ties go to

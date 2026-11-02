@@ -260,13 +260,13 @@ describe("freshness per country", () => {
   it("the US figures ignore other countries; each country is judged on its own window", () => {
     const f = freshnessFromRows([
       row("R085", 40, 40, 40, 10), row("R032", 40, 40, 40, 12),
-      row("R092", 40, 0, 40, 100), // London: checked 100 s ago — stale for the US window, fresh for the 120 s intl window
+      row("R092", 40, 0, 40, 50), // London: checked 50 s ago — stale for the US window, fresh for the 60 s intl window (4 × 15 s)
       row("R079", 40, 0, 0, 900), // Tokyo: nothing for 15 minutes
     ]);
     expect(f).toMatchObject({ pairs: 80, freshPairs: 80, stores: 2, staleStores: [], oldestSec: 12 });
-    expect(f.intl?.uk).toEqual({ pairs: 40, freshPairs: 40, stores: 1, staleStores: [], oldestSec: 100 });
+    expect(f.intl?.uk).toEqual({ pairs: 40, freshPairs: 40, stores: 1, staleStores: [], oldestSec: 50 });
     expect(f.intl?.jp).toEqual({ pairs: 40, freshPairs: 0, stores: 1, staleStores: ["R079"], oldestSec: 900 });
-    expect(f.intlFreshSec).toBe(INTL_FRESH_FACTOR * 30);
+    expect(f.intlFreshSec).toBe(INTL_FRESH_FACTOR * 15);
     // A dead Japan never touches the US verdict.
     expect(pollerVerdict(5_000, f).state).toBe("ok");
     const v = intlVerdict(f, ["uk", "jp", "ca"])!;
@@ -285,13 +285,14 @@ describe("freshness per country", () => {
 describe("alerts for a store outside the US", () => {
   const store = STORE_INDEX.get("R092")!;
   const item = PART_INDEX.get("MK2E4QN/A")!;
-  it("push: the store's place line, its country's apple.com, and no link to a page that does not exist yet", () => {
+  it("push: the store's place line, its country's apple.com, and the store's own page (the UK has pages)", () => {
     const p = restockPayload([{ item, store, quote: "Heute" }], "w1", new Date("2026-11-02T12:00:00Z"));
     expect(p.title).toBe("In stock: iPhone Duo 256GB Night Sky");
     expect(p.body).toBe("Apple Regent Street · London, UK. Tap to reserve on apple.com.");
-    // Until the UK page tree ships (COUNTRIES_WITH_PAGES), the alert opens the account page, never a 404.
-    expect(COUNTRIES_WITH_PAGES.has("uk")).toBe(false);
-    expect(p.url).toBe("/account?from=push");
+    // Every country has its page tree (COUNTRIES_WITH_PAGES): the alert opens the store's page under /uk.
+    expect(COUNTRIES_WITH_PAGES.has("uk")).toBe(true);
+    expect(p.url).toBe(`${storePath(store)}?from=push`);
+    expect(p.url.startsWith("/uk/stores/")).toBe(true);
     expect(p.data?.buyUrl).toBe("https://www.apple.com/uk/shop/buy-iphone/iphone-duo");
     expect(p.tag).toBe("restock-w1-R092-MK2E4QN-A");
     // A US alert is exactly what it was: its store page and Apple's own quote.

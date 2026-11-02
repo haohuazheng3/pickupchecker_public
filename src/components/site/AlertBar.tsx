@@ -9,9 +9,35 @@ import { useEffect, useState } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { usePathname } from "next/navigation";
 import { MODELS } from "@/lib/apple/catalog-us";
+import { countryFromPrefix } from "@/lib/apple/countries";
 import { productBySlug, resolvePlace } from "@/lib/seo/products";
 
+/**
+ * Another country's pages (/uk/…) point at their own home's alert setup (/uk?…#notify): the model, storage and
+ * colour of a product page, a store page's store (by slug, which that page's alert panel resolves).
+ */
 export function alertHref(pathname: string): string {
+  const cc = countryFromPrefix(pathname.split("/")[1])?.cc;
+  if (cc) {
+    const rest = pathname.slice(cc.length + 1) || "/";
+    const parts = rest.split("/").filter(Boolean);
+    const product = parts[0] === "stock" && parts[1] ? productBySlug(parts[1]) : undefined;
+    const q = new URLSearchParams();
+    if (product) {
+      q.set("model", product.model);
+      if (product.storage) q.set("storage", product.storage);
+      if (product.color) q.set("color", product.color);
+      if (parts.length === 5) q.set("store", parts[4]);
+      else if (parts[2]) { q.set("state", parts[2]); if (parts[3]) q.set("city", parts[3]); }
+    } else if (parts[0] === "stores" && parts.length === 4) q.set("store", parts[3]);
+    else if (parts[0] === "stores" && parts[1]) { q.set("state", parts[1]); if (parts[2]) q.set("city", parts[2]); }
+    const qs = q.toString();
+    return `/${cc}${qs ? `?${qs}` : ""}#notify`;
+  }
+  return usAlertHref(pathname);
+}
+
+function usAlertHref(pathname: string): string {
   // A product page: the exact phone, and the store / city / state it is about.
   const parts = pathname.split("/").filter(Boolean);
   const product = parts[0] === "stock" && parts[1] ? productBySlug(parts[1]) : undefined;

@@ -2,6 +2,7 @@ import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { Logo } from "./Logo";
 import { topStates } from "@/lib/seo/links";
 import { TrackingChoice } from "./Consent";
+import { switchCountries } from "./countries";
 
 export function Footer() {
   return (
@@ -53,7 +54,13 @@ export function Footer() {
             </ul>
           </div>
         </div>
-        <div className="hairline mt-8 flex flex-wrap items-center justify-between gap-3 pt-5 text-xs text-ink-3">
+        <div className="hairline mt-8 pt-5 text-sm">
+          <div className="eyebrow mb-3">Countries</div>
+          <ul className="flex flex-wrap gap-x-4 gap-y-2 text-ink-2">
+            {switchCountries().map((c) => <li key={c.cc}><Link href={c.cc === "us" ? "/" : `/${c.cc}`} className="hover:text-ink">{c.name}</Link></li>)}
+          </ul>
+        </div>
+        <div className="hairline mt-6 flex flex-wrap items-center justify-between gap-3 pt-5 text-xs text-ink-3">
           <span>© {new Date().getFullYear()} PickupChecker</span>
           <Link href="/api/health" className="hover:text-ink">Status</Link>
         </div>

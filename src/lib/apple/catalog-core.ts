@@ -286,6 +286,20 @@ export function storeLocality(store: Pick<Store, "city" | "state"> & Partial<Pic
   return `${store.city}, ${long ? c.name : c.short}`;
 }
 
+/** A store's town for a list row on its own country's pages: "Austin, TX" in the US, "Toronto" elsewhere. */
+export function cityLine(store: Pick<Store, "city" | "state"> & Partial<Pick<Store, "country" | "stateCode" | "region" | "regionCode">>): string {
+  const cc = store.country ?? "us";
+  return cc === "us" ? `${store.city}, ${stateCodeOf(store as StoreLike)}` : store.city;
+}
+
+/** "/map", "/uk/map": a country's pages link to their own map and restock log. */
+export function mapPath(cc: CountryCode = "us"): string {
+  return `${prefixOf(cc)}/map`;
+}
+export function restocksPath(cc: CountryCode = "us"): string {
+  return `${prefixOf(cc)}/restocks`;
+}
+
 /* ------------------------------------------------------------------ data-dependent lookups */
 
 export interface CityEntry { name: string; slug: string; state: string; stateSlug: string; stores: Store[]; country: CountryCode }

@@ -1,26 +1,11 @@
 import type { Metadata } from "next";
-import { STORES, storeInCountry, STATE_CODES, stateCodeOf, storePath, cityPath, statePath, modelByKey, DEFAULT_MODEL, type ModelKey } from "@/lib/apple/catalog";
-import { mapSnapshot } from "@/lib/stock/queries";
-import { StockMap, type MapStore, type MapFocus } from "@/components/map/StockMap";
+import { US } from "@/lib/apple/countries";
+import { MapPage, mapMetadata } from "@/components/pages/MapPage";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: "iPhone Duo pickup stock map — every US Apple Store, live",
-  description: "Live map of all 269 US Apple Stores with iPhone Duo, 18 Pro and Pro Max in-store pickup stock right now, by storage and color.",
-  alternates: { canonical: "/map" },
-};
+export const metadata: Metadata = mapMetadata(US);
 
 /** ?store=R095 · ?stores=R095,R032 · ?state=NY · ?model=duo|18-pro|18-pro-max|all — all optional. */
-export default async function MapPage({ searchParams }: PageProps<"/map">) {
-  const sp = await searchParams;
-  const stores: MapStore[] = STORES.map((s) => ({ n: s.storeNumber, name: s.name, city: s.city, state: s.state, code: stateCodeOf(s), path: storePath(s), cityHref: cityPath(s.state, s.city), stateHref: statePath(s.state), lat: s.lat, lng: s.lng }));
-  const modelParam = typeof sp.model === "string" ? sp.model : "";
-  const focus: MapFocus = {
-    model: modelParam === "all" ? "all" : modelByKey(modelParam) ? (modelParam as ModelKey) : DEFAULT_MODEL,
-    store: typeof sp.store === "string" && storeInCountry(sp.store) ? sp.store : undefined,
-    stores: typeof sp.stores === "string" ? sp.stores.split(",").filter((n) => storeInCountry(n)) : undefined,
-    stateCode: typeof sp.state === "string" && Object.values(STATE_CODES).includes(sp.state.toUpperCase()) ? sp.state.toUpperCase() : undefined,
-  };
-  const initial = await mapSnapshot();
-  return <StockMap stores={stores} initial={initial} focus={focus} />;
+export default async function Page({ searchParams }: PageProps<"/map">) {
+  return <MapPage country={US} searchParams={await searchParams} />;
 }

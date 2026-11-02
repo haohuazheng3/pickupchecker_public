@@ -1,11 +1,12 @@
 /**
  * Pure helpers for the product × place pages: everything on a page is computed in memory from the
  * cached status rows of the three models (stock/queries.ts modelStock), so a page costs no extra reads.
+ * A place's country (seo/tree.ts) decides the catalogue, the stores and the links: nothing crosses a border.
  */
-import { MODELS, PART_INDEX, STORES, catalogFor, colorsFor, distanceMiles, storagesFor, type CatalogItem, type ModelKey, type Store } from "../apple/catalog";
+import { MODELS, catalogFor, colorsFor, distanceMiles, itemFor, storagesFor, type CatalogItem, type ModelKey, type Store } from "../apple/catalog";
 import type { PartStatus } from "../stock/queries";
-import { multiStoreCities, productFor, statePlace, cityPlace, storePlace, type Place, type Product } from "./products";
-import { neighborStates } from "./links";
+import type { Place, Product } from "./products";
+import { treeFor } from "./tree";
 
 export type StockByModel = Record<ModelKey, PartStatus[]>;
 
@@ -42,15 +43,17 @@ export interface Facets { models: Facet[]; storages: Facet[]; colors: Facet[] }
 
 /** The three chip rows: switch model (keeping storage / color where the model has them), storage, color. */
 export function facetsFor(ix: StockIndex, product: Product, place: Place): Facets {
+  const t = treeFor(place);
+  const productFor = t.productFor;
   const models = MODELS.map((m) => {
     const p = productFor(m.key, product.storage, product.color);
     return { product: p, label: m.short === "Duo" ? "iPhone Duo" : m.short, count: chipCount(ix, p, place), on: m.key === product.model };
   });
-  const storages = [undefined, ...storagesFor(product.model)].map((s) => {
+  const storages = [undefined, ...storagesFor(product.model, t.cc)].map((s) => {
     const p = productFor(product.model, s, product.color);
     return { product: p, label: s ?? "All", count: chipCount(ix, p, place), on: product.storage === s };
   });
-  const colors = [undefined, ...colorsFor(product.model)].map((c) => {
+  const colors = [undefined, ...colorsFor(product.model, undefined, t.cc)].map((c) => {
     const p = productFor(product.model, product.storage, c);
     return { product: p, label: c ?? "All", count: chipCount(ix, p, place), on: product.color === c, swatch: c };
   });
@@ -79,7 +82,7 @@ export function storeLine(ix: StockIndex, product: Product, store: Store): Store
     const r = e?.get(p);
     if (!r) continue;
     tracked++;
-    if (isOn(r)) { const item = PART_INDEX.get(p); if (item) available.push(item); }
+    if (isOn(r)) { const item = itemFor(p, store.country); if (item) available.push(item); }
     if (r.lastCheckedAt && (!lastCheckedAt || r.lastCheckedAt > lastCheckedAt)) lastCheckedAt = r.lastCheckedAt;
     if (r.lastAvailableAt && (!lastAvailableAt || r.lastAvailableAt > lastAvailableAt)) lastAvailableAt = r.lastAvailableAt;
   }
@@ -104,12 +107,13 @@ export interface GridCell { item: CatalogItem; product: Product; count: number; 
 
 /** storage × color for the product's model: stores with each configuration (a place) or its status (a store). */
 export function configGrid(ix: StockIndex, product: Product, place: Place): { storages: string[]; colors: string[]; cells: Map<string, GridCell> } {
-  const storages = storagesFor(product.model);
-  const colors = colorsFor(product.model);
+  const t = treeFor(place);
+  const storages = storagesFor(product.model, t.cc);
+  const colors = colorsFor(product.model, undefined, t.cc);
   const cells = new Map<string, GridCell>();
   const scope = new Set(product.parts);
-  for (const item of catalogFor(product.model)) {
-    const p = productFor(product.model, item.storage, item.color);
+  for (const item of catalogFor(product.model, t.cc)) {
+    const p = t.productFor(product.model, item.storage, item.color);
     const status = place.level === "store" ? ix.get(place.store!.storeNumber)?.get(item.partNumber) : undefined;
     cells.set(`${item.storage}|${item.color}`, { item, product: p, count: chipCount(ix, p, place), status, inScope: scope.has(item.partNumber) });
   }
@@ -118,40 +122,44 @@ export function configGrid(ix: StockIndex, product: Product, place: Place): { st
 
 export interface PlaceCount { place: Place; stores: number; inStock: number; distance?: number }
 
-/** One level down: states of the US, two-plus-store cities of a state. */
+/** One level down: states (regions) of the country, two-plus-store cities of a state. */
 export function childPlaces(ix: StockIndex, product: Product, place: Place): PlaceCount[] {
+  const t = treeFor(place);
   const count = (p: Place): PlaceCount => ({ place: p, stores: p.stores.length, inStock: storesWith(ix, product.parts, p.stores).length });
-  if (place.level === "us") {
-    const names = [...new Set(STORES.map((s) => s.state))];
-    return names.map((n) => count(statePlace(n)!)).sort((a, b) => b.inStock - a.inStock || b.stores - a.stores || a.place.name.localeCompare(b.place.name));
+  if (place.level === "country") {
+    const names = [...new Set(t.stores.map((s) => s.state))];
+    // A region that is the whole country (Singapore, Hong Kong) is no level of its own.
+    if (names.length === 1 && t.cc !== "us") return [];
+    return names.map((n) => count(t.regionPlace(n)!)).sort((a, b) => b.inStock - a.inStock || b.stores - a.stores || a.place.name.localeCompare(b.place.name));
   }
   if (place.level === "state") {
-    return multiStoreCities().filter((c) => c.state === place.state).map((c) => count(cityPlace(c.state, c.name)!)).sort((a, b) => b.inStock - a.inStock || b.stores - a.stores || a.place.name.localeCompare(b.place.name));
+    return t.multiStoreCities().filter((c) => c.state === place.state).map((c) => count(t.cityPlace(c.state, c.name)!)).sort((a, b) => b.inStock - a.inStock || b.stores - a.stores || a.place.name.localeCompare(b.place.name));
   }
   return [];
 }
 
-/** Sideways: bordering states (a state), or the nearest stores outside this city / store. */
+/** Sideways: bordering states (a state; elsewhere the nearest regions), or the nearest stores outside this city / store, same country. */
 export function siblingPlaces(ix: StockIndex, product: Product, place: Place, limit = 6): PlaceCount[] {
+  const t = treeFor(place);
   if (place.level === "state") {
-    return neighborStates(place.state!).map((n) => statePlace(n.name)!).map((p) => ({ place: p, stores: p.stores.length, inStock: storesWith(ix, product.parts, p.stores).length }));
+    return t.neighborRegions(place.state!).map((p) => ({ place: p, stores: p.stores.length, inStock: storesWith(ix, product.parts, p.stores).length }));
   }
   if (place.level === "city" || place.level === "store") {
     const own = new Set(place.stores.map((s) => s.storeNumber));
-    return STORES.filter((s) => !own.has(s.storeNumber))
+    return t.stores.filter((s) => !own.has(s.storeNumber))
       .map((s) => ({ s, d: distanceMiles(place.lat, place.lng, s.lat, s.lng) }))
       .sort((a, b) => a.d - b.d)
       .slice(0, limit)
-      .map(({ s, d }) => ({ place: storePlace(s), stores: 1, inStock: storesWith(ix, product.parts, [s]).length, distance: d }));
+      .map(({ s, d }) => ({ place: t.storePlace(s), stores: 1, inStock: storesWith(ix, product.parts, [s]).length, distance: d }));
   }
   return [];
 }
 
-/** Nearest store outside the place that has the product now (for "not here — try …"). */
+/** Nearest store outside the place, same country, that has the product now (for "not here — try …"). */
 export function nearestWithStock(ix: StockIndex, product: Product, place: Place): { store: Store; distance: number } | null {
   const own = new Set(place.stores.map((s) => s.storeNumber));
   let best: { store: Store; distance: number } | null = null;
-  for (const s of storesWith(ix, product.parts, STORES)) {
+  for (const s of storesWith(ix, product.parts, treeFor(place).stores)) {
     if (own.has(s.storeNumber)) continue;
     const d = distanceMiles(place.lat, place.lng, s.lat, s.lng);
     if (!best || d < best.distance) best = { store: s, distance: d };

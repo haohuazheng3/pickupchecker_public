@@ -5,9 +5,22 @@
  */
 import { useState } from "react";
 import { COLOR_META, MODELS, STORAGE_ORDER, type ModelKey } from "@/lib/apple/catalog-us";
+import { COUNTRIES, formatPrice, type CountryCode } from "@/lib/apple/countries";
+import type { GeoStore } from "@/lib/geo";
 import { phoneKey, type Phone } from "@/lib/alertSet";
 
-export interface PhoneCatalog { configs: Record<ModelKey, { storage: string; color: string; price: number; partNumber: string }[]> }
+/** A store as the picker of another country's page receives it (no hours or addresses: they stay on the server). */
+export type PickerStore = GeoStore & Required<Pick<GeoStore, "slug" | "country" | "region">>;
+
+/**
+ * What the alert setup offers: every configuration per model with its price, and — on another country's
+ * pages — that country (prices in its currency) and its stores for the store list. Absent = the US.
+ */
+export interface PhoneCatalog {
+  configs: Record<ModelKey, { storage: string; color: string; price: number; partNumber: string }[]>;
+  country?: CountryCode;
+  stores?: PickerStore[];
+}
 
 export function PhoneMatrix({ catalog, selected, onToggle, initialModel, disabled = false }: {
   catalog: PhoneCatalog; selected: Phone[]; onToggle: (p: Phone) => void; initialModel?: ModelKey; disabled?: boolean;
@@ -60,7 +73,7 @@ export function PhoneMatrix({ catalog, selected, onToggle, initialModel, disable
                       <button type="button" role="checkbox" aria-checked={on} aria-label={`${s} ${c}`} disabled={disabled} onClick={() => onToggle(p)} style={{ color: on ? "var(--ink)" : "var(--ink-3)" }}
                         className={`flex h-12 w-full flex-col items-center justify-center gap-0.5 rounded-xl border text-xs transition disabled:opacity-50 ${on ? "border-accent bg-accent/10" : "border-line-2 hover:border-ink/30"}`}>
                         <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] border text-[10px] font-bold ${on ? "border-accent bg-accent" : "border-ink/25"}`} style={on ? { color: "var(--accent-ink)" } : undefined} aria-hidden>{on ? "✓" : ""}</span>
-                        <span className="tabular-nums">${cfg.price.toLocaleString("en-US")}</span>
+                        <span className="tabular-nums">{catalog.country && catalog.country !== "us" ? formatPrice(COUNTRIES[catalog.country], cfg.price) : `$${cfg.price.toLocaleString("en-US")}`}</span>
                       </button>
                     </td>
                   );

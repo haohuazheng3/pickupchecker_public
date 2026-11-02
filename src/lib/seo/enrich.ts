@@ -4,7 +4,8 @@
  * zone, nearest stores across state lines, narrative paragraphs, FAQs, JSON-LD and page titles.
  * Everything here is deterministic and unit-tested (tests/seo-enrich.test.ts); nothing touches the DB.
  */
-import { STORES, MODELS, DEFAULT_MODEL, STORAGE_ORDER, catalogFor, modelByKey, stateCodeOf, distanceMiles, storePath, type Store, type ModelKey, type CatalogItem, appleName } from "../apple/catalog";
+import { STORES, MODELS, DEFAULT_MODEL, STORAGE_ORDER, catalogFor, modelByKey, stateCodeOf, distanceMiles, storePath, storesOf, type Store, type ModelKey, type CatalogItem, appleName } from "../apple/catalog";
+import { COUNTRIES, prefixOf, type CountryCode } from "../apple/countries";
 
 /* ------------------------------------------------------------------ opening hours */
 
@@ -118,12 +119,40 @@ export function telHref(phone: string | undefined): string | null {
   return null;
 }
 
-export function fullAddress(store: Store): string {
-  return `${(store.street ?? "").trim()}, ${store.city}, ${stateCodeOf(store)} ${store.postalCode ?? ""}`.replace(/\s+/g, " ").trim();
+/** Country calling codes (Canada shares +1 and the US format). */
+const CALLING: Partial<Record<CountryCode, string>> = { uk: "44", au: "61", de: "49", fr: "33", it: "39", es: "34", jp: "81", kr: "82", hk: "852", sg: "65", ae: "971", ch: "41", nl: "31", se: "46", tw: "886", at: "43", be: "32" };
+
+/** A store's phone as a tel: link in international form: "01224 287 900" in the UK → "tel:+441224287900". */
+export function telHrefFor(phone: string | undefined, cc: CountryCode = "us"): string | null {
+  const code = CALLING[cc];
+  if (!code) return telHref(phone);
+  let digits = (phone ?? "").replace(/\D/g, "");
+  if (digits.length < 6) return null;
+  if (digits.startsWith(code) && digits.length > 9) return `tel:+${digits}`;
+  // The trunk 0 goes, except in Italy, where it is part of the number.
+  if (cc !== "it" && digits.startsWith("0")) digits = digits.slice(1);
+  return `tel:+${code}${digits}`;
 }
 
-/** Wizard deep link: one alert is one store × one model × one storage × one color. */
-export function alertHref(o: { model?: ModelKey; storage?: string; color?: string; store?: string; state?: string; city?: string } = {}): string {
+/** Where the postcode goes before the city ("10719 Berlin"), as those countries write addresses. */
+const POSTCODE_FIRST = new Set<CountryCode>(["de", "fr", "it", "es", "ch", "nl", "se", "at", "be"]);
+
+/** One line: "1 Main St, Austin, TX 78701" in the US; "235 Regent Street, London W1B 2EL, UK" / "Kurfürstendamm 26, 10719 Berlin, Germany" elsewhere. */
+export function fullAddress(store: Store): string {
+  const cc = store.country ?? "us";
+  if (cc === "us") return `${(store.street ?? "").trim()}, ${store.city}, ${stateCodeOf(store)} ${store.postalCode ?? ""}`.replace(/\s+/g, " ").trim();
+  const c = COUNTRIES[cc];
+  const pc = (store.postalCode ?? "").trim();
+  const town = pc ? (POSTCODE_FIRST.has(cc) ? `${pc} ${store.city}` : `${store.city} ${pc}`) : store.city;
+  const tail = store.city === c.name || store.city === c.short ? "" : `, ${c.short}`;
+  return `${(store.street ?? "").trim()}, ${town}${tail}`.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Wizard deep link: one alert is one store × one model × one storage × one color. Another country's pages link
+ * to their own home (/uk?…#notify), whose alert setup lists that country's stores.
+ */
+export function alertHref(o: { model?: ModelKey; storage?: string; color?: string; store?: string; state?: string; city?: string; country?: CountryCode } = {}): string {
   const q = new URLSearchParams();
   q.set("model", o.model ?? DEFAULT_MODEL);
   if (o.storage) q.set("storage", o.storage);
@@ -131,7 +160,7 @@ export function alertHref(o: { model?: ModelKey; storage?: string; color?: strin
   if (o.store) q.set("store", o.store);
   if (o.state) q.set("state", o.state);
   if (o.city) q.set("city", o.city);
-  return `/?${q.toString()}#notify`;
+  return `${prefixOf(o.country ?? "us") || "/"}?${q.toString()}#notify`;
 }
 
 export type StoreWithDistance = Store & { distance: number };
@@ -140,19 +169,22 @@ function withDistance(from: Pick<Store, "lat" | "lng">, list: Store[]): StoreWit
   return list.map((s) => ({ ...s, distance: distanceMiles(from.lat, from.lng, s.lat, s.lng) })).sort((a, b) => a.distance - b.distance);
 }
 
-/** Nearest stores in a different state (never empty: Alaska gets Washington). */
-export function nearestOutsideState(from: Pick<Store, "lat" | "lng" | "state">, limit = 4): StoreWithDistance[] {
-  return withDistance(from, STORES.filter((s) => s.state !== from.state)).slice(0, limit);
+/** The stores a neighbourhood search may return: the same country only (a US page never lists a Canadian store). */
+const pool = (cc: CountryCode | undefined): Store[] => (!cc || cc === "us" ? STORES : storesOf(cc));
+
+/** Nearest stores in a different state (never empty: Alaska gets Washington), same country as `from`. */
+export function nearestOutsideState(from: Pick<Store, "lat" | "lng" | "state"> & { country?: CountryCode }, limit = 4): StoreWithDistance[] {
+  return withDistance(from, pool(from.country).filter((s) => s.state !== from.state)).slice(0, limit);
 }
 
 /** Nearest other stores in the same state, optionally outside the same city. */
 export function nearestInState(from: Store, limit = 6, opts: { excludeCity?: boolean } = {}): StoreWithDistance[] {
-  return withDistance(from, STORES.filter((s) => s.state === from.state && s.storeNumber !== from.storeNumber && (!opts.excludeCity || s.city !== from.city))).slice(0, limit);
+  return withDistance(from, pool(from.country).filter((s) => s.state === from.state && s.storeNumber !== from.storeNumber && (!opts.excludeCity || s.city !== from.city))).slice(0, limit);
 }
 
-/** Nearest stores to a point, any state, excluding a set. */
-export function nearestTo(from: Pick<Store, "lat" | "lng">, exclude: Set<string>, limit = 6): StoreWithDistance[] {
-  return withDistance(from, STORES.filter((s) => !exclude.has(s.storeNumber))).slice(0, limit);
+/** Nearest stores to a point, any state of the country (default the US), excluding a set. */
+export function nearestTo(from: Pick<Store, "lat" | "lng">, exclude: Set<string>, limit = 6, cc: CountryCode = "us"): StoreWithDistance[] {
+  return withDistance(from, pool(cc).filter((s) => !exclude.has(s.storeNumber))).slice(0, limit);
 }
 
 export function centroid(stores: Pick<Store, "lat" | "lng">[]): { lat: number; lng: number } {
@@ -290,6 +322,18 @@ export interface FaqContext {
   prices?: { low: number; high: number; storages: string[]; colors: string[] };
 }
 
+/** "Austin, TX (12 mi)" in the US; "Toronto (19 km)" elsewhere (the page already names the country). */
+export function nearLine(x: StoreWithDistance): string {
+  const cc = x.country ?? "us";
+  if (cc === "us") return `${x.city}, ${stateCodeOf(x)} (${Math.round(x.distance)} mi)`;
+  return `${x.city} (${distText(x.distance, cc)})`;
+}
+
+/** Straight-line distance in the country's unit: "12 mi" (US, UK) or "19 km". */
+export function distText(miles: number, cc: CountryCode = "us"): string {
+  return COUNTRIES[cc].unit === "mi" ? `${Math.round(miles)} mi` : `${Math.round(miles * 1.609344)} km`;
+}
+
 /** Up to 5 data-driven questions per page type; every answer is one sentence. */
 export function faq(c: FaqContext): FaqItem[] {
   const duo = modelByKey(DEFAULT_MODEL)!;
@@ -298,7 +342,7 @@ export function faq(c: FaqContext): FaqItem[] {
   const prep = c.kind === "store" ? "at" : c.kind === "model" ? "for the" : "in";
   const restockA = `${c.stats.month === 0 ? `No restock logged ${prep} ${c.place} in the last ${n} days` : `${plural(c.stats.month, "restock")} ${prep} ${c.place} in the last ${n} days, ${c.stats.week} this week`}${c.peak ? `, most of them around ${c.peak.hour} local time and most often on ${c.peak.day}s` : ""}; Apple publishes no schedule.`;
   const lastsA = c.stats.medianMs == null ? `Too few restock-to-sell-out pairs ${prep} ${c.place} yet to measure.` : `Over the last ${n} days a restocked configuration stayed available about ${fmtDuration(c.stats.medianMs)} (median) before selling out again.`;
-  const nearestA = (list: StoreWithDistance[]) => `${listWords(list.slice(0, 3).map((x) => `${appleName(x)} in ${x.city}, ${stateCodeOf(x)} (${Math.round(x.distance)} mi)`))}.`;
+  const nearestA = (list: StoreWithDistance[]) => `${listWords(list.slice(0, 3).map((x) => `${appleName(x)} in ${nearLine(x)}`))}.`;
   if (c.kind === "model") {
     const now = c.stockNow[MODELS.find((m) => m.name === c.place)?.key ?? "duo"] ?? 0;
     out.push({ q: `Which Apple Stores have the ${c.place} in stock right now?`, a: now === 0 ? `None at the last check; the list on this page updates as soon as a US Apple Store lists the ${c.place} for pickup.` : `${plural(now, "US Apple Store")} at the last check, each named on this page with the configurations it has.` });
@@ -343,7 +387,7 @@ export function itemListJsonLd(name: string, stores: Store[]) {
 export function storeJsonLd(s: Store, week: DayHours[]) {
   return {
     "@context": "https://schema.org", "@type": "Store", name: `${appleName(s)}`, url: `${BASE}${storePath(s)}`, sameAs: s.url, brand: { "@type": "Brand", name: "Apple" },
-    address: { "@type": "PostalAddress", streetAddress: (s.street ?? "").trim(), addressLocality: s.city, addressRegion: s.state, postalCode: s.postalCode, addressCountry: "US" },
+    address: { "@type": "PostalAddress", streetAddress: (s.street ?? "").trim(), addressLocality: s.city, addressRegion: s.state, postalCode: s.postalCode, addressCountry: s.iso ?? "US" },
     geo: { "@type": "GeoCoordinates", latitude: s.lat, longitude: s.lng }, telephone: s.phone, image: s.image,
     hasMap: directionsUrl(s), openingHoursSpecification: openingHoursSpec(week),
   };

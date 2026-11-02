@@ -6,7 +6,7 @@
  * in that time zone is drawn faintly underneath (grey bars, hollow timeline dots) so there is a shape to
  * read — never in place of the user's own.
  */
-import { MODELS, STORES, STORE_INDEX, partNumbersFor, storeTimeZone } from "@/lib/apple/catalog";
+import { MODELS, STORE_INDEX, partNumbersFor, storeTimeZone, storesOf } from "@/lib/apple/catalog";
 import { placeStats, restockPattern, restockSlots } from "@/lib/stock/queries";
 import { buildTimeline, hourLabel, hourSpan, majorityZone, minuteIn, nextWindow, topHours, zoneName } from "@/lib/restockTimes";
 import { fmtDuration } from "@/lib/seo/enrich";
@@ -32,10 +32,12 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
   if (live.length === 0) return null;
   const own = [...new Set(live.map((w) => w.storeNumbers[0]))];
   const models = MODELS.filter((m) => live.some((w) => w.model === m.key));
-  const parts = models.flatMap((m) => partNumbersFor(m.key));
+  // Each store's own country's part numbers (an account can watch stores in several countries).
+  const countries = [...new Set(own.map((n) => STORE_INDEX.get(n)!.country))];
+  const parts = [...new Set(models.flatMap((m) => countries.flatMap((cc) => partNumbersFor(m.key, [], [], cc))))];
   const tz = majorityZone(own.map((n) => storeTimeZone(STORE_INDEX.get(n)!)));
   const zone = zoneName(tz);
-  const zoneStores = STORES.filter((s) => storeTimeZone(s) === tz).map((s) => s.storeNumber);
+  const zoneStores = countries.flatMap((cc) => storesOf(cc)).filter((s) => storeTimeZone(s) === tz).map((s) => s.storeNumber);
   const others = zoneStores.filter((n) => !own.includes(n));
 
   const [mine, mineSlots, stay] = await Promise.all([restockPattern(own, parts, [], tz), restockSlots(own, parts, tz), placeStats({ storeNumbers: own, parts, tz })]);

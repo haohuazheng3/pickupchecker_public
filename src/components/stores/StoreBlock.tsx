@@ -1,5 +1,5 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
-import { DEFAULT_MODEL, storePath, type Store, appleName } from "@/lib/apple/catalog";
+import { DEFAULT_MODEL, storePath, mapPath, type Store, appleName } from "@/lib/apple/catalog";
 import type { StoreStockSummary, StoreStatusRow } from "@/lib/stock/queries";
 import { nearestOutsideState, nearestInState, alertHref } from "@/lib/seo/enrich";
 import { StockByModel } from "./StockByModel";
@@ -25,8 +25,8 @@ export function StoreBlock({ store, summary, rows, stock }: { store: Store; summ
           <p className="text-sm text-ink-3">Checked <LiveChecked iso={summary?.lastCheckedAt ?? null} stores={[store.storeNumber]} /> · {CHECK_NOTE}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/map?store=${store.storeNumber}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>
-          <Link href={alertHref({ store: store.storeNumber })} className="btn btn-primary btn-sm">Alert me here</Link>
+          <Link href={`${mapPath(store.country)}?store=${store.storeNumber}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>
+          <Link href={alertHref({ store: store.storeNumber, country: store.country })} className="btn btn-primary btn-sm">Alert me here</Link>
         </div>
       </div>
       <div className="pane p-5"><StoreInfo store={store} compact /></div>
@@ -36,7 +36,7 @@ export function StoreBlock({ store, summary, rows, stock }: { store: Store; summ
         <div className="pane p-5"><HoursTable store={store} /></div>
         <div className="space-y-4">
           {inState.length > 0 && <NearbyStores title={`Also in ${store.state}`} stores={inState} stock={stock} />}
-          <NearbyStores title="Nearest stores across the state line" stores={outside} stock={stock} />
+          <NearbyStores title={store.country === "us" ? "Nearest stores across the state line" : "Nearest stores elsewhere"} stores={outside} stock={stock} />
         </div>
       </div>
     </section>

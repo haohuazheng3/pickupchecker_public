@@ -1,18 +1,47 @@
 import type { MetadataRoute } from "next";
-import { MODELS, STORES, statesWithStores, citiesWithStores, storePath, cityPath, hasStatePage } from "@/lib/apple/catalog";
+import { MODELS, STORES, statesWithStores, citiesWithStores, storePath, cityPath, hasStatePage, storesOf, placeTarget, mapPath, restocksPath } from "@/lib/apple/catalog";
+import { INTL_CODES, prefixOf, type CountryCode } from "@/lib/apple/countries";
 import { latestEventPerStore } from "@/lib/stock/queries";
 import { PRODUCTS, US, productPath, isIndexedProductPage } from "@/lib/seo/products";
 
 /** Regenerated hourly: lastModified of a store/city/state page is its latest real availability event when one is known. */
 export const revalidate = 3600;
 
+type Entry = MetadataRoute.Sitemap[number];
+
+/**
+ * Another country's indexable pages (seo.md §12): its home, its store index (unless it collapses into the only
+ * store), every region and city page that is its place's page (placeTarget), every store, the three model
+ * pages, the restock log and the map. Nothing that redirects or is noindex.
+ */
+export function countryEntries(cc: Exclude<CountryCode, "us">, base: string, now: Date, latestOf: (storeNumbers: string[]) => Date): Entry[] {
+  const p = prefixOf(cc);
+  const stores = storesOf(cc);
+  const out: Entry[] = [{ url: `${base}${p}`, lastModified: latestOf(stores.map((s) => s.storeNumber)), changeFrequency: "hourly", priority: 0.9 }];
+  if (placeTarget(cc)?.indexable) out.push({ url: `${base}${p}/stores`, lastModified: latestOf(stores.map((s) => s.storeNumber)), changeFrequency: "hourly", priority: 0.85 });
+  for (const r of statesWithStores(cc)) {
+    const t = placeTarget(cc, r.slug);
+    if (t?.indexable) out.push({ url: `${base}${t.path}`, lastModified: latestOf(t.stores.map((s) => s.storeNumber)), changeFrequency: "hourly", priority: 0.85 });
+  }
+  for (const c of citiesWithStores(cc)) {
+    const t = placeTarget(cc, c.stateSlug, c.slug);
+    if (t?.indexable) out.push({ url: `${base}${t.path}`, lastModified: latestOf(t.stores.map((s) => s.storeNumber)), changeFrequency: "hourly", priority: 0.8 });
+  }
+  for (const s of stores) out.push({ url: `${base}${storePath(s)}`, lastModified: latestOf([s.storeNumber]), changeFrequency: "hourly", priority: 0.8 });
+  for (const m of MODELS) out.push({ url: `${base}${p}/stock/${m.slug}`, lastModified: now, changeFrequency: "always", priority: 0.75 });
+  out.push({ url: `${base}${restocksPath(cc)}`, lastModified: now, changeFrequency: "hourly", priority: 0.5 });
+  out.push({ url: `${base}${mapPath(cc)}`, lastModified: now, changeFrequency: "hourly", priority: 0.5 });
+  return out;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pickupchecker.com";
   const now = new Date();
-  const latest = await latestEventPerStore();
+  const [latest, ...intlLatest] = await Promise.all([latestEventPerStore(), ...INTL_CODES.map((cc) => latestEventPerStore(cc))]);
+  const all = Object.assign({}, latest, ...intlLatest) as Record<string, string>;
   const latestOf = (storeNumbers: string[]): Date => {
     let best: Date | null = null;
-    for (const n of storeNumbers) { const iso = latest[n]; if (iso) { const d = new Date(iso); if (!best || d > best) best = d; } }
+    for (const n of storeNumbers) { const iso = all[n]; if (iso) { const d = new Date(iso); if (!best || d > best) best = d; } }
     return best ?? now;
   };
   const statics = ["", "/how-it-works", "/pricing", "/install", "/map", "/restocks", "/about", "/contact", "/privacy", "/terms", "/refunds", "/stores"].map((p) => ({ url: `${base}${p}`, lastModified: now, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.6 }));
@@ -26,5 +55,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // stays out of the index (noindex, follow): the /stores page of a place already answers "iPhone Duo in
   // <place>", and one indexed page per place keeps the site free of near-duplicates.
   const products: MetadataRoute.Sitemap = PRODUCTS.filter((p) => (p.kind === "storage" || p.kind === "color") && isIndexedProductPage(p, US)).map((p) => ({ url: `${base}${productPath(p, US)}`, lastModified: now, changeFrequency: "hourly" as const, priority: 0.5 }));
-  return [...statics, ...models, ...states, ...cities, ...stores, ...products];
+  const countries = INTL_CODES.flatMap((cc) => countryEntries(cc, base, now, latestOf));
+  return [...statics, ...models, ...states, ...cities, ...stores, ...products, ...countries];
 }

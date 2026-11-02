@@ -1,5 +1,5 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
-import { MODELS, storePath, stateCodeOf, type Store } from "@/lib/apple/catalog";
+import { MODELS, storePath, cityLine, type Store } from "@/lib/apple/catalog";
 import { productFor, productPath, storePlace } from "@/lib/seo/products";
 import type { StoreStockSummary } from "@/lib/stock/queries";
 import { normalizeHours, todayLabel } from "@/lib/seo/enrich";
@@ -27,7 +27,7 @@ export function ModelStoreMatrix({ stores, stock, showCity = true, now = new Dat
             <li key={s.storeNumber} className="grid grid-cols-[1fr_repeat(3,3.4rem)] items-center gap-x-2 px-3 py-2.5 sm:grid-cols-[1fr_repeat(3,5.5rem)_7rem] sm:px-4">
               <div className="min-w-0">
                 <Link href={storePath(s)} className="block truncate font-medium text-ink hover:underline">Apple {s.name}</Link>
-                <div className="truncate text-xs text-ink-3">{showCity ? `${s.city}, ${stateCodeOf(s)} · ` : ""}{today.label}<span className="sm:hidden"> · <LiveChecked iso={r?.lastCheckedAt ?? null} stores={[s.storeNumber]} /></span></div>
+                <div className="truncate text-xs text-ink-3">{showCity ? `${cityLine(s)} · ` : ""}{today.label}<span className="sm:hidden"> · <LiveChecked iso={r?.lastCheckedAt ?? null} stores={[s.storeNumber]} /></span></div>
               </div>
               {MODELS.map((m) => {
                 const c = r?.perModel[m.key];

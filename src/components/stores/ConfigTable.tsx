@@ -3,6 +3,7 @@ import { MODELS, COLOR_META, catalogFor, appleBuyUrl, modelKeyFor, type CatalogI
 import { productFor, productPath, storePlace } from "@/lib/seo/products";
 import type { StoreStatusRow } from "@/lib/stock/queries";
 import { alertHref, fmtPrice, sortConfigs } from "@/lib/seo/enrich";
+import { COUNTRIES, formatPrice } from "@/lib/apple/countries";
 import { Dot } from "@/components/stock/StatusBits";
 import { LiveAgo } from "@/components/site/LiveAgo";
 
@@ -22,7 +23,7 @@ function Line({ r, store }: { r: Row; store: Store }) {
       <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <Link href={productPath(productFor(modelKeyFor(r.item.model), r.item.storage, r.item.color), storePlace(store))} className="font-medium text-ink hover:underline">{r.item.storage} {r.item.color}</Link>
-          <span className="text-xs text-ink-3">{fmtPrice(r.item.price)}</span>
+          <span className="text-xs text-ink-3">{store.country === "us" ? fmtPrice(r.item.price) : formatPrice(COUNTRIES[store.country], r.item.price)}</span>
         </div>
         <div className="flex flex-wrap items-center gap-x-2 text-xs text-ink-3">
           <span className={`inline-flex items-center gap-1.5 ${ok ? "text-accent" : ""}`}><Dot state={ok ? "ok" : unknown ? "warn" : "idle"} live={ok} />{ok ? (st?.quote ?? "Available") : unknown ? "not checked yet" : (st?.quote ?? "Unavailable")}</span>
@@ -32,8 +33,8 @@ function Line({ r, store }: { r: Row; store: Store }) {
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-3 text-xs">
-        {ok && <a href={appleBuyUrl(r.item)} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm px-2.5 text-xs">Buy</a>}
-        <Link href={alertHref({ model: MODELS.find((m) => m.name === r.item.model)?.key, storage: r.item.storage, color: r.item.color, store: store.storeNumber })} className="font-medium text-ink hover:underline" aria-label={`Alert me when the ${r.item.model} ${r.item.storage} ${r.item.color} is available at ${appleName(store)}`}>Alert me →</Link>
+        {ok && <a href={appleBuyUrl(r.item, store.country)} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm px-2.5 text-xs">Buy</a>}
+        <Link href={alertHref({ model: MODELS.find((m) => m.name === r.item.model)?.key, storage: r.item.storage, color: r.item.color, store: store.storeNumber, country: store.country })} className="font-medium text-ink hover:underline" aria-label={`Alert me when the ${r.item.model} ${r.item.storage} ${r.item.color} is available at ${appleName(store)}`}>Alert me →</Link>
       </div>
     </li>
   );
@@ -48,7 +49,7 @@ export function ConfigTable({ store, rows, title = "Every configuration at this 
       <p className="mt-1 text-sm text-ink-3">{rows.length ? `${rows.length} configurations tracked` : "First sweep in progress — statuses appear within a minute"}</p>
       <div className="mt-3 grid gap-5 lg:grid-cols-3">
         {MODELS.map((m) => {
-          const items = sortConfigs(catalogFor(m.key)).map((item) => ({ item, status: byPart.get(item.partNumber) }));
+          const items = sortConfigs(catalogFor(m.key, store.country)).map((item) => ({ item, status: byPart.get(item.partNumber) }));
           const avail = items.filter((r) => r.status?.status === "available").length;
           return (
             <div key={m.key} className="min-w-0">

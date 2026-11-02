@@ -1,5 +1,6 @@
 /**
- * The product × place page tree under /stock:
+ * The product × place page tree under /stock (other countries: the same tree under /{cc}/stock, built by
+ * seo/tree.ts from that country's catalogue and stores; a Place or Product carrying `country` links there):
  *
  *   /stock/{product}                               the whole US
  *   /stock/{product}/{state}                       one state
@@ -11,7 +12,8 @@
  * ("iphone-duo-night-sky") or one exact configuration ("iphone-duo-512gb-night-sky"): 3 + 12 + 10 + 40 = 65.
  * Every page links to its neighbours along both axes, so moving between them is one tap.
  */
-import { MODELS, STORES, STATE_CODES, catalogFor, citiesWithStores, citySlug, colorsFor, stateSlug, storagesFor, storeTimeZone, type ModelKey, type Store, appleName } from "../apple/catalog-us";
+import { MODELS, STORES, STATE_CODES, catalogFor, citiesWithStores, citySlug, colorsFor, stateSlug, stateCodeOf, storagesFor, storeTimeZone, type ModelKey, type Store, appleName } from "../apple/catalog-us";
+import { prefixOf, type CountryCode } from "../apple/countries";
 
 export type ProductKind = "model" | "storage" | "color" | "config";
 
@@ -27,8 +29,10 @@ export interface Product {
   short: string;
   /** "512GB Night Sky", "512GB", "Night Sky" or "" for a whole model. */
   variant: string;
-  /** Apple part numbers covered, storage then color order. */
+  /** Apple part numbers covered, storage then color order (of `country`'s catalogue). */
   parts: string[];
+  /** Absent = the US. */
+  country?: CountryCode;
 }
 
 export function slugPart(s: string): string {
@@ -69,9 +73,14 @@ export const NOT_INDEXED_PRODUCTS: ReadonlySet<string> = new Set([
   "iphone-18-pro-max-512gb", "iphone-18-pro-max-1tb", "iphone-18-pro-max-2tb",
 ]);
 
-/** The product pages that are indexed: national (US) pages of a model, a storage size or a color, minus the list above. */
-export function isIndexedProductPage(product: Pick<Product, "slug" | "kind">, place: Pick<Place, "level">): boolean {
-  return place.level === "us" && product.kind !== "config" && !NOT_INDEXED_PRODUCTS.has(product.slug);
+/**
+ * The product pages that are indexed: national (US) pages of a model, a storage size or a color, minus the list
+ * above. Other countries index their three model pages only (seo.md §12).
+ */
+export function isIndexedProductPage(product: Pick<Product, "slug" | "kind">, place: Pick<Place, "level" | "country">): boolean {
+  if (place.level !== "country") return false;
+  if (place.country && place.country !== "us") return product.kind === "model";
+  return product.kind !== "config" && !NOT_INDEXED_PRODUCTS.has(product.slug);
 }
 
 export function productBySlug(slug: string): Product | undefined {
@@ -87,7 +96,8 @@ export function productFor(model: ModelKey, storage?: string, color?: string): P
 
 /* ------------------------------------------------------------------ places */
 
-export type PlaceLevel = "us" | "state" | "city" | "store";
+/** "country" = the whole country (the US, or `country`); "state" = a state or another country's region. */
+export type PlaceLevel = "country" | "state" | "city" | "store";
 
 export interface Place {
   level: PlaceLevel;
@@ -107,11 +117,13 @@ export interface Place {
   tz: string;
   lat: number;
   lng: number;
+  /** Absent = the US. */
+  country?: CountryCode;
 }
 
 const mid = (stores: Store[]) => ({ lat: stores.reduce((a, s) => a + s.lat, 0) / Math.max(1, stores.length), lng: stores.reduce((a, s) => a + s.lng, 0) / Math.max(1, stores.length) });
 
-export const US: Place = { level: "us", segments: [], name: "the US", label: "US", stores: STORES, tz: "America/New_York", ...mid(STORES) };
+export const US: Place = { level: "country", segments: [], name: "the US", label: "US", stores: STORES, tz: "America/New_York", ...mid(STORES) };
 
 export function statePlace(stateName: string): Place | null {
   const stores = STORES.filter((s) => s.state === stateName);
@@ -128,9 +140,11 @@ export function cityPlace(stateName: string, city: string): Place | null {
   return { level: "city", segments: [stateSlug(stateName), citySlug(city)], name: `${city}, ${code}`, label: city, stores, state: stateName, stateSlug: stateSlug(stateName), stateCode: code, city, citySlug: citySlug(city), tz: storeTimeZone(stores[0]), ...mid(stores) };
 }
 
+/** Any country's store (its page links stay in its country's tree). */
 export function storePlace(store: Store): Place {
-  const code = STATE_CODES[store.state] ?? store.state.slice(0, 2).toUpperCase();
-  return { level: "store", segments: [stateSlug(store.state), citySlug(store.city), store.slug], name: `${appleName(store)}`, label: store.name, stores: [store], state: store.state, stateSlug: stateSlug(store.state), stateCode: code, city: store.city, citySlug: citySlug(store.city), store, tz: storeTimeZone(store), lat: store.lat, lng: store.lng };
+  const intl = store.country && store.country !== "us";
+  const code = intl ? stateCodeOf(store) : (STATE_CODES[store.state] ?? store.state.slice(0, 2).toUpperCase());
+  return { level: "store", segments: [stateSlug(store.state), citySlug(store.city), store.slug], name: `${appleName(store)}`, label: store.name, stores: [store], state: store.state, stateSlug: stateSlug(store.state), stateCode: code, city: store.city, citySlug: citySlug(store.city), store, tz: storeTimeZone(store), lat: store.lat, lng: store.lng, ...(intl ? { country: store.country } : {}) };
 }
 
 /** Cities with two or more stores (the only city pages in the product tree). */
@@ -157,7 +171,7 @@ export function resolvePlace(segments: string[]): Place | { redirect: string[] }
 /** The chain of places from the US down to this one (one-store cities are skipped). */
 export function placeChain(place: Place): Place[] {
   const out: Place[] = [US];
-  if (place.level === "us") return out;
+  if (place.level === "country") return out;
   out.push(statePlace(place.state!)!);
   if (place.level === "state") return out;
   const city = cityPlace(place.state!, place.city!);
@@ -166,8 +180,9 @@ export function placeChain(place: Place): Place[] {
   return out;
 }
 
-export function productPath(product: Pick<Product, "slug">, place: Pick<Place, "segments"> = US): string {
-  return `/stock/${product.slug}${place.segments.length ? `/${place.segments.join("/")}` : ""}`;
+/** The page of a product at a place; the place's country (else the product's) gives the prefix: /stock/… or /uk/stock/…. */
+export function productPath(product: Pick<Product, "slug"> & { country?: CountryCode }, place: Pick<Place, "segments"> & { country?: CountryCode } = US): string {
+  return `${prefixOf(place.country ?? product.country ?? "us")}/stock/${product.slug}${place.segments.length ? `/${place.segments.join("/")}` : ""}`;
 }
 
 /**
