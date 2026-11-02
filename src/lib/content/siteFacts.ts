@@ -12,16 +12,24 @@ import { recordError, errorMessage } from "../errors";
 /** Tracking of the 269 US stores began on this day; the 18 other countries on the second date. */
 export const TRACKING_SINCE_US = "2026-10-29";
 export const TRACKING_SINCE_INTL = "2026-11-02";
-/** Fewer restocks than this in the window and a store's "usual hour" is not stated: too little to call a pattern. */
+/**
+ * A store's "usual hour" is stated from PATTERN_MIN restocks on PATTERN_MIN_DAYS different local days (ten restocks
+ * in one burst are one event, not a habit), its busiest weekday only once its restocks span WEEKDAY_MIN_SPAN days
+ * (the 18 other countries were first tracked on a Monday: every one of them would be "busiest on Monday").
+ */
 export const PATTERN_MIN = 5;
+export const PATTERN_MIN_DAYS = 3;
+export const WEEKDAY_MIN_SPAN = 14;
 export const PATTERN_DAYS = 30;
 
 export interface StorePattern {
   storeNumber: string;
   restocks: number;
-  /** Local hour (0–23) with the most restocks, null under PATTERN_MIN. */
+  /** Local days with at least one restock. */
+  days: number;
+  /** Local hour (0–23) with the most restocks; null below PATTERN_MIN restocks or PATTERN_MIN_DAYS days. */
   peakHour: number | null;
-  /** 0 = Sunday, null under PATTERN_MIN. */
+  /** 0 = Sunday; null until the restocks span WEEKDAY_MIN_SPAN days. */
   peakWeekday: number | null;
   /** Median minutes a restock stayed listed before it sold out (pairs inside the window). */
   medianStayMin: number | null;
@@ -41,12 +49,13 @@ export interface SiteFacts {
 
 const EMPTY: SiteFacts = { at: new Date(0).toISOString(), restocks: 0, soldouts: 0, restockStores: 0, duoGone2Min: null, patterns: {} };
 
-/** Pure: local hour and weekday of an instant in a zone. */
-export function localHourDay(iso: string, tz: string): { hour: number; weekday: number } {
-  const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", hourCycle: "h23", weekday: "short" }).formatToParts(new Date(iso));
-  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0) % 24;
-  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts.find((p) => p.type === "weekday")?.value ?? "Sun");
-  return { hour, weekday: Math.max(0, weekday) };
+/** Pure: local hour, weekday and date (YYYY-MM-DD) of an instant in a zone. */
+export function localHourDay(iso: string, tz: string): { hour: number; weekday: number; date: string } {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", hourCycle: "h23", weekday: "short", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const hour = Number(get("hour") || 0) % 24;
+  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(get("weekday") || "Sun");
+  return { hour, weekday: Math.max(0, weekday), date: `${get("year")}-${get("month")}-${get("day")}` };
 }
 
 /** Pure: per-store patterns from restock instants (ISO) and median stays. */
@@ -55,15 +64,18 @@ export function patternsFrom(restocks: { storeNumber: string; at: string }[], st
   for (const r of restocks) by.set(r.storeNumber, [...(by.get(r.storeNumber) ?? []), r.at]);
   const out: Record<string, StorePattern> = {};
   for (const [store, ats] of by) {
-    const hours = Array(24).fill(0), days = Array(7).fill(0);
+    const hours = Array(24).fill(0), weekdays = Array(7).fill(0), dates = new Set<string>();
     const tz = tzOf(store);
-    for (const at of ats) { const { hour, weekday } = localHourDay(at, tz); hours[hour]++; days[weekday]++; }
-    const enough = ats.length >= PATTERN_MIN;
+    for (const at of ats) { const { hour, weekday, date } = localHourDay(at, tz); hours[hour]++; weekdays[weekday]++; dates.add(date); }
+    const sorted = [...dates].sort();
+    const spanDays = sorted.length ? Math.round((Date.parse(sorted[sorted.length - 1]) - Date.parse(sorted[0])) / 86400_000) + 1 : 0;
+    const enough = ats.length >= PATTERN_MIN && dates.size >= PATTERN_MIN_DAYS;
     out[store] = {
       storeNumber: store,
       restocks: ats.length,
+      days: dates.size,
       peakHour: enough ? hours.indexOf(Math.max(...hours)) : null,
-      peakWeekday: enough ? days.indexOf(Math.max(...days)) : null,
+      peakWeekday: enough && spanDays >= WEEKDAY_MIN_SPAN ? weekdays.indexOf(Math.max(...weekdays)) : null,
       medianStayMin: stays[store] ?? null,
       lastRestockAt: ats.reduce((a, b) => (a > b ? a : b)),
     };
@@ -108,7 +120,7 @@ const cached = unstable_cache(
       patterns: patternsFrom(recent.map((r) => ({ storeNumber: r.store_number, at: iso(r.at) })), stays, tzOfStore),
     };
   },
-  ["site-facts-v1"],
+  ["site-facts-v2"],
   { revalidate: 3600 },
 );
 
@@ -130,13 +142,13 @@ export function hourLabel(h: number): string {
   return h === 0 ? "midnight" : h === 12 ? "noon" : h < 12 ? `${h} AM` : `${h - 12} PM`;
 }
 
-/** "Usually restocks around 8 AM local time, busiest on Friday; 30 restocks in the last 30 days; typically listed ~5 min." */
+/** "Usually restocks around 8 AM local time[, busiest on Friday]; 30 confirmed restocks in the last 30 days; typically listed ~5 min…" */
 export function patternSentence(p: StorePattern | undefined): string {
   if (!p) return `No confirmed restock in the last ${PATTERN_DAYS} days.`;
   const count = `${p.restocks} confirmed restock${p.restocks === 1 ? "" : "s"} in the last ${PATTERN_DAYS} days`;
   const stay = p.medianStayMin != null ? `; typically listed ~${p.medianStayMin} min before selling out` : "";
-  if (p.peakHour == null) return `${count} — too few to call a pattern yet${stay}.`;
-  return `Usually restocks around ${hourLabel(p.peakHour)} local time, busiest on ${WEEKDAYS[p.peakWeekday!]}; ${count}${stay}.`;
+  if (p.peakHour == null) return `${count}${p.days > 0 && p.days < PATTERN_MIN_DAYS ? ` on ${p.days} day${p.days === 1 ? "" : "s"}` : ""} — too few to call a pattern yet${stay}.`;
+  return `Usually restocks around ${hourLabel(p.peakHour)} local time${p.peakWeekday != null ? `, busiest on ${WEEKDAYS[p.peakWeekday]}` : ""}; ${count}${stay}.`;
 }
 
 /** "Nov 2, 2:31 PM" in the store's own zone. */

@@ -8,8 +8,8 @@ const facts = {
   at: "2026-11-02T18:00:00.000Z", restocks: 4321, soldouts: 3999, restockStores: 300,
   duoGone2Min: { share: 0.71, restocks: 1170 },
   patterns: {
-    R095: { storeNumber: "R095", restocks: 30, peakHour: 8, peakWeekday: 5, medianStayMin: 5, lastRestockAt: "2026-11-02T14:31:00.000Z" },
-    R313: { storeNumber: "R313", restocks: 3, peakHour: null, peakWeekday: null, medianStayMin: 31, lastRestockAt: "2026-11-02T16:45:00.000Z" },
+    R095: { storeNumber: "R095", restocks: 30, days: 20, peakHour: 8, peakWeekday: 5, medianStayMin: 5, lastRestockAt: "2026-11-02T14:31:00.000Z" },
+    R313: { storeNumber: "R313", restocks: 3, days: 1, peakHour: null, peakWeekday: null, medianStayMin: 31, lastRestockAt: "2026-11-02T16:45:00.000Z" },
   },
 };
 vi.mock("@/lib/content/siteFacts", async (orig) => ({ ...(await orig<typeof import("@/lib/content/siteFacts")>()), siteFacts: async () => facts }));
@@ -43,20 +43,26 @@ describe("llms-full.txt — every store's restock pattern", () => {
     const t = await llmsFullTxt();
     expect(t.split("\n").filter((l) => l.startsWith("- [Apple ") && l.includes("/stores/")).length).toBe(ALL_STORES.length);
     expect(t).toMatch(/Apple Fifth Avenue\]\(https:\/\/pickupchecker\.com\/stores\/new-york\/new-york\/fifthavenue\) — New York, NY\. Usually restocks around 8 AM local time, busiest on Friday; 30 confirmed restocks/);
-    expect(t).toMatch(/Belfast, UK\. 3 confirmed restocks in the last 30 days — too few to call a pattern yet/);
+    expect(t).toMatch(/Belfast, UK\. 3 confirmed restocks in the last 30 days on 1 day — too few to call a pattern yet/);
   });
 });
 
 describe("store patterns", () => {
   it("reads hours and weekdays in the store's own zone", () => {
-    expect(localHourDay("2026-11-02T13:00:00.000Z", "America/New_York")).toEqual({ hour: 8, weekday: 1 });
-    expect(localHourDay("2026-11-02T23:30:00.000Z", "Asia/Tokyo")).toEqual({ hour: 8, weekday: 2 });
+    expect(localHourDay("2026-11-02T13:00:00.000Z", "America/New_York")).toEqual({ hour: 8, weekday: 1, date: "2026-11-02" });
+    expect(localHourDay("2026-11-02T23:30:00.000Z", "Asia/Tokyo")).toEqual({ hour: 8, weekday: 2, date: "2026-11-03" });
   });
-  it("states a pattern only from 5 restocks up", () => {
-    const at = (h: number) => `2026-10-${String(10 + h).padStart(2, "0")}T13:05:00.000Z`;
-    const p = patternsFrom([0, 1, 2, 3, 4].map((h) => ({ storeNumber: "R095", at: at(h) })), { R095: 4 }, () => "America/New_York");
-    expect(p.R095).toMatchObject({ restocks: 5, peakHour: 9, medianStayMin: 4 });
-    expect(patternSentence(p.R095)).toMatch(/^Usually restocks around 9 AM local time/);
+  it("states the hour from 5 restocks on 3 days, the weekday only over 2 weeks", () => {
+    const at = (d: number) => `2026-10-${String(10 + d).padStart(2, "0")}T13:05:00.000Z`;
+    const five = patternsFrom([0, 1, 2, 3, 4].map((d) => ({ storeNumber: "R095", at: at(d) })), { R095: 4 }, () => "America/New_York");
+    expect(five.R095).toMatchObject({ restocks: 5, days: 5, peakHour: 9, peakWeekday: null, medianStayMin: 4 });
+    expect(patternSentence(five.R095)).toMatch(/^Usually restocks around 9 AM local time; 5 confirmed/);
+    const span = patternsFrom([0, 7, 14, 15, 16].map((d) => ({ storeNumber: "R095", at: at(d) })), {}, () => "America/New_York");
+    expect(span.R095.peakWeekday).not.toBeNull();
+    // ten restocks in one burst are one day's event, not a habit (the other countries' first day)
+    const burst = patternsFrom(Array.from({ length: 10 }, () => ({ storeNumber: "R092", at: "2026-11-02T14:00:00.000Z" })), {}, () => "Europe/London");
+    expect(burst.R092).toMatchObject({ restocks: 10, days: 1, peakHour: null, peakWeekday: null });
+    expect(patternSentence(burst.R092)).toBe("10 confirmed restocks in the last 30 days on 1 day — too few to call a pattern yet.");
     expect(patternSentence(undefined)).toBe("No confirmed restock in the last 30 days.");
   });
 });

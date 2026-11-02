@@ -39,7 +39,7 @@ export default async function HowItWorks() {
   const intl = ALL_STORES.length - STORES.length;
   const gone = f.duoGone2Min ? `${pct(f.duoGone2Min.share)} of iPhone Duo restocks in the last 7 days were gone within 2 minutes` : "most iPhone Duo restocks are gone within 2 minutes";
   const exampleLine = ex
-    ? `At [${ex.name}](${ex.path}), for example: ${ex.p.restocks} restocks in the last ${PATTERN_DAYS} days, most around **${hourLabel(ex.p.peakHour!)}** local time, **${WEEKDAYS[ex.p.peakWeekday!]}** the busiest day${ex.p.medianStayMin != null ? `, and a typical restock stayed listed about ${ex.p.medianStayMin} minutes` : ""}.`
+    ? `At [${ex.name}](${ex.path}), for example: ${ex.p.restocks} restocks in the last ${PATTERN_DAYS} days, most around **${hourLabel(ex.p.peakHour!)}** local time${ex.p.peakWeekday != null ? `, **${WEEKDAYS[ex.p.peakWeekday]}** the busiest day` : ""}${ex.p.medianStayMin != null ? `, and a typical restock stayed listed about ${ex.p.medianStayMin} minutes` : ""}.`
     : "Each store page shows the hour restocks usually land, the busiest weekday and the last 30 days, day by day.";
 
   const speed: Block[] = [

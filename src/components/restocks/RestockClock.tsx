@@ -53,13 +53,15 @@ function fmtHour(h: number): string {
 export function RestockClock({ stats, label, reports }: { stats: RestockStats; label: string; reports?: ReportSeries | null }) {
   const peakHour = stats.byHour.indexOf(Math.max(...stats.byHour));
   const peakDay = stats.byWeekday.indexOf(Math.max(...stats.byWeekday));
-  const thin = stats.total < 5;
+  // Same rule as peakOf: a pattern from 5 restocks on 3 days, a busiest weekday only over 14 days.
+  const thin = stats.total < 5 || (stats.dates ?? Infinity) < 3;
+  const weekday = (stats.spanDays ?? Infinity) >= 14;
   const zone = stats.tz.split("/").pop()?.replace(/_/g, " ") ?? stats.tz;
   const rep = reports && reports.total > 0 ? reports : null;
   return (
     <div>
       <p className="text-sm text-ink-2">
-        {stats.total === 0 ? `No restocks recorded ${label} in the last ${stats.days} days yet.` : thin ? `${stats.total} restock${stats.total === 1 ? "" : "s"} ${label} in the last ${stats.days} days — too few to call a pattern yet.` : <>{stats.total} restocks {label} in the last {stats.days} days. Most arrive around <b className="text-ink">{fmtHour(peakHour)}</b> local time, and <b className="text-ink">{DAY_NAMES[peakDay]}</b> is the busiest day.</>}
+        {stats.total === 0 ? `No restocks recorded ${label} in the last ${stats.days} days yet.` : thin ? `${stats.total} restock${stats.total === 1 ? "" : "s"} ${label} in the last ${stats.days} days${stats.dates != null && stats.dates < 3 ? ` (on ${stats.dates} day${stats.dates === 1 ? "" : "s"})` : ""} — too few to call a pattern yet.` : <>{stats.total} restocks {label} in the last {stats.days} days. Most arrive around <b className="text-ink">{fmtHour(peakHour)}</b> local time{weekday ? <>, and <b className="text-ink">{DAY_NAMES[peakDay]}</b> is the busiest day</> : null}.</>}
       </p>
       {(stats.total > 0 || rep) && (
         <div className="mt-4 grid gap-6 sm:grid-cols-[3fr_2fr]">

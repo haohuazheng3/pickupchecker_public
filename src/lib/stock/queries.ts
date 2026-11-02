@@ -278,7 +278,11 @@ export async function restockCounts(q: Pick<RestockQuery, "model" | "state" | "c
   });
 }
 
-export interface RestockStats { total: number; byHour: number[]; byWeekday: number[]; days: number; tz: string }
+/**
+ * `dates`: local days with at least one restock; `spanDays`: first to last of them, inclusive. A pattern is called
+ * from 5 restocks on 3 days, a busiest weekday only over 14 days (peakOf; the 18 other countries started on one day).
+ */
+export interface RestockStats { total: number; byHour: number[]; byWeekday: number[]; days: number; tz: string; dates?: number; spanDays?: number }
 
 /** When restocks happen at these stores: local hour-of-day and weekday histograms over the last `days`. */
 export async function restockStats(storeNumbers: string[], tz: string, days = 30, model?: ModelKey, onlyParts?: string[], country?: CountryCode): Promise<RestockStats> {
@@ -292,12 +296,19 @@ export async function restockStats(storeNumbers: string[], tz: string, days = 30
   // A whole country is filtered by its own part numbers where it has them (no 269-item IN list).
   conds.push(...scopeConds(countryScope(cc, storeNumbers, parts), EV));
   return safe("restock stats", empty, async () => {
-    const rows = await db()
-      .select({ h: sql<number>`extract(hour from ${schema.availabilityEvents.at} at time zone ${tz})::int`, d: sql<number>`extract(dow from ${schema.availabilityEvents.at} at time zone ${tz})::int`, n: sql<number>`count(*)::int` })
-      .from(schema.availabilityEvents)
-      .where(and(...conds))
-      .groupBy(sql`1`, sql`2`);
-    const out: RestockStats = { ...empty, byHour: Array(24).fill(0), byWeekday: Array(7).fill(0) };
+    const local = sql`(${schema.availabilityEvents.at} at time zone ${tz})`;
+    const [rows, [span]] = await Promise.all([
+      db()
+        .select({ h: sql<number>`extract(hour from ${schema.availabilityEvents.at} at time zone ${tz})::int`, d: sql<number>`extract(dow from ${schema.availabilityEvents.at} at time zone ${tz})::int`, n: sql<number>`count(*)::int` })
+        .from(schema.availabilityEvents)
+        .where(and(...conds))
+        .groupBy(sql`1`, sql`2`),
+      db()
+        .select({ dates: sql<number>`count(distinct ${local}::date)::int`, span: sql<number | null>`(max(${local}::date) - min(${local}::date) + 1)::int` })
+        .from(schema.availabilityEvents)
+        .where(and(...conds)),
+    ]);
+    const out: RestockStats = { ...empty, byHour: Array(24).fill(0), byWeekday: Array(7).fill(0), dates: span?.dates ?? 0, spanDays: span?.span ?? 0 };
     for (const r of rows) { out.byHour[r.h] += r.n; out.byWeekday[r.d] += r.n; out.total += r.n; }
     return out;
   });

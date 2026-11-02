@@ -281,12 +281,16 @@ export function fmtHour(h: number): string {
 }
 
 /** Peak local hour and weekday from the restock histograms; null below 5 events (too thin to call a pattern). */
-export function peakOf(stats: { byHour: number[]; byWeekday: number[]; total: number }): { hour: string; day: string; total: number } | null {
-  if (stats.total < 5) return null;
+/**
+ * The usual hour from 5 restocks on 3 different days; the busiest weekday only once they span 14 days (null before).
+ * Ten restocks in one burst are one day's event, and a week of data names whatever day it started on.
+ */
+export function peakOf(stats: { byHour: number[]; byWeekday: number[]; total: number; dates?: number; spanDays?: number }): { hour: string; day: string | null; total: number } | null {
+  if (stats.total < 5 || (stats.dates ?? Infinity) < 3) return null;
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const h = stats.byHour.indexOf(Math.max(...stats.byHour));
   const d = stats.byWeekday.indexOf(Math.max(...stats.byWeekday));
-  return { hour: fmtHour(Math.max(0, h)), day: days[Math.max(0, d)], total: stats.total };
+  return { hour: fmtHour(Math.max(0, h)), day: (stats.spanDays ?? Infinity) >= 14 ? days[Math.max(0, d)] : null, total: stats.total };
 }
 
 /* ------------------------------------------------------------------ explainer & FAQ */
@@ -314,7 +318,7 @@ export interface FaqContext {
   duoStores?: Store[];
   stats: NarrativeStats;
   /** Peak hour label and weekday from RestockStats, when there are ≥5 events. */
-  peak?: { hour: string; day: string; total: number } | null;
+  peak?: { hour: string; day: string | null; total: number } | null;
   nearest?: StoreWithDistance[];
   hours?: string;
   todayText?: string;
@@ -340,7 +344,7 @@ export function faq(c: FaqContext): FaqItem[] {
   const n = c.stats.days;
   const out: FaqItem[] = [];
   const prep = c.kind === "store" ? "at" : c.kind === "model" ? "for the" : "in";
-  const restockA = `${c.stats.month === 0 ? `No restock logged ${prep} ${c.place} in the last ${n} days` : `${plural(c.stats.month, "restock")} ${prep} ${c.place} in the last ${n} days, ${c.stats.week} this week`}${c.peak ? `, most of them around ${c.peak.hour} local time and most often on ${c.peak.day}s` : ""}; Apple publishes no schedule.`;
+  const restockA = `${c.stats.month === 0 ? `No restock logged ${prep} ${c.place} in the last ${n} days` : `${plural(c.stats.month, "restock")} ${prep} ${c.place} in the last ${n} days, ${c.stats.week} this week`}${c.peak ? `, most of them around ${c.peak.hour} local time${c.peak.day ? ` and most often on ${c.peak.day}s` : ""}` : ""}; Apple publishes no schedule.`;
   const lastsA = c.stats.medianMs == null ? `Too few restock-to-sell-out pairs ${prep} ${c.place} yet to measure.` : `Over the last ${n} days a restocked configuration stayed available about ${fmtDuration(c.stats.medianMs)} (median) before selling out again.`;
   const nearestA = (list: StoreWithDistance[]) => `${listWords(list.slice(0, 3).map((x) => `${appleName(x)} in ${nearLine(x)}`))}.`;
   if (c.kind === "model") {
