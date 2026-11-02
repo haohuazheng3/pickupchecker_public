@@ -4,7 +4,7 @@
  * colour across the top. Ticking a cell adds that phone (to every chosen store), unticking removes it.
  */
 import { useState } from "react";
-import { COLOR_META, MODELS, STORAGE_ORDER, type ModelKey } from "@/lib/apple/catalog";
+import { COLOR_META, MODELS, STORAGE_ORDER, type ModelKey } from "@/lib/apple/catalog-us";
 import { phoneKey, type Phone } from "@/lib/alertSet";
 
 export interface PhoneCatalog { configs: Record<ModelKey, { storage: string; color: string; price: number; partNumber: string }[]> }

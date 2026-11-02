@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { ensureUser } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { MODELS, STORE_INDEX, catalogFor, type ModelKey } from "@/lib/apple/catalog";
+import { COUNTRIES } from "@/lib/apple/countries";
 import { userPlan } from "@/lib/billing";
 import { coveredWatchIds, SAVE_CAP } from "@/lib/plans";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
@@ -48,11 +49,28 @@ export function phonesOf(b: { model?: ModelKey; storage?: string; color?: string
   return all.filter((p) => { const k = `${p.model}|${p.storage}|${p.color}`; if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
-/** The single configuration a rule watches, or null for a legacy-shaped row. */
+/** The single configuration a rule watches, or null for a legacy-shaped row. Part number and price are the store's country's. */
 export function ruleConfig(w: { model: string; storages: string[]; colors: string[]; storeNumbers: string[] }) {
   if (w.storages.length !== 1 || w.colors.length !== 1 || w.storeNumbers.length !== 1) return null;
-  const item = catalogFor(w.model as ModelKey).find((c) => c.storage === w.storages[0] && c.color === w.colors[0]);
+  const item = catalogFor(w.model as ModelKey, STORE_INDEX.get(w.storeNumbers[0])?.country ?? "us").find((c) => c.storage === w.storages[0] && c.color === w.colors[0]);
   return item ? { storage: w.storages[0], color: w.colors[0], storeNumber: w.storeNumbers[0], partNumber: item.partNumber, price: item.price } : null;
+}
+
+/**
+ * A store outside the US sells its own country's catalogue: every phone asked for must be in it. Null when
+ * every combination exists (US stores are checked against the US catalogue above, as always).
+ */
+export function unsoldAt(phones: Phone[], storeNumbers: string[]): string | null {
+  for (const n of storeNumbers) {
+    const store = STORE_INDEX.get(n);
+    if (!store || store.country === "us") continue;
+    for (const p of phones) {
+      if (!catalogFor(p.model, store.country).some((c) => c.storage === p.storage && c.color === p.color)) {
+        return `${p.model} ${p.storage} ${p.color} is not sold at ${store.name} (${COUNTRIES[store.country].name})`;
+      }
+    }
+  }
+  return null;
 }
 
 export async function GET() {
@@ -95,6 +113,8 @@ export async function POST(req: Request) {
   const dropped = [...new Set(b.removeStoreNumbers ?? [])].filter((n) => !wanted.includes(n));
   const unknown = [...wanted, ...dropped].find((n) => !STORE_INDEX.has(n));
   if (unknown) return NextResponse.json({ error: `unknown store ${unknown}` }, { status: 400 });
+  const unsold = unsoldAt(phones, wanted);
+  if (unsold) return NextResponse.json({ error: unsold }, { status: 400 });
   // Store-major, so the first store ticked gets its rules first for every phone.
   const combos = wanted.flatMap((n) => phones.map((p) => ({ ...p, storeNumber: n })));
   if (combos.length > SAVE_CAP) return NextResponse.json({ error: `that is ${combos.length} alerts — at most ${SAVE_CAP} per account` }, { status: 400 });
@@ -172,6 +192,8 @@ export async function PUT(req: Request) {
   }
   const unknown = stores.find((n) => !STORE_INDEX.has(n));
   if (unknown) return NextResponse.json({ error: `unknown store ${unknown}` }, { status: 400 });
+  const unsold = unsoldAt(phones, stores);
+  if (unsold) return NextResponse.json({ error: unsold }, { status: 400 });
   if (phones.length * stores.length > SAVE_CAP) return NextResponse.json({ error: `that is ${phones.length * stores.length} alerts — at most ${SAVE_CAP} per account` }, { status: 400 });
 
   const [existing, { plan, sub }] = await Promise.all([db().select(ROW).from(schema.watches).where(eq(schema.watches.userId, u.id)) as Promise<Row[]>, userPlan(u.id)]);

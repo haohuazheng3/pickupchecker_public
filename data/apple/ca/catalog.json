@@ -1,0 +1,362 @@
+[
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Black",
+  "partNumber": "MJR54VC/A",
+  "sku": "MJR54",
+  "price": 1749,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Burgundy",
+  "partNumber": "MJR74VC/A",
+  "sku": "MJR74",
+  "price": 1749,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Glacier",
+  "partNumber": "MJR84VC/A",
+  "sku": "MJR84",
+  "price": 1749,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Silver",
+  "partNumber": "MJR64VC/A",
+  "sku": "MJR64",
+  "price": 1749,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Black",
+  "partNumber": "MJR94VC/A",
+  "sku": "MJR94",
+  "price": 2049,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Burgundy",
+  "partNumber": "MJRD4VC/A",
+  "sku": "MJRD4",
+  "price": 2049,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Glacier",
+  "partNumber": "MJRE4VC/A",
+  "sku": "MJRE4",
+  "price": 2049,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Silver",
+  "partNumber": "MJRC4VC/A",
+  "sku": "MJRC4",
+  "price": 2049,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Black",
+  "partNumber": "MJRF4VC/A",
+  "sku": "MJRF4",
+  "price": 2649,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Burgundy",
+  "partNumber": "MJRH4VC/A",
+  "sku": "MJRH4",
+  "price": 2649,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Glacier",
+  "partNumber": "MJRJ4VC/A",
+  "sku": "MJRJ4",
+  "price": 2649,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Silver",
+  "partNumber": "MJRG4VC/A",
+  "sku": "MJRG4",
+  "price": 2649,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Black",
+  "partNumber": "MJRK4VC/A",
+  "sku": "MJRK4",
+  "price": 3549,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Burgundy",
+  "partNumber": "MJRM4VC/A",
+  "sku": "MJRM4",
+  "price": 3549,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Glacier",
+  "partNumber": "MJRN4VC/A",
+  "sku": "MJRN4",
+  "price": 3549,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Silver",
+  "partNumber": "MJRL4VC/A",
+  "sku": "MJRL4",
+  "price": 3549,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Black",
+  "partNumber": "MJX54VC/A",
+  "sku": "MJX54",
+  "price": 1899,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Burgundy",
+  "partNumber": "MJX74VC/A",
+  "sku": "MJX74",
+  "price": 1899,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Glacier",
+  "partNumber": "MJX84VC/A",
+  "sku": "MJX84",
+  "price": 1899,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Silver",
+  "partNumber": "MJX64VC/A",
+  "sku": "MJX64",
+  "price": 1899,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Black",
+  "partNumber": "MJX94VC/A",
+  "sku": "MJX94",
+  "price": 2199,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Burgundy",
+  "partNumber": "MJXC4VC/A",
+  "sku": "MJXC4",
+  "price": 2199,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Glacier",
+  "partNumber": "MJXD4VC/A",
+  "sku": "MJXD4",
+  "price": 2199,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Silver",
+  "partNumber": "MJXA4VC/A",
+  "sku": "MJXA4",
+  "price": 2199,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Black",
+  "partNumber": "MJXE4VC/A",
+  "sku": "MJXE4",
+  "price": 2799,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Burgundy",
+  "partNumber": "MJXG4VC/A",
+  "sku": "MJXG4",
+  "price": 2799,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Glacier",
+  "partNumber": "MJXH4VC/A",
+  "sku": "MJXH4",
+  "price": 2799,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Silver",
+  "partNumber": "MJXF4VC/A",
+  "sku": "MJXF4",
+  "price": 2799,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Black",
+  "partNumber": "MJXJ4VC/A",
+  "sku": "MJXJ4",
+  "price": 3699,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Burgundy",
+  "partNumber": "MJXL4VC/A",
+  "sku": "MJXL4",
+  "price": 3699,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Glacier",
+  "partNumber": "MJXM4VC/A",
+  "sku": "MJXM4",
+  "price": 3699,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Silver",
+  "partNumber": "MJXK4VC/A",
+  "sku": "MJXK4",
+  "price": 3699,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "256GB",
+  "color": "Night Sky",
+  "partNumber": "MK254VC/A",
+  "sku": "MK254",
+  "price": 2999,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "256GB",
+  "color": "Star White",
+  "partNumber": "MK244VC/A",
+  "sku": "MK244",
+  "price": 2999,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "512GB",
+  "color": "Night Sky",
+  "partNumber": "MK274VC/A",
+  "sku": "MK274",
+  "price": 3299,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "512GB",
+  "color": "Star White",
+  "partNumber": "MK264VC/A",
+  "sku": "MK264",
+  "price": 3299,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "1TB",
+  "color": "Night Sky",
+  "partNumber": "MK294VC/A",
+  "sku": "MK294",
+  "price": 3899,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "1TB",
+  "color": "Star White",
+  "partNumber": "MK284VC/A",
+  "sku": "MK284",
+  "price": 3899,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "2TB",
+  "color": "Night Sky",
+  "partNumber": "MK2C4VC/A",
+  "sku": "MK2C4",
+  "price": 4799,
+  "currency": "CAD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "2TB",
+  "color": "Star White",
+  "partNumber": "MK2A4VC/A",
+  "sku": "MK2A4",
+  "price": 4799,
+  "currency": "CAD"
+ }
+]

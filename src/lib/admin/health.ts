@@ -24,6 +24,12 @@ export interface Heartbeat {
   ipv6Stats?: { requests: number; throttled: number; errors: number } | null;
   /** The 5 s fast lane over the stores paid alerts point at (poller/main.ts fastStats). */
   fast?: { cadenceSec: number; stores: number; pairs: number; rounds: number; requests: number; failures: number; throttled: number; confirmed: number; refuted: number; paused: boolean; lastAt: string | null } | null;
+  /** The per-store round of the other countries (poller/main.ts intlStats); absent when POLL_COUNTRIES is empty. */
+  intl?: {
+    cadenceSec: number; countries: string[]; stores: number; tasks: number; rounds: number; requests: number; failures: number; unresolved: number; throttled: number; paused: boolean; lastAt: string | null; lastDurationMs: number;
+    /** Countries resting after a failed round (code → ISO time they are asked again); stuck-loop restarts; left off after too many. */
+    pausedCountries?: Record<string, string>; restarts?: number; stopped?: boolean;
+  } | null;
 }
 
 export interface HealthSnapshot {
@@ -88,7 +94,7 @@ export function computeNodes(s: HealthSnapshot): NodeHealth[] {
     key: "poller", name: "Poller (Linode)", href: "/admin/poller",
     state: hbAge < 2.5 * MIN ? (hb?.mode === "degraded" ? "warn" : "ok") : hbAge < 10 * MIN ? "warn" : "bad",
     value: hb ? `${hb.mode ?? "?"} · ${fmtAge(hbAge)}` : "no heartbeat",
-    detail: hb ? `${hb.host ?? "?"} · every ${hb.cadenceSec ?? "?"} s via ${hb.egress ?? "?"} · last sweep ${hb.requests ?? 0} req, ${hb.storesCovered ?? 0} stores, ${hb.durationMs ? (hb.durationMs / 1000).toFixed(1) : "?"} s · ${hb.held ?? 0} unconfirmed blips held${hb.fast ? ` · fast lane ${hb.fast.stores} stores every ${hb.fast.cadenceSec} s${hb.fast.paused ? " (paused)" : ""}, ${hb.fast.failures} of ${hb.fast.requests} failed` : ""}` : "the host has never written a heartbeat",
+    detail: hb ? `${hb.host ?? "?"} · every ${hb.cadenceSec ?? "?"} s via ${hb.egress ?? "?"} · last sweep ${hb.requests ?? 0} req, ${hb.storesCovered ?? 0} stores, ${hb.durationMs ? (hb.durationMs / 1000).toFixed(1) : "?"} s · ${hb.held ?? 0} unconfirmed blips held${hb.fast ? ` · fast lane ${hb.fast.stores} stores every ${hb.fast.cadenceSec} s${hb.fast.paused ? " (paused)" : ""}, ${hb.fast.failures} of ${hb.fast.requests} failed` : ""}${hb.intl ? ` · ${hb.intl.countries.length} other countries, ${hb.intl.stores} stores every ${hb.intl.cadenceSec} s${hb.intl.stopped ? " (stopped: stuck too often)" : hb.intl.paused ? " (paused)" : ""}${Object.keys(hb.intl.pausedCountries ?? {}).length ? ` (resting: ${Object.keys(hb.intl.pausedCountries!).join(", ")})` : ""}, ${hb.intl.failures} of ${hb.intl.requests} failed` : ""}` : "the host has never written a heartbeat",
   });
 
   // 2. host vitals

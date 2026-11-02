@@ -1,0 +1,47 @@
+[
+ {
+  "storeNumber": "R687",
+  "slug": "kaerntnerstrasse",
+  "name": "Kärntner Straße",
+  "city": "Vienna",
+  "region": "Vienna",
+  "regionCode": null,
+  "country": "AT",
+  "lat": 48.206908,
+  "lng": 16.371731,
+  "street": "Kärntner Straße 11",
+  "postalCode": "1010",
+  "phone": "(01) 206 09 25 44",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R687.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Thursday",
+     "Monday",
+     "Tuesday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:30:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/Vienna",
+  "url": "https://www.apple.com/at/retail/kaerntnerstrasse/",
+  "nativeName": "Apple Kärntner Straße"
+ }
+]

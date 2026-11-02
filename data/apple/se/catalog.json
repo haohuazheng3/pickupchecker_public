@@ -1,0 +1,362 @@
+[
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Black",
+  "partNumber": "MJRP4QN/A",
+  "sku": "MJRP4",
+  "price": 16495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Burgundy",
+  "partNumber": "MJRR4QN/A",
+  "sku": "MJRR4",
+  "price": 16495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Glacier",
+  "partNumber": "MJRT4QN/A",
+  "sku": "MJRT4",
+  "price": 16495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Silver",
+  "partNumber": "MJRQ4QN/A",
+  "sku": "MJRQ4",
+  "price": 16495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Black",
+  "partNumber": "MJRU4QN/A",
+  "sku": "MJRU4",
+  "price": 19495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Burgundy",
+  "partNumber": "MJRW4QN/A",
+  "sku": "MJRW4",
+  "price": 19495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Glacier",
+  "partNumber": "MJRX4QN/A",
+  "sku": "MJRX4",
+  "price": 19495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Silver",
+  "partNumber": "MJRV4QN/A",
+  "sku": "MJRV4",
+  "price": 19495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Black",
+  "partNumber": "MJRY4QN/A",
+  "sku": "MJRY4",
+  "price": 24995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Burgundy",
+  "partNumber": "MJT14QN/A",
+  "sku": "MJT14",
+  "price": 24995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Glacier",
+  "partNumber": "MJT24QN/A",
+  "sku": "MJT24",
+  "price": 24995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Silver",
+  "partNumber": "MJT04QN/A",
+  "sku": "MJT04",
+  "price": 24995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Black",
+  "partNumber": "MJT34QN/A",
+  "sku": "MJT34",
+  "price": 33495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Burgundy",
+  "partNumber": "MJT54QN/A",
+  "sku": "MJT54",
+  "price": 33495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Glacier",
+  "partNumber": "MJT64QN/A",
+  "sku": "MJT64",
+  "price": 33495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Silver",
+  "partNumber": "MJT44QN/A",
+  "sku": "MJT44",
+  "price": 33495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Black",
+  "partNumber": "MJXN4QN/A",
+  "sku": "MJXN4",
+  "price": 18495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Burgundy",
+  "partNumber": "MJXQ4QN/A",
+  "sku": "MJXQ4",
+  "price": 18495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Glacier",
+  "partNumber": "MJXR4QN/A",
+  "sku": "MJXR4",
+  "price": 18495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Silver",
+  "partNumber": "MJXP4QN/A",
+  "sku": "MJXP4",
+  "price": 18495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Black",
+  "partNumber": "MJXT4QN/A",
+  "sku": "MJXT4",
+  "price": 21495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Burgundy",
+  "partNumber": "MJXV4QN/A",
+  "sku": "MJXV4",
+  "price": 21495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Glacier",
+  "partNumber": "MJXW4QN/A",
+  "sku": "MJXW4",
+  "price": 21495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Silver",
+  "partNumber": "MJXU4QN/A",
+  "sku": "MJXU4",
+  "price": 21495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Black",
+  "partNumber": "MJXX4QN/A",
+  "sku": "MJXX4",
+  "price": 26995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Burgundy",
+  "partNumber": "MJY04QN/A",
+  "sku": "MJY04",
+  "price": 26995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Glacier",
+  "partNumber": "MJY14QN/A",
+  "sku": "MJY14",
+  "price": 26995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Silver",
+  "partNumber": "MJXY4QN/A",
+  "sku": "MJXY4",
+  "price": 26995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Black",
+  "partNumber": "MJY24QN/A",
+  "sku": "MJY24",
+  "price": 35495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Burgundy",
+  "partNumber": "MJY44QN/A",
+  "sku": "MJY44",
+  "price": 35495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Glacier",
+  "partNumber": "MJY54QN/A",
+  "sku": "MJY54",
+  "price": 35495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Silver",
+  "partNumber": "MJY34QN/A",
+  "sku": "MJY34",
+  "price": 35495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "256GB",
+  "color": "Night Sky",
+  "partNumber": "MK2E4QN/A",
+  "sku": "MK2E4",
+  "price": 26995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "256GB",
+  "color": "Star White",
+  "partNumber": "MK2D4QN/A",
+  "sku": "MK2D4",
+  "price": 26995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "512GB",
+  "color": "Night Sky",
+  "partNumber": "MK2G4QN/A",
+  "sku": "MK2G4",
+  "price": 29995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "512GB",
+  "color": "Star White",
+  "partNumber": "MK2F4QN/A",
+  "sku": "MK2F4",
+  "price": 29995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "1TB",
+  "color": "Night Sky",
+  "partNumber": "MK2J4QN/A",
+  "sku": "MK2J4",
+  "price": 35495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "1TB",
+  "color": "Star White",
+  "partNumber": "MK2H4QN/A",
+  "sku": "MK2H4",
+  "price": 35495,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "2TB",
+  "color": "Night Sky",
+  "partNumber": "MK2L4QN/A",
+  "sku": "MK2L4",
+  "price": 43995,
+  "currency": "SEK"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "2TB",
+  "color": "Star White",
+  "partNumber": "MK2K4QN/A",
+  "sku": "MK2K4",
+  "price": 43995,
+  "currency": "SEK"
+ }
+]

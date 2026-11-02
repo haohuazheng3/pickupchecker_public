@@ -1,0 +1,194 @@
+[
+ {
+  "storeNumber": "R439",
+  "slug": "freiestrasse",
+  "name": "Freie Strasse",
+  "city": "Basel",
+  "region": "Basel",
+  "regionCode": null,
+  "country": "CH",
+  "lat": 47.5563507,
+  "lng": 7.59021,
+  "street": "Freie Strasse 47",
+  "postalCode": "4001",
+  "phone": "(061) 206 01 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R439.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Tuesday"
+    ],
+    "opens": "09:30:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Friday",
+     "Thursday"
+    ],
+    "opens": "09:30:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/Zurich",
+  "url": "https://www.apple.com/chde/retail/freiestrasse/",
+  "nativeName": "Apple Freie Strasse"
+ },
+ {
+  "storeNumber": "R275",
+  "slug": "ruederive",
+  "name": "Rue de Rive",
+  "city": "Geneva",
+  "region": "Geneva",
+  "regionCode": null,
+  "country": "CH",
+  "lat": 46.202263,
+  "lng": 6.150313,
+  "street": "Rue de Rive 4",
+  "postalCode": "1204",
+  "phone": "(022) 318 03 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R275.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Tuesday",
+     "Monday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:30:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Zurich",
+  "url": "https://www.apple.com/chde/retail/ruederive/",
+  "nativeName": "Apple Rue de Rive"
+ },
+ {
+  "storeNumber": "R309",
+  "slug": "glattzentrum",
+  "name": "Glattzentrum",
+  "city": "Wallisellen",
+  "region": "Zurich",
+  "regionCode": null,
+  "country": "CH",
+  "lat": 47.40826,
+  "lng": 8.59592,
+  "street": "Einkaufszentrum Glatt Neue Winterthurerstrasse 99",
+  "postalCode": "8304",
+  "phone": "(044) 832 81 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R309.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Saturday",
+     "Thursday",
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Zurich",
+  "url": "https://www.apple.com/chde/retail/glattzentrum/",
+  "nativeName": "Apple Glattzentrum"
+ },
+ {
+  "storeNumber": "R159",
+  "slug": "rennweg",
+  "name": "Rennweg",
+  "city": "Zurich",
+  "region": "Zurich",
+  "regionCode": null,
+  "country": "CH",
+  "lat": 47.373487,
+  "lng": 8.538929,
+  "street": "Rennweg 43",
+  "postalCode": "8001",
+  "phone": "(044) 213 18 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R159.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Monday",
+     "Friday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Zurich",
+  "url": "https://www.apple.com/chde/retail/rennweg/",
+  "nativeName": "Apple Rennweg"
+ }
+]

@@ -1,0 +1,125 @@
+[
+ {
+  "storeNumber": "R408",
+  "slug": "amsterdam",
+  "name": "Amsterdam",
+  "city": "Amsterdam",
+  "region": "North Holland",
+  "regionCode": null,
+  "country": "NL",
+  "lat": 52.36331,
+  "lng": 4.8824,
+  "street": "Hirschgebouw, Leidseplein 25",
+  "postalCode": "1017 PS",
+  "phone": "(020) 5302200",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R408.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/Amsterdam",
+  "url": "https://www.apple.com/nl/retail/amsterdam/",
+  "nativeName": "Apple Amsterdam"
+ },
+ {
+  "storeNumber": "R539",
+  "slug": "haarlem",
+  "name": "Haarlem",
+  "city": "Haarlem",
+  "region": "North Holland",
+  "regionCode": null,
+  "country": "NL",
+  "lat": 52.378447,
+  "lng": 4.632961,
+  "street": "Grote Houtstraat 99",
+  "postalCode": "2011 SH",
+  "phone": "(023) 7993800",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/97e/901/6c5/8b2/506/381/5d5/7fc/9c0/591/14e3e8bd-a015-3691-859e-f87a2b222031_Haarlem_20240123_HC_Hero_2880%20x%201612_PNG_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Saturday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/Amsterdam",
+  "url": "https://www.apple.com/nl/retail/haarlem/",
+  "nativeName": "Apple Haarlem"
+ },
+ {
+  "storeNumber": "R540",
+  "slug": "denhaag",
+  "name": "Den Haag",
+  "city": "The Hague",
+  "region": "South Holland",
+  "regionCode": null,
+  "country": "NL",
+  "lat": 52.0779495,
+  "lng": 4.3113198,
+  "street": "Passage 39",
+  "postalCode": "2511 AB",
+  "phone": "(070) 7010300",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R540.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "12:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Monday"
+    ],
+    "opens": "12:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/Amsterdam",
+  "url": "https://www.apple.com/nl/retail/denhaag/",
+  "nativeName": "Apple Den Haag"
+ }
+]

@@ -1,0 +1,197 @@
+[
+ {
+  "storeNumber": "R706",
+  "slug": "almaryahisland",
+  "name": "Al Maryah Island",
+  "city": "Abu Dhabi",
+  "region": "Abu Dhabi",
+  "regionCode": null,
+  "country": "AE",
+  "lat": 24.501327,
+  "lng": 54.388378,
+  "street": "The Galleria Al Maryah Island",
+  "postalCode": null,
+  "phone": "800 0444 0521",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R706.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Monday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   },
+   {
+    "days": [
+     "Saturday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "23:59:00"
+   }
+  ],
+  "timezone": "Asia/Dubai",
+  "url": "https://www.apple.com/ae/retail/almaryahisland/",
+  "nativeName": "Apple Al Maryah Island"
+ },
+ {
+  "storeNumber": "R595",
+  "slug": "yasmall",
+  "name": "Yas Mall",
+  "city": "Abu Dhabi",
+  "region": "Abu Dhabi",
+  "regionCode": null,
+  "country": "AE",
+  "lat": 24.4886111,
+  "lng": 54.6097222222222,
+  "street": "Yas Mall Yas Island",
+  "postalCode": null,
+  "phone": "800 0444 1824",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R595.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "23:59:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Thursday",
+     "Wednesday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Dubai",
+  "url": "https://www.apple.com/ae/retail/yasmall/",
+  "nativeName": "Apple Yas Mall"
+ },
+ {
+  "storeNumber": "R785",
+  "slug": "aljimimall",
+  "name": "Al Jimi Mall",
+  "city": "Al Ain",
+  "region": "Abu Dhabi",
+  "regionCode": null,
+  "country": "AE",
+  "lat": 24.2438889,
+  "lng": 55.7266666666667,
+  "street": "Al Jimi Mall Hamdan Bin Mohammed Street",
+  "postalCode": null,
+  "phone": "800 0444 4106",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R785.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday",
+     "Wednesday",
+     "Thursday",
+     "Monday",
+     "Tuesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   },
+   {
+    "days": [
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "23:59:00"
+   }
+  ],
+  "timezone": "Asia/Dubai",
+  "url": "https://www.apple.com/ae/retail/aljimimall/",
+  "nativeName": "Apple Al Jimi Mall"
+ },
+ {
+  "storeNumber": "R597",
+  "slug": "dubaimall",
+  "name": "Dubai Mall",
+  "city": "Dubai",
+  "region": "Dubai",
+  "regionCode": null,
+  "country": "AE",
+  "lat": 25.195613989,
+  "lng": 55.277543085,
+  "street": "The Dubai Mall Downtown",
+  "postalCode": null,
+  "phone": "800 0444 9012",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R597.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "23:00:00"
+   },
+   {
+    "days": [
+     "Sunday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "23:59:00"
+   }
+  ],
+  "timezone": "Asia/Dubai",
+  "url": "https://www.apple.com/ae/retail/dubaimall/",
+  "nativeName": "Apple Dubai Mall"
+ },
+ {
+  "storeNumber": "R596",
+  "slug": "malloftheemirates",
+  "name": "Mall of the Emirates",
+  "city": "Dubai",
+  "region": "Dubai",
+  "regionCode": null,
+  "country": "AE",
+  "lat": 25.11842,
+  "lng": 55.200543,
+  "street": "Mall of the Emirates Al Barsha 1",
+  "postalCode": null,
+  "phone": "800 0444 1819",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R596.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "23:00:00"
+   },
+   {
+    "days": [
+     "Sunday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "23:59:00"
+   }
+  ],
+  "timezone": "Asia/Dubai",
+  "url": "https://www.apple.com/ae/retail/malloftheemirates/",
+  "nativeName": "Apple Mall of the Emirates"
+ }
+]

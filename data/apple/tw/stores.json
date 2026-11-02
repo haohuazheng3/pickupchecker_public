@@ -1,0 +1,80 @@
+[
+ {
+  "storeNumber": "R713",
+  "slug": "taipei101",
+  "name": "Taipei 101",
+  "city": "Taipei",
+  "region": "Taipei",
+  "regionCode": null,
+  "country": "TW",
+  "lat": 25.033626,
+  "lng": 121.564215,
+  "street": "信義區市府路 45 號 台北 101 購物中心 1F",
+  "postalCode": "110",
+  "phone": "0800-020-005",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R713.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Thursday",
+     "Sunday",
+     "Wednesday",
+     "Tuesday"
+    ],
+    "opens": "11:00:00",
+    "closes": "21:30:00"
+   },
+   {
+    "days": [
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "11:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Taipei",
+  "url": "https://www.apple.com/tw/retail/taipei101/",
+  "nativeName": "Apple 台北 101"
+ },
+ {
+  "storeNumber": "R694",
+  "slug": "xinyia13",
+  "name": "Xinyi A13",
+  "city": "Taipei",
+  "region": "Taipei",
+  "regionCode": null,
+  "country": "TW",
+  "lat": 25.036067,
+  "lng": 121.567972,
+  "street": "信義區松壽路 13 號",
+  "postalCode": "11051",
+  "phone": "0800-020-010",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R694.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Sunday",
+     "Monday"
+    ],
+    "opens": "11:00:00",
+    "closes": "21:30:00"
+   },
+   {
+    "days": [
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "11:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Taipei",
+  "url": "https://www.apple.com/tw/retail/xinyia13/",
+  "nativeName": "Apple 信義 A13"
+ }
+]

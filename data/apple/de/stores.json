@@ -1,0 +1,632 @@
+[
+ {
+  "storeNumber": "R519",
+  "slug": "sindelfingen",
+  "name": "Sindelfingen",
+  "city": "Sindelfingen",
+  "region": "Baden-Württemberg",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 48.704167,
+  "lng": 9.032222,
+  "street": "Breuningerland Sindelfingen Tilsiter Straße 15",
+  "postalCode": "71065",
+  "phone": "(07031) 4104600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R519.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:30:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Wednesday",
+     "Thursday",
+     "Monday",
+     "Friday",
+     "Tuesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/sindelfingen/",
+  "nativeName": "Apple Sindelfingen"
+ },
+ {
+  "storeNumber": "R431",
+  "slug": "city-galerie",
+  "name": "City-Galerie",
+  "city": "Augsburg",
+  "region": "Bavaria",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 48.36541,
+  "lng": 10.90726,
+  "street": "City-Galerie Augsburg Willy-Brandt-Platz 1",
+  "postalCode": "86153",
+  "phone": "(0821) 907649000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R431.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday",
+     "Tuesday",
+     "Thursday",
+     "Friday",
+     "Monday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/city-galerie/",
+  "nativeName": "Apple City-Galerie"
+ },
+ {
+  "storeNumber": "R521",
+  "slug": "oez",
+  "name": "OEZ",
+  "city": "Munich",
+  "region": "Bavaria",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 48.18306,
+  "lng": 11.53302,
+  "street": "Olympia-Einkaufszentrum Hanauer Straße 68",
+  "postalCode": "80993",
+  "phone": "(089) 204002800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R521.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Monday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "09:30:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/oez/",
+  "nativeName": "Apple OEZ"
+ },
+ {
+  "storeNumber": "R045",
+  "slug": "rosenstrasse",
+  "name": "Rosenstraße",
+  "city": "Munich",
+  "region": "Bavaria",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 48.13683,
+  "lng": 11.57449,
+  "street": "Rosenstraße 1",
+  "postalCode": "80331",
+  "phone": "(089) 242145000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R045.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   },
+   {
+    "days": [
+     "Saturday",
+     "Wednesday",
+     "Tuesday",
+     "Friday",
+     "Thursday",
+     "Monday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/rosenstrasse/",
+  "nativeName": "Apple Rosenstraße"
+ },
+ {
+  "storeNumber": "R358",
+  "slug": "kurfuerstendamm",
+  "name": "Kurfürstendamm",
+  "city": "Berlin",
+  "region": "Berlin",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 52.50363,
+  "lng": 13.32865,
+  "street": "Kurfürstendamm 26",
+  "postalCode": "10719",
+  "phone": "(030) 590090000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R358.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Monday",
+     "Friday",
+     "Thursday",
+     "Wednesday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/kurfuerstendamm/",
+  "nativeName": "Apple Kurfürstendamm"
+ },
+ {
+  "storeNumber": "R443",
+  "slug": "rosenthalerstrasse",
+  "name": "Rosenthaler Straße",
+  "city": "Berlin",
+  "region": "Berlin",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 52.52404,
+  "lng": 13.40315,
+  "street": "Rosenthaler Straße 44",
+  "postalCode": "10178",
+  "phone": "(030) 346493600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R443.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Saturday",
+     "Thursday",
+     "Monday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/rosenthalerstrasse/",
+  "nativeName": "Apple Rosenthaler Straße"
+ },
+ {
+  "storeNumber": "R366",
+  "slug": "alstertal",
+  "name": "Alstertal",
+  "city": "Hamburg",
+  "region": "Hamburg",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 53.65432,
+  "lng": 10.09203,
+  "street": "Alstertal-Einkaufszentrum Poppenbüttel",
+  "postalCode": "22391",
+  "phone": "(040) 6118315000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R366.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   },
+   {
+    "days": [
+     "Friday",
+     "Tuesday",
+     "Monday",
+     "Wednesday",
+     "Saturday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/alstertal/",
+  "nativeName": "Apple Alstertal"
+ },
+ {
+  "storeNumber": "R396",
+  "slug": "jungfernstieg",
+  "name": "Jungfernstieg",
+  "city": "Hamburg",
+  "region": "Hamburg",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 53.552862,
+  "lng": 9.99288,
+  "street": "Jungfernstieg 12",
+  "postalCode": "20354",
+  "phone": "(040) 349628000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R396.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Monday",
+     "Thursday",
+     "Wednesday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/jungfernstieg/",
+  "nativeName": "Apple Jungfernstieg"
+ },
+ {
+  "storeNumber": "R352",
+  "slug": "grossebockenheimerstrasse",
+  "name": "Große Bockenheimer Straße",
+  "city": "Frankfurt",
+  "region": "Hesse",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 50.11468,
+  "lng": 8.67505,
+  "street": "Große Bockenheimer Straße 30",
+  "postalCode": "60313",
+  "phone": "(069) 219308000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R352.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Thursday",
+     "Tuesday",
+     "Wednesday",
+     "Saturday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/grossebockenheimerstrasse/",
+  "nativeName": "Apple Große Bockenheimer Straße"
+ },
+ {
+  "storeNumber": "R434",
+  "slug": "mtz",
+  "name": "MTZ",
+  "city": "Sulzbach",
+  "region": "Hesse",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 50.11933,
+  "lng": 8.52679,
+  "street": "Main-Taunus-Zentrum",
+  "postalCode": "65843",
+  "phone": "(069) 389865800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R434.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Monday",
+     "Thursday",
+     "Friday",
+     "Tuesday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/mtz/",
+  "nativeName": "Apple MTZ"
+ },
+ {
+  "storeNumber": "R455",
+  "slug": "hannover",
+  "name": "Hannover",
+  "city": "Hanover",
+  "region": "Lower Saxony",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 52.375092,
+  "lng": 9.73943,
+  "street": "Bahnhofstraße 5",
+  "postalCode": "30159",
+  "phone": "(0511) 93620700",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R455.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Saturday",
+     "Friday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/hannover/",
+  "nativeName": "Apple Hannover"
+ },
+ {
+  "storeNumber": "R520",
+  "slug": "rheincenter",
+  "name": "Rhein Center",
+  "city": "Cologne",
+  "region": "North Rhine-Westphalia",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 50.93729,
+  "lng": 6.83437,
+  "street": "Rhein Center Köln-Weiden Aachener Straße 1253",
+  "postalCode": "50858",
+  "phone": "(02234) 2020600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R520.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Thursday",
+     "Monday",
+     "Tuesday",
+     "Saturday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/rheincenter/",
+  "nativeName": "Apple Rhein Center"
+ },
+ {
+  "storeNumber": "R559",
+  "slug": "schildergasse",
+  "name": "Schildergasse",
+  "city": "Cologne",
+  "region": "North Rhine-Westphalia",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 50.9365,
+  "lng": 6.9557,
+  "street": "Schildergasse 1-9",
+  "postalCode": "50667",
+  "phone": "(0221) 65013700",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R559.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Thursday",
+     "Wednesday",
+     "Saturday",
+     "Tuesday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/schildergasse/",
+  "nativeName": "Apple Schildergasse"
+ },
+ {
+  "storeNumber": "R331",
+  "slug": "duesseldorf",
+  "name": "Düsseldorf",
+  "city": "Düsseldorf",
+  "region": "North Rhine-Westphalia",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 51.22675,
+  "lng": 6.77995,
+  "street": "Kö-Bogen Königsallee 2",
+  "postalCode": "40212",
+  "phone": "(0211) 42470600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R331.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/duesseldorf/",
+  "nativeName": "Apple Düsseldorf"
+ },
+ {
+  "storeNumber": "R403",
+  "slug": "centro",
+  "name": "CentrO",
+  "city": "Oberhausen",
+  "region": "North Rhine-Westphalia",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 51.489596,
+  "lng": 6.876976,
+  "street": "CentrO Oberhausen Centroallee 147",
+  "postalCode": "46047",
+  "phone": "(0208) 30588000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R403.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Friday",
+     "Monday",
+     "Thursday",
+     "Wednesday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/centro/",
+  "nativeName": "Apple CentrO"
+ },
+ {
+  "storeNumber": "R430",
+  "slug": "altmarkt-galerie",
+  "name": "Altmarkt-Galerie",
+  "city": "Dresden",
+  "region": "Saxony",
+  "regionCode": null,
+  "country": "DE",
+  "lat": 51.04997,
+  "lng": 13.73573,
+  "street": "Altmarkt 25",
+  "postalCode": "01067",
+  "phone": "(0351) 49774000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R430.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Thursday",
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Berlin",
+  "url": "https://www.apple.com/de/retail/altmarkt-galerie/",
+  "nativeName": "Apple Altmarkt-Galerie"
+ }
+]

@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { usePathname } from "next/navigation";
-import { MODELS } from "@/lib/apple/catalog";
+import { MODELS } from "@/lib/apple/catalog-us";
 import { productBySlug, resolvePlace } from "@/lib/seo/products";
 
 export function alertHref(pathname: string): string {

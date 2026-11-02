@@ -1,0 +1,101 @@
+[
+ {
+  "storeNumber": "R736",
+  "slug": "jewelchangiairport",
+  "name": "Jewel Changi Airport",
+  "city": "Singapore",
+  "region": "Singapore",
+  "regionCode": null,
+  "country": "SG",
+  "lat": 1.36059,
+  "lng": 103.989579,
+  "street": "78 Airport Boulevard #02-234",
+  "postalCode": "819666",
+  "phone": "1800 407 4948",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R736.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Friday",
+     "Tuesday",
+     "Sunday",
+     "Wednesday",
+     "Thursday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Singapore",
+  "url": "https://www.apple.com/sg/retail/jewelchangiairport/",
+  "nativeName": "Apple Jewel Changi Airport"
+ },
+ {
+  "storeNumber": "R633",
+  "slug": "marinabaysands",
+  "name": "Marina Bay Sands",
+  "city": "Singapore",
+  "region": "Singapore",
+  "regionCode": null,
+  "country": "SG",
+  "lat": 1.283286,
+  "lng": 103.857547,
+  "street": "2 Bayfront Avenue, B2-06",
+  "postalCode": "018972",
+  "phone": "1800 407 4949",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R633.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Monday",
+     "Wednesday",
+     "Thursday",
+     "Saturday",
+     "Friday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Singapore",
+  "url": "https://www.apple.com/sg/retail/marinabaysands/",
+  "nativeName": "Apple Marina Bay Sands"
+ },
+ {
+  "storeNumber": "R669",
+  "slug": "orchardroad",
+  "name": "Orchard Road",
+  "city": "Singapore",
+  "region": "Singapore",
+  "regionCode": null,
+  "country": "SG",
+  "lat": 1.302795462688,
+  "lng": 103.836398631801,
+  "street": "270 Orchard Road",
+  "postalCode": "238857",
+  "phone": "1800 699 2824",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R669.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday",
+     "Monday",
+     "Tuesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Singapore",
+  "url": "https://www.apple.com/sg/retail/orchardroad/",
+  "nativeName": "Apple Orchard Road"
+ }
+]

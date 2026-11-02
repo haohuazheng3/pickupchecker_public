@@ -1,8 +1,59 @@
-import { desc, eq, gt, inArray, sql, and } from "drizzle-orm";
+import { desc, eq, gt, inArray, sql, and, isNull, type SQL } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { db, hasDatabase, schema } from "../db";
-import { PART_INDEX, STORE_INDEX, STORES, MODELS, modelKeyFor, partNumbersFor, type ModelKey, type CatalogItem, type Store } from "../apple/catalog";
+import { PART_INDEX, STORE_INDEX, MODELS, itemFor, modelKeyFor, partNumbersFor, partNumbersOf, storesOf, countryOfStore, hasOwnPartNumbers, type ModelKey, type CatalogItem, type Store } from "../apple/catalog";
+import type { CountryCode } from "../apple/countries";
 import { recordError, errorMessage } from "../errors";
+
+/*
+ * Every read here is confined to one country (default the US): the database holds every country's stores and
+ * several countries share part numbers (ZD/A in DE/AT/NL/BE…), so "all stores" and "all of a part" no longer
+ * mean the US. A caller's explicit store list already names a country; a whole country is filtered by its part
+ * numbers where no other country sells them (the US, CA, FR, JP…: a short list, and the same rows), else by its
+ * store numbers. The country is part of every cache key.
+ *
+ * Rows handed to pages carry `item` as the row's store's country sells it (storeItem): PART_INDEX alone would
+ * give an Austrian store the German price of their shared ZD/A part, or a Singapore store an AUD price.
+ */
+
+/** The catalogue item of a status/event row, priced in its store's country (US rows: exactly PART_INDEX's item). */
+function storeItem(storeNumber: string, partNumber: string): CatalogItem | undefined {
+  return itemFor(partNumber, countryOfStore(storeNumber) ?? "us");
+}
+
+const STORE_LIST = new Map<CountryCode, string[]>();
+/** A country's store numbers, sorted. */
+export function countryStoreNumbers(cc: CountryCode = "us"): string[] {
+  let l = STORE_LIST.get(cc);
+  if (!l) { l = storesOf(cc).map((s) => s.storeNumber).sort(); STORE_LIST.set(cc, l); }
+  return l;
+}
+
+/** True when `storeNumbers` is every store of the country (the caller asked for the whole country). */
+function wholeCountry(cc: CountryCode, storeNumbers: string[] | null | undefined): boolean {
+  return !storeNumbers || storeNumbers.length >= storesOf(cc).length;
+}
+
+/**
+ * Pure: the filters that confine a read to `cc`. `storeNumbers` null/absent or covering the whole country means
+ * "the country"; `parts` null means "every configuration". Returns null for a filter that is not needed.
+ */
+export function countryScope(cc: CountryCode, storeNumbers: string[] | null | undefined, parts: string[] | null | undefined): { stores: string[] | null; parts: string[] | null } {
+  const p = parts ?? null;
+  if (!wholeCountry(cc, storeNumbers)) return { stores: storeNumbers!, parts: p };
+  if (hasOwnPartNumbers(cc)) return { stores: null, parts: p ?? partNumbersOf(cc) };
+  return { stores: countryStoreNumbers(cc), parts: p };
+}
+
+/** The SQL conditions of a countryScope on a table with store_number / part_number columns. */
+function scopeConds(scope: { stores: string[] | null; parts: string[] | null }, cols: { store: Parameters<typeof inArray>[0]; part: Parameters<typeof inArray>[0] }): SQL[] {
+  const out: SQL[] = [];
+  if (scope.stores) out.push(inArray(cols.store, scope.stores));
+  if (scope.parts) out.push(inArray(cols.part, scope.parts));
+  return out;
+}
+const SSS = { store: schema.storeSkuStatus.storeNumber, part: schema.storeSkuStatus.partNumber };
+const EV = { store: schema.availabilityEvents.storeNumber, part: schema.availabilityEvents.partNumber };
 
 /**
  * Public pages read through this: a transient database failure (a dropped connection, a network
@@ -50,15 +101,15 @@ export interface StoreStockRow {
 }
 
 /** Per-store summary for one model: which parts are available now, when last checked. */
-export async function stockByStore(model: ModelKey, filter: { storage?: string; color?: string } = {}): Promise<StoreStockRow[]> {
+export async function stockByStore(model: ModelKey, filter: { storage?: string; color?: string } = {}, country: CountryCode = "us"): Promise<StoreStockRow[]> {
   if (!hasDatabase()) return [];
-  const parts = partNumbersFor(model, filter.storage ? [filter.storage] : [], filter.color ? [filter.color] : []);
+  const parts = partNumbersFor(model, filter.storage ? [filter.storage] : [], filter.color ? [filter.color] : [], country);
   if (parts.length === 0) return [];
   return safe("stock by store", [], async () => {
   const rows = await db()
     .select({ storeNumber: schema.storeSkuStatus.storeNumber, partNumber: schema.storeSkuStatus.partNumber, status: schema.storeSkuStatus.status, lastCheckedAt: schema.storeSkuStatus.lastCheckedAt, lastAvailableAt: schema.storeSkuStatus.lastAvailableAt })
     .from(schema.storeSkuStatus)
-    .where(inArray(schema.storeSkuStatus.partNumber, parts));
+    .where(and(...scopeConds(countryScope(country, null, parts), SSS)));
   const map = new Map<string, StoreStockRow>();
   for (const r of rows) {
     const m = map.get(r.storeNumber) ?? { storeNumber: r.storeNumber, availableParts: [], lastCheckedAt: null, lastAvailableAt: null };
@@ -71,13 +122,13 @@ export async function stockByStore(model: ModelKey, filter: { storage?: string; 
   });
 }
 
-export async function recentRestocks(limit = 30, model?: ModelKey) {
+export async function recentRestocks(limit = 30, model?: ModelKey, country: CountryCode = "us") {
   if (!hasDatabase()) return [];
   const rows = await safe("recent restocks", [] as (typeof schema.availabilityEvents.$inferSelect)[], () =>
-    db().select().from(schema.availabilityEvents).where(eq(schema.availabilityEvents.kind, "restock")).orderBy(desc(schema.availabilityEvents.at)).limit(limit * (model ? 4 : 1)),
+    db().select().from(schema.availabilityEvents).where(and(eq(schema.availabilityEvents.kind, "restock"), ...scopeConds(countryScope(country, null, null), EV))).orderBy(desc(schema.availabilityEvents.at)).limit(limit * (model ? 4 : 1)),
   );
   return rows
-    .map((r) => ({ ...r, item: PART_INDEX.get(r.partNumber), store: STORE_INDEX.get(r.storeNumber) }))
+    .map((r) => ({ ...r, item: storeItem(r.storeNumber, r.partNumber), store: STORE_INDEX.get(r.storeNumber) }))
     .filter((r) => r.item && r.store && (!model || modelKeyFor(r.item.model) === model))
     .slice(0, limit);
 }
@@ -85,18 +136,36 @@ export async function recentRestocks(limit = 30, model?: ModelKey) {
 export async function storeStatus(storeNumber: string) {
   if (!hasDatabase()) return [];
   const rows = await safe("store status", [] as (typeof schema.storeSkuStatus.$inferSelect)[], () => db().select().from(schema.storeSkuStatus).where(eq(schema.storeSkuStatus.storeNumber, storeNumber)));
-  return rows.map((r) => ({ ...r, item: PART_INDEX.get(r.partNumber) })).filter((r): r is typeof r & { item: CatalogItem } => Boolean(r.item));
+  return rows.map((r) => ({ ...r, item: storeItem(r.storeNumber, r.partNumber) })).filter((r): r is typeof r & { item: CatalogItem } => Boolean(r.item));
 }
 
-export async function overview() {
+export async function overview(country: CountryCode = "us") {
   const empty = { availableNow: 0, storesWithStock: 0, lastCheckedAt: null as Date | null, checksLastHour: 0 };
   if (!hasDatabase()) return empty;
+  const scope = scopeConds(countryScope(country, null, null), SSS);
   return safe("overview", empty, async () => {
   const d = db();
-  const [a] = await d.select({ n: sql<number>`count(*)::int`, stores: sql<number>`count(distinct ${schema.storeSkuStatus.storeNumber})::int`, last: sql<Date | null>`max(${schema.storeSkuStatus.lastCheckedAt})` }).from(schema.storeSkuStatus).where(eq(schema.storeSkuStatus.status, "available"));
-  const [c] = await d.select({ n: sql<number>`count(*)::int` }).from(schema.pollLog).where(and(gt(schema.pollLog.at, new Date(Date.now() - 3600_000)), eq(schema.pollLog.ok, true)));
-  const [l] = await d.select({ last: sql<Date | null>`max(${schema.storeSkuStatus.lastCheckedAt})` }).from(schema.storeSkuStatus);
-  return { availableNow: a?.n ?? 0, storesWithStock: a?.stores ?? 0, lastCheckedAt: l?.last ?? null, checksLastHour: c?.n ?? 0 };
+  const hourAgo = new Date(Date.now() - 3600_000);
+  const [a] = await d.select({ n: sql<number>`count(*)::int`, stores: sql<number>`count(distinct ${schema.storeSkuStatus.storeNumber})::int`, last: sql<Date | null>`max(${schema.storeSkuStatus.lastCheckedAt})` }).from(schema.storeSkuStatus).where(and(eq(schema.storeSkuStatus.status, "available"), ...scope));
+  const [l] = await d.select({ last: sql<Date | null>`max(${schema.storeSkuStatus.lastCheckedAt})` }).from(schema.storeSkuStatus).where(scope.length ? and(...scope) : undefined);
+  let checks: number;
+  if (country === "us") {
+    // US requests are logged one row each (poll_log.country is null for them).
+    const [c] = await d.select({ n: sql<number>`count(*)::int` }).from(schema.pollLog).where(and(gt(schema.pollLog.at, hourAgo), eq(schema.pollLog.ok, true), isNull(schema.pollLog.country)));
+    checks = c?.n ?? 0;
+  } else {
+    // The per-store sweep of other countries logs failures only: its successful requests are its rounds × the
+    // country's requests per round (two batches per store) minus the failures; fast-lane requests are logged.
+    // Rounds count only for a country the poller says it polls (heartbeat): sweeps rows do not name countries,
+    // and with POLL_COUNTRIES="ca,uk" a German page must not claim the round's checks. (A country resting after a
+    // failed round still counts its rounds here: an overstatement for at most its backoff.)
+    const [hb] = await d.select({ value: schema.pollerState.value }).from(schema.pollerState).where(eq(schema.pollerState.key, "heartbeat")).limit(1);
+    const polled = ((hb?.value as { intl?: { countries?: string[] } } | undefined)?.intl?.countries ?? []).includes(country);
+    const [r] = polled ? await d.select({ n: sql<number>`count(*)::int` }).from(schema.sweeps).where(and(eq(schema.sweeps.mode, "intl"), gt(schema.sweeps.startedAt, hourAgo))) : [{ n: 0 }];
+    const [c] = await d.select({ ok: sql<number>`count(*) filter (where ${schema.pollLog.ok})::int`, failed: sql<number>`count(*) filter (where not ${schema.pollLog.ok})::int` }).from(schema.pollLog).where(and(gt(schema.pollLog.at, hourAgo), eq(schema.pollLog.country, country)));
+    checks = (c?.ok ?? 0) + Math.max(0, (r?.n ?? 0) * storesOf(country).length * Math.ceil(partNumbersOf(country).length / 20) - (c?.failed ?? 0));
+  }
+  return { availableNow: a?.n ?? 0, storesWithStock: a?.stores ?? 0, lastCheckedAt: l?.last ?? null, checksLastHour: checks };
   });
 }
 
@@ -107,9 +176,10 @@ export interface MapSnapshot {
 }
 
 /** One aggregated row per store for the map: cheap enough to poll every 15 s from every open tab. */
-export async function mapSnapshot(): Promise<MapSnapshot> {
+export async function mapSnapshot(country: CountryCode = "us"): Promise<MapSnapshot> {
   const at = new Date().toISOString();
   if (!hasDatabase()) return { at, stores: {} };
+  const scope = scopeConds(countryScope(country, null, null), SSS);
   return safe("map snapshot", { at, stores: {} }, async () => {
   const rows = await db()
     .select({
@@ -118,6 +188,7 @@ export async function mapSnapshot(): Promise<MapSnapshot> {
       checked: sql<string | null>`max(${schema.storeSkuStatus.lastCheckedAt})`,
     })
     .from(schema.storeSkuStatus)
+    .where(scope.length ? and(...scope) : undefined)
     .groupBy(schema.storeSkuStatus.storeNumber);
   const stores: MapSnapshot["stores"] = {};
   for (const r of rows) stores[r.storeNumber] = { a: (r.parts ?? []).filter((x) => PART_INDEX.has(x)), c: r.checked ? new Date(r.checked).toISOString() : null };
@@ -142,12 +213,16 @@ export interface RestockQuery {
   kind?: "restock" | "soldout" | "all";
   limit?: number;
   page?: number;
+  /** Whose stores and catalogue (default the US); `state` is a region name of this country. */
+  country?: CountryCode;
 }
 
+/** The query's store set; null = the whole country. */
 function storeNumbersFor(q: RestockQuery): string[] | null {
-  if (q.storeNumbers) return q.storeNumbers.length >= STORES.length ? null : q.storeNumbers;
+  const cc = q.country ?? "us";
+  if (q.storeNumbers) return wholeCountry(cc, q.storeNumbers) ? null : q.storeNumbers;
   if (q.storeNumber) return [q.storeNumber];
-  if (q.state) return STORES.filter((s) => s.state === q.state && (!q.city || s.city === q.city)).map((s) => s.storeNumber);
+  if (q.state) return storesOf(cc).filter((s) => s.state === q.state && (!q.city || s.city === q.city)).map((s) => s.storeNumber);
   return null;
 }
 
@@ -156,14 +231,14 @@ export async function restockFeed(q: RestockQuery = {}): Promise<RestockRow[]> {
   if (!hasDatabase()) return [];
   const limit = Math.min(200, Math.max(1, q.limit ?? 20));
   const offset = Math.max(0, (q.page ?? 0) * limit);
-  const parts = q.parts ?? (q.model ? partNumbersFor(q.model) : null);
+  const cc = q.country ?? "us";
+  const parts = q.parts ?? (q.model ? partNumbersFor(q.model, [], [], cc) : null);
   const stores = storeNumbersFor(q);
   if ((parts && parts.length === 0) || (stores && stores.length === 0)) return [];
   const conds = [eq(schema.availabilityEvents.firstSeen, false)];
   if (q.kind && q.kind !== "all") conds.push(eq(schema.availabilityEvents.kind, q.kind));
   else if (!q.kind) conds.push(eq(schema.availabilityEvents.kind, "restock"));
-  if (parts) conds.push(inArray(schema.availabilityEvents.partNumber, parts));
-  if (stores) conds.push(inArray(schema.availabilityEvents.storeNumber, stores));
+  conds.push(...scopeConds(countryScope(cc, stores, parts), EV));
   const rows = await safe("restock feed", [] as (typeof schema.availabilityEvents.$inferSelect)[], () =>
     db().select().from(schema.availabilityEvents).where(and(...conds)).orderBy(desc(schema.availabilityEvents.at)).limit(limit).offset(offset),
   );
@@ -177,20 +252,20 @@ export async function restockFeed(q: RestockQuery = {}): Promise<RestockRow[]> {
     for (const r of st) now.set(`${r.storeNumber}|${r.partNumber}`, r.status === "available");
   }
   return rows
-    .map((r) => ({ id: r.id, at: r.at, kind: r.kind, quote: r.quote, storeNumber: r.storeNumber, partNumber: r.partNumber, item: PART_INDEX.get(r.partNumber), store: STORE_INDEX.get(r.storeNumber), nowAvailable: now.get(`${r.storeNumber}|${r.partNumber}`) ?? null }))
+    .map((r) => ({ id: r.id, at: r.at, kind: r.kind, quote: r.quote, storeNumber: r.storeNumber, partNumber: r.partNumber, item: storeItem(r.storeNumber, r.partNumber), store: STORE_INDEX.get(r.storeNumber), nowAvailable: now.get(`${r.storeNumber}|${r.partNumber}`) ?? null }))
     .filter((r): r is RestockRow => Boolean(r.item && r.store));
 }
 
 /** How many real restocks in the last 24 h / 7 d (optionally per model or store set). */
-export async function restockCounts(q: Pick<RestockQuery, "model" | "state" | "city" | "storeNumber"> = {}): Promise<{ day: number; week: number; lastAt: Date | null }> {
+export async function restockCounts(q: Pick<RestockQuery, "model" | "state" | "city" | "storeNumber" | "country"> = {}): Promise<{ day: number; week: number; lastAt: Date | null }> {
   const empty = { day: 0, week: 0, lastAt: null as Date | null };
   if (!hasDatabase()) return empty;
-  const parts = q.model ? partNumbersFor(q.model) : null;
+  const cc = q.country ?? "us";
+  const parts = q.model ? partNumbersFor(q.model, [], [], cc) : null;
   const stores = storeNumbersFor(q);
   if ((parts && parts.length === 0) || (stores && stores.length === 0)) return empty;
   const conds = [eq(schema.availabilityEvents.firstSeen, false), eq(schema.availabilityEvents.kind, "restock"), gt(schema.availabilityEvents.at, new Date(Date.now() - 7 * 86400_000))];
-  if (parts) conds.push(inArray(schema.availabilityEvents.partNumber, parts));
-  if (stores) conds.push(inArray(schema.availabilityEvents.storeNumber, stores));
+  conds.push(...scopeConds(countryScope(cc, stores, parts), EV));
   return safe("restock counts", empty, async () => {
     const [r] = await db()
       .select({ day: sql<number>`count(*) filter (where ${schema.availabilityEvents.at} > now() - interval '24 hours')::int`, week: sql<number>`count(*)::int`, lastAt: sql<Date | null>`max(${schema.availabilityEvents.at})` })
@@ -203,15 +278,16 @@ export async function restockCounts(q: Pick<RestockQuery, "model" | "state" | "c
 export interface RestockStats { total: number; byHour: number[]; byWeekday: number[]; days: number; tz: string }
 
 /** When restocks happen at these stores: local hour-of-day and weekday histograms over the last `days`. */
-export async function restockStats(storeNumbers: string[], tz: string, days = 30, model?: ModelKey, onlyParts?: string[]): Promise<RestockStats> {
+export async function restockStats(storeNumbers: string[], tz: string, days = 30, model?: ModelKey, onlyParts?: string[], country?: CountryCode): Promise<RestockStats> {
   const empty: RestockStats = { total: 0, byHour: Array(24).fill(0), byWeekday: Array(7).fill(0), days, tz };
   if (!hasDatabase() || storeNumbers.length === 0) return empty;
-  const parts = onlyParts ?? (model ? partNumbersFor(model) : null);
+  // The stores name the country unless the caller does.
+  const cc = country ?? countryOfStore(storeNumbers[0]) ?? "us";
+  const parts = onlyParts ?? (model ? partNumbersFor(model, [], [], cc) : null);
   if (parts && parts.length === 0) return empty;
   const conds = [eq(schema.availabilityEvents.firstSeen, false), eq(schema.availabilityEvents.kind, "restock"), gt(schema.availabilityEvents.at, new Date(Date.now() - days * 86400_000))];
-  // The whole country needs no store filter (and a 269-item IN list is wasted work).
-  if (storeNumbers.length < STORES.length) conds.push(inArray(schema.availabilityEvents.storeNumber, storeNumbers));
-  if (parts) conds.push(inArray(schema.availabilityEvents.partNumber, parts));
+  // A whole country is filtered by its own part numbers where it has them (no 269-item IN list).
+  conds.push(...scopeConds(countryScope(cc, storeNumbers, parts), EV));
   return safe("restock stats", empty, async () => {
     const rows = await db()
       .select({ h: sql<number>`extract(hour from ${schema.availabilityEvents.at} at time zone ${tz})::int`, d: sql<number>`extract(dow from ${schema.availabilityEvents.at} at time zone ${tz})::int`, n: sql<number>`count(*)::int` })
@@ -344,12 +420,10 @@ function dayKeysBack(days: number, tz: string): string[] {
 }
 
 const cachedPlaceStats = unstable_cache(
-  async (storeNumbers: string[] | null, parts: string[] | null, tz: string, days: number): Promise<PlaceStats> => {
+  async (storeNumbers: string[] | null, parts: string[] | null, tz: string, days: number, cc: CountryCode): Promise<PlaceStats> => {
     const base = EMPTY_STATS(days, tz);
     const ev = schema.availabilityEvents;
-    const scope = [eq(ev.firstSeen, false), sql`${ev.at} > now() - interval '1 day' * ${days}`];
-    if (storeNumbers) scope.push(inArray(ev.storeNumber, storeNumbers));
-    if (parts) scope.push(inArray(ev.partNumber, parts));
+    const scope = [eq(ev.firstSeen, false), sql`${ev.at} > now() - interval '1 day' * ${days}`, ...scopeConds(countryScope(cc, storeNumbers, parts), EV)];
     const where = and(...scope);
     const [totals, median, series] = await Promise.all([
       must("place stats totals", async () => {
@@ -404,22 +478,25 @@ const cachedPlaceStats = unstable_cache(
   { revalidate: 60 },
 );
 
-/** Restock / sell-out statistics for a set of stores and/or one model over the last `days` (default 30). Three queries, cached 60 s. */
-export async function placeStats(opts: { storeNumbers?: string[]; model?: ModelKey; parts?: string[]; tz?: string; days?: number } = {}): Promise<PlaceStats> {
+/**
+ * Restock / sell-out statistics for a set of stores and/or one model over the last `days` (default 30). Three
+ * queries, cached 60 s. No store set = the whole `country` (default: the stores' country, else the US).
+ */
+export async function placeStats(opts: { storeNumbers?: string[]; model?: ModelKey; parts?: string[]; tz?: string; days?: number; country?: CountryCode } = {}): Promise<PlaceStats> {
   const days = opts.days ?? 30;
   const tz = opts.tz ?? "America/New_York";
   if (!hasDatabase()) return EMPTY_STATS(days, tz);
-  const stores = opts.storeNumbers && opts.storeNumbers.length < STORES.length ? [...opts.storeNumbers].sort() : null;
-  const parts = opts.parts ? [...opts.parts].sort() : opts.model ? partNumbersFor(opts.model) : null;
+  const cc = opts.country ?? (opts.storeNumbers?.length ? countryOfStore(opts.storeNumbers[0]) : undefined) ?? "us";
+  const stores = opts.storeNumbers && !wholeCountry(cc, opts.storeNumbers) ? [...opts.storeNumbers].sort() : null;
+  const parts = opts.parts ? [...opts.parts].sort() : opts.model ? partNumbersFor(opts.model, [], [], cc) : null;
   if ((stores && stores.length === 0) || (parts && parts.length === 0)) return EMPTY_STATS(days, tz);
-  return outsideCache({ ...EMPTY_STATS(days, tz), unknown: true }, () => cachedPlaceStats(stores, parts, tz, days));
+  return outsideCache({ ...EMPTY_STATS(days, tz), unknown: true }, () => cachedPlaceStats(stores, parts, tz, days, cc));
 }
 
 const cachedStockNow = unstable_cache(
-  async (storeNumbers: string[] | null): Promise<Record<ModelKey, number>> => {
+  async (storeNumbers: string[] | null, cc: CountryCode): Promise<Record<ModelKey, number>> => {
     const out = Object.fromEntries(MODELS.map((m) => [m.key, 0])) as Record<ModelKey, number>;
-    const conds = [eq(schema.storeSkuStatus.status, "available")];
-    if (storeNumbers) conds.push(inArray(schema.storeSkuStatus.storeNumber, storeNumbers));
+    const conds = [eq(schema.storeSkuStatus.status, "available"), ...scopeConds(countryScope(cc, storeNumbers, null), SSS)];
     const rows = await must("stock now", () =>
       db().selectDistinct({ storeNumber: schema.storeSkuStatus.storeNumber, partNumber: schema.storeSkuStatus.partNumber }).from(schema.storeSkuStatus).where(and(...conds)),
     );
@@ -432,13 +509,14 @@ const cachedStockNow = unstable_cache(
   { revalidate: 60 },
 );
 
-/** Stores (of the set, or all) with at least one configuration available right now, per model. One query, cached 60 s — for metadata. */
-export async function storesWithStockNow(storeNumbers?: string[]): Promise<Record<ModelKey, number>> {
+/** Stores (of the set, or all of the country) with at least one configuration available right now, per model. One query, cached 60 s — for metadata. */
+export async function storesWithStockNow(storeNumbers?: string[], country?: CountryCode): Promise<Record<ModelKey, number>> {
   const empty = Object.fromEntries(MODELS.map((m) => [m.key, 0])) as Record<ModelKey, number>;
   if (!hasDatabase()) return empty;
-  const stores = storeNumbers && storeNumbers.length < STORES.length ? [...storeNumbers].sort() : null;
+  const cc = country ?? (storeNumbers?.length ? countryOfStore(storeNumbers[0]) : undefined) ?? "us";
+  const stores = storeNumbers && !wholeCountry(cc, storeNumbers) ? [...storeNumbers].sort() : null;
   if (stores && stores.length === 0) return empty;
-  return outsideCache(empty, () => cachedStockNow(stores));
+  return outsideCache(empty, () => cachedStockNow(stores, cc));
 }
 
 export type StoreStatusRow = typeof schema.storeSkuStatus.$inferSelect & { item: CatalogItem };
@@ -449,7 +527,7 @@ export async function storesStatusFull(storeNumbers: string[]): Promise<Map<stri
   if (!hasDatabase() || storeNumbers.length === 0) return map;
   const rows = await safe("stores status", [] as (typeof schema.storeSkuStatus.$inferSelect)[], () => db().select().from(schema.storeSkuStatus).where(inArray(schema.storeSkuStatus.storeNumber, storeNumbers)));
   for (const r of rows) {
-    const item = PART_INDEX.get(r.partNumber);
+    const item = storeItem(r.storeNumber, r.partNumber);
     if (!item) continue;
     const list = map.get(r.storeNumber) ?? [];
     list.push({ ...r, item });
@@ -459,10 +537,10 @@ export async function storesStatusFull(storeNumbers: string[]): Promise<Map<stri
 }
 
 const cachedLatestEvents = unstable_cache(
-  async (): Promise<Record<string, string>> => {
+  async (cc: CountryCode): Promise<Record<string, string>> => {
     const ev = schema.availabilityEvents;
     const rows = await must("latest events", () =>
-      db().select({ storeNumber: ev.storeNumber, at: sql<string | null>`max(${ev.at})` }).from(ev).where(eq(ev.firstSeen, false)).groupBy(ev.storeNumber),
+      db().select({ storeNumber: ev.storeNumber, at: sql<string | null>`max(${ev.at})` }).from(ev).where(and(eq(ev.firstSeen, false), ...scopeConds(countryScope(cc, null, null), EV))).groupBy(ev.storeNumber),
     );
     const out: Record<string, string> = {};
     for (const r of rows) if (r.at) out[r.storeNumber] = new Date(r.at).toISOString();
@@ -472,10 +550,10 @@ const cachedLatestEvents = unstable_cache(
   { revalidate: 3600 },
 );
 
-/** storeNumber → ISO time of its latest real event (sitemap lastModified). Cached an hour. */
-export async function latestEventPerStore(): Promise<Record<string, string>> {
+/** storeNumber → ISO time of its latest real event (sitemap lastModified), one country's stores. Cached an hour. */
+export async function latestEventPerStore(country: CountryCode = "us"): Promise<Record<string, string>> {
   if (!hasDatabase()) return {};
-  return outsideCache({} as Record<string, string>, () => cachedLatestEvents());
+  return outsideCache({} as Record<string, string>, () => cachedLatestEvents(country));
 }
 
 /* ------------------------------------------------------------------ product pages: every status row of one model, shared by all of its pages */
@@ -489,10 +567,10 @@ const sec = (d: Date | null | undefined) => (d ? Math.round(new Date(d).getTime(
 const fromSec = (n: number) => (n ? new Date(n * 1000).toISOString() : null);
 
 const cachedModelStock = unstable_cache(
-  async (model: ModelKey): Promise<PackedStatus[]> => {
-    const parts = partNumbersFor(model);
+  async (model: ModelKey, cc: CountryCode): Promise<PackedStatus[]> => {
+    const parts = partNumbersFor(model, [], [], cc);
     const rows = await must("model stock", () =>
-      db().select({ s: schema.storeSkuStatus.storeNumber, p: schema.storeSkuStatus.partNumber, st: schema.storeSkuStatus.status, q: schema.storeSkuStatus.quote, since: schema.storeSkuStatus.since, lc: schema.storeSkuStatus.lastCheckedAt, la: schema.storeSkuStatus.lastAvailableAt }).from(schema.storeSkuStatus).where(inArray(schema.storeSkuStatus.partNumber, parts)),
+      db().select({ s: schema.storeSkuStatus.storeNumber, p: schema.storeSkuStatus.partNumber, st: schema.storeSkuStatus.status, q: schema.storeSkuStatus.quote, since: schema.storeSkuStatus.since, lc: schema.storeSkuStatus.lastCheckedAt, la: schema.storeSkuStatus.lastAvailableAt }).from(schema.storeSkuStatus).where(and(...scopeConds(countryScope(cc, null, parts), SSS))),
     );
     // Apple's quote is only shown for an available row; leaving the rest out keeps the entry small.
     return rows.map((r) => [r.s, r.p, r.st === "available" ? 1 : r.st === "unavailable" ? 0 : 2, r.st === "available" ? r.q : null, sec(r.since), sec(r.lc), sec(r.la)]);
@@ -503,33 +581,34 @@ const cachedModelStock = unstable_cache(
 );
 
 const STATUS = ["unavailable", "available", "unknown"] as const;
-const memo = new Map<ModelKey, { at: number; rows: Promise<PartStatus[]> }>();
+const memo = new Map<string, { at: number; rows: Promise<PartStatus[]> }>();
 
-/** Every store's status for every configuration of a model (≤ 16 × 269 rows): cached 15 s, and memoised 5 s per process. */
-export async function modelStock(model: ModelKey): Promise<PartStatus[]> {
+/** Every store's status for every configuration of a model in one country (≤ 16 × 269 rows): cached 15 s, and memoised 5 s per process. */
+export async function modelStock(model: ModelKey, country: CountryCode = "us"): Promise<PartStatus[]> {
   if (!hasDatabase()) return [];
-  const hit = memo.get(model);
+  const key = `${country}|${model}`;
+  const hit = memo.get(key);
   if (hit && Date.now() - hit.at < 5_000) return hit.rows;
-  const rows = outsideCache([] as PackedStatus[], () => cachedModelStock(model)).then((packed) =>
+  const rows = outsideCache([] as PackedStatus[], () => cachedModelStock(model, country)).then((packed) =>
     packed.map(([storeNumber, partNumber, st, quote, since, lc, la]) => ({ storeNumber, partNumber, status: STATUS[st], quote, since: fromSec(since), lastCheckedAt: fromSec(lc), lastAvailableAt: fromSec(la) })),
   );
-  memo.set(model, { at: Date.now(), rows });
+  memo.set(key, { at: Date.now(), rows });
   return rows;
 }
 
 const cachedActivePairs = unstable_cache(
-  async (days: number): Promise<{ storeNumber: string; partNumber: string }[]> =>
+  async (days: number, cc: CountryCode): Promise<{ storeNumber: string; partNumber: string }[]> =>
     must("active pairs", () =>
       db().selectDistinct({ storeNumber: schema.availabilityEvents.storeNumber, partNumber: schema.availabilityEvents.partNumber })
         .from(schema.availabilityEvents)
-        .where(and(eq(schema.availabilityEvents.firstSeen, false), eq(schema.availabilityEvents.kind, "restock"), gt(schema.availabilityEvents.at, sql`now() - interval '1 day' * ${days}`))),
+        .where(and(eq(schema.availabilityEvents.firstSeen, false), eq(schema.availabilityEvents.kind, "restock"), gt(schema.availabilityEvents.at, sql`now() - interval '1 day' * ${days}`), ...scopeConds(countryScope(cc, null, null), EV))),
     ),
   ["seo-active-pairs"],
   { revalidate: 3600 },
 );
 
-/** Store × part pairs with at least one real restock in the last `days` (the sitemap's index gate); null when the read failed. */
-export async function activePairs(days = 30): Promise<{ storeNumber: string; partNumber: string }[] | null> {
+/** Store × part pairs of one country with at least one real restock in the last `days` (the sitemap's index gate); null when the read failed. */
+export async function activePairs(days = 30, country: CountryCode = "us"): Promise<{ storeNumber: string; partNumber: string }[] | null> {
   if (!hasDatabase()) return [];
-  return outsideCache(null, () => cachedActivePairs(days));
+  return outsideCache(null, () => cachedActivePairs(days, country));
 }

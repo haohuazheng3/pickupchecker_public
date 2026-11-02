@@ -3,7 +3,7 @@
  * near which, and what is "popular". Every page type links sideways (siblings, neighbours) and
  * up/down (state ↔ city ↔ store), so no page is a dead end.
  */
-import { STORES, STATE_CODES, citiesWithStores, cityPath, statePath, stateSlug, stateCodeOf, distanceMiles, type Store } from "../apple/catalog";
+import { STORES, STATE_CODES, citiesWithStores, cityPath, statePath, stateSlug, stateCodeOf, distanceMiles, type Store } from "../apple/catalog-us";
 
 /** Land borders by two-letter code (DC counts as bordering MD/VA; HI/AK/PR have none). */
 export const STATE_NEIGHBORS: Record<string, string[]> = {

@@ -1,4 +1,5 @@
-import { appleName } from "@/lib/apple/catalog";
+import { appleName, appleBuyIphoneUrl, storeLocality } from "@/lib/apple/catalog";
+import { alertQuote } from "../push/payload";
 import { Resend } from "resend";
 import { env } from "../env";
 import type { CatalogItem, Store } from "../apple/catalog";
@@ -28,8 +29,8 @@ export function alertText(lines: AlertLine[], manageUrl: string): string {
   const body = lines
     .map(
       (l) =>
-        `• ${l.item.model} ${l.item.storage} ${l.item.color} — ${appleName(l.store)}, ${l.store.city}, ${l.store.state}` +
-        `${l.quote ? ` (${l.quote})` : ""}\n  Reserve: https://www.apple.com/shop/buy-iphone\n  Store: ${l.store.url ?? ""}`,
+        `• ${l.item.model} ${l.item.storage} ${l.item.color} — ${appleName(l.store)}, ${storeLocality(l.store, true)}` +
+        `${alertQuote(l) ? ` (${alertQuote(l)})` : ""}\n  Reserve: ${appleBuyIphoneUrl(l.store.country)}\n  Store: ${l.store.url ?? ""}`,
     )
     .join("\n\n");
   return `Good news — available for in-store pickup right now:\n\n${body}\n\nPickup stock moves fast: open the Apple Store app or apple.com, choose "Pick up", and select the store.\n\nManage or pause this alert: ${manageUrl}\n\n— PickupChecker`;
@@ -40,8 +41,8 @@ export function alertHtml(lines: AlertLine[], manageUrl: string): string {
     .map(
       (l) => `<tr><td style="padding:14px 16px;border-top:1px solid #e9e9ee">
   <div style="font:600 16px/1.3 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#0b0b0f">${esc(l.item.model)} ${esc(l.item.storage)} ${esc(l.item.color)}</div>
-  <div style="font:14px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#4a4a55;margin-top:2px">Apple ${esc(l.store.name)} · ${esc(l.store.city)}, ${esc(l.store.state)}${l.quote ? ` · <span style="color:#0a7f3f">${esc(l.quote)}</span>` : ""}</div>
-  <div style="margin-top:10px"><a href="https://www.apple.com/shop/buy-iphone" style="display:inline-block;background:#0b0b0f;color:#fff;text-decoration:none;font:600 13px/1 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;padding:10px 14px;border-radius:999px">Reserve on apple.com</a>
+  <div style="font:14px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#4a4a55;margin-top:2px">Apple ${esc(l.store.name)} · ${esc(storeLocality(l.store, true))}${alertQuote(l) ? ` · <span style="color:#0a7f3f">${esc(alertQuote(l)!)}</span>` : ""}</div>
+  <div style="margin-top:10px"><a href="${esc(appleBuyIphoneUrl(l.store.country))}" style="display:inline-block;background:#0b0b0f;color:#fff;text-decoration:none;font:600 13px/1 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;padding:10px 14px;border-radius:999px">Reserve on apple.com</a>
   ${l.store.url ? `<a href="${esc(l.store.url)}" style="display:inline-block;margin-left:8px;color:#0b0b0f;font:500 13px/1 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;padding:10px 6px">Store page →</a>` : ""}</div>
 </td></tr>`,
     )

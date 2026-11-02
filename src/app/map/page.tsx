@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { STORES, STORE_INDEX, STATE_CODES, stateCodeOf, storePath, cityPath, statePath, modelByKey, DEFAULT_MODEL, type ModelKey } from "@/lib/apple/catalog";
+import { STORES, storeInCountry, STATE_CODES, stateCodeOf, storePath, cityPath, statePath, modelByKey, DEFAULT_MODEL, type ModelKey } from "@/lib/apple/catalog";
 import { mapSnapshot } from "@/lib/stock/queries";
 import { StockMap, type MapStore, type MapFocus } from "@/components/map/StockMap";
 
@@ -17,8 +17,8 @@ export default async function MapPage({ searchParams }: PageProps<"/map">) {
   const modelParam = typeof sp.model === "string" ? sp.model : "";
   const focus: MapFocus = {
     model: modelParam === "all" ? "all" : modelByKey(modelParam) ? (modelParam as ModelKey) : DEFAULT_MODEL,
-    store: typeof sp.store === "string" && STORE_INDEX.has(sp.store) ? sp.store : undefined,
-    stores: typeof sp.stores === "string" ? sp.stores.split(",").filter((n) => STORE_INDEX.has(n)) : undefined,
+    store: typeof sp.store === "string" && storeInCountry(sp.store) ? sp.store : undefined,
+    stores: typeof sp.stores === "string" ? sp.stores.split(",").filter((n) => storeInCountry(n)) : undefined,
     stateCode: typeof sp.state === "string" && Object.values(STATE_CODES).includes(sp.state.toUpperCase()) ? sp.state.toUpperCase() : undefined,
   };
   const initial = await mapSnapshot();

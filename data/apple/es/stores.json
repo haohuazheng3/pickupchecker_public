@@ -1,0 +1,470 @@
+[
+ {
+  "storeNumber": "R406",
+  "slug": "lamaquinista",
+  "name": "La Maquinista",
+  "city": "Barcelona",
+  "region": "Barcelona",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 41.43967,
+  "lng": 2.19834,
+  "street": "Centro comercial La Maquinista Passeig de Potosí, 2",
+  "postalCode": "08030",
+  "phone": "934 669 000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R406.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/lamaquinista/",
+  "nativeName": "Apple La Maquinista"
+ },
+ {
+  "storeNumber": "R368",
+  "slug": "passeigdegracia",
+  "name": "Passeig de Gràcia",
+  "city": "Barcelona",
+  "region": "Barcelona",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 41.387937,
+  "lng": 2.16988,
+  "street": "Passeig de Gràcia, 1",
+  "postalCode": "08007",
+  "phone": "932 950 500",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R368.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "09:30:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/passeigdegracia/",
+  "nativeName": "Apple Passeig de Gràcia"
+ },
+ {
+  "storeNumber": "R397",
+  "slug": "xanadu",
+  "name": "Xanadú",
+  "city": "Arroyomolinos",
+  "region": "Madrid",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 40.29903,
+  "lng": -3.92671,
+  "street": "Centro comercial de Ocio Madrid Xanadú Carretera N-V, Km 23,5",
+  "postalCode": "28939",
+  "phone": "914 817 600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R397.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday",
+     "Thursday",
+     "Friday",
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/xanadu/",
+  "nativeName": "Apple Xanadú"
+ },
+ {
+  "storeNumber": "R436",
+  "slug": "parquesur",
+  "name": "Parquesur",
+  "city": "Leganés",
+  "region": "Madrid",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 40.34015,
+  "lng": -3.73163,
+  "street": "Centro Comercial Parquesur Avenida Gran Bretaña s/n",
+  "postalCode": "28916",
+  "phone": "916 445 100",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/e8f/9e5/047/f39/63a/995/bad/60f/62f/1e2/f933abaa-b668-3907-beed-97692acedfba_R436_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/parquesur/",
+  "nativeName": "Apple Parquesur"
+ },
+ {
+  "storeNumber": "R624",
+  "slug": "lavaguada",
+  "name": "La Vaguada",
+  "city": "Madrid",
+  "region": "Madrid",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 40.4797222,
+  "lng": -3.7075,
+  "street": "Centro Comercial La Vaguada Av. de Monforte de Lemos 36",
+  "postalCode": "28029",
+  "phone": "910 873 600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R624.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Thursday",
+     "Saturday",
+     "Tuesday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/lavaguada/",
+  "nativeName": "Apple La Vaguada"
+ },
+ {
+  "storeNumber": "R450",
+  "slug": "puertadelsol",
+  "name": "Puerta del Sol",
+  "city": "Madrid",
+  "region": "Madrid",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 40.41690030328,
+  "lng": -3.702156543732,
+  "street": "Plaza de la Puerta del Sol, 1",
+  "postalCode": "28013",
+  "phone": "917 699 100",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R450.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:30:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/puertadelsol/",
+  "nativeName": "Apple Puerta del Sol"
+ },
+ {
+  "storeNumber": "R435",
+  "slug": "granplaza2",
+  "name": "Gran Plaza 2",
+  "city": "Majadahonda",
+  "region": "Madrid",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 40.49109,
+  "lng": -3.89898,
+  "street": "Centro Comercial Gran Plaza 2 Calle de los Químicos, 1",
+  "postalCode": "28222",
+  "phone": "916 349 700",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/028/738/d5a/450/24f/53f/395/316/545/c64/6485f751-7908-3c10-b4ab-52d2005c07ce_R435_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/granplaza2/",
+  "nativeName": "Apple Gran Plaza 2"
+ },
+ {
+  "storeNumber": "R507",
+  "slug": "nuevacondomina",
+  "name": "Nueva Condomina",
+  "city": "Murcia",
+  "region": "Murcia",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 38.03928,
+  "lng": -1.14871,
+  "street": "Centro Comercial Nueva Condomina Autovía A-7, km 760",
+  "postalCode": "30110",
+  "phone": "968 387 800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R507.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   },
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Tuesday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/nuevacondomina/",
+  "nativeName": "Apple Nueva Condomina"
+ },
+ {
+  "storeNumber": "R468",
+  "slug": "lacanada",
+  "name": "La Cañada",
+  "city": "Marbella",
+  "region": "Málaga",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 36.52166667,
+  "lng": -4.87416667,
+  "street": "Parque Comercial La Cañada Autovía del Mediterráneo s/n Salida Ojén",
+  "postalCode": "29600",
+  "phone": "952 760 800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R468.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Saturday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/lacanada/",
+  "nativeName": "Apple La Cañada"
+ },
+ {
+  "storeNumber": "R419",
+  "slug": "valencia",
+  "name": "Valencia",
+  "city": "Valencia",
+  "region": "Valencia",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 39.46903,
+  "lng": -0.372431,
+  "street": "Calle Colón, 25",
+  "postalCode": "46004",
+  "phone": "963 506 300",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R419.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/valencia/",
+  "nativeName": "Apple Valencia"
+ },
+ {
+  "storeNumber": "R538",
+  "slug": "rioshopping",
+  "name": "Río Shopping",
+  "city": "Arroyo de la Encomienda",
+  "region": "Valladolid",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 41.627828,
+  "lng": -4.78512,
+  "street": "Centro Comercial Río Shopping Calle Me falta un tornillo, 5",
+  "postalCode": "47195",
+  "phone": "983 368 900",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R538.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Monday",
+     "Thursday",
+     "Saturday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/rioshopping/",
+  "nativeName": "Apple Río Shopping"
+ },
+ {
+  "storeNumber": "R377",
+  "slug": "puertovenecia",
+  "name": "Puerto Venecia",
+  "city": "Zaragoza",
+  "region": "Zaragoza",
+  "regionCode": null,
+  "country": "ES",
+  "lat": 41.60951,
+  "lng": -0.88623,
+  "street": "Puerto Venecia Shopping Resort, The Gallery Avda. Puerto Venecia, s/n",
+  "postalCode": "50021",
+  "phone": "976 188 900",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R377.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Monday",
+     "Wednesday",
+     "Friday",
+     "Saturday",
+     "Tuesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Madrid",
+  "url": "https://www.apple.com/es/retail/puertovenecia/",
+  "nativeName": "Apple Puerto Venecia"
+ }
+]

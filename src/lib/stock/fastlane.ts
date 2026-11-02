@@ -1,6 +1,8 @@
 /**
  * The fast lane: the stores paid alerts point at, each asked on its own (`store=R###`, ~7 KB, ~0.3 s)
- * every FAST_CADENCE_SEC (5) — on top of the 15 s sweep of all 269 stores. Plus the instant confirm,
+ * every FAST_CADENCE_SEC (5) — on top of the 15 s sweep of the 269 US stores and the 30 s per-store round of
+ * the other countries. Every request goes to the store's own country endpoint with that country's part
+ * numbers (a UK alert for a Duo asks /uk/… for the …QN/A part). Plus the instant confirm,
  * shared with the sweep: a first "available" is re-asked from that store about a second later instead
  * of waiting for the next round, so a confirmed restock (CONFIRM.restock needs two responses) alerts in
  * ~1–2 s and a one-response blip is refuted on the spot. Both outcomes are logged (ops_log) so brief
@@ -12,7 +14,7 @@
 import { randomUUID } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
 import { batchParts, fetchPickupAtStore, type PickupResponse } from "../apple/client";
-import { partNumbersFor, STORE_INDEX, type ModelKey } from "../apple/catalog";
+import { countryOfStore, partNumbersForStore, STORE_INDEX, type ModelKey } from "../apple/catalog";
 import { db, schema } from "../db";
 import { errorMessage, recordError } from "../errors";
 import { logOps } from "../ops";
@@ -27,7 +29,7 @@ export interface SubRow { userId: string; plan: string; status: string; alertLim
 /**
  * Pure: store → part numbers that paid, covered, unpaused rules point at. Coverage is the plan rule
  * notify.ts applies (the oldest `limit` active rules of each user send), so the fast lane checks exactly
- * what would alert — nothing for a user without a plan.
+ * what would alert — nothing for a user without a plan. Part numbers are those of the store's country.
  */
 export function targetsFromRules(rules: RuleRow[], subs: SubRow[]): Map<string, string[]> {
   const byUser = new Map<string, RuleRow[]>();
@@ -42,7 +44,7 @@ export function targetsFromRules(rules: RuleRow[], subs: SubRow[]): Map<string, 
       if (r.storages.length !== 1 || r.colors.length !== 1 || r.storeNumbers.length !== 1) continue; // legacy shape never alerts
       const store = r.storeNumbers[0];
       if (!STORE_INDEX.has(store)) continue;
-      for (const p of partNumbersFor(r.model as ModelKey, r.storages, r.colors)) out.set(store, (out.get(store) ?? new Set()).add(p));
+      for (const p of partNumbersForStore(store, r.model as ModelKey, r.storages, r.colors)) out.set(store, (out.get(store) ?? new Set()).add(p));
     }
   }
   return new Map([...out].sort(([a], [b]) => a.localeCompare(b)).map(([s, parts]) => [s, [...parts].sort()]));
@@ -79,8 +81,9 @@ async function askStore(task: FastTask, egress: Egress, label: string, timeoutMs
   const t0 = Date.now();
   let res: PickupResponse | null = null;
   let err: string | undefined;
+  const country = countryOfStore(task.storeNumber) ?? "us";
   try {
-    res = await fetchPickupAtStore(task.parts, task.storeNumber, slot.fetch, timeoutMs);
+    res = await fetchPickupAtStore(task.parts, task.storeNumber, slot.fetch, timeoutMs, country);
   } catch (e) {
     err = /abort/i.test(errorMessage(e)) ? `timed out after ${Math.round((Date.now() - t0) / 1000)} s` : errorMessage(e);
   }
@@ -90,6 +93,7 @@ async function askStore(task: FastTask, egress: Egress, label: string, timeoutMs
     at: new Date(), sweepId: label, egress: slot.label, anchor: `store:${task.storeNumber}`, batch: 0,
     httpStatus: status || null, ok: Boolean(res?.ok), durationMs: Date.now() - t0, bytes: res?.bytes ?? null, storesSeen: res?.stores.length ?? null,
     error: err ?? res?.error ?? null,
+    ...(country !== "us" ? { country } : {}),
   };
   let ingested: Awaited<ReturnType<typeof ingestStores>> | null = null;
   if (res?.ok) {
@@ -116,6 +120,29 @@ export function logRefuted(label: string, refuted: RefutedObs[], extra: Record<s
   }).catch(() => undefined);
 }
 
+/** Runs a request through a bounded number of slots (a counting semaphore). */
+export type Gate = <T>(run: () => Promise<T>) => Promise<T>;
+
+/**
+ * At most `max` runs at once; the rest wait in arrival order. A finishing run hands its slot straight to the
+ * next waiter, so the bound holds exactly.
+ */
+export function gate(max: number): Gate {
+  let active = 0;
+  const waiting: (() => void)[] = [];
+  return async <T,>(run: () => Promise<T>): Promise<T> => {
+    if (active < max) active++;
+    else await new Promise<void>((r) => waiting.push(r));
+    try {
+      return await run();
+    } finally {
+      const next = waiting.shift();
+      if (next) next();
+      else active--;
+    }
+  };
+}
+
 export interface ConfirmOptions {
   egress: Egress;
   /** Label for poll_log / events (the sweep id or fast round id). */
@@ -125,6 +152,11 @@ export interface ConfirmOptions {
   delayMs?: number;
   timeoutMs?: number;
   notified?: NotifyStats;
+  /**
+   * Bounds the confirm requests in flight across calls (the per-store round of other countries passes one: a
+   * mass restock there would otherwise start one confirm per response, outside its own concurrency).
+   */
+  gate?: Gate;
 }
 
 /**
@@ -143,7 +175,8 @@ export async function confirmPendingRestocks(pending: PendingObs[], opts: Confir
   await Promise.all(
     [...byStore].map(async ([storeNumber, parts]) => {
       for (const batch of batchParts([...parts])) {
-        const r = await askStore({ storeNumber, parts: batch }, opts.egress, opts.label, opts.timeoutMs ?? 4500, opts.known, jobs, notified);
+        const ask = () => askStore({ storeNumber, parts: batch }, opts.egress, opts.label, opts.timeoutMs ?? 4500, opts.known, jobs, notified);
+        const r = await (opts.gate ? opts.gate(ask) : ask());
         if (!r) return;
         r.row.anchor = `confirm:${storeNumber}`;
         out.rows.push(r.row); out.requests++;
@@ -191,6 +224,7 @@ export async function runFastRound(opts: FastRoundOptions): Promise<FastRoundSum
   const id = `fast:${randomUUID()}`;
   const started = Date.now();
   const tasks = buildFastTasks(opts.targets);
+  // Every country: a fast-lane target is any store a paid alert points at.
   const known = new Set(STORE_INDEX.keys());
   const notified: NotifyStats = { matched: 0, sent: 0, failed: 0, skipped: 0 };
   const jobs: Promise<unknown>[] = [];

@@ -1,0 +1,800 @@
+[
+ {
+  "storeNumber": "R395",
+  "slug": "cap3000",
+  "name": "CAP 3000",
+  "city": "Nice",
+  "region": "Alpes-Maritimes",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 43.65882,
+  "lng": 7.19705,
+  "street": "Avenue Eugène Donadeï Saint-Laurent Du Var",
+  "postalCode": "06700",
+  "phone": "04 92 12 51 50",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R395.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Tuesday",
+     "Saturday",
+     "Wednesday",
+     "Thursday",
+     "Monday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/cap3000/",
+  "nativeName": "Apple CAP 3000"
+ },
+ {
+  "storeNumber": "R394",
+  "slug": "strasbourg",
+  "name": "Strasbourg",
+  "city": "Strasbourg",
+  "region": "Bas-Rhin",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 48.58385,
+  "lng": 7.74548,
+  "street": "L’Aubette Place Kléber",
+  "postalCode": "67000",
+  "phone": "03 88 10 13 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R394.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Saturday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/strasbourg/",
+  "nativeName": "Apple Strasbourg"
+ },
+ {
+  "storeNumber": "R477",
+  "slug": "aix-en-provence",
+  "name": "Aix-en-Provence",
+  "city": "Aix-en-Provence",
+  "region": "Bouches-du-Rhône",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 43.525496,
+  "lng": 5.445182,
+  "street": "2 Place du Général de Gaulle",
+  "postalCode": "13100",
+  "phone": "04 88 80 78 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R477.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Thursday",
+     "Friday",
+     "Wednesday",
+     "Tuesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:30:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/aix-en-provence/",
+  "nativeName": "Apple Aix-en-Provence"
+ },
+ {
+  "storeNumber": "R357",
+  "slug": "marseille",
+  "name": "Marseille",
+  "city": "Marseille",
+  "region": "Bouches-du-Rhône",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 43.306274,
+  "lng": 5.363277,
+  "street": "Les Terrasses du Port 9 Quai du Lazaret",
+  "postalCode": "13002",
+  "phone": "04 20 10 54 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R357.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Friday",
+     "Sunday",
+     "Tuesday",
+     "Thursday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/marseille/",
+  "nativeName": "Apple Marseille"
+ },
+ {
+  "storeNumber": "R522",
+  "slug": "latoisondor",
+  "name": "La Toison d’Or",
+  "city": "Dijon",
+  "region": "Côte d’Or",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 47.35699,
+  "lng": 5.05129,
+  "street": "Centre Commercial de la Toison d’Or Avenue de Langres",
+  "postalCode": "21000",
+  "phone": "03 80 40 45 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R522.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   },
+   {
+    "days": [
+     "Thursday",
+     "Friday",
+     "Tuesday",
+     "Monday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/latoisondor/",
+  "nativeName": "Apple La Toison d’Or"
+ },
+ {
+  "storeNumber": "R424",
+  "slug": "sainte-catherine",
+  "name": "Sainte-Catherine",
+  "city": "Bordeaux",
+  "region": "Gironde",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 44.84201,
+  "lng": -0.57443,
+  "street": "2-4 rue Sainte-Catherine",
+  "postalCode": "33000",
+  "phone": "05 56 69 58 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R424.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Monday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:30:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/sainte-catherine/",
+  "nativeName": "Apple Sainte-Catherine"
+ },
+ {
+  "storeNumber": "R178",
+  "slug": "lesquatretemps",
+  "name": "Les Quatre Temps",
+  "city": "Puteaux - la Défense",
+  "region": "Hauts-de-Seine",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 48.89095,
+  "lng": 2.2381,
+  "street": "Centre commercial Les Quatre Temps 15 Parvis de la Défense",
+  "postalCode": "92800",
+  "phone": "01 41 97 36 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R178.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:30:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/lesquatretemps/",
+  "nativeName": "Apple Les Quatre Temps"
+ },
+ {
+  "storeNumber": "R367",
+  "slug": "odysseum",
+  "name": "Odysseum",
+  "city": "Montpellier",
+  "region": "Hérault",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 43.603751,
+  "lng": 3.920996,
+  "street": "Centre Commercial Odysseum Zone Odysseum Zac Port Marianne",
+  "postalCode": "34000",
+  "phone": "04 67 13 99 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R367.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Saturday",
+     "Tuesday",
+     "Monday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/odysseum/",
+  "nativeName": "Apple Odysseum"
+ },
+ {
+  "storeNumber": "R470",
+  "slug": "atlantis",
+  "name": "Atlantis",
+  "city": "Saint Herblain",
+  "region": "Loire-Atlantique",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 47.225393,
+  "lng": -1.630539,
+  "street": "Galerie Atlantis Le Centre",
+  "postalCode": "44811",
+  "phone": "02 40 85 57 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R470.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Saturday",
+     "Friday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:30:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/atlantis/",
+  "nativeName": "Apple Atlantis"
+ },
+ {
+  "storeNumber": "R376",
+  "slug": "lille",
+  "name": "Lille",
+  "city": "Lille",
+  "region": "Nord-Pas-de-Calais",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 50.6373639671188,
+  "lng": 3.06567303482582,
+  "street": "1 rue Faidherbe",
+  "postalCode": "59800",
+  "phone": "03 59 81 89 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R376.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Tuesday",
+     "Friday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:30:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/lille/",
+  "nativeName": "Apple Lille"
+ },
+ {
+  "storeNumber": "R675",
+  "slug": "champs-elysees",
+  "name": "Champs-Élysées",
+  "city": "Paris",
+  "region": "Paris",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 48.872216692829,
+  "lng": 2.301233410835,
+  "street": "114 av. des Champs-Élysées",
+  "postalCode": "75008",
+  "phone": "01 70 98 09 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R675.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Monday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/champs-elysees/",
+  "nativeName": "Apple Champs-Élysées"
+ },
+ {
+  "storeNumber": "R566",
+  "slug": "marchesaintgermain",
+  "name": "Marché Saint-Germain",
+  "city": "Paris",
+  "region": "Paris",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 48.8521,
+  "lng": 2.3359,
+  "street": "9 rue Clément",
+  "postalCode": "75006",
+  "phone": "01 85 65 48 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R566.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Monday",
+     "Tuesday",
+     "Saturday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/marchesaintgermain/",
+  "nativeName": "Apple Marché Saint-Germain"
+ },
+ {
+  "storeNumber": "R277",
+  "slug": "opera",
+  "name": "Opéra",
+  "city": "Paris",
+  "region": "Paris",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 48.872244,
+  "lng": 2.333126,
+  "street": "12 rue Halévy",
+  "postalCode": "75009",
+  "phone": "01 44 83 42 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R277.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/opera/",
+  "nativeName": "Apple Opéra"
+ },
+ {
+  "storeNumber": "R469",
+  "slug": "confluence",
+  "name": "Confluence",
+  "city": "Lyon",
+  "region": "Rhône",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 45.74128,
+  "lng": 4.81666,
+  "street": "Centre Commercial Confluence 112 Cours Charlemagne",
+  "postalCode": "69002",
+  "phone": "04 37 23 15 00",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/4aa/bb2/bca/78d/a68/29a/78a/382/3e2/b30/97e4cde3-c77d-3a69-901c-c3d11a9c48d3_R469_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Thursday",
+     "Monday",
+     "Friday",
+     "Tuesday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/confluence/",
+  "nativeName": "Apple Confluence"
+ },
+ {
+  "storeNumber": "R373",
+  "slug": "part-dieu",
+  "name": "Part-Dieu",
+  "city": "Lyon",
+  "region": "Rhône",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 45.76153,
+  "lng": 4.8557,
+  "street": "Centre commercial La Part-Dieu 17 Rue du Docteur Bouchut",
+  "postalCode": "69003",
+  "phone": "04 72 13 25 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R373.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Wednesday",
+     "Monday",
+     "Tuesday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "09:30:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/part-dieu/",
+  "nativeName": "Apple Part-Dieu"
+ },
+ {
+  "storeNumber": "R536",
+  "slug": "rosny2",
+  "name": "Rosny 2",
+  "city": "Rosny-Sous-Bois",
+  "region": "Seine-Saint-Denis",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 48.883503,
+  "lng": 2.477519,
+  "street": "Centre Commercial Rosny 2  Avenue du Général-de-Gaulle",
+  "postalCode": "93110",
+  "phone": "01 73 30 89 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R536.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:30:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/rosny2/",
+  "nativeName": "Apple Rosny 2"
+ },
+ {
+  "storeNumber": "R438",
+  "slug": "carresenart",
+  "name": "Carré Sénart",
+  "city": "Lieusaint",
+  "region": "Seine-et-Marne",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 48.61461,
+  "lng": 2.54731,
+  "street": "Centre commercial régional 3, allée du Préambule",
+  "postalCode": "77127",
+  "phone": "01 60 18 26 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R438.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Friday",
+     "Saturday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:30:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/carresenart/",
+  "nativeName": "Apple Carré Sénart"
+ },
+ {
+  "storeNumber": "R425",
+  "slug": "valdeurope",
+  "name": "Val d’Europe",
+  "city": "Marne-la-Vallée",
+  "region": "Seine-et-Marne",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 48.85577,
+  "lng": 2.78292,
+  "street": "Centre Commercial Val d’Europe 14, cours du Danube - Serris",
+  "postalCode": "77711",
+  "phone": "01 64 17 35 00",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/7f4/44f/157/f32/542/880/7e7/ac4/1a8/50b/f4665392-3b48-377f-98ff-b6e2da25dd10_R425_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:30:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/valdeurope/",
+  "nativeName": "Apple Val d’Europe"
+ },
+ {
+  "storeNumber": "R374",
+  "slug": "parly2",
+  "name": "Parly 2",
+  "city": "Le Chesnay",
+  "region": "Yvelines",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 48.8277778,
+  "lng": 2.11722222222222,
+  "street": "Centre commercial régional Parly 2 Avenue Charles de Gaulle",
+  "postalCode": "78158",
+  "phone": "01 39 66 26 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R374.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:30:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/parly2/",
+  "nativeName": "Apple Parly 2"
+ },
+ {
+  "storeNumber": "R315",
+  "slug": "velizy2",
+  "name": "Vélizy 2",
+  "city": "Vélizy-Villacoublay",
+  "region": "Yvelines",
+  "regionCode": null,
+  "country": "FR",
+  "lat": 48.780381,
+  "lng": 2.220057,
+  "street": "2 Avenue de l’Europe",
+  "postalCode": "78140",
+  "phone": "01 30 70 77 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R315.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:30:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/Paris",
+  "url": "https://www.apple.com/fr/retail/velizy2/",
+  "nativeName": "Apple Vélizy 2"
+ }
+]

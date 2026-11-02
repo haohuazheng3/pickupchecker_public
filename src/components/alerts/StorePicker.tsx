@@ -8,7 +8,7 @@
  * Census centroid; by road, estimated, with a link to real directions. No origin, no distances.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { STORES, STORE_INDEX, distanceMiles, stateCodeOf, appleName } from "@/lib/apple/catalog";
+import { STORES, STORE_INDEX, distanceMiles, stateCodeOf, appleName } from "@/lib/apple/catalog-us";
 import { centroid, formatDrive, formatMiles, rankStores, searchAnchor, zipAt, type Anchor } from "@/lib/geo";
 import { useZipPoint } from "@/lib/useZipPoint";
 

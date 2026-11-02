@@ -1,0 +1,1208 @@
+[
+ {
+  "storeNumber": "R209",
+  "slug": "chinookcentre",
+  "name": "Chinook Centre",
+  "city": "Calgary",
+  "region": "Alberta",
+  "regionCode": "AB",
+  "country": "CA",
+  "lat": 50.999372,
+  "lng": -114.072981,
+  "street": "6455 Macleod Trail SW",
+  "postalCode": "T2H 0K8",
+  "phone": "(403) 444-3759",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R209.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Canada/Mountain",
+  "url": "https://www.apple.com/ca/retail/chinookcentre/",
+  "nativeName": "Apple Chinook Centre"
+ },
+ {
+  "storeNumber": "R301",
+  "slug": "marketmall",
+  "name": "Market Mall",
+  "city": "Calgary",
+  "region": "Alberta",
+  "regionCode": "AB",
+  "country": "CA",
+  "lat": 51.08307,
+  "lng": -114.15449,
+  "street": "3625 Shaganappi Trail NW",
+  "postalCode": "T3A 0E2",
+  "phone": "(403) 648-4865",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R301.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Mountain",
+  "url": "https://www.apple.com/ca/retail/marketmall/",
+  "nativeName": "Apple Market Mall"
+ },
+ {
+  "storeNumber": "R411",
+  "slug": "southgatecentre",
+  "name": "Southgate Centre",
+  "city": "Edmonton",
+  "region": "Alberta",
+  "regionCode": "AB",
+  "country": "CA",
+  "lat": 53.48623,
+  "lng": -113.51454,
+  "street": "5015 111 St",
+  "postalCode": "T6H 4M6",
+  "phone": "(780) 801-3820",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R411.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Monday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Mountain",
+  "url": "https://www.apple.com/ca/retail/southgatecentre/",
+  "nativeName": "Apple Southgate Centre"
+ },
+ {
+  "storeNumber": "R273",
+  "slug": "westedmonton",
+  "name": "West Edmonton",
+  "city": "Edmonton",
+  "region": "Alberta",
+  "regionCode": "AB",
+  "country": "CA",
+  "lat": 53.52232,
+  "lng": -113.6209,
+  "street": "8882-170 Street",
+  "postalCode": "T5T 4M2",
+  "phone": "(780) 701-0540",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R273.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Mountain",
+  "url": "https://www.apple.com/ca/retail/westedmonton/",
+  "nativeName": "Apple West Edmonton"
+ },
+ {
+  "storeNumber": "R460",
+  "slug": "metrotown",
+  "name": "Metrotown",
+  "city": "Burnaby",
+  "region": "British Columbia",
+  "regionCode": "BC",
+  "country": "CA",
+  "lat": 49.22606,
+  "lng": -122.99922,
+  "street": "320 4700 Kingsway",
+  "postalCode": "V5H 4J2",
+  "phone": "(778) 373-4810",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R460.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Saturday",
+     "Thursday",
+     "Monday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Canada/Pacific",
+  "url": "https://www.apple.com/ca/retail/metrotown/",
+  "nativeName": "Apple Metrotown"
+ },
+ {
+  "storeNumber": "R488",
+  "slug": "coquitlamcentre",
+  "name": "Coquitlam Centre",
+  "city": "Coquitlam",
+  "region": "British Columbia",
+  "regionCode": "BC",
+  "country": "CA",
+  "lat": 49.279558,
+  "lng": -122.798712,
+  "street": "2929 Barnet Highway",
+  "postalCode": "V3B 5R5",
+  "phone": "(604) 945-1160",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R488.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Tuesday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Pacific",
+  "url": "https://www.apple.com/ca/retail/coquitlamcentre/",
+  "nativeName": "Apple Coquitlam Centre"
+ },
+ {
+  "storeNumber": "R421",
+  "slug": "richmondcentre",
+  "name": "Richmond Centre",
+  "city": "Richmond",
+  "region": "British Columbia",
+  "regionCode": "BC",
+  "country": "CA",
+  "lat": 49.16567,
+  "lng": -123.13837,
+  "street": "6551 No. 3 Road",
+  "postalCode": "V6Y 2B6",
+  "phone": "(604) 248-3940",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R421.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Saturday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Canada/Pacific",
+  "url": "https://www.apple.com/ca/retail/richmondcentre/",
+  "nativeName": "Apple Richmond Centre"
+ },
+ {
+  "storeNumber": "R601",
+  "slug": "guildfordtowncentre",
+  "name": "Guildford Town Centre",
+  "city": "Surrey",
+  "region": "British Columbia",
+  "regionCode": "BC",
+  "country": "CA",
+  "lat": 49.189363,
+  "lng": -122.803625,
+  "street": "10355 152 Street",
+  "postalCode": "V3R 7C1",
+  "phone": "(604) 634-3240",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R601.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Canada/Pacific",
+  "url": "https://www.apple.com/ca/retail/guildfordtowncentre/",
+  "nativeName": "Apple Guildford Town Centre"
+ },
+ {
+  "storeNumber": "R280",
+  "slug": "pacificcentre",
+  "name": "Pacific Centre",
+  "city": "Vancouver",
+  "region": "British Columbia",
+  "regionCode": "BC",
+  "country": "CA",
+  "lat": 49.28312,
+  "lng": -123.11866,
+  "street": "701 West Georgia Street",
+  "postalCode": "V7Y 1G5",
+  "phone": "(778) 373-1800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R280.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Canada/Pacific",
+  "url": "https://www.apple.com/ca/retail/pacificcentre/",
+  "nativeName": "Apple Pacific Centre"
+ },
+ {
+  "storeNumber": "R369",
+  "slug": "polopark",
+  "name": "Polo Park",
+  "city": "Winnipeg",
+  "region": "Manitoba",
+  "regionCode": "MB",
+  "country": "CA",
+  "lat": 49.882966,
+  "lng": -97.198652,
+  "street": "1485 Portage Avenue",
+  "postalCode": "R3G 0W4",
+  "phone": "(204) 777-4500",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R369.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Central",
+  "url": "https://www.apple.com/ca/retail/polopark/",
+  "nativeName": "Apple Polo Park"
+ },
+ {
+  "storeNumber": "R514",
+  "slug": "halifaxshoppingcentre",
+  "name": "Halifax Shopping Centre",
+  "city": "Halifax",
+  "region": "Nova Scotia",
+  "regionCode": "NS",
+  "country": "CA",
+  "lat": 44.648933,
+  "lng": -63.619234,
+  "street": "7001 Mumford Road",
+  "postalCode": "B3L 2H8",
+  "phone": "(902) 442-3495",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/f37/a87/4f5/83d/8ab/3e0/168/9cd/9d5/5e4/74c81514-4bbb-3bc4-992e-57bcc3e676eb_R514_2880_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "09:30:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "12:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Canada/Atlantic",
+  "url": "https://www.apple.com/ca/retail/halifaxshoppingcentre/",
+  "nativeName": "Apple Halifax Shopping Centre"
+ },
+ {
+  "storeNumber": "R447",
+  "slug": "mapleviewcentre",
+  "name": "Mapleview Centre",
+  "city": "Burlington",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 43.32525,
+  "lng": -79.81967,
+  "street": "900 Maple Avenue",
+  "postalCode": "L7S 2J8",
+  "phone": "(289) 288-2012",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/bdc/ec1/2dd/ad7/80b/1c0/81a/ed0/721/1b5/8c17762d-e0b3-3b64-ad73-662f93500d9d_R447_2880px_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:30:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/mapleviewcentre/",
+  "nativeName": "Apple Mapleview Centre"
+ },
+ {
+  "storeNumber": "R489",
+  "slug": "masonville",
+  "name": "Masonville",
+  "city": "London",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 43.025556,
+  "lng": -81.277778,
+  "street": "1680 Richmond Street North",
+  "postalCode": "N6G 3Y9",
+  "phone": "(519) 963-4060",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R489.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Monday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/masonville/",
+  "nativeName": "Apple Masonville"
+ },
+ {
+  "storeNumber": "R515",
+  "slug": "markvilleshoppingcentre",
+  "name": "Markville Shopping Centre",
+  "city": "Markham",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 43.868241,
+  "lng": -79.287983,
+  "street": "5000 Highway 7 East",
+  "postalCode": "L3R 4M9",
+  "phone": "(905) 513-2860",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R515.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/markvilleshoppingcentre/",
+  "nativeName": "Apple Markville Shopping Centre"
+ },
+ {
+  "storeNumber": "R350",
+  "slug": "squareone",
+  "name": "Square One",
+  "city": "Mississauga",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 43.593096,
+  "lng": -79.642159,
+  "street": "100 City Centre Drive",
+  "postalCode": "L5B 2C9",
+  "phone": "(905) 366-0580",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R350.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/squareone/",
+  "nativeName": "Apple Square One"
+ },
+ {
+  "storeNumber": "R429",
+  "slug": "uppercanadamall",
+  "name": "Upper Canada Mall",
+  "city": "Newmarket",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 44.0558,
+  "lng": -79.48516,
+  "street": "17600 Yonge Street",
+  "postalCode": "L3Y 4Z1",
+  "phone": "(905) 952-3400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R429.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/uppercanadamall/",
+  "nativeName": "Apple Upper Canada Mall"
+ },
+ {
+  "storeNumber": "R490",
+  "slug": "bayshoreshoppingcentre",
+  "name": "Bayshore Shopping Centre",
+  "city": "Ottawa",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 45.34706,
+  "lng": -75.80758,
+  "street": "100 Bayshore Drive",
+  "postalCode": "K2B 8C1",
+  "phone": "(613) 288-7950",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R490.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/bayshoreshoppingcentre/",
+  "nativeName": "Apple Bayshore Shopping Centre"
+ },
+ {
+  "storeNumber": "R332",
+  "slug": "rideau",
+  "name": "Rideau",
+  "city": "Ottawa",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 45.42509,
+  "lng": -75.69101,
+  "street": "50 Rideau Street",
+  "postalCode": "K1N 9J7",
+  "phone": "(613) 688-5575",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R332.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/rideau/",
+  "nativeName": "Apple Rideau"
+ },
+ {
+  "storeNumber": "R121",
+  "slug": "eatoncentre",
+  "name": "Eaton Centre",
+  "city": "Toronto",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 43.653,
+  "lng": -79.3804,
+  "street": "220 Yonge Street",
+  "postalCode": "M5B 2H1",
+  "phone": "(647) 258-0801",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R121.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Monday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/eatoncentre/",
+  "nativeName": "Apple Eaton Centre"
+ },
+ {
+  "storeNumber": "R333",
+  "slug": "fairview",
+  "name": "Fairview",
+  "city": "Toronto",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 43.778,
+  "lng": -79.3442,
+  "street": "1800 Sheppard Avenue East",
+  "postalCode": "M2J 5A7",
+  "phone": "(416) 646-4412",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R333.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Saturday",
+     "Friday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/fairview/",
+  "nativeName": "Apple Fairview"
+ },
+ {
+  "storeNumber": "R208",
+  "slug": "sherwaygardens",
+  "name": "Sherway Gardens",
+  "city": "Toronto",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 43.612406,
+  "lng": -79.556325,
+  "street": "25 The West Mall",
+  "postalCode": "M9C 1B8",
+  "phone": "(416) 646-8489",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R208.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Saturday",
+     "Friday",
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/sherwaygardens/",
+  "nativeName": "Apple Sherway Gardens"
+ },
+ {
+  "storeNumber": "R120",
+  "slug": "yorkdale",
+  "name": "Yorkdale",
+  "city": "Toronto",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 43.724262,
+  "lng": -79.4543,
+  "street": "3401 Dufferin Street",
+  "postalCode": "M6A 3A1",
+  "phone": "(416) 785-1776",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R120.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Saturday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/yorkdale/",
+  "nativeName": "Apple Yorkdale"
+ },
+ {
+  "storeNumber": "R464",
+  "slug": "conestoga",
+  "name": "Conestoga",
+  "city": "Waterloo",
+  "region": "Ontario",
+  "regionCode": "ON",
+  "country": "CA",
+  "lat": 43.49773,
+  "lng": -80.5273,
+  "street": "550 King Street North",
+  "postalCode": "N2L 5W6",
+  "phone": "(519) 772-5150",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R464.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/conestoga/",
+  "nativeName": "Apple Conestoga"
+ },
+ {
+  "storeNumber": "R512",
+  "slug": "dix30",
+  "name": "DIX30",
+  "city": "Brossard",
+  "region": "Quebec",
+  "regionCode": "QC",
+  "country": "CA",
+  "lat": 45.446364,
+  "lng": -73.438306,
+  "street": "1055 rue du Lumen",
+  "postalCode": "J4Y 0L3",
+  "phone": "(450) 618-1400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R512.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/dix30/",
+  "nativeName": "Apple DIX30"
+ },
+ {
+  "storeNumber": "R207",
+  "slug": "carrefourlaval",
+  "name": "Carrefour Laval",
+  "city": "Laval",
+  "region": "Quebec",
+  "regionCode": "QC",
+  "country": "CA",
+  "lat": 45.571402,
+  "lng": -73.75204,
+  "street": "3035, boulevard Le Carrefour, local C14B",
+  "postalCode": "H7T 1C8",
+  "phone": "(450) 902-4400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R207.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/carrefourlaval/",
+  "nativeName": "Apple Carrefour Laval"
+ },
+ {
+  "storeNumber": "R248",
+  "slug": "saintecatherine",
+  "name": "Sainte-Catherine",
+  "city": "Montreal",
+  "region": "Quebec",
+  "regionCode": "QC",
+  "country": "CA",
+  "lat": 45.498091,
+  "lng": -73.575256,
+  "street": "1255 Rue Sainte-Catherine West",
+  "postalCode": "H3G 1P3",
+  "phone": "(514) 906-8400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R248.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/saintecatherine/",
+  "nativeName": "Apple Sainte-Catherine"
+ },
+ {
+  "storeNumber": "R392",
+  "slug": "fairviewpointeclaire",
+  "name": "Fairview Pointe-Claire",
+  "city": "Pointe-Claire",
+  "region": "Quebec",
+  "regionCode": "QC",
+  "country": "CA",
+  "lat": 45.46333,
+  "lng": -73.83166,
+  "street": "6801, Transcanada Highway",
+  "postalCode": "H9R 5J2",
+  "phone": "(514) 630-8800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R392.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Wednesday",
+     "Monday",
+     "Tuesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/fairviewpointeclaire/",
+  "nativeName": "Apple Fairview Pointe-Claire"
+ },
+ {
+  "storeNumber": "R412",
+  "slug": "placestefoy",
+  "name": "Place Ste-Foy",
+  "city": "Quebec City",
+  "region": "Quebec",
+  "regionCode": "QC",
+  "country": "CA",
+  "lat": 46.77431,
+  "lng": -71.27958,
+  "street": "2450 Boulevard Laurier",
+  "postalCode": "G1V 2L1",
+  "phone": "(418) 266-8600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R412.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Monday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Canada/Eastern",
+  "url": "https://www.apple.com/ca/retail/placestefoy/",
+  "nativeName": "Apple Place Ste-Foy"
+ }
+]

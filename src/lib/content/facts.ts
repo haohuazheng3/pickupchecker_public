@@ -9,11 +9,12 @@
  * Global: {{stores}}, {{trackingSince}}, {{trackingDays}}, {{asOf}}.
  */
 import { cache } from "react";
-import { MODELS, STORES, PART_INDEX, catalogFor, type ModelKey } from "../apple/catalog";
+import { MODELS, PART_INDEX, catalogFor, storesOf, type ModelKey } from "../apple/catalog";
+import { COUNTRIES, formatPrice, type CountryCode } from "../apple/countries";
 import { modelStock, placeStats } from "../stock/queries";
 import { fmtDuration, fmtPrice } from "../seo/enrich";
 
-/** First real (non-first-seen) event in the database: tracking of all 269 stores began on this day. */
+/** First real (non-first-seen) event in the database: tracking of all 269 US stores began on this day. */
 export const TRACKING_SINCE = "2026-10-29";
 
 export const PREFIX: Record<string, ModelKey> = { duo: "duo", pro: "18-pro", pm: "18-pro-max" };
@@ -44,12 +45,13 @@ export interface ModelFacts {
   priceHigh: number;
 }
 
-export interface Facts { at: string; models: Record<ModelKey, ModelFacts> }
+/** `country` absent = the US (every fact and token of a page is about one country's stores). */
+export interface Facts { at: string; models: Record<ModelKey, ModelFacts>; country?: CountryCode }
 
-async function modelFacts(key: ModelKey): Promise<ModelFacts> {
-  const items = catalogFor(key);
+async function modelFacts(key: ModelKey, cc: CountryCode): Promise<ModelFacts> {
+  const items = catalogFor(key, cc);
   const prices = items.map((i) => i.price);
-  const [rows, stats] = await Promise.all([modelStock(key), placeStats({ model: key })]);
+  const [rows, stats] = await Promise.all([modelStock(key, cc), placeStats({ model: key, country: cc })]);
   const available = rows.filter((r) => r.status === "available");
   const byConfig: Record<string, number> = Object.fromEntries(items.map((i) => [`${i.storage} ${i.color}`, 0]));
   for (const r of available) {
@@ -82,7 +84,7 @@ async function modelFacts(key: ModelKey): Promise<ModelFacts> {
     unknown: rows.length === 0 || Boolean(stats.unknown),
     storesNow: new Set(available.map((r) => r.storeNumber)).size,
     pairsNow: available.length,
-    pairsTotal: rows.length || items.length * STORES.length,
+    pairsTotal: rows.length || items.length * storesOf(cc).length,
     restocks: stats.month,
     soldouts: stats.soldouts,
     medianMs: stats.medianMs,
@@ -100,10 +102,10 @@ async function modelFacts(key: ModelKey): Promise<ModelFacts> {
   };
 }
 
-/** One read per request (React cache), three models in parallel. */
-export const getFacts = cache(async (): Promise<Facts> => {
-  const list = await Promise.all(MODELS.map((m) => modelFacts(m.key)));
-  return { at: new Date().toISOString(), models: Object.fromEntries(list.map((f) => [f.key, f])) as Record<ModelKey, ModelFacts> };
+/** One read per request and country (React cache), three models in parallel. */
+export const getFacts = cache(async (country: CountryCode = "us"): Promise<Facts> => {
+  const list = await Promise.all(MODELS.map((m) => modelFacts(m.key, country)));
+  return { at: new Date().toISOString(), models: Object.fromEntries(list.map((f) => [f.key, f])) as Record<ModelKey, ModelFacts>, ...(country === "us" ? {} : { country }) };
 });
 
 const ET = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -113,12 +115,20 @@ function n(v: number, unknown: boolean): string {
   return unknown ? "—" : v.toLocaleString("en-US");
 }
 
+/** "Nov 2, 3:04 PM ET" in the US; other countries in their own zone and abbreviation ("GMT", "JST"). */
+function when(iso: string, cc: CountryCode): string {
+  if (cc === "us") return `${ET.format(new Date(iso))} ET`;
+  return new Intl.DateTimeFormat("en-US", { timeZone: COUNTRIES[cc].timeZone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(new Date(iso));
+}
+const price = (v: number, cc: CountryCode) => (cc === "us" ? fmtPrice(v) : formatPrice(COUNTRIES[cc], v));
+
 /** The value for one token, or null when the token is not known (left as-is so tests catch typos). */
 export function tokenValue(token: string, facts: Facts): string | null {
-  if (token === "stores") return String(STORES.length);
+  const cc = facts.country ?? "us";
+  if (token === "stores") return String(storesOf(cc).length);
   if (token === "trackingSince") return LONG_DATE.format(new Date(`${TRACKING_SINCE}T12:00:00Z`));
   if (token === "trackingDays") return String(Math.max(1, Math.ceil((Date.parse(facts.at) - Date.parse(`${TRACKING_SINCE}T00:00:00Z`)) / 86400_000)));
-  if (token === "asOf") return `${ET.format(new Date(facts.at))} ET`;
+  if (token === "asOf") return when(facts.at, cc);
   const dot = token.indexOf(".");
   if (dot < 0) return null;
   const key = PREFIX[token.slice(0, dot)];
@@ -132,7 +142,7 @@ export function tokenValue(token: string, facts: Facts): string | null {
   }
   switch (field) {
     case "storesNow": return n(f.storesNow, f.unknown);
-    case "storesTotal": return String(STORES.length);
+    case "storesTotal": return String(storesOf(cc).length);
     case "pairsNow": return n(f.pairsNow, f.unknown);
     case "pairsTotal": return f.pairsTotal.toLocaleString("en-US");
     case "pairsPct": return f.unknown ? "—" : `${Math.round((100 * f.pairsNow) / Math.max(1, f.pairsTotal))}%`;
@@ -140,12 +150,12 @@ export function tokenValue(token: string, facts: Facts): string | null {
     case "restockStores": return n(f.restockStores, f.unknown);
     case "soldouts": return n(f.soldouts, f.unknown);
     case "medianStay": return f.medianMs == null ? "too few to measure yet" : fmtDuration(f.medianMs);
-    case "lastRestock": return f.lastRestockAt ? `${ET.format(new Date(f.lastRestockAt))} ET` : "none logged yet";
+    case "lastRestock": return f.lastRestockAt ? when(f.lastRestockAt, cc) : "none logged yet";
     case "topConfig": return f.topConfig ?? "none yet";
     case "configsNow": return n(Object.values(f.byConfig).filter((v) => v > 0).length, f.unknown);
     case "configsTotal": return String(Object.keys(f.byConfig).length);
-    case "priceFrom": return fmtPrice(f.priceLow);
-    case "priceTo": return fmtPrice(f.priceHigh);
+    case "priceFrom": return price(f.priceLow, cc);
+    case "priceTo": return price(f.priceHigh, cc);
     default: return null;
   }
 }

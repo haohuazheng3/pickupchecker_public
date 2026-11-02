@@ -124,30 +124,34 @@ export const stores = pgTable(
     slug: text("slug").notNull(),
     name: text("name").notNull(),
     city: text("city").notNull(),
-    state: text("state").notNull(), // full name, e.g. "New York"
-    stateCode: text("state_code").notNull(), // "NY"
+    state: text("state").notNull(), // full name, e.g. "New York"; other countries: the region (= region)
+    stateCode: text("state_code").notNull(), // "NY"; other countries: the region's short code, else its name
     postalCode: text("postal_code"),
     street: text("street"),
     phone: text("phone"),
     lat: doublePrecision("lat").notNull(),
     lng: doublePrecision("lng").notNull(),
-    timezone: text("timezone"),
+    timezone: text("timezone"), // IANA, from Apple's store page (written for non-US stores; US rows use the state table)
     hours: jsonb("hours").$type<{ days: string[]; opens: string | null; closes: string | null }[]>(),
     image: text("image"),
     url: text("url"),
     active: boolean("active").notNull().default(true),
+    /** ISO 3166-1 alpha-2 ("US", "CA", "GB" …), as the data files and Apple use it (migration 0009). */
+    country: text("country").notNull().default("US"),
+    /** The level between country and city in Apple's store list (US: the state; province, prefecture …). */
+    region: text("region"),
   },
-  (t) => [index("stores_state_idx").on(t.stateCode)],
+  (t) => [index("stores_state_idx").on(t.stateCode), index("stores_country_idx").on(t.country)],
 );
 
 export const skus = pgTable("skus", {
-  partNumber: text("part_number").primaryKey(), // "MJQ34LL/A"
+  partNumber: text("part_number").primaryKey(), // "MJQ34LL/A" — one row per part number, every country
   sku: text("sku").notNull(), // "MJQ34"
   model: text("model").notNull(), // "18-pro"
   modelName: text("model_name").notNull(), // "iPhone 18 Pro"
   storage: text("storage").notNull(),
   color: text("color").notNull(),
-  priceUsd: doublePrecision("price_usd"),
+  priceUsd: doublePrecision("price_usd"), // US parts only; other countries' prices live in the static catalogues
   active: boolean("active").notNull().default(true),
 });
 
@@ -225,7 +229,7 @@ export const pollLog = pgTable(
     at: ts("at").notNull().defaultNow(),
     sweepId: text("sweep_id"),
     egress: text("egress").notNull(), // ipv6:<addr> | vercel | cloudflare | local
-    anchor: text("anchor").notNull(), // zip
+    anchor: text("anchor").notNull(), // zip | store:R### (fast lane) | confirm:R### | <cc>:R### (other countries' sweep)
     batch: integer("batch").notNull(),
     httpStatus: integer("http_status"),
     ok: boolean("ok").notNull(),
@@ -233,6 +237,8 @@ export const pollLog = pgTable(
     bytes: integer("bytes"),
     storesSeen: integer("stores_seen"),
     error: text("error"),
+    /** null = a US request; else the lower-case site code of the country asked ("uk"). Migration 0009. */
+    country: text("country"),
   },
   (t) => [index("poll_log_at_idx").on(t.at), index("poll_log_ok_idx").on(t.ok, t.at)],
 );
@@ -244,7 +250,7 @@ export const sweeps = pgTable(
     id: text("id").primaryKey(),
     startedAt: ts("started_at").notNull(),
     finishedAt: ts("finished_at"),
-    mode: text("mode").notNull(), // full | degraded
+    mode: text("mode").notNull(), // full | degraded (the US anchor sweep) | intl (other countries, per store)
     host: text("host").notNull(),
     requests: integer("requests").notNull().default(0),
     failures: integer("failures").notNull().default(0),

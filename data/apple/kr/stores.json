@@ -1,0 +1,233 @@
+[
+ {
+  "storeNumber": "R770",
+  "slug": "hanam",
+  "name": "Hanam",
+  "city": "Hanam",
+  "region": "Gyeonggi",
+  "regionCode": null,
+  "country": "KR",
+  "lat": 37.54574,
+  "lng": 127.224151,
+  "street": "하남시 미사대로 750 스타필드 하남, 1F",
+  "postalCode": "12942",
+  "phone": "080-500-3006",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R770.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Sunday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Seoul",
+  "url": "https://www.apple.com/kr/retail/hanam/",
+  "nativeName": "Apple 하남"
+ },
+ {
+  "storeNumber": "R691",
+  "slug": "gangnam",
+  "name": "Gangnam",
+  "city": "Seoul",
+  "region": "Seoul",
+  "regionCode": null,
+  "country": "KR",
+  "lat": 37.503775,
+  "lng": 127.02522,
+  "street": "강남구 강남대로 464",
+  "postalCode": "06123",
+  "phone": "080-500-0456",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R691.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday",
+     "Sunday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Monday"
+    ],
+    "opens": "11:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Seoul",
+  "url": "https://www.apple.com/kr/retail/gangnam/",
+  "nativeName": "Apple 강남"
+ },
+ {
+  "storeNumber": "R692",
+  "slug": "garosugil",
+  "name": "Garosugil",
+  "city": "Seoul",
+  "region": "Seoul",
+  "regionCode": null,
+  "country": "KR",
+  "lat": 37.5209,
+  "lng": 127.0228,
+  "street": "강남구 가로수길 43",
+  "postalCode": "06028",
+  "phone": "080-500-0029",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R692.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Saturday",
+     "Thursday"
+    ],
+    "opens": "11:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Seoul",
+  "url": "https://www.apple.com/kr/retail/garosugil/",
+  "nativeName": "Apple 가로수길"
+ },
+ {
+  "storeNumber": "R764",
+  "slug": "hongdae",
+  "name": "Hongdae",
+  "city": "Seoul",
+  "region": "Seoul",
+  "regionCode": null,
+  "country": "KR",
+  "lat": 37.5551,
+  "lng": 126.92191,
+  "street": "마포구 양화로 140",
+  "postalCode": "04050",
+  "phone": "080-500-3005",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R764.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday",
+     "Sunday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "11:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Seoul",
+  "url": "https://www.apple.com/kr/retail/hongdae/",
+  "nativeName": "Apple 홍대"
+ },
+ {
+  "storeNumber": "R751",
+  "slug": "jamsil",
+  "name": "Jamsil",
+  "city": "Seoul",
+  "region": "Seoul",
+  "regionCode": null,
+  "country": "KR",
+  "lat": 37.512965858126,
+  "lng": 127.101191657544,
+  "street": "송파구 올림픽로 300 롯데월드몰 1F",
+  "postalCode": "05551",
+  "phone": "080-500-0098",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/8f8/32b/370/1c2/990/11c/19d/dcd/645/124/5df05571-db28-3987-b6bb-f5601c571821_Apple_Jamsil_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Saturday",
+     "Sunday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:30:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Seoul",
+  "url": "https://www.apple.com/kr/retail/jamsil/",
+  "nativeName": "Apple 잠실"
+ },
+ {
+  "storeNumber": "R738",
+  "slug": "myeongdong",
+  "name": "Myeongdong",
+  "city": "Seoul",
+  "region": "Seoul",
+  "regionCode": null,
+  "country": "KR",
+  "lat": 37.564659,
+  "lng": 126.982678,
+  "street": "중구 남대문로 2가 9-1 하이드파크",
+  "postalCode": "04534",
+  "phone": "080-500-1007",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/aa9/6b9/ef4/ec8/7e6/414/d44/320/d9a/1a6/3e519f29-53d9-3e8e-88c9-c433462f4b42_Myeongdong_20220409_TF_Store_Page_large_2x.jpg",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Seoul",
+  "url": "https://www.apple.com/kr/retail/myeongdong/",
+  "nativeName": "Apple 명동"
+ },
+ {
+  "storeNumber": "R747",
+  "slug": "yeouido",
+  "name": "Yeouido",
+  "city": "Seoul",
+  "region": "Seoul",
+  "regionCode": null,
+  "country": "KR",
+  "lat": 37.525,
+  "lng": 126.92527,
+  "street": "영등포구 국제금융로 10 IFC MALL, L1",
+  "postalCode": "07326",
+  "phone": "080-500-0013",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/91e/64b/a4c/e1f/ebf/c65/f89/f5d/258/d55/7688a9a4-db22-373b-b63c-ca23c5e2adea_Yeouido_20210226_TF_RetailStorePage_large_2x.jpg",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Seoul",
+  "url": "https://www.apple.com/kr/retail/yeouido/",
+  "nativeName": "Apple 여의도"
+ }
+]

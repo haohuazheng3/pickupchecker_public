@@ -1,0 +1,362 @@
+[
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Black",
+  "partNumber": "MJRP4X/A",
+  "sku": "MJRP4",
+  "price": 2099,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Burgundy",
+  "partNumber": "MJRR4X/A",
+  "sku": "MJRR4",
+  "price": 2099,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Glacier",
+  "partNumber": "MJRT4X/A",
+  "sku": "MJRT4",
+  "price": 2099,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Silver",
+  "partNumber": "MJRQ4X/A",
+  "sku": "MJRQ4",
+  "price": 2099,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Black",
+  "partNumber": "MJRU4X/A",
+  "sku": "MJRU4",
+  "price": 2499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Burgundy",
+  "partNumber": "MJRW4X/A",
+  "sku": "MJRW4",
+  "price": 2499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Glacier",
+  "partNumber": "MJRX4X/A",
+  "sku": "MJRX4",
+  "price": 2499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Silver",
+  "partNumber": "MJRV4X/A",
+  "sku": "MJRV4",
+  "price": 2499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Black",
+  "partNumber": "MJRY4X/A",
+  "sku": "MJRY4",
+  "price": 3299,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Burgundy",
+  "partNumber": "MJT14X/A",
+  "sku": "MJT14",
+  "price": 3299,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Glacier",
+  "partNumber": "MJT24X/A",
+  "sku": "MJT24",
+  "price": 3299,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Silver",
+  "partNumber": "MJT04X/A",
+  "sku": "MJT04",
+  "price": 3299,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Black",
+  "partNumber": "MJT34X/A",
+  "sku": "MJT34",
+  "price": 4499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Burgundy",
+  "partNumber": "MJT54X/A",
+  "sku": "MJT54",
+  "price": 4499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Glacier",
+  "partNumber": "MJT64X/A",
+  "sku": "MJT64",
+  "price": 4499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Silver",
+  "partNumber": "MJT44X/A",
+  "sku": "MJT44",
+  "price": 4499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Black",
+  "partNumber": "MJXN4X/A",
+  "sku": "MJXN4",
+  "price": 2299,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Burgundy",
+  "partNumber": "MJXQ4X/A",
+  "sku": "MJXQ4",
+  "price": 2299,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Glacier",
+  "partNumber": "MJXR4X/A",
+  "sku": "MJXR4",
+  "price": 2299,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Silver",
+  "partNumber": "MJXP4X/A",
+  "sku": "MJXP4",
+  "price": 2299,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Black",
+  "partNumber": "MJXT4X/A",
+  "sku": "MJXT4",
+  "price": 2699,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Burgundy",
+  "partNumber": "MJXV4X/A",
+  "sku": "MJXV4",
+  "price": 2699,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Glacier",
+  "partNumber": "MJXW4X/A",
+  "sku": "MJXW4",
+  "price": 2699,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Silver",
+  "partNumber": "MJXU4X/A",
+  "sku": "MJXU4",
+  "price": 2699,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Black",
+  "partNumber": "MJXX4X/A",
+  "sku": "MJXX4",
+  "price": 3499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Burgundy",
+  "partNumber": "MJY04X/A",
+  "sku": "MJY04",
+  "price": 3499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Glacier",
+  "partNumber": "MJY14X/A",
+  "sku": "MJY14",
+  "price": 3499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Silver",
+  "partNumber": "MJXY4X/A",
+  "sku": "MJXY4",
+  "price": 3499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Black",
+  "partNumber": "MJY24X/A",
+  "sku": "MJY24",
+  "price": 4699,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Burgundy",
+  "partNumber": "MJY44X/A",
+  "sku": "MJY44",
+  "price": 4699,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Glacier",
+  "partNumber": "MJY54X/A",
+  "sku": "MJY54",
+  "price": 4699,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Silver",
+  "partNumber": "MJY34X/A",
+  "sku": "MJY34",
+  "price": 4699,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "256GB",
+  "color": "Night Sky",
+  "partNumber": "MK2E4X/A",
+  "sku": "MK2E4",
+  "price": 3499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "256GB",
+  "color": "Star White",
+  "partNumber": "MK2D4X/A",
+  "sku": "MK2D4",
+  "price": 3499,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "512GB",
+  "color": "Night Sky",
+  "partNumber": "MK2G4X/A",
+  "sku": "MK2G4",
+  "price": 3899,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "512GB",
+  "color": "Star White",
+  "partNumber": "MK2F4X/A",
+  "sku": "MK2F4",
+  "price": 3899,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "1TB",
+  "color": "Night Sky",
+  "partNumber": "MK2J4X/A",
+  "sku": "MK2J4",
+  "price": 4699,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "1TB",
+  "color": "Star White",
+  "partNumber": "MK2H4X/A",
+  "sku": "MK2H4",
+  "price": 4699,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "2TB",
+  "color": "Night Sky",
+  "partNumber": "MK2L4X/A",
+  "sku": "MK2L4",
+  "price": 5899,
+  "currency": "AUD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "2TB",
+  "color": "Star White",
+  "partNumber": "MK2K4X/A",
+  "sku": "MK2K4",
+  "price": 5899,
+  "currency": "AUD"
+ }
+]

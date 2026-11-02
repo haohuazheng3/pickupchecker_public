@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
-import { STORES, stateCodeOf, appleName, type ModelKey } from "@/lib/apple/catalog";
+import { STORES, stateCodeOf, appleName, type ModelKey } from "@/lib/apple/catalog-us";
 import { rankStores, searchAnchor, formatDrive, formatMiles, zipAt, type Anchor } from "@/lib/geo";
 import { useZipPoint } from "@/lib/useZipPoint";
 import { productBySlug, productFor, productPath, storePlace } from "@/lib/seo/products";

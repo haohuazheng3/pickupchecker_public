@@ -9,7 +9,7 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db, schema } from "../db";
-import { PART_INDEX, STORE_INDEX, modelKeyFor } from "../apple/catalog";
+import { PART_INDEX, STORE_INDEX, itemFor, modelKeyFor } from "../apple/catalog";
 import { sendAlertEmail } from "../mail/resend";
 import { recordError, errorMessage } from "../errors";
 import { enabledSubscriptionsFor, notifyPushStopped, pushConfigured, sendPushToRows } from "../push/server";
@@ -110,8 +110,9 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
     const w = g.c.watch;
     const started = Date.now();
     const lines = g.items.map((x) => {
-      const item = PART_INDEX.get(x.t.partNumber)!;
       const store = STORE_INDEX.get(x.t.storeNumber)!;
+      // The item as the store's country sells it (a ZD/A part at an Austrian store: the Austrian price).
+      const item = itemFor(x.t.partNumber, store.country)!;
       return { item, store, quote: x.t.quote };
     });
     const devices = pushByUser.get(w.userId) ?? [];

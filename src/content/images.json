@@ -400,6 +400,70 @@
   "pexelsId": 39219886
  },
  {
+  "id": "place-ae-abu-dhabi",
+  "base": "/img/places/place-ae-abu-dhabi",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Abu Dhabi's waterfront towers across clear blue water on a sunny day",
+  "caption": "The Abu Dhabi skyline from the water.",
+  "credit": "Nader",
+  "creditUrl": "https://www.pexels.com/photo/scenic-abu-dhabi-skyline-with-boat-on-water-39035654/",
+  "pexelsId": 39035654
+ },
+ {
+  "id": "place-ae-abu-dhabi-emirate",
+  "base": "/img/places/place-ae-abu-dhabi-emirate",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The white domes and minarets of the Sheikh Zayed Grand Mosque under a blue sky",
+  "caption": "Sheikh Zayed Grand Mosque, Abu Dhabi.",
+  "credit": "Jackson  Jacob",
+  "creditUrl": "https://www.pexels.com/photo/sheikh-zayed-grand-mosque-in-abu-dhabi-in-uae-20584925/",
+  "pexelsId": 20584925
+ },
+ {
+  "id": "place-ae-dubai",
+  "base": "/img/places/place-ae-dubai",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of Downtown Dubai with the Burj Khalifa rising above the Dubai Mall",
+  "caption": "Downtown Dubai: the Burj Khalifa and the Dubai Mall, home to Apple Dubai Mall.",
+  "credit": "Nelemson G",
+  "creditUrl": "https://www.pexels.com/photo/aerial-view-of-dubai-skyline-with-burj-khalifa-29470840/",
+  "pexelsId": 29470840
+ },
+ {
+  "id": "place-ae-uae",
+  "base": "/img/places/place-ae-uae",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Burj Al Arab beyond palm trees and an arched footbridge at Madinat Jumeirah, Dubai",
+  "caption": "The Burj Al Arab, Dubai.",
+  "credit": "Diego F. Parra",
+  "creditUrl": "https://www.pexels.com/photo/burj-al-arab-in-dubai-15478194/",
+  "pexelsId": 15478194
+ },
+ {
   "id": "place-alabama",
   "base": "/img/places/place-alabama",
   "widths": [
@@ -448,6 +512,22 @@
   "pexelsId": 37594909
  },
  {
+  "id": "place-at-vienna",
+  "base": "/img/places/place-at-vienna",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "St. Stephen's Cathedral rising above the rooftops of Vienna under a blue sky",
+  "caption": "St. Stephen's Cathedral above Vienna's old town.",
+  "credit": "Westafrikan Koffi",
+  "creditUrl": "https://www.pexels.com/photo/view-of-a-church-5374620/",
+  "pexelsId": 5374620
+ },
+ {
   "id": "place-atlanta",
   "base": "/img/places/place-atlanta",
   "widths": [
@@ -462,6 +542,86 @@
   "credit": "K",
   "creditUrl": "https://www.pexels.com/photo/aerial-view-of-atlanta-skyline-at-dusk-33133727/",
   "pexelsId": 33133727
+ },
+ {
+  "id": "place-au-new-south-wales",
+  "base": "/img/places/place-au-new-south-wales",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Sydney city skyline and Sydney Tower across the harbour under a blue sky",
+  "caption": "Sydney's city skyline across the harbour, New South Wales.",
+  "credit": "Leif Bergerson",
+  "creditUrl": "https://www.pexels.com/photo/blue-sky-over-high-rise-buildings-9580831/",
+  "pexelsId": 9580831
+ },
+ {
+  "id": "place-au-queensland",
+  "base": "/img/places/place-au-queensland",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of Brisbane's city skyline over the Brisbane River on a sunny day",
+  "caption": "Brisbane and the Brisbane River, Queensland.",
+  "credit": "David Pickup |  Advertising & Marketing  🇬🇧",
+  "creditUrl": "https://www.pexels.com/photo/aerial-view-of-brisbane-city-skyline-with-river-37183850/",
+  "pexelsId": 37183850
+ },
+ {
+  "id": "place-au-sydney-harbour",
+  "base": "/img/places/place-au-sydney-harbour",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of the Sydney Opera House and Harbour Bridge over Sydney Harbour on a clear day",
+  "caption": "Sydney Harbour, with the Opera House and Harbour Bridge.",
+  "credit": "Parth  Patel",
+  "creditUrl": "https://www.pexels.com/photo/sydney-harbour-with-opera-house-and-bridge-37930274/",
+  "pexelsId": 37930274
+ },
+ {
+  "id": "place-au-victoria",
+  "base": "/img/places/place-au-victoria",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Melbourne's skyline behind Princes Bridge over the Yarra River, with St Paul's Cathedral spires on the left",
+  "caption": "Princes Bridge and the Melbourne skyline, Victoria.",
+  "credit": "John Simmons",
+  "creditUrl": "https://www.pexels.com/photo/modern-melbourne-skyscrapers-next-to-the-neo-gothic-cathedral-and-19th-century-princes-bridge-8436835/",
+  "pexelsId": 8436835
+ },
+ {
+  "id": "place-au-western-australia",
+  "base": "/img/places/place-au-western-australia",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Perth's city skyline seen from Kings Park on a clear day",
+  "caption": "Perth from Kings Park, Western Australia.",
+  "credit": "Horace Young",
+  "creditUrl": "https://www.pexels.com/photo/modern-architecture-in-perth-20777137/",
+  "pexelsId": 20777137
  },
  {
   "id": "place-austin",
@@ -480,6 +640,22 @@
   "pexelsId": 39881381
  },
  {
+  "id": "place-be-belgium",
+  "base": "/img/places/place-be-belgium",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Brussels Town Hall and the guild houses of the Grand-Place at sunset",
+  "caption": "The Grand-Place, Brussels, at sunset.",
+  "credit": "Magda Ehlers",
+  "creditUrl": "https://www.pexels.com/photo/brabantine-gothic-town-hall-in-brussels-at-dawn-12822728/",
+  "pexelsId": 12822728
+ },
+ {
   "id": "place-brooklyn",
   "base": "/img/places/place-brooklyn",
   "widths": [
@@ -496,6 +672,150 @@
   "pexelsId": 4451504
  },
  {
+  "id": "place-ca-alberta",
+  "base": "/img/places/place-ca-alberta",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Lake Louise and the glacier-covered peaks above it in Banff National Park, Alberta",
+  "caption": "Lake Louise, Banff National Park, Alberta.",
+  "credit": "Ryan Beirne",
+  "creditUrl": "https://www.pexels.com/photo/lake-louise-brush-17709342/",
+  "pexelsId": 17709342
+ },
+ {
+  "id": "place-ca-british-columbia",
+  "base": "/img/places/place-ca-british-columbia",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Downtown Vancouver's towers above a marina, with the North Shore Mountains behind",
+  "caption": "Vancouver and the North Shore Mountains, British Columbia.",
+  "credit": "Luke Lawreszuk",
+  "creditUrl": "https://www.pexels.com/photo/vancouver-skyline-with-mountains-and-marina-29072584/",
+  "pexelsId": 29072584
+ },
+ {
+  "id": "place-ca-calgary",
+  "base": "/img/places/place-ca-calgary",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Downtown Calgary's skyscrapers and the Calgary Tower under a clear sky",
+  "caption": "Downtown Calgary and the Calgary Tower.",
+  "credit": "Francois Mutombo",
+  "creditUrl": "https://www.pexels.com/photo/calgary-skyline-with-iconic-calgary-tower-31228635/",
+  "pexelsId": 31228635
+ },
+ {
+  "id": "place-ca-canada",
+  "base": "/img/places/place-ca-canada",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The CN Tower and Rogers Centre above the Toronto skyline, seen across the water on a sunny day",
+  "caption": "The CN Tower and Toronto skyline from across the water.",
+  "credit": "Jeffrey Eisen",
+  "creditUrl": "https://www.pexels.com/photo/city-skyline-across-body-of-water-13420120/",
+  "pexelsId": 13420120
+ },
+ {
+  "id": "place-ca-edmonton",
+  "base": "/img/places/place-ca-edmonton",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Downtown Edmonton's skyline above the frozen North Saskatchewan River on a clear winter day",
+  "caption": "Downtown Edmonton above the North Saskatchewan River in winter.",
+  "credit": "Alexander Aubin",
+  "creditUrl": "https://www.pexels.com/photo/edmonton-skyline-in-winter-with-snow-covered-river-34639843/",
+  "pexelsId": 34639843
+ },
+ {
+  "id": "place-ca-ontario",
+  "base": "/img/places/place-ca-ontario",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Horseshoe Falls at Niagara Falls, Ontario, wrapped in mist above the Niagara River",
+  "caption": "The Horseshoe Falls, Niagara Falls, Ontario.",
+  "credit": "Sahil Singh",
+  "creditUrl": "https://www.pexels.com/photo/waterfall-in-a-fog-19533422/",
+  "pexelsId": 19533422
+ },
+ {
+  "id": "place-ca-ottawa",
+  "base": "/img/places/place-ca-ottawa",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Centre Block and Peace Tower on Parliament Hill in Ottawa under a blue sky",
+  "caption": "Parliament Hill, Ottawa.",
+  "credit": "Splash of Rain",
+  "creditUrl": "https://www.pexels.com/photo/building-architecture-historical-tower-7328/",
+  "pexelsId": 7328
+ },
+ {
+  "id": "place-ca-quebec",
+  "base": "/img/places/place-ca-quebec",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Château Frontenac rising above the rooftops of Old Quebec",
+  "caption": "Château Frontenac, Quebec City.",
+  "credit": "Valentina  Rodriguez",
+  "creditUrl": "https://www.pexels.com/photo/chateau-frontenac-in-old-quebec-city-skyline-33126529/",
+  "pexelsId": 33126529
+ },
+ {
+  "id": "place-ca-toronto",
+  "base": "/img/places/place-ca-toronto",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Old City Hall rising behind Nathan Phillips Square and its reflecting pool in downtown Toronto",
+  "caption": "Nathan Phillips Square and Old City Hall, Toronto.",
+  "credit": "Sehjad Khoja",
+  "creditUrl": "https://www.pexels.com/photo/toronto-s-old-city-hall-by-day-in-summer-33844669/",
+  "pexelsId": 33844669
+ },
+ {
   "id": "place-california",
   "base": "/img/places/place-california",
   "widths": [
@@ -510,6 +830,38 @@
   "credit": "ArtHouse Studio",
   "creditUrl": "https://www.pexels.com/photo/aerial-view-of-sea-near-brown-mountain-8147170/",
   "pexelsId": 8147170
+ },
+ {
+  "id": "place-ch-geneva",
+  "base": "/img/places/place-ch-geneva",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of the Jet d'Eau fountain on Lake Geneva with the city and mountains behind",
+  "caption": "The Jet d'Eau on Lake Geneva.",
+  "credit": "Liviu Gorincioi",
+  "creditUrl": "https://www.pexels.com/photo/the-jet-deau-fountain-of-geneva-11277773/",
+  "pexelsId": 11277773
+ },
+ {
+  "id": "place-ch-zurich",
+  "base": "/img/places/place-ch-zurich",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Grossmünster's twin towers above the Limmat River in Zurich's old town",
+  "caption": "The Grossmünster and the Limmat, Zurich.",
+  "credit": "Magda Ehlers",
+  "creditUrl": "https://www.pexels.com/photo/scenic-view-of-grossmunster-and-limmat-river-in-zurich-32008180/",
+  "pexelsId": 32008180
  },
  {
   "id": "place-chicago",
@@ -592,6 +944,198 @@
   "pexelsId": 11926780
  },
  {
+  "id": "place-de-bavaria",
+  "base": "/img/places/place-de-bavaria",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Neuschwanstein Castle above green forest in the Bavarian countryside",
+  "caption": "Neuschwanstein Castle, Schwangau, Bavaria.",
+  "credit": "Kuanling Chen",
+  "creditUrl": "https://www.pexels.com/photo/majestic-neuschwanstein-castle-in-bavarian-countryside-37792607/",
+  "pexelsId": 37792607
+ },
+ {
+  "id": "place-de-berlin",
+  "base": "/img/places/place-de-berlin",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Berlin Cathedral with the Fernsehturm TV tower behind it",
+  "caption": "Berlin Cathedral and the TV Tower.",
+  "credit": "Igor Passchier",
+  "creditUrl": "https://www.pexels.com/photo/berlin-cathedral-and-tv-tower-on-cloudy-day-35533338/",
+  "pexelsId": 35533338
+ },
+ {
+  "id": "place-de-brandenburg-gate",
+  "base": "/img/places/place-de-brandenburg-gate",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Brandenburg Gate in Berlin on a clear day",
+  "caption": "The Brandenburg Gate, Berlin.",
+  "credit": "Nino Keller",
+  "creditUrl": "https://www.pexels.com/photo/brandenburg-gate-in-berlin-during-daytime-37923937/",
+  "pexelsId": 37923937
+ },
+ {
+  "id": "place-de-cologne",
+  "base": "/img/places/place-de-cologne",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Cologne Cathedral beyond the Hohenzollern Bridge across the Rhine on a sunny day",
+  "caption": "Cologne Cathedral and the Hohenzollern Bridge.",
+  "credit": "Petros Fount",
+  "creditUrl": "https://www.pexels.com/photo/hohenzollern-bridge-and-cologne-cathedral-in-cologne-33364460/",
+  "pexelsId": 33364460
+ },
+ {
+  "id": "place-de-hamburg",
+  "base": "/img/places/place-de-hamburg",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Elbphilharmonie above Hamburg's harbour with a harbour ferry in front",
+  "caption": "The Elbphilharmonie, Hamburg harbour.",
+  "credit": "Wolfgang Weiser",
+  "creditUrl": "https://www.pexels.com/photo/elbphilharmonie-and-harbor-in-hamburg-29611407/",
+  "pexelsId": 29611407
+ },
+ {
+  "id": "place-de-hesse",
+  "base": "/img/places/place-de-hesse",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Frankfurt's skyscrapers along the River Main under dramatic clouds",
+  "caption": "Frankfurt am Main, Hesse.",
+  "credit": "Alexander Popovkin",
+  "creditUrl": "https://www.pexels.com/photo/city-skyline-under-cloudy-sky-12742508/",
+  "pexelsId": 12742508
+ },
+ {
+  "id": "place-de-munich",
+  "base": "/img/places/place-de-munich",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of Marienplatz, the New Town Hall and the Frauenkirche in Munich",
+  "caption": "Marienplatz and the Frauenkirche, Munich.",
+  "credit": "Chuck Henjes",
+  "creditUrl": "https://www.pexels.com/photo/aerial-view-of-a-cityscape-3623710/",
+  "pexelsId": 3623710
+ },
+ {
+  "id": "place-de-north-rhine-westphalia",
+  "base": "/img/places/place-de-north-rhine-westphalia",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Rheinturm and the MedienHafen buildings on the Rhine in Düsseldorf",
+  "caption": "Düsseldorf's MedienHafen and Rheinturm, North Rhine-Westphalia.",
+  "credit": "Masood Aslami",
+  "creditUrl": "https://www.pexels.com/photo/rheinturm-and-media-harbor-in-dusseldorf-germany-19136562/",
+  "pexelsId": 19136562
+ },
+ {
+  "id": "place-es-barcelona",
+  "base": "/img/places/place-es-barcelona",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of the Sagrada Família above Barcelona's Eixample at sunset",
+  "caption": "The Sagrada Família, Barcelona, at sunset.",
+  "credit": "Ken Cheung",
+  "creditUrl": "https://www.pexels.com/photo/stunning-aerial-view-of-sagrada-familia-at-sunset-32868875/",
+  "pexelsId": 32868875
+ },
+ {
+  "id": "place-es-madrid",
+  "base": "/img/places/place-es-madrid",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Metropolis Building on Gran Vía, Madrid, under a clear blue sky",
+  "caption": "The Metropolis Building on Gran Vía, Madrid.",
+  "credit": "Travel Photographer",
+  "creditUrl": "https://www.pexels.com/photo/gran-via-in-madrid-on-a-sunny-day-35417806/",
+  "pexelsId": 35417806
+ },
+ {
+  "id": "place-es-madrid-region",
+  "base": "/img/places/place-es-madrid-region",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Cuatro Torres skyscrapers of north Madrid with mountains behind",
+  "caption": "Madrid's Cuatro Torres business district.",
+  "credit": "Victor  de Dompablo",
+  "creditUrl": "https://www.pexels.com/photo/majestic-skyline-of-madrid-with-mountains-36464298/",
+  "pexelsId": 36464298
+ },
+ {
+  "id": "place-es-spain",
+  "base": "/img/places/place-es-spain",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The City of Arts and Sciences in Valencia under a blue sky",
+  "caption": "The City of Arts and Sciences, Valencia.",
+  "credit": "Ye Baiq",
+  "creditUrl": "https://www.pexels.com/photo/harp-like-bridge-between-the-science-museum-principe-felipe-and-the-museum-agora-20975163/",
+  "pexelsId": 20975163
+ },
+ {
   "id": "place-florida",
   "base": "/img/places/place-florida",
   "widths": [
@@ -606,6 +1150,102 @@
   "credit": "Jacob Moore",
   "creditUrl": "https://www.pexels.com/photo/beach-palm-tree-florida-7784452/",
   "pexelsId": 7784452
+ },
+ {
+  "id": "place-fr-bouches-du-rhone",
+  "base": "/img/places/place-fr-bouches-du-rhone",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Yachts in Marseille's Vieux-Port with Notre-Dame de la Garde on the hill",
+  "caption": "Marseille's Vieux-Port below Notre-Dame de la Garde.",
+  "credit": "Jan Tang",
+  "creditUrl": "https://www.pexels.com/photo/marseille-27587788/",
+  "pexelsId": 27587788
+ },
+ {
+  "id": "place-fr-france",
+  "base": "/img/places/place-fr-france",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Eiffel Tower above the Seine with tour boats on a sunny day",
+  "caption": "The Eiffel Tower and the Seine, Paris.",
+  "credit": "Dan Umareta",
+  "creditUrl": "https://www.pexels.com/photo/eiffel-tower-in-paris-18436941/",
+  "pexelsId": 18436941
+ },
+ {
+  "id": "place-fr-lyon",
+  "base": "/img/places/place-fr-lyon",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Colourful old-town facades on the riverbank below the Basilica of Notre-Dame de Fourvière in Lyon",
+  "caption": "Vieux Lyon below Fourvière hill.",
+  "credit": "Mihai Vlasceanu",
+  "creditUrl": "https://www.pexels.com/photo/buildings-on-riverbank-in-city-16632277/",
+  "pexelsId": 16632277
+ },
+ {
+  "id": "place-fr-paris",
+  "base": "/img/places/place-fr-paris",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The tree-lined Champs-Élysées seen from above at dusk",
+  "caption": "The Champs-Élysées, Paris, at dusk.",
+  "credit": "ARNAUD VIGNE",
+  "creditUrl": "https://www.pexels.com/photo/aerial-view-of-city-buildings-7170417/",
+  "pexelsId": 7170417
+ },
+ {
+  "id": "place-fr-seine-et-marne",
+  "base": "/img/places/place-fr-seine-et-marne",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Château de Fontainebleau reflected in its lake",
+  "caption": "The Château de Fontainebleau, Seine-et-Marne.",
+  "credit": "Lewis Bedar",
+  "creditUrl": "https://www.pexels.com/photo/chateau-de-fontainebleau-with-reflective-lake-view-38772251/",
+  "pexelsId": 38772251
+ },
+ {
+  "id": "place-fr-yvelines",
+  "base": "/img/places/place-fr-yvelines",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Marble Court and gilded facade of the Palace of Versailles",
+  "caption": "The Palace of Versailles, Yvelines.",
+  "credit": "Kirandeep Singh Walia",
+  "creditUrl": "https://www.pexels.com/photo/view-of-people-walking-in-front-of-the-palace-of-versailles-17283209/",
+  "pexelsId": 17283209
  },
  {
   "id": "place-georgia",
@@ -638,6 +1278,22 @@
   "credit": "RDNE Stock project",
   "creditUrl": "https://www.pexels.com/photo/cityscape-view-from-above-8783585/",
   "pexelsId": 8783585
+ },
+ {
+  "id": "place-hk-hong-kong",
+  "base": "/img/places/place-hk-hong-kong",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Hong Kong Island's skyline and Two IFC across Victoria Harbour",
+  "caption": "Victoria Harbour and Two IFC, Hong Kong.",
+  "credit": "Kirandeep Singh Walia",
+  "creditUrl": "https://www.pexels.com/photo/hong-kong-skyline-with-victoria-harbour-view-35262286/",
+  "pexelsId": 35262286
  },
  {
   "id": "place-honolulu",
@@ -704,6 +1360,150 @@
   "pexelsId": 4372134
  },
  {
+  "id": "place-it-florence",
+  "base": "/img/places/place-it-florence",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Florence's skyline with Brunelleschi's dome and Giotto's bell tower",
+  "caption": "Florence and its Duomo.",
+  "credit": "Riccardo Falconi",
+  "creditUrl": "https://www.pexels.com/photo/aerial-view-of-florence-s-iconic-cathedral-dome-36458690/",
+  "pexelsId": 36458690
+ },
+ {
+  "id": "place-it-italy",
+  "base": "/img/places/place-it-italy",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Rialto Bridge over the Grand Canal in Venice with gondolas in daylight",
+  "caption": "The Rialto Bridge, Venice.",
+  "credit": "Helena Jankovičová Kováčová",
+  "creditUrl": "https://www.pexels.com/photo/gondolas-on-canal-in-venice-13644896/",
+  "pexelsId": 13644896
+ },
+ {
+  "id": "place-it-milan",
+  "base": "/img/places/place-it-milan",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Milan Cathedral's Gothic facade over the Piazza del Duomo",
+  "caption": "The Duomo di Milano and its square.",
+  "credit": "Omar Ramadan",
+  "creditUrl": "https://www.pexels.com/photo/people-walking-around-in-front-of-a-cathedral-27362357/",
+  "pexelsId": 27362357
+ },
+ {
+  "id": "place-it-rome",
+  "base": "/img/places/place-it-rome",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Castel Sant'Angelo and Ponte Sant'Angelo reflected in the Tiber in daylight",
+  "caption": "Castel Sant'Angelo on the Tiber, Rome.",
+  "credit": "Magda Ehlers",
+  "creditUrl": "https://www.pexels.com/photo/castel-sant-angelo-and-ponte-sant-angelo-in-rome-35709273/",
+  "pexelsId": 35709273
+ },
+ {
+  "id": "place-it-rome-region",
+  "base": "/img/places/place-it-rome-region",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Colosseum framed by trees at sunset",
+  "caption": "The Colosseum, Rome, at sunset.",
+  "credit": "Görkem Özdemir",
+  "creditUrl": "https://www.pexels.com/photo/the-colosseum-rome-italy-15562413/",
+  "pexelsId": 15562413
+ },
+ {
+  "id": "place-it-turin",
+  "base": "/img/places/place-it-turin",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Turin's rooftops and the Mole Antonelliana with the snow-capped Alps behind",
+  "caption": "Turin, the Mole Antonelliana and the Alps.",
+  "credit": "Ariadne Barroso",
+  "creditUrl": "https://www.pexels.com/photo/panoramic-view-of-turin-featuring-mole-antonelliana-33040847/",
+  "pexelsId": 33040847
+ },
+ {
+  "id": "place-jp-japan",
+  "base": "/img/places/place-jp-japan",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Mount Fuji behind the red Chureito Pagoda on a clear day",
+  "caption": "Mount Fuji and the Chureito Pagoda, Yamanashi.",
+  "credit": "Minh Vũ",
+  "creditUrl": "https://www.pexels.com/photo/chureito-pagoda-with-mount-fuji-in-background-35600154/",
+  "pexelsId": 35600154
+ },
+ {
+  "id": "place-jp-osaka",
+  "base": "/img/places/place-jp-osaka",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Dotonbori canal lined with bright shop signs in Osaka",
+  "caption": "Dotonbori, Osaka.",
+  "credit": "kazuyoshi sakamoto",
+  "creditUrl": "https://www.pexels.com/photo/bustling-dotonbori-canal-with-neon-signs-osaka-32381534/",
+  "pexelsId": 32381534
+ },
+ {
+  "id": "place-jp-tokyo",
+  "base": "/img/places/place-jp-tokyo",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of Tokyo with the Tokyo Skytree under a clear blue sky",
+  "caption": "Tokyo and the Skytree from the air.",
+  "credit": "Rin Gakusho",
+  "creditUrl": "https://www.pexels.com/photo/cityscape-of-tokyo-in-japan-20378132/",
+  "pexelsId": 20378132
+ },
+ {
   "id": "place-kentucky",
   "base": "/img/places/place-kentucky",
   "widths": [
@@ -718,6 +1518,38 @@
   "credit": "Matt Ashworth",
   "creditUrl": "https://www.pexels.com/photo/skyscrapers-of-louisville-in-usa-19148164/",
   "pexelsId": 19148164
+ },
+ {
+  "id": "place-kr-seoul",
+  "base": "/img/places/place-kr-seoul",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Lotte World Tower rising over Seokchon Lake and the Seoul skyline at sunset",
+  "caption": "Lotte World Tower; Apple Jamsil is in the mall at its base.",
+  "credit": "Pixabay",
+  "creditUrl": "https://www.pexels.com/photo/buildings-and-body-of-water-during-golden-hour-237211/",
+  "pexelsId": 237211
+ },
+ {
+  "id": "place-kr-south-korea",
+  "base": "/img/places/place-kr-south-korea",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Gwanghwamun, the main gate of Gyeongbokgung Palace, under a clear sky",
+  "caption": "Gwanghwamun Gate, Gyeongbokgung Palace, Seoul.",
+  "credit": "Henry Acevedo",
+  "creditUrl": "https://www.pexels.com/photo/gwanghwamun-gate-at-gyeongbokgung-palace-37436233/",
+  "pexelsId": 37436233
  },
  {
   "id": "place-las-vegas",
@@ -960,6 +1792,38 @@
   "pexelsId": 10013098
  },
  {
+  "id": "place-nl-netherlands",
+  "base": "/img/places/place-nl-netherlands",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Gabled canal houses in Amsterdam reflected in the water under a bright sky",
+  "caption": "Canal houses in Amsterdam.",
+  "credit": "Martijn Stoof",
+  "creditUrl": "https://www.pexels.com/photo/colorful-canal-houses-in-amsterdam-netherlands-37593108/",
+  "pexelsId": 37593108
+ },
+ {
+  "id": "place-nl-north-holland",
+  "base": "/img/places/place-nl-north-holland",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The De Adriaan windmill on the Spaarne river in Haarlem",
+  "caption": "The De Adriaan windmill on the Spaarne, Haarlem.",
+  "credit": "Philipp Galichkin",
+  "creditUrl": "https://www.pexels.com/photo/windmill-in-haarlem-18580220/",
+  "pexelsId": 18580220
+ },
+ {
   "id": "place-north-carolina",
   "base": "/img/places/place-north-carolina",
   "widths": [
@@ -1168,6 +2032,38 @@
   "pexelsId": 39480846
  },
  {
+  "id": "place-se-sweden",
+  "base": "/img/places/place-se-sweden",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Riddarholmen Church and the old-town waterfront in Stockholm",
+  "caption": "Riddarholmen, Stockholm's old town.",
+  "credit": "Hakan Tas",
+  "creditUrl": "https://www.pexels.com/photo/buildings-on-a-waterfront-19391718/",
+  "pexelsId": 19391718
+ },
+ {
+  "id": "place-sg-singapore",
+  "base": "/img/places/place-sg-singapore",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Marina Bay Sands and the Gardens by the Bay domes across the water",
+  "caption": "Marina Bay Sands and Gardens by the Bay.",
+  "credit": "Eli Mirasol",
+  "creditUrl": "https://www.pexels.com/photo/view-of-the-marina-bay-sands-in-singapore-8176859/",
+  "pexelsId": 8176859
+ },
+ {
   "id": "place-south-carolina",
   "base": "/img/places/place-south-carolina",
   "widths": [
@@ -1230,6 +2126,182 @@
   "credit": "Vishnu Vardhan Akula",
   "creditUrl": "https://www.pexels.com/photo/historic-fort-worth-stockyards-street-view-32448245/",
   "pexelsId": 32448245
+ },
+ {
+  "id": "place-tw-taiwan",
+  "base": "/img/places/place-tw-taiwan",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Taipei 101 rising above the Xinyi district skyline on a clear day",
+  "caption": "Taipei 101, Taipei.",
+  "credit": "Belle Co",
+  "creditUrl": "https://www.pexels.com/photo/photo-of-high-rise-buildings-981150/",
+  "pexelsId": 981150
+ },
+ {
+  "id": "place-uk-devon",
+  "base": "/img/places/place-uk-devon",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Smeaton's Tower, the red-and-white lighthouse on Plymouth Hoe, overlooking Plymouth Sound",
+  "caption": "Smeaton's Tower on Plymouth Hoe, Devon.",
+  "credit": "Paul Bisseker",
+  "creditUrl": "https://www.pexels.com/photo/smeatons-tower-in-plymouth-england-6726014/",
+  "pexelsId": 6726014
+ },
+ {
+  "id": "place-uk-glasgow",
+  "base": "/img/places/place-uk-glasgow",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of the University of Glasgow's main building and tower above Kelvingrove Park",
+  "caption": "The University of Glasgow in the West End.",
+  "credit": "Lewis Ashton",
+  "creditUrl": "https://www.pexels.com/photo/an-aerial-photography-of-university-of-glasgow-under-the-cloudy-sky-10569153/",
+  "pexelsId": 10569153
+ },
+ {
+  "id": "place-uk-greater-london",
+  "base": "/img/places/place-uk-greater-london",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "St Paul's Cathedral above the City of London, with Blackfriars Bridge crossing the Thames",
+  "caption": "St Paul's Cathedral and Blackfriars Bridge, London.",
+  "credit": "Mike Bird",
+  "creditUrl": "https://www.pexels.com/photo/city-buildings-under-the-cloudy-sky-9787987/",
+  "pexelsId": 9787987
+ },
+ {
+  "id": "place-uk-hampshire",
+  "base": "/img/places/place-uk-hampshire",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Spinnaker Tower above Portsmouth Harbour on a clear day",
+  "caption": "The Spinnaker Tower, Portsmouth, Hampshire.",
+  "credit": "Sebastien Devocelle",
+  "creditUrl": "https://www.pexels.com/photo/spinnaker-tower-and-portsmouth-harbour-skyline-37486140/",
+  "pexelsId": 37486140
+ },
+ {
+  "id": "place-uk-kent",
+  "base": "/img/places/place-uk-kent",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Canterbury Cathedral's central tower rising above the old city walls",
+  "caption": "Canterbury Cathedral, Kent.",
+  "credit": "Stanley James  Adie",
+  "creditUrl": "https://www.pexels.com/photo/majestic-view-of-canterbury-cathedral-and-city-walls-38088299/",
+  "pexelsId": 38088299
+ },
+ {
+  "id": "place-uk-london",
+  "base": "/img/places/place-uk-london",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Tower Bridge over the River Thames under a bright blue sky, with towers in the distance",
+  "caption": "Tower Bridge, London.",
+  "credit": "Benni Fish",
+  "creditUrl": "https://www.pexels.com/photo/tower-bridge-with-london-in-the-background-24739980/",
+  "pexelsId": 24739980
+ },
+ {
+  "id": "place-uk-manchester",
+  "base": "/img/places/place-uk-manchester",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Aerial view of Manchester Town Hall's clock tower and Albert Square in the city centre",
+  "caption": "Manchester Town Hall and Albert Square.",
+  "credit": "Mylo Kaye",
+  "creditUrl": "https://www.pexels.com/photo/aerial-view-of-manchester-town-hall-15023016/",
+  "pexelsId": 15023016
+ },
+ {
+  "id": "place-uk-tyne-and-wear",
+  "base": "/img/places/place-uk-tyne-and-wear",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The Tyne Bridge over the River Tyne between Newcastle and Gateshead, with the Millennium Bridge beyond",
+  "caption": "The Tyne Bridge, Newcastle upon Tyne.",
+  "credit": "Mike Bird",
+  "creditUrl": "https://www.pexels.com/photo/blue-sky-over-tyne-bridge-9361455/",
+  "pexelsId": 9361455
+ },
+ {
+  "id": "place-uk-united-kingdom",
+  "base": "/img/places/place-uk-united-kingdom",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Big Ben and the Houses of Parliament beside Westminster Bridge on the River Thames",
+  "caption": "The Houses of Parliament and Big Ben, London.",
+  "credit": "Duc Tinh Ngo",
+  "creditUrl": "https://www.pexels.com/photo/iconic-london-big-ben-and-westminster-bridge-scene-29989521/",
+  "pexelsId": 29989521
+ },
+ {
+  "id": "place-uk-west-midlands",
+  "base": "/img/places/place-uk-west-midlands",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "The disc-covered facade of the Selfridges building at the Bullring, Birmingham",
+  "caption": "Selfridges at the Bullring, Birmingham.",
+  "credit": "Michael D Beckwith",
+  "creditUrl": "https://www.pexels.com/photo/iconic-selfridges-building-facade-in-birmingham-31270291/",
+  "pexelsId": 31270291
  },
  {
   "id": "place-utah",

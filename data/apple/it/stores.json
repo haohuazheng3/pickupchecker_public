@@ -1,0 +1,569 @@
+[
+ {
+  "storeNumber": "R418",
+  "slug": "oriocenter",
+  "name": "Oriocenter",
+  "city": "Orio al Serio",
+  "region": "Bergamo",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 45.66451,
+  "lng": 9.69326,
+  "street": "Centro commerciale Oriocenter Via Portico, 71",
+  "postalCode": "24050",
+  "phone": "035 421 400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R418.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Thursday",
+     "Tuesday",
+     "Saturday",
+     "Sunday",
+     "Monday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/oriocenter/",
+  "nativeName": "Apple Oriocenter"
+ },
+ {
+  "storeNumber": "R427",
+  "slug": "viarizzoli",
+  "name": "Via Rizzoli",
+  "city": "Bologna",
+  "region": "Bologna",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 44.49493,
+  "lng": 11.34344,
+  "street": "Via Rizzoli, 16",
+  "postalCode": "40125",
+  "phone": "051 640 010 0",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R427.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday",
+     "Sunday",
+     "Monday",
+     "Thursday",
+     "Friday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/viarizzoli/",
+  "nativeName": "Apple Via Rizzoli"
+ },
+ {
+  "storeNumber": "R547",
+  "slug": "illeone",
+  "name": "il Leone",
+  "city": "Lonato",
+  "region": "Brescia",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 45.4301758982515,
+  "lng": 10.5134117603302,
+  "street": "Il Leone Shopping Center Via Mantova, 36",
+  "postalCode": "25017",
+  "phone": "030 915 670 1",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/f37/c09/440/273/64b/4bb/33d/8a6/ba8/ed5/d3b23a05-c924-3a18-a7e4-efc9b51849b7_R547_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Saturday",
+     "Monday",
+     "Thursday",
+     "Friday",
+     "Sunday"
+    ],
+    "opens": "09:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/illeone/",
+  "nativeName": "Apple il Leone"
+ },
+ {
+  "storeNumber": "R453",
+  "slug": "campania",
+  "name": "Campania",
+  "city": "Marcianise",
+  "region": "Caserta",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 41.00357,
+  "lng": 14.32853,
+  "street": "Centro Commerciale Campania S.S. Sannitica 87 - Località Aurno",
+  "postalCode": "81025",
+  "phone": "0823 698 710 0",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R453.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Saturday",
+     "Sunday",
+     "Monday",
+     "Wednesday",
+     "Friday",
+     "Tuesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/campania/",
+  "nativeName": "Apple Campania"
+ },
+ {
+  "storeNumber": "R454",
+  "slug": "centrosicilia",
+  "name": "Centro Sicilia",
+  "city": "Misterbianco",
+  "region": "Catania",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 37.47774,
+  "lng": 15.00844,
+  "street": "Strada provinciale 54 - Località La Tenutella Contrada Cubba",
+  "postalCode": "95045",
+  "phone": "095 718 180 1",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R454.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Saturday",
+     "Sunday",
+     "Thursday"
+    ],
+    "opens": "09:30:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/centrosicilia/",
+  "nativeName": "Apple Centro Sicilia"
+ },
+ {
+  "storeNumber": "R449",
+  "slug": "igigli",
+  "name": "I Gigli",
+  "city": "Campi Bisenzio",
+  "region": "Florence",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 43.84578,
+  "lng": 11.1421,
+  "street": "Centro Commerciale I Gigli Via San Quirico, 165",
+  "postalCode": "50013",
+  "phone": "055 880 300 0",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/363/d3a/859/710/af4/fc1/f42/4f5/b88/5ec/f75ed0f9-cdfb-35e9-a135-6ec69f12f963_I%20Gigli_20230907_JW_Hero_2880%20x%201612_PNG_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Tuesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Sunday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/igigli/",
+  "nativeName": "Apple I Gigli"
+ },
+ {
+  "storeNumber": "R602",
+  "slug": "firenze",
+  "name": "Firenze",
+  "city": "Florence",
+  "region": "Florence",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 43.771301,
+  "lng": 11.25345,
+  "street": "Piazza della Repubblica",
+  "postalCode": "50123",
+  "phone": "055 464 190 0",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R602.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Saturday",
+     "Thursday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/firenze/",
+  "nativeName": "Apple Firenze"
+ },
+ {
+  "storeNumber": "R365",
+  "slug": "carosello",
+  "name": "Carosello",
+  "city": "Carugate",
+  "region": "Milan",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 45.5455,
+  "lng": 9.32783,
+  "street": "Centro Commerciale Carosello Strada Provinciale 208 KM 2",
+  "postalCode": "20061",
+  "phone": "02 925 072 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R365.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Sunday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/carosello/",
+  "nativeName": "Apple Carosello"
+ },
+ {
+  "storeNumber": "R667",
+  "slug": "piazzaliberty",
+  "name": "Piazza Liberty",
+  "city": "Milan",
+  "region": "Milan",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 45.465638,
+  "lng": 9.194489,
+  "street": "Piazza del Liberty, 1",
+  "postalCode": "20121",
+  "phone": "02 303 024 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R667.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Friday",
+     "Saturday",
+     "Sunday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/piazzaliberty/",
+  "nativeName": "Apple Piazza Liberty"
+ },
+ {
+  "storeNumber": "R441",
+  "slug": "fiordaliso",
+  "name": "Fiordaliso",
+  "city": "Rozzano",
+  "region": "Milan",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 45.39217,
+  "lng": 9.17534,
+  "street": "Centro Commerciale Fiordaliso Via Curiel, 25",
+  "postalCode": "20089",
+  "phone": "02 577 976 00",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/325/903/1b4/1c6/eae/bf3/093/d9a/e41/7bf/04d7f527-cad5-3c93-8b94-d484b50e2799_R441_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Thursday",
+     "Friday",
+     "Sunday",
+     "Saturday",
+     "Monday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/fiordaliso/",
+  "nativeName": "Apple Fiordaliso"
+ },
+ {
+  "storeNumber": "R564",
+  "slug": "lebefane",
+  "name": "Le Befane",
+  "city": "Rimini",
+  "region": "Rimini",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 44.03863,
+  "lng": 12.58765,
+  "street": "Centro Commerciale Le Befane Via Caduti di Nassiriya, 20",
+  "postalCode": "47924",
+  "phone": "0541 181 320 0",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/a38/28d/3bc/4c7/836/72e/dbf/a05/5ff/4de/e01b02bd-b02d-3ef7-b60c-a372e3682575_PNG_LeBefane_hero_2880px_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Sunday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/lebefane/",
+  "nativeName": "Apple Le Befane"
+ },
+ {
+  "storeNumber": "R381",
+  "slug": "portadiroma",
+  "name": "Porta di Roma",
+  "city": "Bufalotta",
+  "region": "Rome",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 41.9715,
+  "lng": 12.53983,
+  "street": "Galleria Porta di Roma Via Alberto Lionello, 201",
+  "postalCode": "00139",
+  "phone": "06 872 085 01",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R381.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/portadiroma/",
+  "nativeName": "Apple Porta di Roma"
+ },
+ {
+  "storeNumber": "R562",
+  "slug": "euroma2",
+  "name": "Euroma2",
+  "city": "Rome",
+  "region": "Rome",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 41.816509,
+  "lng": 12.459608,
+  "street": "Centro Commerciale Euroma2 Viale dell'Oceano Pacifico, 83",
+  "postalCode": "00144",
+  "phone": "06 452 307 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R562.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Friday",
+     "Saturday",
+     "Sunday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/euroma2/",
+  "nativeName": "Apple Euroma2"
+ },
+ {
+  "storeNumber": "R382",
+  "slug": "viadelcorso",
+  "name": "Via del Corso",
+  "city": "Rome",
+  "region": "Rome",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 41.9022,
+  "lng": 12.4802,
+  "street": "Via del Corso 181-188",
+  "postalCode": "00186",
+  "phone": "(06) 69204400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R382.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday",
+     "Sunday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "09:30:00",
+    "closes": "20:30:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/viadelcorso/",
+  "nativeName": "Apple Via del Corso"
+ },
+ {
+  "storeNumber": "R278",
+  "slug": "legru",
+  "name": "Le Gru",
+  "city": "Grugliasco",
+  "region": "Turin",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 45.0556,
+  "lng": 7.61299,
+  "street": "Centro commerciale Le Gru Via Crea, 10",
+  "postalCode": "10095",
+  "phone": "011 770 511 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R278.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Sunday",
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/legru/",
+  "nativeName": "Apple Le Gru"
+ },
+ {
+  "storeNumber": "R442",
+  "slug": "viaroma",
+  "name": "Via Roma",
+  "city": "Turin",
+  "region": "Turin",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 45.069164,
+  "lng": 7.683394,
+  "street": "Via Roma, 82",
+  "postalCode": "10121",
+  "phone": "011 506 620 1",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R442.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Saturday",
+     "Thursday",
+     "Friday",
+     "Sunday",
+     "Monday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/viaroma/",
+  "nativeName": "Apple Via Roma"
+ },
+ {
+  "storeNumber": "R625",
+  "slug": "navedevero",
+  "name": "Nave de Vero",
+  "city": "Mestre",
+  "region": "Venice",
+  "regionCode": null,
+  "country": "IT",
+  "lat": 45.458953,
+  "lng": 12.213355,
+  "street": "Centro commerciale Nave de Vero Via Arduino - Marghera",
+  "postalCode": "30175",
+  "phone": "041 884 270 0",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R625.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Saturday",
+     "Wednesday",
+     "Friday",
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/Rome",
+  "url": "https://www.apple.com/it/retail/navedevero/",
+  "nativeName": "Apple Nave de Vero"
+ }
+]

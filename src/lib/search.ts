@@ -2,7 +2,7 @@
  * Site search: one small index (states, cities, stores, models, pages) built from the catalog, and a
  * dependency-free matcher that runs in the browser. The index is served by /api/search-index.
  */
-import { MODELS, STORES, statePath, cityPath, storePath, stateCodeOf, type ModelKey } from "./apple/catalog";
+import { MODELS, STORES, statePath, cityPath, storePath, stateCodeOf, type ModelKey } from "./apple/catalog-us";
 import { stateRefs, cityRefs } from "./seo/links";
 import { rankStores, zipAnchor } from "./geo";
 import { PRODUCTS, productPath } from "./seo/products";

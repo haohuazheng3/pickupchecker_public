@@ -1,0 +1,362 @@
+[
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Black",
+  "partNumber": "MJRP4ZA/A",
+  "sku": "MJRP4",
+  "price": 10499,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Burgundy",
+  "partNumber": "MJRR4ZA/A",
+  "sku": "MJRR4",
+  "price": 10499,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Glacier",
+  "partNumber": "MJRT4ZA/A",
+  "sku": "MJRT4",
+  "price": 10499,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "256GB",
+  "color": "Silver",
+  "partNumber": "MJRQ4ZA/A",
+  "sku": "MJRQ4",
+  "price": 10499,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Black",
+  "partNumber": "MJRU4ZA/A",
+  "sku": "MJRU4",
+  "price": 12299,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Burgundy",
+  "partNumber": "MJRW4ZA/A",
+  "sku": "MJRW4",
+  "price": 12299,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Glacier",
+  "partNumber": "MJRX4ZA/A",
+  "sku": "MJRX4",
+  "price": 12299,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "512GB",
+  "color": "Silver",
+  "partNumber": "MJRV4ZA/A",
+  "sku": "MJRV4",
+  "price": 12299,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Black",
+  "partNumber": "MJRY4ZA/A",
+  "sku": "MJRY4",
+  "price": 15799,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Burgundy",
+  "partNumber": "MJT14ZA/A",
+  "sku": "MJT14",
+  "price": 15799,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Glacier",
+  "partNumber": "MJT24ZA/A",
+  "sku": "MJT24",
+  "price": 15799,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "1TB",
+  "color": "Silver",
+  "partNumber": "MJT04ZA/A",
+  "sku": "MJT04",
+  "price": 15799,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Black",
+  "partNumber": "MJT34ZA/A",
+  "sku": "MJT34",
+  "price": 20999,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Burgundy",
+  "partNumber": "MJT54ZA/A",
+  "sku": "MJT54",
+  "price": 20999,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Glacier",
+  "partNumber": "MJT64ZA/A",
+  "sku": "MJT64",
+  "price": 20999,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro",
+  "storage": "2TB",
+  "color": "Silver",
+  "partNumber": "MJT44ZA/A",
+  "sku": "MJT44",
+  "price": 20999,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Black",
+  "partNumber": "MJXN4ZA/A",
+  "sku": "MJXN4",
+  "price": 11499,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Burgundy",
+  "partNumber": "MJXQ4ZA/A",
+  "sku": "MJXQ4",
+  "price": 11499,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Glacier",
+  "partNumber": "MJXR4ZA/A",
+  "sku": "MJXR4",
+  "price": 11499,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "256GB",
+  "color": "Silver",
+  "partNumber": "MJXP4ZA/A",
+  "sku": "MJXP4",
+  "price": 11499,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Black",
+  "partNumber": "MJXT4ZA/A",
+  "sku": "MJXT4",
+  "price": 13299,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Burgundy",
+  "partNumber": "MJXV4ZA/A",
+  "sku": "MJXV4",
+  "price": 13299,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Glacier",
+  "partNumber": "MJXW4ZA/A",
+  "sku": "MJXW4",
+  "price": 13299,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "512GB",
+  "color": "Silver",
+  "partNumber": "MJXU4ZA/A",
+  "sku": "MJXU4",
+  "price": 13299,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Black",
+  "partNumber": "MJXX4ZA/A",
+  "sku": "MJXX4",
+  "price": 16799,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Burgundy",
+  "partNumber": "MJY04ZA/A",
+  "sku": "MJY04",
+  "price": 16799,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Glacier",
+  "partNumber": "MJY14ZA/A",
+  "sku": "MJY14",
+  "price": 16799,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "1TB",
+  "color": "Silver",
+  "partNumber": "MJXY4ZA/A",
+  "sku": "MJXY4",
+  "price": 16799,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Black",
+  "partNumber": "MJY24ZA/A",
+  "sku": "MJY24",
+  "price": 21999,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Burgundy",
+  "partNumber": "MJY44ZA/A",
+  "sku": "MJY44",
+  "price": 21999,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Glacier",
+  "partNumber": "MJY54ZA/A",
+  "sku": "MJY54",
+  "price": 21999,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone 18 Pro Max",
+  "storage": "2TB",
+  "color": "Silver",
+  "partNumber": "MJY34ZA/A",
+  "sku": "MJY34",
+  "price": 21999,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "256GB",
+  "color": "Night Sky",
+  "partNumber": "MK2E4ZA/A",
+  "sku": "MK2E4",
+  "price": 17499,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "256GB",
+  "color": "Star White",
+  "partNumber": "MK2D4ZA/A",
+  "sku": "MK2D4",
+  "price": 17499,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "512GB",
+  "color": "Night Sky",
+  "partNumber": "MK2G4ZA/A",
+  "sku": "MK2G4",
+  "price": 19299,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "512GB",
+  "color": "Star White",
+  "partNumber": "MK2F4ZA/A",
+  "sku": "MK2F4",
+  "price": 19299,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "1TB",
+  "color": "Night Sky",
+  "partNumber": "MK2J4ZA/A",
+  "sku": "MK2J4",
+  "price": 22799,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "1TB",
+  "color": "Star White",
+  "partNumber": "MK2H4ZA/A",
+  "sku": "MK2H4",
+  "price": 22799,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "2TB",
+  "color": "Night Sky",
+  "partNumber": "MK2L4ZA/A",
+  "sku": "MK2L4",
+  "price": 27999,
+  "currency": "HKD"
+ },
+ {
+  "model": "iPhone Duo",
+  "storage": "2TB",
+  "color": "Star White",
+  "partNumber": "MK2K4ZA/A",
+  "sku": "MK2K4",
+  "price": 27999,
+  "currency": "HKD"
+ }
+]

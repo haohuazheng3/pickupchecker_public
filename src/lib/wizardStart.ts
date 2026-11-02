@@ -2,7 +2,7 @@
  * The wizard's starting state from an "Alert me" link's query: ?model ?storage ?color ?store ?state ?city.
  * Used by the home page (deep links) and by the alert dialog (every in-site "Alert me" opens it).
  */
-import { DEFAULT_MODEL, STORES, STORE_INDEX, cityBySlug, colorsFor, modelByKey, statesWithStores, storagesFor, type ModelKey } from "./apple/catalog";
+import { DEFAULT_MODEL, STORES, cityBySlug, colorsFor, modelByKey, statesWithStores, storagesFor, storeInCountry, type ModelKey } from "./apple/catalog-us";
 
 export interface StartParams {
   initialModel: ModelKey;
@@ -18,8 +18,8 @@ export function wizardStartFrom(get: (key: string) => string | null | undefined)
   const requested = Boolean(m && modelByKey(m));
   const model = (requested ? m : DEFAULT_MODEL) as ModelKey;
   const s = get("store");
-  // A store number (R123) or the store slug the floating button reads off a store page URL.
-  const initialStore = s ? (STORE_INDEX.has(s) ? s : STORES.find((x) => x.slug === s)?.storeNumber) : undefined;
+  // A store number (R123) or the store slug the floating button reads off a store page URL (US stores only).
+  const initialStore = s ? (storeInCountry(s) ? s : STORES.find((x) => x.slug === s)?.storeNumber) : undefined;
   const st = get("storage");
   const initialStorage = st && storagesFor(model).includes(st) ? st : undefined;
   const c = get("color");

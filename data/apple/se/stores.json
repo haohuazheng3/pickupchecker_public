@@ -1,0 +1,107 @@
+[
+ {
+  "storeNumber": "R503",
+  "slug": "emporia",
+  "name": "Emporia",
+  "city": "Malmö",
+  "region": "Skåne",
+  "regionCode": null,
+  "country": "SE",
+  "lat": 55.563466,
+  "lng": 12.973509,
+  "street": "Emporia Hyllie Boulevard 19",
+  "postalCode": "215 32",
+  "phone": "040-37 10 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R503.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Saturday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/Stockholm",
+  "url": "https://www.apple.com/se/retail/emporia/",
+  "nativeName": "Apple Emporia"
+ },
+ {
+  "storeNumber": "R626",
+  "slug": "mallofscandinavia",
+  "name": "Mall of Scandinavia",
+  "city": "Solna",
+  "region": "Solna",
+  "regionCode": null,
+  "country": "SE",
+  "lat": 59.37027,
+  "lng": 18.00255,
+  "street": "Westfield Mall of Scandinavia Stjärntorget 2",
+  "postalCode": "169 79",
+  "phone": "08-5251 7000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R626.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/Stockholm",
+  "url": "https://www.apple.com/se/retail/mallofscandinavia/",
+  "nativeName": "Apple Mall of Scandinavia"
+ },
+ {
+  "storeNumber": "R505",
+  "slug": "tabycentrum",
+  "name": "Täby Centrum",
+  "city": "Täby",
+  "region": "Uppland",
+  "regionCode": null,
+  "country": "SE",
+  "lat": 59.44498,
+  "lng": 18.07128,
+  "street": "Täby Centrum Stora Marknadsvägen 15",
+  "postalCode": "183 34",
+  "phone": "084-46 93 00",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R505.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Saturday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/Stockholm",
+  "url": "https://www.apple.com/se/retail/tabycentrum/",
+  "nativeName": "Apple Täby Centrum"
+ }
+]

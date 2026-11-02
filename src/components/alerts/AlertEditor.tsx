@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { MODELS, STORE_INDEX, type ModelKey } from "@/lib/apple/catalog";
+import { MODELS, STORE_INDEX, type ModelKey } from "@/lib/apple/catalog-us";
 import { PAID_PLANS, PLANS, SPEED_LINE, type PaidPlanKey } from "@/lib/plans";
 import { alertSetOf, phoneKey, togglePhone, toggleStore, type AlertSet, type Phone } from "@/lib/alertSet";
 import { fetchMe } from "@/lib/me";

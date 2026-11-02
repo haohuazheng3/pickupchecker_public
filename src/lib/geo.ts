@@ -3,7 +3,7 @@
  * Stores by distance from an anchor: the device's location, a ZIP, a typed city / state / store, the
  * place an SEO page handed in, or a store a page pre-ticked.
  */
-import { STORES, distanceMiles, stateCodeOf, type Store } from "@/lib/apple/catalog";
+import { STORES, distanceMiles, stateCodeOf, type Store } from "@/lib/apple/catalog-us";
 import { norm } from "@/lib/text";
 
 export type AnchorKind = "here" | "zip" | "place" | "store" | "state";

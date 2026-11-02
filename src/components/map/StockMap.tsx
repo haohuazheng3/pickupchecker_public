@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type * as maplibregl from "maplibre-gl";
-import { MODELS, PART_INDEX, modelKeyFor, storagesFor, colorsFor, STORAGE_ORDER, COLOR_META, type ModelKey } from "@/lib/apple/catalog";
+import { MODELS, PART_INDEX, modelKeyFor, storagesFor, colorsFor, STORAGE_ORDER, COLOR_META, type ModelKey } from "@/lib/apple/catalog-us";
 import type { MapSnapshot } from "@/lib/stock/queries";
 import { LiveAgo } from "@/components/site/LiveAgo";
 import { MAP_INK, MAP_WORKER_URL as WORKER_URL, mapStyleFor } from "@/lib/map";

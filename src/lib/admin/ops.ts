@@ -2,12 +2,24 @@
  * Admin data: time-bucketed series for the charts and health strips, the health snapshot, and
  * filtered/paginated log readers. Every query is bounded (time window or limit).
  */
-import { and, desc, eq, gt, isNull, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, isNull, ne, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "../db";
 import { readState } from "../stock/sweep";
 import { stripePermissions } from "./stripeCheck";
 import { env } from "../env";
-import { STORES, PART_INDEX, MODELS, modelKeyFor, type ModelKey } from "../apple/catalog";
+import { STORES, PART_INDEX, MODELS, ALL_PART_NUMBERS, modelKeyFor, type ModelKey } from "../apple/catalog";
+import type { CountryCode } from "../apple/countries";
+
+/*
+ * The figures below are the US poller's, as they were before other countries were polled: poll_log rows of other
+ * countries carry `country` (and the per-store round logs only its failures), their sweeps are mode "intl", and
+ * their stock rows are told apart by part number (US part numbers are sold nowhere else). The other countries'
+ * totals ride along with the heartbeat (`intl`).
+ */
+const US_REQUEST = isNull(schema.pollLog.country);
+const US_SWEEP = ne(schema.sweeps.mode, "intl");
+const usStock = () => inArray(schema.storeSkuStatus.partNumber, ALL_PART_NUMBERS);
+const usEvents = () => inArray(schema.availabilityEvents.partNumber, ALL_PART_NUMBERS);
 import type { HealthSnapshot, Heartbeat } from "./health";
 
 /* ------------------------------------------------------------------ buckets */
@@ -47,7 +59,7 @@ export async function requestBuckets(hours = 6, sec = 300) {
       bytes: sql<number>`coalesce(sum(bytes), 0)::bigint`,
     })
     .from(schema.pollLog)
-    .where(gt(schema.pollLog.at, since))
+    .where(and(gt(schema.pollLog.at, since), US_REQUEST))
     .groupBy(t)
     .orderBy(t);
   return fillBuckets(rows.map((r) => ({ ...r, t: r.t as unknown as string })), hours, sec, ["n", "ok", "s541", "other", "avgMs", "bytes"]);
@@ -68,7 +80,7 @@ export async function sweepBuckets(hours = 6, sec = 300) {
       degraded: sql<number>`count(*) filter (where mode = 'degraded')::int`,
     })
     .from(schema.sweeps)
-    .where(gt(schema.sweeps.startedAt, since))
+    .where(and(gt(schema.sweeps.startedAt, since), US_SWEEP))
     .groupBy(t)
     .orderBy(t);
   return fillBuckets(rows.map((r) => ({ ...r, t: r.t as unknown as string })), hours, sec, ["n", "avgMs", "maxMs", "stores", "transitions", "failures", "degraded"]);
@@ -80,7 +92,7 @@ export async function eventBuckets(hours = 24, sec = 3600) {
   const rows = await db()
     .select({ t, restocks: sql<number>`count(*) filter (where kind = 'restock')::int`, soldouts: sql<number>`count(*) filter (where kind = 'soldout')::int` })
     .from(schema.availabilityEvents)
-    .where(gt(schema.availabilityEvents.at, since))
+    .where(and(gt(schema.availabilityEvents.at, since), usEvents()))
     .groupBy(t)
     .orderBy(t);
   return fillBuckets(rows.map((r) => ({ ...r, t: r.t as unknown as string })), hours, sec, ["restocks", "soldouts"]);
@@ -129,13 +141,13 @@ export async function healthSnapshot(): Promise<HealthSnapshot> {
     t0 = Date.now(); await d.execute(sql`select 1`); dbLatencyMs = Date.now() - t0;
   } catch (e) { dbError = e instanceof Error ? e.message : String(e); }
   const [heartbeat, watchdog] = await Promise.all([readState<Heartbeat>("heartbeat"), readState<{ down?: boolean; since?: string }>("watchdog")]);
-  const [req15] = await d.select({ n: sql<number>`count(*)::int`, ok: sql<number>`count(*) filter (where ok)::int`, s541: sql<number>`count(*) filter (where http_status = 541)::int`, avgMs: sql<number>`coalesce(avg(duration_ms),0)::int` }).from(schema.pollLog).where(gt(schema.pollLog.at, m15));
-  const [reqHour] = await d.select({ n: sql<number>`count(*)::int`, ok: sql<number>`count(*) filter (where ok)::int`, s541: sql<number>`count(*) filter (where http_status = 541)::int`, avgMs: sql<number>`coalesce(avg(duration_ms),0)::int` }).from(schema.pollLog).where(gt(schema.pollLog.at, hour));
+  const [req15] = await d.select({ n: sql<number>`count(*)::int`, ok: sql<number>`count(*) filter (where ok)::int`, s541: sql<number>`count(*) filter (where http_status = 541)::int`, avgMs: sql<number>`coalesce(avg(duration_ms),0)::int` }).from(schema.pollLog).where(and(gt(schema.pollLog.at, m15), US_REQUEST));
+  const [reqHour] = await d.select({ n: sql<number>`count(*)::int`, ok: sql<number>`count(*) filter (where ok)::int`, s541: sql<number>`count(*) filter (where http_status = 541)::int`, avgMs: sql<number>`coalesce(avg(duration_ms),0)::int` }).from(schema.pollLog).where(and(gt(schema.pollLog.at, hour), US_REQUEST));
   const [stock] = await d.select({
     total: sql<number>`count(*)::int`, available: sql<number>`count(*) filter (where status='available')::int`, unknown: sql<number>`count(*) filter (where status='unknown')::int`,
     newest: sql<string | null>`max(last_checked_at)`, storesChecked: sql<number>`count(distinct store_number) filter (where last_checked_at is not null)::int`,
     storesStale: sql<number>`count(distinct store_number) filter (where last_checked_at is null or last_checked_at < ${m30})::int`,
-  }).from(schema.storeSkuStatus);
+  }).from(schema.storeSkuStatus).where(usStock());
   const [alerts24] = await d.select({
     sent: sql<number>`count(*) filter (where status='sent')::int`, failed: sql<number>`count(*) filter (where status='failed')::int`,
     pushSent: sql<number>`count(*) filter (where status='sent' and channel='push')::int`, emailSent: sql<number>`count(*) filter (where status='sent' and channel='email')::int`,
@@ -182,6 +194,7 @@ export async function stockByModel() {
   const rows = await db()
     .select({ partNumber: schema.storeSkuStatus.partNumber, status: schema.storeSkuStatus.status, n: sql<number>`count(*)::int`, stores: sql<number>`count(distinct store_number) filter (where status = 'available')::int` })
     .from(schema.storeSkuStatus)
+    .where(usStock())
     .groupBy(schema.storeSkuStatus.partNumber, schema.storeSkuStatus.status);
   const byModel = new Map<ModelKey, { available: number; unavailable: number; unknown: number }>();
   for (const m of MODELS) byModel.set(m.key, { available: 0, unavailable: 0, unknown: 0 });
@@ -204,6 +217,7 @@ export async function skuTable() {
       lastAvailableAt: sql<string | null>`max(last_available_at)`,
     })
     .from(schema.storeSkuStatus)
+    .where(usStock())
     .groupBy(schema.storeSkuStatus.partNumber);
   return rows
     .map((r) => ({ ...r, item: PART_INDEX.get(r.partNumber) }))
@@ -215,6 +229,7 @@ export async function storeFreshness() {
   const rows = await db()
     .select({ storeNumber: schema.storeSkuStatus.storeNumber, last: sql<string | null>`max(last_checked_at)`, available: sql<number>`count(*) filter (where status='available')::int`, unknown: sql<number>`count(*) filter (where status='unknown')::int` })
     .from(schema.storeSkuStatus)
+    .where(usStock())
     .groupBy(schema.storeSkuStatus.storeNumber);
   const byStore = new Map(rows.map((r) => [r.storeNumber, r]));
   return STORES.map((s) => ({ store: s, last: byStore.get(s.storeNumber)?.last ? new Date(byStore.get(s.storeNumber)!.last!).toISOString() : null, available: byStore.get(s.storeNumber)?.available ?? 0, unknown: byStore.get(s.storeNumber)?.unknown ?? 0 }));
@@ -224,7 +239,7 @@ export async function recentTransitions(limit = 60, kind?: "restock" | "soldout"
   const rows = await db()
     .select()
     .from(schema.availabilityEvents)
-    .where(kind ? eq(schema.availabilityEvents.kind, kind) : undefined)
+    .where(kind ? and(eq(schema.availabilityEvents.kind, kind), usEvents()) : usEvents())
     .orderBy(desc(schema.availabilityEvents.at))
     .limit(limit);
   return rows.map((r) => ({ ...r, item: PART_INDEX.get(r.partNumber), store: STORES.find((s) => s.storeNumber === r.storeNumber) }));
@@ -266,8 +281,16 @@ export async function opsLogRows(o: PageOpts & { level?: string; source?: string
   return db().select().from(schema.opsLog).where(conds.length ? and(...conds) : undefined).orderBy(desc(schema.opsLog.at)).limit(lim(o)).offset(off(o));
 }
 
-export async function pollLogRows(o: PageOpts & { status?: "all" | "fail" | "541" | "ok"; anchor?: string; egress?: string } = {}) {
-  const conds: SQL[] = [];
+/**
+ * Which country's rows a log reader shows: the US by default (as before other countries were polled), "intl" =
+ * every other country, or one country code. Other countries' poll_log rows are failures only (plus fast-lane
+ * and confirm requests), and their sweeps are one row per round (mode "intl").
+ */
+export type LogCountry = "us" | "intl" | CountryCode;
+const pollLogCountry = (c: LogCountry | undefined): SQL => (!c || c === "us" ? US_REQUEST : c === "intl" ? isNotNull(schema.pollLog.country) : eq(schema.pollLog.country, c));
+
+export async function pollLogRows(o: PageOpts & { status?: "all" | "fail" | "541" | "ok"; anchor?: string; egress?: string; country?: LogCountry } = {}) {
+  const conds: SQL[] = [pollLogCountry(o.country)];
   if (o.status === "fail") conds.push(eq(schema.pollLog.ok, false));
   if (o.status === "ok") conds.push(eq(schema.pollLog.ok, true));
   if (o.status === "541") conds.push(eq(schema.pollLog.httpStatus, 541));
@@ -290,8 +313,9 @@ export async function notificationRows(o: PageOpts & { channel?: string; status?
     .offset(off(o));
 }
 
-export async function sweepRows(o: PageOpts = {}) {
-  return db().select().from(schema.sweeps).orderBy(desc(schema.sweeps.startedAt)).limit(lim(o)).offset(off(o));
+export async function sweepRows(o: PageOpts & { country?: "us" | "intl" } = {}) {
+  const where = o.country === "intl" ? eq(schema.sweeps.mode, "intl") : US_SWEEP;
+  return db().select().from(schema.sweeps).where(where).orderBy(desc(schema.sweeps.startedAt)).limit(lim(o)).offset(off(o));
 }
 
 export async function stripeEventRows(o: PageOpts = {}) {

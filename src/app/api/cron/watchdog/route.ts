@@ -5,7 +5,8 @@ import { degradedTick } from "@/lib/stock/degraded";
 import { notifyOwner } from "@/lib/mail/owner";
 import { recordError, errorMessage } from "@/lib/errors";
 import { logOps } from "@/lib/ops";
-import { PARTIAL_SEC, freshness, pollerVerdict, type PollerState } from "@/lib/stock/fallback";
+import { PARTIAL_SEC, freshness, intlVerdict, intlWatchStep, pollerVerdict, type IntlVerdict, type IntlWatchState, type PollerState } from "@/lib/stock/fallback";
+import type { CountryCode } from "@/lib/apple/countries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ const REMIND_MS = 3 * 60 * 60 * 1000;
 const PARTIAL_RUNS = 3;
 
 interface WatchdogState { down: boolean; kind?: PollerState; since?: string; lastMail?: string; partialRuns?: number; partialMailed?: boolean }
+type HeartbeatIntl = { cadenceSec?: number; countries?: CountryCode[]; paused?: boolean } | null;
 
 /**
  * Vercel Cron, every minute. Judges polling by the data (fallback.ts), not only by the heartbeat:
@@ -24,21 +26,30 @@ interface WatchdogState { down: boolean; kind?: PollerState; since?: string; las
  *            spare egress on its own, so Vercel stays out of the way (they would share one IP budget)
  *  • partial (stores unchecked for 90 s, three runs in a row) → one mail naming them
  *  • a mail when it is over
+ * All of that is the US. The other countries (polled store by store every ~30 s) are judged on their own:
+ * a country with under half its pairs fresh for three runs in a row → one mail naming it, one when it clears.
+ * Never the fill-in (it serves the US only). Judged only while the US itself is fine (ok or partial): when the
+ * poller is silent, blind or degraded, or has them paused, their staleness says nothing about them.
  */
 export async function GET(req: Request) {
   if (!bearerOk(req, env.cronSecret())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   try {
-    const hb = await readState<{ at?: string; host?: string; mode?: string }>("heartbeat");
+    const hb = await readState<{ at?: string; host?: string; mode?: string; intl?: HeartbeatIntl }>("heartbeat");
     const age = hb ? Date.now() - new Date(hb.value.at ?? hb.updatedAt).getTime() : Infinity;
-    const fresh = await freshness().catch(() => null);
+    const fresh = await freshness({ intlCadenceSec: hb?.value.intl?.cadenceSec }).catch(() => null);
     const v = pollerVerdict(age, fresh);
     const wd = (await readState<WatchdogState>("watchdog"))?.value ?? { down: false };
     const now = new Date();
+    // A blind US (the shared IPv6 egress failing) starves every country: only the US mail goes out then.
+    const intlOn = Boolean(hb?.value.intl && !hb.value.intl.paused && hb.value.mode !== "degraded" && (v.state === "ok" || v.state === "partial"));
+    const iv = intlOn ? intlVerdict(fresh, hb!.value.intl!.countries) : null;
     // One debug row per run: the admin health strip proves the cron itself is alive.
     await logOps("cron", "debug", "watchdog tick", {
       ageMs: Number.isFinite(age) ? Math.round(age) : null, state: v.state, degraded: v.fill,
       freshPairs: fresh?.freshPairs ?? null, pairs: fresh?.pairs ?? null, staleStores: fresh?.staleStores.length ?? null,
+      ...(iv ? { intl: iv.state, intlFresh: Object.fromEntries(iv.countries.map((c) => [c.cc, Math.round(c.share * 100)])) } : {}),
     });
+    await watchIntl(iv, intlOn, now, v.state).catch((e) => recordError("web", `watchdog (other countries) failed: ${errorMessage(e)}`));
 
     if (v.state === "silent" || v.state === "blind") {
       const firstTime = !wd.down || wd.kind !== v.state;
@@ -89,6 +100,23 @@ export async function GET(req: Request) {
     await probeFromWorker();
     return NextResponse.json({ error: errorMessage(e) }, { status: 500 });
   }
+}
+
+/** The other countries' mail state machine (state key "watchdog:intl"; the rules are intlWatchStep's). */
+async function watchIntl(iv: IntlVerdict | null, judged: boolean, now: Date, usState: PollerState): Promise<void> {
+  const st = (await readState<IntlWatchState>("watchdog:intl"))?.value ?? { runs: 0, mailed: false };
+  const blind = iv?.countries.filter((c) => c.state === "blind").map((c) => c.cc) ?? [];
+  const step = intlWatchStep(st, judged, blind, now);
+  if (step.mail === "blind") {
+    await logOps("cron", "warn", `other countries blind: ${iv!.summary}`, { countries: blind });
+    // "The US is fine" only when it is: a partial US shares the cause often enough not to promise it.
+    const us = usState === "ok" ? "The US is not affected (its own sweep and checks are fresh)." : `The US is ${usState} at the same time — check both.`;
+    await notifyOwner(`[PickupChecker] Stock checks failing in ${blind.join(", ").toUpperCase()}`, `${iv!.summary}.\n${us} The other countries are asked store by store; usually one country's endpoint is failing or Apple changed its answer there — see /admin/poller and poll_log rows with country set.`).catch(() => undefined);
+  } else if (step.mail === "recovered") {
+    await logOps("cron", "info", "other countries checked again", { were: st.countries ?? [] });
+    await notifyOwner(`[PickupChecker] Other countries are being checked again`, `Stock checks recovered in ${(st.countries ?? []).join(", ").toUpperCase() || "every country"} (failing since ${st.since ?? "?"}).`).catch(() => undefined);
+  }
+  if (step.write) await writeState("watchdog:intl", { ...step.next });
 }
 
 /**

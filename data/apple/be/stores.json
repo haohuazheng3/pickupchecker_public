@@ -1,0 +1,41 @@
+[
+ {
+  "storeNumber": "R486",
+  "slug": "brussels",
+  "name": "Brussels",
+  "city": "Brussels",
+  "region": "Brussels",
+  "regionCode": null,
+  "country": "BE",
+  "lat": 50.83666,
+  "lng": 4.3582,
+  "street": "Avenue de la Toison d’Or 26/28",
+  "postalCode": "1050",
+  "phone": "0800 81 685",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R486.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Saturday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Europe/Brussels",
+  "url": "https://www.apple.com/befr/retail/brussels/",
+  "nativeName": "Apple Brussels"
+ }
+]

@@ -1,0 +1,1019 @@
+[
+ {
+  "storeNumber": "R483",
+  "slug": "canberra",
+  "name": "Canberra",
+  "city": "Canberra",
+  "region": "Australian Capital Territory",
+  "regionCode": "ACT",
+  "country": "AU",
+  "lat": -35.28026,
+  "lng": 149.13371,
+  "street": "Canberra Centre 148 Bunda Street",
+  "postalCode": "2601",
+  "phone": "(02) 6224 9500",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R483.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Thursday",
+     "Tuesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:30:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "16:00:00"
+   },
+   {
+    "days": [
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Australia/Sydney",
+  "url": "https://www.apple.com/au/retail/canberra/",
+  "nativeName": "Apple Canberra"
+ },
+ {
+  "storeNumber": "R254",
+  "slug": "bondi",
+  "name": "Bondi",
+  "city": "Bondi Junction",
+  "region": "New South Wales",
+  "regionCode": "NSW",
+  "country": "AU",
+  "lat": -33.89228,
+  "lng": 151.2503,
+  "street": "213 Oxford Street",
+  "postalCode": "2022",
+  "phone": "(02) 9019 2400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R254.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Sunday",
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Australia/Sydney",
+  "url": "https://www.apple.com/au/retail/bondi/",
+  "nativeName": "Apple Bondi"
+ },
+ {
+  "storeNumber": "R523",
+  "slug": "broadway",
+  "name": "Broadway",
+  "city": "Broadway",
+  "region": "New South Wales",
+  "regionCode": "NSW",
+  "country": "AU",
+  "lat": -33.88367,
+  "lng": 151.19421,
+  "street": "Broadway Shopping Centre 1 Bay Street",
+  "postalCode": "2007",
+  "phone": "(02) 8035 4000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R523.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Tuesday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Australia/Sydney",
+  "url": "https://www.apple.com/au/retail/broadway/",
+  "nativeName": "Apple Broadway"
+ },
+ {
+  "storeNumber": "R344",
+  "slug": "castletowers",
+  "name": "Castle Towers",
+  "city": "Castle Hill",
+  "region": "New South Wales",
+  "regionCode": "NSW",
+  "country": "AU",
+  "lat": -33.730556,
+  "lng": 151.006111,
+  "street": "Castle Towers Shopping Centre 6-14 Castle Street",
+  "postalCode": "2154",
+  "phone": "(02) 8864 0800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R344.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:30:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Australia/Sydney",
+  "url": "https://www.apple.com/au/retail/castletowers/",
+  "nativeName": "Apple Castle Towers"
+ },
+ {
+  "storeNumber": "R385",
+  "slug": "charlestown",
+  "name": "Charlestown",
+  "city": "Charlestown",
+  "region": "New South Wales",
+  "regionCode": "NSW",
+  "country": "AU",
+  "lat": -32.96363,
+  "lng": 151.69406,
+  "street": "Charlestown Square 30 Pearson Street",
+  "postalCode": "2290",
+  "phone": "(02) 4032 5800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R385.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Friday",
+     "Wednesday",
+     "Monday",
+     "Tuesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:30:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Australia/Sydney",
+  "url": "https://www.apple.com/au/retail/charlestown/",
+  "nativeName": "Apple Charlestown"
+ },
+ {
+  "storeNumber": "R253",
+  "slug": "chatswoodchase",
+  "name": "Chatswood Chase",
+  "city": "Chatswood",
+  "region": "New South Wales",
+  "regionCode": "NSW",
+  "country": "AU",
+  "lat": -33.79499,
+  "lng": 151.18613,
+  "street": "Chatswood Chase Sydney 345 Victoria Avenue",
+  "postalCode": "2067",
+  "phone": "(02) 8206 0500",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R253.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Friday",
+     "Wednesday"
+    ],
+    "opens": "09:30:00",
+    "closes": "17:30:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:30:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Australia/Sydney",
+  "url": "https://www.apple.com/au/retail/chatswoodchase/",
+  "nativeName": "Apple Chatswood Chase"
+ },
+ {
+  "storeNumber": "R606",
+  "slug": "miranda",
+  "name": "Miranda",
+  "city": "Miranda",
+  "region": "New South Wales",
+  "regionCode": "NSW",
+  "country": "AU",
+  "lat": -34.03492,
+  "lng": 151.10088,
+  "street": "Westfield Miranda 600 Kingsway",
+  "postalCode": "2228",
+  "phone": "(02) 8578 1700",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R606.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Friday",
+     "Monday",
+     "Wednesday"
+    ],
+    "opens": "09:30:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:30:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Australia/Sydney",
+  "url": "https://www.apple.com/au/retail/miranda/",
+  "nativeName": "Apple Miranda"
+ },
+ {
+  "storeNumber": "R440",
+  "slug": "penrith",
+  "name": "Penrith",
+  "city": "Penrith",
+  "region": "New South Wales",
+  "regionCode": "NSW",
+  "country": "AU",
+  "lat": -33.751287,
+  "lng": 150.694699,
+  "street": "Westfield Penrith 585 High Street",
+  "postalCode": "2750",
+  "phone": "(02) 4702 9400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R440.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Friday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:30:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Australia/Sydney",
+  "url": "https://www.apple.com/au/retail/penrith/",
+  "nativeName": "Apple Penrith"
+ },
+ {
+  "storeNumber": "R238",
+  "slug": "sydney",
+  "name": "Sydney",
+  "city": "Sydney",
+  "region": "New South Wales",
+  "regionCode": "NSW",
+  "country": "AU",
+  "lat": -33.86889,
+  "lng": 151.20678,
+  "street": "367 George Street",
+  "postalCode": "2000",
+  "phone": "(02) 8083 9400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R238.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Saturday",
+     "Monday",
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Australia/Sydney",
+  "url": "https://www.apple.com/au/retail/sydney/",
+  "nativeName": "Apple Sydney"
+ },
+ {
+  "storeNumber": "R466",
+  "slug": "brisbane",
+  "name": "Brisbane",
+  "city": "Brisbane City",
+  "region": "Queensland",
+  "regionCode": "QLD",
+  "country": "AU",
+  "lat": -27.46835,
+  "lng": 153.027261,
+  "street": "MacArthur Chambers 233 Queen Street",
+  "postalCode": "4000",
+  "phone": "(07) 3182 9000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R466.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "16:00:00"
+   },
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Monday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Australia/Brisbane",
+  "url": "https://www.apple.com/au/retail/brisbane/",
+  "nativeName": "Apple Brisbane"
+ },
+ {
+  "storeNumber": "R509",
+  "slug": "carindale",
+  "name": "Carindale",
+  "city": "Carindale",
+  "region": "Queensland",
+  "regionCode": "QLD",
+  "country": "AU",
+  "lat": -27.50227,
+  "lng": 153.10189,
+  "street": "Westfield Carindale 1151 Creek Road",
+  "postalCode": "4152",
+  "phone": "(07) 3199 2200",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R509.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Friday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:30:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Australia/Brisbane",
+  "url": "https://www.apple.com/au/retail/carindale/",
+  "nativeName": "Apple Carindale"
+ },
+ {
+  "storeNumber": "R384",
+  "slug": "chermside",
+  "name": "Chermside",
+  "city": "Chermside",
+  "region": "Queensland",
+  "regionCode": "QLD",
+  "country": "AU",
+  "lat": -27.3811,
+  "lng": 153.032944,
+  "street": "Westfield Chermside Cnr Gympie and Hamilton Roads",
+  "postalCode": "4032",
+  "phone": "(07) 3115 0800",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/70a/555/e0a/b28/445/0a5/b25/c87/aca/de7/1476aec6-dd8d-3f2b-98de-c4b85f5b877b_apple-heritage-logo_2880-1612_2x_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Saturday",
+     "Monday",
+     "Thursday",
+     "Friday",
+     "Wednesday",
+     "Sunday"
+    ],
+    "opens": null,
+    "closes": null
+   }
+  ],
+  "timezone": "Australia/Brisbane",
+  "url": "https://www.apple.com/au/retail/chermside/",
+  "nativeName": "Apple Chermside"
+ },
+ {
+  "storeNumber": "R351",
+  "slug": "robina",
+  "name": "Robina",
+  "city": "Robina",
+  "region": "Queensland",
+  "regionCode": "QLD",
+  "country": "AU",
+  "lat": -28.077575,
+  "lng": 153.385213,
+  "street": "Robina Town Centre",
+  "postalCode": "4226",
+  "phone": "(07) 5667 0400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R351.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "16:00:00"
+   },
+   {
+    "days": [
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:30:00"
+   }
+  ],
+  "timezone": "Australia/Brisbane",
+  "url": "https://www.apple.com/au/retail/robina/",
+  "nativeName": "Apple Robina"
+ },
+ {
+  "storeNumber": "R405",
+  "slug": "rundleplace",
+  "name": "Rundle Place",
+  "city": "Adelaide",
+  "region": "South Australia",
+  "regionCode": "SA",
+  "country": "AU",
+  "lat": -34.922821,
+  "lng": 138.602631,
+  "street": "Rundle Place Centre 77-90 Rundle Mall",
+  "postalCode": "5000",
+  "phone": "(08) 7088 5300",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R405.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Australia/Adelaide",
+  "url": "https://www.apple.com/au/retail/rundleplace/",
+  "nativeName": "Apple Rundle Place"
+ },
+ {
+  "storeNumber": "R180",
+  "slug": "chadstone",
+  "name": "Chadstone",
+  "city": "Chadstone",
+  "region": "Victoria",
+  "regionCode": "VIC",
+  "country": "AU",
+  "lat": -37.885829,
+  "lng": 145.082502,
+  "street": "Chadstone Shopping Centre 1341 Dandenong Road",
+  "postalCode": "3148",
+  "phone": "(03) 9038 7500",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R180.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:30:00"
+   },
+   {
+    "days": [
+     "Saturday",
+     "Friday",
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Australia/Melbourne",
+  "url": "https://www.apple.com/au/retail/chadstone/",
+  "nativeName": "Apple Chadstone"
+ },
+ {
+  "storeNumber": "R343",
+  "slug": "southland",
+  "name": "Southland",
+  "city": "Cheltenham",
+  "region": "Victoria",
+  "regionCode": "VIC",
+  "country": "AU",
+  "lat": -37.958244,
+  "lng": 145.052434,
+  "street": "Westfield Southland 1239 Nepean Highway",
+  "postalCode": "3192",
+  "phone": "(03) 8523 1400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R343.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:30:00"
+   },
+   {
+    "days": [
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Australia/Melbourne",
+  "url": "https://www.apple.com/au/retail/southland/",
+  "nativeName": "Apple Southland"
+ },
+ {
+  "storeNumber": "R342",
+  "slug": "doncaster",
+  "name": "Doncaster",
+  "city": "Doncaster",
+  "region": "Victoria",
+  "regionCode": "VIC",
+  "country": "AU",
+  "lat": -37.78442,
+  "lng": 145.1261,
+  "street": "Westfield Doncaster 619 Doncaster Road",
+  "postalCode": "3108",
+  "phone": "(03) 9914 2800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R342.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Friday",
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Monday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:30:00"
+   }
+  ],
+  "timezone": "Australia/Melbourne",
+  "url": "https://www.apple.com/au/retail/doncaster/",
+  "nativeName": "Apple Doncaster"
+ },
+ {
+  "storeNumber": "R530",
+  "slug": "fountaingate",
+  "name": "Fountain Gate",
+  "city": "Fountain Gate",
+  "region": "Victoria",
+  "regionCode": "VIC",
+  "country": "AU",
+  "lat": -38.01799,
+  "lng": 145.30466,
+  "street": "Westfield Fountain Gate 352 Princes Highway",
+  "postalCode": "3805",
+  "phone": "(03) 8765 4000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R530.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:30:00"
+   },
+   {
+    "days": [
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Australia/Melbourne",
+  "url": "https://www.apple.com/au/retail/fountaingate/",
+  "nativeName": "Apple Fountain Gate"
+ },
+ {
+  "storeNumber": "R504",
+  "slug": "highpoint",
+  "name": "Highpoint",
+  "city": "Maribyrnong",
+  "region": "Victoria",
+  "regionCode": "VIC",
+  "country": "AU",
+  "lat": -37.77238,
+  "lng": 144.89015,
+  "street": "Highpoint Shopping Centre 120-200 Rosamond Road",
+  "postalCode": "3032",
+  "phone": "(03) 9975 9700",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R504.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Wednesday",
+     "Tuesday",
+     "Monday",
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Australia/Melbourne",
+  "url": "https://www.apple.com/au/retail/highpoint/",
+  "nativeName": "Apple Highpoint"
+ },
+ {
+  "storeNumber": "R508",
+  "slug": "booragoon",
+  "name": "Booragoon",
+  "city": "Booragoon",
+  "region": "Western Australia",
+  "regionCode": "WA",
+  "country": "AU",
+  "lat": -32.03422,
+  "lng": 115.83735,
+  "street": "Westfield Booragoon 125 Riseley Street",
+  "postalCode": "6154",
+  "phone": "(08) 6557 6000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R508.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Friday",
+     "Tuesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:30:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Australia/Perth",
+  "url": "https://www.apple.com/au/retail/booragoon/",
+  "nativeName": "Apple Booragoon"
+ },
+ {
+  "storeNumber": "R386",
+  "slug": "perthcity",
+  "name": "Perth City",
+  "city": "Perth",
+  "region": "Western Australia",
+  "regionCode": "WA",
+  "country": "AU",
+  "lat": -31.952658,
+  "lng": 115.858728,
+  "street": "Commonwealth Bank Building, Ground Floor 242 Murray Street Mall",
+  "postalCode": "6000",
+  "phone": "(08) 6140 3800",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/450/3ad/233/706/78c/2eb/f95/079/ed2/65e/79366979-a90c-3da6-9c8a-3d5819fbfb6a_hero_large_2880_x_1612_large_2x.jpg",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Australia/Perth",
+  "url": "https://www.apple.com/au/retail/perthcity/",
+  "nativeName": "Apple Perth City"
+ }
+]

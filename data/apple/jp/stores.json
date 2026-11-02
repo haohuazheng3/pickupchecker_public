@@ -1,0 +1,365 @@
+[
+ {
+  "storeNumber": "R005",
+  "slug": "nagoyasakae",
+  "name": "Nagoya Sakae",
+  "city": "Nagoya",
+  "region": "Aichi",
+  "regionCode": null,
+  "country": "JP",
+  "lat": 35.16555,
+  "lng": 136.90716,
+  "street": "中区栄3-17-15 エフエックスビル",
+  "postalCode": "460-0008",
+  "phone": "(052) 238-2400",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/bbf/acf/c88/d1a/295/99a/353/d68/a6a/85a/d1d9b281-1724-37eb-ada2-c63663aebb1a_PNG_Nagoya-Sakae_hero_2880px_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Friday",
+     "Sunday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Tokyo",
+  "url": "https://www.apple.com/jp/retail/nagoyasakae/",
+  "nativeName": "Apple 名古屋栄"
+ },
+ {
+  "storeNumber": "R048",
+  "slug": "fukuoka",
+  "name": "Fukuoka",
+  "city": "Fukuoka",
+  "region": "Fukuoka",
+  "regionCode": null,
+  "country": "JP",
+  "lat": 33.587908,
+  "lng": 130.397033,
+  "street": "中央区天神2-5-19",
+  "postalCode": "810-0001",
+  "phone": "(092) 778-0200",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R048.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Monday",
+     "Tuesday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Tokyo",
+  "url": "https://www.apple.com/jp/retail/fukuoka/",
+  "nativeName": "Apple 福岡"
+ },
+ {
+  "storeNumber": "R710",
+  "slug": "kawasaki",
+  "name": "Kawasaki",
+  "city": "Kawasaki",
+  "region": "Kanagawa",
+  "regionCode": null,
+  "country": "JP",
+  "lat": 35.532695,
+  "lng": 139.695856,
+  "street": "幸区堀川町72-1 ラゾーナ川崎プラザ",
+  "postalCode": "212-0013",
+  "phone": "(044) 577-5100",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R710.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Tuesday",
+     "Monday",
+     "Sunday",
+     "Thursday",
+     "Saturday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Tokyo",
+  "url": "https://www.apple.com/jp/retail/kawasaki/",
+  "nativeName": "Apple 川崎"
+ },
+ {
+  "storeNumber": "R711",
+  "slug": "kyoto",
+  "name": "Kyoto",
+  "city": "Kyoto",
+  "region": "Kyoto",
+  "regionCode": null,
+  "country": "JP",
+  "lat": 35.003825,
+  "lng": 135.762675,
+  "street": "下京区 四条通高倉東入立売中之町83-1",
+  "postalCode": "600-8006",
+  "phone": "(075) 757-8700",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R711.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Monday",
+     "Tuesday",
+     "Friday",
+     "Saturday",
+     "Wednesday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Tokyo",
+  "url": "https://www.apple.com/jp/retail/kyoto/",
+  "nativeName": "Apple 京都"
+ },
+ {
+  "storeNumber": "R091",
+  "slug": "shinsaibashi",
+  "name": "Shinsaibashi",
+  "city": "Osaka",
+  "region": "Osaka",
+  "regionCode": null,
+  "country": "JP",
+  "lat": 34.672,
+  "lng": 135.50007,
+  "street": "中央区西心斎橋1-5-5 アーバンBLD心斎橋",
+  "postalCode": "542-0086",
+  "phone": "(06) 4965-2900",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R091.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Saturday",
+     "Sunday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Tokyo",
+  "url": "https://www.apple.com/jp/retail/shinsaibashi/",
+  "nativeName": "Apple 心斎橋"
+ },
+ {
+  "storeNumber": "R768",
+  "slug": "umeda",
+  "name": "Umeda",
+  "city": "Osaka",
+  "region": "Osaka",
+  "regionCode": null,
+  "country": "JP",
+  "lat": 34.703682,
+  "lng": 135.495117,
+  "street": "北区大深町4-20 グランフロント大阪南館",
+  "postalCode": "530-0011",
+  "phone": "(06) 7526-6200",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R768.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Sunday",
+     "Monday",
+     "Tuesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Tokyo",
+  "url": "https://www.apple.com/jp/retail/umeda/",
+  "nativeName": "Apple 梅田"
+ },
+ {
+  "storeNumber": "R079",
+  "slug": "ginza",
+  "name": "Ginza",
+  "city": "Tokyo",
+  "region": "Tokyo",
+  "regionCode": null,
+  "country": "JP",
+  "lat": 35.6722345079264,
+  "lng": 139.765874516619,
+  "street": "銀座3-5-12 サヱグサビル",
+  "postalCode": "104-0061",
+  "phone": "(03) 4345-3600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R079.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Saturday",
+     "Sunday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Tokyo",
+  "url": "https://www.apple.com/jp/retail/ginza/",
+  "nativeName": "Apple 銀座"
+ },
+ {
+  "storeNumber": "R718",
+  "slug": "marunouchi",
+  "name": "Marunouchi",
+  "city": "Tokyo",
+  "region": "Tokyo",
+  "regionCode": null,
+  "country": "JP",
+  "lat": 35.680176,
+  "lng": 139.763855,
+  "street": "丸の内2-5-2 三菱ビル",
+  "postalCode": "100-0005",
+  "phone": "(03) 4213-0500",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R718.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Tokyo",
+  "url": "https://www.apple.com/jp/retail/marunouchi/",
+  "nativeName": "Apple 丸の内"
+ },
+ {
+  "storeNumber": "R224",
+  "slug": "omotesando",
+  "name": "Omotesando",
+  "city": "Tokyo",
+  "region": "Tokyo",
+  "regionCode": null,
+  "country": "JP",
+  "lat": 35.666129,
+  "lng": 139.710932,
+  "street": "神宮前4-2-13",
+  "postalCode": "150-0001",
+  "phone": "(03) 6757-4400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R224.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Saturday",
+     "Sunday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Tokyo",
+  "url": "https://www.apple.com/jp/retail/omotesando/",
+  "nativeName": "Apple 表参道"
+ },
+ {
+  "storeNumber": "R119",
+  "slug": "shibuya",
+  "name": "Shibuya",
+  "city": "Tokyo",
+  "region": "Tokyo",
+  "regionCode": null,
+  "country": "JP",
+  "lat": 35.66196,
+  "lng": 139.69978,
+  "street": "神南1-20-9  公園通りビル",
+  "postalCode": "150-0041",
+  "phone": "(03) 6670-1800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R119.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Tokyo",
+  "url": "https://www.apple.com/jp/retail/shibuya/",
+  "nativeName": "Apple 渋谷"
+ },
+ {
+  "storeNumber": "R128",
+  "slug": "shinjuku",
+  "name": "Shinjuku",
+  "city": "Tokyo",
+  "region": "Tokyo",
+  "regionCode": null,
+  "country": "JP",
+  "lat": 35.691,
+  "lng": 139.7041,
+  "street": "新宿3−30−13 新宿マルイ本館",
+  "postalCode": "160-0022",
+  "phone": "(03) 5656-1800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R128.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Sunday",
+     "Tuesday",
+     "Saturday",
+     "Monday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Tokyo",
+  "url": "https://www.apple.com/jp/retail/shinjuku/",
+  "nativeName": "Apple 新宿"
+ }
+]

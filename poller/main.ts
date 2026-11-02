@@ -11,26 +11,35 @@
  *  • adaptive: 541 share > 25% ⇒ back off and alert; ≥ 90% failing for 2 rounds (541s, a dead route,
  *    anything) ⇒ switch to the spare egress — the host's own IPv4, then the Vercel function — spent on
  *    watched stores first (fallback.ts); full mode is probed again every 15 min
+ *  • the other countries (docs/i18n.md), opt-in through POLL_COUNTRIES: every INTL_CADENCE_SEC (30) each of
+ *    their stores on its own (`store=R###`, the country's 40 part numbers in 2 batches), INTL_CONCURRENCY at once
+ *    (12), through the same IPv6 egress, ingest, instant confirm and alerts; failed requests retried once in the
+ *    round. A country whose round mostly failed (any reason) is paused on its own, 60 s doubling to 16 min.
+ *    poll_log keeps only its failures (one sweeps row per round, mode "intl"); totals ride along with the
+ *    heartbeat. Runs only in full mode (the spare egress is budgeted for the US).
  *  • heartbeat after every sweep (the Vercel watchdog alerts when it stops, or when the data goes stale)
- *  • a sweep stuck for STUCK_MS exits the process, and systemd starts a fresh one
+ *  • a sweep stuck for STUCK_MS exits the process, and systemd starts a fresh one. A round of the other
+ *    countries stuck for INTL_STUCK_MS only restarts their own loop (the US sweep never restarts for them).
  *
  *  Env: DATABASE_URL, RESEND_API_KEY, IPV6_PREFIX (e.g. 2600:3c0a:e000:1b::/56, or "auto" = read
  *       IPV6_PREFIX_FILE written by anyip.sh, else derive the /64 of the first global address), SITE_URL,
  *       POLLER_TOKEN (for the vercel egress fallback), CADENCE_SEC, CONCURRENCY, HOST_LABEL,
- *       FAST_CADENCE_SEC (5; 0 disables the fast lane), FAST_CONCURRENCY (8), FAST_TIMEOUT_MS (4500)
+ *       FAST_CADENCE_SEC (5; 0 disables the fast lane), FAST_CONCURRENCY (8), FAST_TIMEOUT_MS (4500),
+ *       POLL_COUNTRIES (unset or "" = none; "ca,uk" = those; "all" = all 18), INTL_CADENCE_SEC (30),
+ *       INTL_CONCURRENCY (12), INTL_TIMEOUT_MS (6000)
  */
 import "dotenv/config";
 import os from "node:os";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { Agent, fetch as undiciFetch } from "undici";
-import { buildTasks, runSweep, singleIdentityEgress, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
+import { buildIntlTasks, buildTasks, nextCountryBackoff, parsePollCountries, runSweep, singleIdentityEgress, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
 import { fallbackOrder } from "../src/lib/stock/fallback";
 import { loadFastTargets, runFastRound } from "../src/lib/stock/fastlane";
 import { expireStale } from "../src/lib/stock/ingest";
 import { recordError, errorMessage } from "../src/lib/errors";
 import { prefixFromInterfaces, randomAddressIn } from "./ipv6";
-import type { FetchLike } from "../src/lib/apple/client";
+import { pickupCountryOf, type FetchLike } from "../src/lib/apple/client";
 import { notifyOwner } from "../src/lib/mail/owner";
 import { logOps } from "../src/lib/ops";
 import { pollerCodeHash } from "./codeHash.mjs";
@@ -40,6 +49,10 @@ const CONCURRENCY = Number(process.env.CONCURRENCY ?? 14);
 const FAST_CADENCE_SEC = Number(process.env.FAST_CADENCE_SEC ?? 5);
 const FAST_CONCURRENCY = Number(process.env.FAST_CONCURRENCY ?? 8);
 const FAST_TIMEOUT_MS = Number(process.env.FAST_TIMEOUT_MS ?? 4500);
+const POLL_COUNTRIES = parsePollCountries(process.env.POLL_COUNTRIES);
+const INTL_CADENCE_SEC = Number(process.env.INTL_CADENCE_SEC ?? 30);
+const INTL_CONCURRENCY = Number(process.env.INTL_CONCURRENCY ?? 12);
+const INTL_TIMEOUT_MS = Number(process.env.INTL_TIMEOUT_MS ?? 6000);
 const HOST = process.env.HOST_LABEL ?? os.hostname();
 const PREFIX = resolvePrefix(process.env.IPV6_PREFIX ?? "");
 const SITE = process.env.SITE_URL ?? "https://pickupchecker.com";
@@ -146,10 +159,13 @@ class VercelEgress implements Egress {
       const u = new URL(url);
       const parts = [...u.searchParams.entries()].filter(([k]) => k.startsWith("parts.")).map(([, v]) => v);
       const location = u.searchParams.get("location") ?? "";
+      // A one-store request and another country's endpoint travel along; a US anchor request is sent as always.
+      const store = u.searchParams.get("store");
+      const country = pickupCountryOf(url);
       const res = await undiciFetch(`${SITE}/api/egress/apple`, {
         method: "POST",
         headers: { authorization: `Bearer ${POLLER_TOKEN}`, "content-type": "application/json" },
-        body: JSON.stringify({ parts, location }),
+        body: JSON.stringify(store || country !== "us" ? { parts, ...(store ? { store } : { location }), ...(country !== "us" ? { country } : {}) } : { parts, location }),
       });
       const j = (await res.json()) as { ok: boolean; httpStatus: number };
       // Re-wrap so fetchPickup sees the Apple status and a JSON body it can parse.
@@ -221,6 +237,91 @@ async function fastLoop(egress: Egress, active: () => boolean) {
   }
 }
 
+/* ---------------- other countries ---------------- */
+
+/** Running totals since the process started; they ride along with every heartbeat (admin Poller node, health). */
+const intlStats = {
+  cadenceSec: INTL_CADENCE_SEC, countries: POLL_COUNTRIES as string[], stores: 0, tasks: 0, rounds: 0, requests: 0, failures: 0, recovered: 0,
+  unresolved: 0, throttled: 0, timeouts: 0, transitions: 0, confirmed: 0, held: 0, notified: 0, errors: 0, paused: false,
+  lastAt: null as string | null, lastDurationMs: 0, lastSweepId: null as string | null, lastStoresCovered: 0,
+  /** Countries resting after a failed round: code → ISO time they are asked again. */
+  pausedCountries: {} as Record<string, string>,
+  /** Times a stuck round made the loop start over (the process never restarts for the other countries). */
+  restarts: 0,
+  /** Stuck too often: left off until the process restarts. */
+  stopped: false,
+};
+/** When the intl loop last finished a round (or decided to rest): the STUCK watchdog reads it. */
+let intlProgress = Date.now();
+/** The running intl loop; a stuck one is abandoned by bumping this, and quits if it ever comes back. */
+let intlGeneration = 0;
+/** Loop restarts allowed per hour; past that the other countries stay off until the process restarts. */
+const INTL_MAX_RESTARTS_PER_HOUR = 3;
+const intlRestartTimes: number[] = [];
+/**
+ * Longer than the worst honest round of the other countries — every request timing out, no retry pass
+ * (398 tasks / 12 at a time × 6 s ≈ 200 s) — with half again as slack, and never shorter than STUCK_MS:
+ * a dead foreign endpoint makes rounds slow, not stuck. A stuck one only starts their loop over.
+ */
+const INTL_STUCK_MS = Math.max(STUCK_MS, Math.ceil(buildIntlTasks(POLL_COUNTRIES).length / Math.max(1, INTL_CONCURRENCY)) * INTL_TIMEOUT_MS * 1.5 + 60_000);
+
+/**
+ * Every INTL_CADENCE_SEC: every store of POLL_COUNTRIES on its own, through the sweep engine in mode "intl"
+ * (fetch, ingest, instant confirm, alerts; failed requests retried once from a fresh address; poll_log keeps
+ * failures only). Pauses while the US sweep is in degraded mode, and for 60 s after a round that was mostly 541s;
+ * a single country whose round mostly failed rests on its own (nextCountryBackoff). `generation` ends a loop the
+ * stuck watchdog has replaced.
+ */
+async function intlLoop(egress: Egress, active: () => boolean, generation: number) {
+  const tasks = buildIntlTasks(POLL_COUNTRIES);
+  const known = new Set(tasks.map((t) => t.store!));
+  intlStats.tasks = tasks.length; intlStats.stores = known.size;
+  let backoffUntil = 0, lastErrorLog = 0;
+  /** Per-country rest (nextCountryBackoff); a country absent here is asked every round. */
+  const countryRest = new Map<string, { level: number; until: number }>();
+  console.log(`[intl] start countries=${POLL_COUNTRIES.join(",")} stores=${known.size} requests/round=${tasks.length} cadence=${INTL_CADENCE_SEC}s concurrency=${INTL_CONCURRENCY}${generation ? ` (restart ${generation})` : ""}`);
+  while (generation === intlGeneration) {
+    const t0 = Date.now();
+    try {
+      intlStats.paused = !active() || Date.now() < backoffUntil;
+      const now = Date.now();
+      const resting = new Set([...countryRest].filter(([, r]) => r.until > now).map(([cc]) => cc));
+      intlStats.pausedCountries = Object.fromEntries([...countryRest].filter(([cc]) => resting.has(cc)).map(([cc, r]) => [cc, new Date(r.until).toISOString()]));
+      const round = tasks.filter((t) => !resting.has(t.country!));
+      if (!intlStats.paused && round.length) {
+        const r = await runSweep({ egress, tasks: round, concurrency: INTL_CONCURRENCY, mode: "intl", host: HOST, known, timeoutMs: INTL_TIMEOUT_MS, logOk: false });
+        if (generation !== intlGeneration) break; // abandoned while it ran (a stuck round came back late)
+        intlStats.rounds++; intlStats.requests += r.requests; intlStats.failures += r.failures; intlStats.recovered += r.recovered; intlStats.unresolved += r.unresolved;
+        intlStats.throttled += r.throttled; intlStats.timeouts += r.timeouts; intlStats.transitions += r.transitions; intlStats.confirmed += r.confirmed; intlStats.held += r.held; intlStats.notified += r.notified.sent;
+        intlStats.lastAt = new Date().toISOString(); intlStats.lastDurationMs = r.durationMs; intlStats.lastSweepId = r.id; intlStats.lastStoresCovered = r.storesCovered;
+        if (r.transitions || r.unresolved || r.throttled) console.log(`[intl ${r.id.slice(0, 8)}] req=${r.requests} fail=${r.failures} recovered=${r.recovered} unresolved=${r.unresolved} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} confirmed=${r.confirmed} ${r.durationMs}ms`);
+        if (r.requests >= 10 && r.throttled / r.requests >= 0.5) {
+          backoffUntil = Date.now() + 60_000;
+          await logOps("poller", "warn", `other countries throttled: ${r.throttled} of ${r.requests} requests — pausing them for 60 s`, { host: HOST }).catch(() => undefined);
+        }
+        // One country failing (throttled, refused, timing out, answering without its store) rests on its own,
+        // so it neither drags every round through its retries nor floods poll_log; the others carry on.
+        for (const [cc, cr] of Object.entries(r.byCountry ?? {})) {
+          const next = nextCountryBackoff(countryRest.get(cc), cr!, Date.now());
+          if (!next) { countryRest.delete(cc); continue; }
+          countryRest.set(cc, next);
+          await logOps("poller", "warn", `${cc}: ${cr!.failed} of ${cr!.tasks} requests failed (${cr!.throttled} throttled) — pausing it for ${Math.round((next.until - Date.now()) / 1000)} s`, { host: HOST, country: cc, level: next.level, sweepId: r.id }).catch(() => undefined);
+        }
+      }
+    } catch (e) {
+      intlStats.errors++;
+      if (Date.now() - lastErrorLog > 10 * 60_000) {
+        lastErrorLog = Date.now();
+        await recordError("poller", `round of the other countries failed: ${errorMessage(e)}`, { host: HOST }).catch(() => undefined);
+      }
+    }
+    if (generation !== intlGeneration) break;
+    intlProgress = Date.now();
+    await new Promise((r) => setTimeout(r, Math.max(1_000, INTL_CADENCE_SEC * 1000 - (Date.now() - t0))));
+  }
+  console.warn(`[intl] loop ${generation} ended (superseded by ${intlGeneration})`);
+}
+
 /* ---------------- main loop ---------------- */
 
 async function main() {
@@ -232,10 +333,14 @@ async function main() {
   let lastAlert = 0;
   /** When the spare egress took over; full mode is tried again 15 min later (not on the next round). */
   let degradedSince = 0;
-  console.log(`[poller] start host=${HOST} mode=${mode} cadence=${CADENCE_SEC}s prefix=${PREFIX || "(none)"}`);
-  await writeState("poller:config", { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, fastCadenceSec: FAST_CADENCE_SEC, prefix: PREFIX || null, startedAt: new Date().toISOString(), commit: COMMIT, node: process.version });
-  await logOps("poller", "info", `poller started (${mode})`, { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, fastCadenceSec: FAST_CADENCE_SEC, prefix: PREFIX || null, commit: COMMIT, node: process.version });
+  const intlOn = Boolean(ipv6 && POLL_COUNTRIES.length > 0 && INTL_CADENCE_SEC > 0);
+  console.log(`[poller] start host=${HOST} mode=${mode} cadence=${CADENCE_SEC}s prefix=${PREFIX || "(none)"}${intlOn ? ` intl=${POLL_COUNTRIES.join(",")}/${INTL_CADENCE_SEC}s` : ""}`);
+  const intlConfig = intlOn ? { pollCountries: POLL_COUNTRIES, intlCadenceSec: INTL_CADENCE_SEC, intlConcurrency: INTL_CONCURRENCY } : {};
+  await writeState("poller:config", { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, fastCadenceSec: FAST_CADENCE_SEC, ...intlConfig, prefix: PREFIX || null, startedAt: new Date().toISOString(), commit: COMMIT, node: process.version });
+  await logOps("poller", "info", `poller started (${mode})`, { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, fastCadenceSec: FAST_CADENCE_SEC, ...intlConfig, prefix: PREFIX || null, commit: COMMIT, node: process.version });
   if (ipv6 && FAST_CADENCE_SEC > 0) void fastLoop(ipv6, () => mode === "full");
+  const startIntl = () => { if (intlOn && ipv6) void intlLoop(ipv6, () => mode === "full", intlGeneration); };
+  startIntl();
   for (const sig of ["SIGTERM", "SIGINT"] as const) {
     process.on(sig, () => {
       logOps("poller", "info", `poller stopping (${sig})`, { host: HOST, commit: COMMIT }).finally(() => process.exit(0));
@@ -246,10 +351,33 @@ async function main() {
   // A sweep that never returns (a hung socket, a stuck query) would keep the process alive and silent:
   // exit instead, and systemd (Restart=always) starts a clean one.
   let lastProgress = Date.now();
+  let exiting = false;
+  let intlGivenUp = false;
   setInterval(() => {
+    if (exiting) return;
+    // The other countries' loop is watched too, but a hung round of theirs only starts their loop over: the old
+    // one is abandoned (it quits if it ever returns) and the US sweep is never restarted on their account.
+    if (intlOn && !intlGivenUp && Date.now() - intlProgress >= INTL_STUCK_MS) {
+      const sec = Math.round((Date.now() - intlProgress) / 1000);
+      intlGeneration++; intlStats.restarts++; intlProgress = Date.now();
+      const now = Date.now();
+      while (intlRestartTimes.length && now - intlRestartTimes[0] > 3600_000) intlRestartTimes.shift();
+      intlRestartTimes.push(now);
+      // An abandoned round may still hold sockets and connections: past a few restarts an hour, stop adding loops.
+      intlGivenUp = intlRestartTimes.length > INTL_MAX_RESTARTS_PER_HOUR;
+      const what = intlGivenUp ? `stuck ${intlRestartTimes.length} times in an hour — left off until the poller restarts` : "starting their loop over";
+      console.error(`[intl] no round finished for ${sec} s — ${what}`);
+      void logOps("poller", "error", `round of the other countries stuck — ${what} (the US sweep is not restarted)`, { host: HOST, stuckSec: sec, restarts: intlStats.restarts }).catch(() => undefined);
+      void recordError("poller", `round of the other countries stuck — ${intlGivenUp ? "left off" : "loop started over"}`, { host: HOST, stuckSec: sec }).catch(() => undefined);
+      // Left off is not "paused": the watchdog keeps judging those countries, so their going stale is mailed.
+      if (intlGivenUp) intlStats.stopped = true;
+      else startIntl();
+    }
     if (Date.now() - lastProgress < STUCK_MS) return;
-    console.error(`[poller] no sweep finished for ${Math.round((Date.now() - lastProgress) / 1000)} s — exiting for a restart`);
-    void logOps("poller", "error", "sweep stuck — restarting the process", { host: HOST, stuckSec: Math.round((Date.now() - lastProgress) / 1000) }).catch(() => undefined);
+    exiting = true;
+    const sec = Math.round((Date.now() - lastProgress) / 1000);
+    console.error(`[poller] no sweep finished for ${sec} s — exiting for a restart`);
+    void logOps("poller", "error", "sweep stuck — restarting the process", { host: HOST, stuckSec: sec }).catch(() => undefined);
     setTimeout(() => process.exit(1), 2000);
   }, 10_000);
 
@@ -267,7 +395,7 @@ async function main() {
         at: new Date().toISOString(), host: HOST, mode, cadenceSec: CADENCE_SEC, lastSweepId: r.id,
         requests: r.requests, failures: r.failures, recovered: r.recovered, unresolved: r.unresolved, throttled: r.throttled, storesCovered: r.storesCovered,
         transitions: r.transitions, held: r.held, confirmed: r.confirmed, notified: r.notified, durationMs: r.durationMs, egress: egress.name,
-        ipv6Stats: ipv6 ? ipv6.stats : null, fast: ipv6 && FAST_CADENCE_SEC > 0 ? fastStats : null, sys: hostVitals(), sweeps: ++sweepsSinceStart, consecutiveBad,
+        ipv6Stats: ipv6 ? ipv6.stats : null, fast: ipv6 && FAST_CADENCE_SEC > 0 ? fastStats : null, ...(intlOn ? { intl: intlStats } : {}), sys: hostVitals(), sweeps: ++sweepsSinceStart, consecutiveBad,
       });
       lastProgress = Date.now();
       console.log(`[sweep ${r.id.slice(0, 8)}] ${mode}/${egress.name} req=${r.requests} fail=${r.failures} recovered=${r.recovered} unresolved=${r.unresolved} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} confirmed=${r.confirmed} held=${r.held} sent=${r.notified.sent} ${r.durationMs}ms`);

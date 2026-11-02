@@ -3,7 +3,8 @@ import { sql } from "drizzle-orm";
 import { db, hasDatabase } from "@/lib/db";
 import { readState } from "@/lib/stock/sweep";
 import { env } from "@/lib/env";
-import { freshness } from "@/lib/stock/fallback";
+import { freshness, intlVerdict } from "@/lib/stock/fallback";
+import type { CountryCode } from "@/lib/apple/countries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +15,8 @@ const HEARTBEAT_STALE_MS = 150_000;
  * GET /api/health[?shallow=1]
  *  200 when config + database + polling are fine; 503 otherwise, with the reason. Polling is judged by the
  *  heartbeat and by the data: a poller that runs but gets no answers from Apple fails the check too.
+ *  The verdict is the US one (its share of pairs fresh in the last minute); the other countries' freshness is
+ *  appended to the detail for information and never fails the check.
  *  shallow=1 skips the database (used by frequent external probes).
  */
 export async function GET(req: Request) {
@@ -29,14 +32,16 @@ export async function GET(req: Request) {
       const t0 = Date.now();
       await db().execute(sql`select 1`);
       checks.database = { ok: true, detail: `${Date.now() - t0} ms` };
-      const hb = await readState<{ at?: string; mode?: string; host?: string; cadenceSec?: number }>("heartbeat");
+      const hb = await readState<{ at?: string; mode?: string; host?: string; cadenceSec?: number; intl?: { cadenceSec?: number; countries?: CountryCode[]; paused?: boolean } | null }>("heartbeat");
       const age = hb ? Date.now() - new Date(hb.value.at ?? hb.updatedAt).getTime() : Infinity;
-      const f = await freshness().catch(() => null);
+      const f = await freshness({ intlCadenceSec: hb?.value.intl?.cadenceSec }).catch(() => null);
       const share = f && f.pairs > 0 ? f.freshPairs / f.pairs : null;
+      const intl = hb?.value.intl ? intlVerdict(f, hb.value.intl.countries) : null;
       checks.poller = {
         ok: age < HEARTBEAT_STALE_MS && (share == null || share >= 0.5),
         detail: (hb ? `${hb.value.mode ?? "?"} on ${hb.value.host ?? "?"}, ${Math.round(age / 1000)} s ago` : "no heartbeat yet") +
-          (f && share != null ? ` · ${Math.round(share * 100)}% of ${f.stores} stores' phones checked in the last minute${f.staleStores.length ? ` · ${f.staleStores.length} stale` : ""}` : ""),
+          (f && share != null ? ` · ${Math.round(share * 100)}% of ${f.stores} stores' phones checked in the last minute${f.staleStores.length ? ` · ${f.staleStores.length} stale` : ""}` : "") +
+          (intl ? ` · other countries${hb?.value.intl?.paused ? " (paused)" : ""}: ${intl.summary}` : ""),
       };
     } catch (e) {
       checks.database = { ok: false, detail: e instanceof Error ? e.message : String(e) };

@@ -1,0 +1,206 @@
+[
+ {
+  "storeNumber": "R409",
+  "slug": "causewaybay",
+  "name": "Causeway Bay",
+  "city": "Causeway Bay",
+  "region": "Hong Kong",
+  "regionCode": null,
+  "country": "HK",
+  "lat": 22.279526,
+  "lng": 114.183666,
+  "street": "Hysan Place 500 Hennessy Road",
+  "postalCode": null,
+  "phone": "39793100",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R409.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday",
+     "Saturday",
+     "Thursday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Hong_Kong",
+  "url": "https://www.apple.com/hk/en/retail/causewaybay/",
+  "nativeName": "Apple Causeway Bay"
+ },
+ {
+  "storeNumber": "R428",
+  "slug": "ifcmall",
+  "name": "ifc mall",
+  "city": "Central",
+  "region": "Hong Kong",
+  "regionCode": null,
+  "country": "HK",
+  "lat": 22.28463,
+  "lng": 114.159172,
+  "street": "International Finance Centre  8 Finance Street",
+  "postalCode": null,
+  "phone": "39721500",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/aa0/61e/026/813/c17/544/2d4/682/589/2b1/2e09a5a6-5a6b-3380-bf29-5355bbd49b5b_R428_large_2x.jpg",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Saturday",
+     "Wednesday",
+     "Tuesday",
+     "Friday",
+     "Monday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Hong_Kong",
+  "url": "https://www.apple.com/hk/en/retail/ifcmall/",
+  "nativeName": "Apple ifc mall"
+ },
+ {
+  "storeNumber": "R485",
+  "slug": "festivalwalk",
+  "name": "Festival Walk",
+  "city": "Kowloon Tong",
+  "region": "Hong Kong",
+  "regionCode": null,
+  "country": "HK",
+  "lat": 22.33719,
+  "lng": 114.17464,
+  "street": "Festival Walk 80 Tat Chee Avenue",
+  "postalCode": null,
+  "phone": "39793600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R485.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Sunday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Thursday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Asia/Hong_Kong",
+  "url": "https://www.apple.com/hk/en/retail/festivalwalk/",
+  "nativeName": "Apple Festival Walk"
+ },
+ {
+  "storeNumber": "R673",
+  "slug": "apmhongkong",
+  "name": "apm Hong Kong",
+  "city": "Kwun Tong",
+  "region": "Hong Kong",
+  "regionCode": null,
+  "country": "HK",
+  "lat": 22.31198,
+  "lng": 114.224912,
+  "street": "418 Kwun Tong Road",
+  "postalCode": null,
+  "phone": "35728900",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R673.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Sunday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "11:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday",
+     "Friday"
+    ],
+    "opens": "11:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Hong_Kong",
+  "url": "https://www.apple.com/hk/en/retail/apmhongkong/",
+  "nativeName": "Apple apm Hong Kong"
+ },
+ {
+  "storeNumber": "R610",
+  "slug": "newtownplaza",
+  "name": "New Town Plaza",
+  "city": "Sha Tin",
+  "region": "Hong Kong",
+  "regionCode": null,
+  "country": "HK",
+  "lat": 22.38185,
+  "lng": 114.18881,
+  "street": "New Town Plaza Phase 1 L4 18 Sha Tin Centre Street",
+  "postalCode": null,
+  "phone": "38997800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R610.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Sunday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Hong_Kong",
+  "url": "https://www.apple.com/hk/en/retail/newtownplaza/",
+  "nativeName": "Apple New Town Plaza"
+ },
+ {
+  "storeNumber": "R499",
+  "slug": "cantonroad",
+  "name": "Canton Road",
+  "city": "Tsim Sha Tsui",
+  "region": "Hong Kong",
+  "regionCode": null,
+  "country": "HK",
+  "lat": 22.299287,
+  "lng": 114.168796,
+  "street": "100 Canton Road",
+  "postalCode": null,
+  "phone": "39798800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R499.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Monday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   }
+  ],
+  "timezone": "Asia/Hong_Kong",
+  "url": "https://www.apple.com/hk/en/retail/cantonroad/",
+  "nativeName": "Apple Canton Road"
+ }
+]

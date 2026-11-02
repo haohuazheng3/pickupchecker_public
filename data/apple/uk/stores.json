@@ -1,0 +1,1691 @@
+[
+ {
+  "storeNumber": "R363",
+  "slug": "unionsquare",
+  "name": "Union Square",
+  "city": "Aberdeen",
+  "region": "Aberdeen",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 57.143454,
+  "lng": -2.096898,
+  "street": "27/28 Ground Level Mall Union Square",
+  "postalCode": "AB11 5PN",
+  "phone": "01224 287 900",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R363.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/unionsquare/",
+  "nativeName": "Apple Union Square"
+ },
+ {
+  "storeNumber": "R176",
+  "slug": "theoracle",
+  "name": "The Oracle",
+  "city": "Reading",
+  "region": "Berkshire",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.453639,
+  "lng": -0.971324,
+  "street": "The Oracle Shopping Centre Upper Level",
+  "postalCode": "RG1 2AG",
+  "phone": "0118 925 4500",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R176.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Monday",
+     "Tuesday"
+    ],
+    "opens": "09:30:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/theoracle/",
+  "nativeName": "Apple The Oracle"
+ },
+ {
+  "storeNumber": "R393",
+  "slug": "cribbscauseway",
+  "name": "Cribbs Causeway",
+  "city": "Bristol",
+  "region": "Bristol",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.52542,
+  "lng": -2.59556,
+  "street": "Upper Mall The Mall at Cribbs Causeway",
+  "postalCode": "BS34 5DG",
+  "phone": "0117 959 7600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R393.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "09:30:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/cribbscauseway/",
+  "nativeName": "Apple Cribbs Causeway"
+ },
+ {
+  "storeNumber": "R269",
+  "slug": "miltonkeynes",
+  "name": "Milton Keynes",
+  "city": "Milton Keynes",
+  "region": "Buckinghamshire",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 52.04049,
+  "lng": -0.75733,
+  "street": "32 Midsummer Place Midsummer Boulevard",
+  "postalCode": "MK9 3GA",
+  "phone": "01908 856 650",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R269.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Monday"
+    ],
+    "opens": "09:30:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:30:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "09:30:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/miltonkeynes/",
+  "nativeName": "Apple Milton Keynes"
+ },
+ {
+  "storeNumber": "R270",
+  "slug": "grandarcade",
+  "name": "Grand Arcade",
+  "city": "Cambridge",
+  "region": "Cambridgeshire",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 52.20396,
+  "lng": 0.12068,
+  "street": "Grand Arcade Shopping Centre",
+  "postalCode": "CB2 3AX",
+  "phone": "01223 253 600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R270.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Friday",
+     "Tuesday",
+     "Thursday",
+     "Wednesday",
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/grandarcade/",
+  "nativeName": "Apple Grand Arcade"
+ },
+ {
+  "storeNumber": "R334",
+  "slug": "cardiff",
+  "name": "Cardiff",
+  "city": "Cardiff",
+  "region": "Cardiff",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.47896,
+  "lng": -3.17517,
+  "street": "63-66 Grand Arcade St David’s Dewi Sant",
+  "postalCode": "CF10 2EL",
+  "phone": "029 2055 6800",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R334.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Tuesday",
+     "Monday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "09:30:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:30:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/cardiff/",
+  "nativeName": "Apple Cardiff"
+ },
+ {
+  "storeNumber": "R279",
+  "slug": "princesshay",
+  "name": "Princesshay",
+  "city": "Exeter",
+  "region": "Devon",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 50.72457,
+  "lng": -3.52786,
+  "street": "24 Princesshay",
+  "postalCode": "EX1 1GE",
+  "phone": "01392 316 600",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/661/d96/926/01b/745/bb2/072/fbf/982/46c/24ba482b-f034-3f1b-b94d-49ab6f852fcc_R279_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Monday",
+     "Saturday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "09:30:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:30:00",
+    "closes": "16:30:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/princesshay/",
+  "nativeName": "Apple Princesshay"
+ },
+ {
+  "storeNumber": "R545",
+  "slug": "plymouth",
+  "name": "Plymouth",
+  "city": "Plymouth",
+  "region": "Devon",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 50.372101,
+  "lng": -4.138771,
+  "street": "1 Charles Street",
+  "postalCode": "PL1 1EA",
+  "phone": "01752 633 000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R545.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Saturday",
+     "Wednesday",
+     "Thursday",
+     "Monday",
+     "Tuesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:30:00",
+    "closes": "16:30:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/plymouth/",
+  "nativeName": "Apple Plymouth"
+ },
+ {
+  "storeNumber": "R244",
+  "slug": "churchillsquare",
+  "name": "Churchill Square",
+  "city": "Brighton",
+  "region": "East Sussex",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 50.822306,
+  "lng": -0.145871,
+  "street": "Upper Mall, Churchill Square",
+  "postalCode": "BN1 2TE",
+  "phone": "01273 740 500",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R244.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "09:30:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/churchillsquare/",
+  "nativeName": "Apple Churchill Square"
+ },
+ {
+  "storeNumber": "R328",
+  "slug": "edinburgh",
+  "name": "Edinburgh",
+  "city": "Edinburgh",
+  "region": "Edinburgh",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 55.953255,
+  "lng": -3.189934,
+  "street": "10 Princes Street",
+  "postalCode": "EH2 2AN",
+  "phone": "0131 242 8200",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R328.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/edinburgh/",
+  "nativeName": "Apple Edinburgh"
+ },
+ {
+  "storeNumber": "R242",
+  "slug": "lakeside",
+  "name": "Lakeside",
+  "city": "Grays",
+  "region": "Essex",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.48862,
+  "lng": 0.28351,
+  "street": "Lakeside Shopping Centre West Thurrock Way",
+  "postalCode": "RM20 2ZP",
+  "phone": "01708 717 500",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/842/3e1/5ba/edf/750/58f/e08/cb8/567/400/36ccb18e-971b-3f5c-8afc-c547851d1d92_Lakeside_20260911_HC_Hero_2880%20x%201612_large_2x.jpg",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Tuesday",
+     "Monday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/lakeside/",
+  "nativeName": "Apple Lakeside"
+ },
+ {
+  "storeNumber": "R340",
+  "slug": "braehead",
+  "name": "Braehead",
+  "city": "Glasgow",
+  "region": "Glasgow",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 55.876122,
+  "lng": -4.364658,
+  "street": "Braehead Shopping Centre Kings Inch Road",
+  "postalCode": "G51 4BP",
+  "phone": "0141 885 4200",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R340.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:30:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/braehead/",
+  "nativeName": "Apple Braehead"
+ },
+ {
+  "storeNumber": "R135",
+  "slug": "glasgow",
+  "name": "Glasgow",
+  "city": "Glasgow",
+  "region": "Glasgow",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 55.86157,
+  "lng": -4.2541,
+  "street": "147 Buchanan Street",
+  "postalCode": "G1 2JX",
+  "phone": "0141 300 4700",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R135.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/glasgow/",
+  "nativeName": "Apple Glasgow"
+ },
+ {
+  "storeNumber": "R227",
+  "slug": "bentallcentre",
+  "name": "Bentall Centre",
+  "city": "Kingston upon Thames",
+  "region": "Greater London",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.41154,
+  "lng": -0.30475,
+  "street": "The Bentall Centre Wood Street",
+  "postalCode": "KT1 1TP",
+  "phone": "020 8233 3400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R227.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:30:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Monday",
+     "Friday"
+    ],
+    "opens": "09:30:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/bentallcentre/",
+  "nativeName": "Apple Bentall Centre"
+ },
+ {
+  "storeNumber": "R762",
+  "slug": "battersea",
+  "name": "Battersea",
+  "city": "London",
+  "region": "Greater London",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.481717,
+  "lng": -0.144469,
+  "street": "Ground Floor Turbine Hall A Circus Road W",
+  "postalCode": "SW11 8AL",
+  "phone": "020 3062 6700",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/291/f43/56c/14d/b96/c00/fdb/950/7c0/021/3465e750-10de-355f-83bd-ca0c0dee885a_Battersea_2880x1612_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Monday",
+     "Tuesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "12:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/battersea/",
+  "nativeName": "Apple Battersea"
+ },
+ {
+  "storeNumber": "R163",
+  "slug": "brentcross",
+  "name": "Brent Cross",
+  "city": "London",
+  "region": "Greater London",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.576232751094,
+  "lng": -0.2249193191528,
+  "street": "Upper West Mall Brent Cross Shopping Centre",
+  "postalCode": "NW4 3FP",
+  "phone": "020 3126 9200",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R163.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Wednesday",
+     "Thursday",
+     "Tuesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "12:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/brentcross/",
+  "nativeName": "Apple Brent Cross"
+ },
+ {
+  "storeNumber": "R329",
+  "slug": "bromptonroad",
+  "name": "Brompton Road",
+  "city": "London",
+  "region": "Greater London",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.50129,
+  "lng": -0.16096,
+  "street": "17-27 Brompton Road",
+  "postalCode": "SW1X 9LF",
+  "phone": "020 3089 3000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R329.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Saturday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "12:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/bromptonroad/",
+  "nativeName": "Apple Brompton Road"
+ },
+ {
+  "storeNumber": "R245",
+  "slug": "coventgarden",
+  "name": "Covent Garden",
+  "city": "London",
+  "region": "Greater London",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.51217,
+  "lng": -0.12352,
+  "street": "No. 1-7 The Piazza",
+  "postalCode": "WC2E 8HB",
+  "phone": "020 7447 1400",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R245.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "12:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Tuesday",
+     "Thursday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/coventgarden/",
+  "nativeName": "Apple Covent Garden"
+ },
+ {
+  "storeNumber": "R092",
+  "slug": "regentstreet",
+  "name": "Regent Street",
+  "city": "London",
+  "region": "Greater London",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.51424,
+  "lng": -0.14214,
+  "street": "235 Regent Street",
+  "postalCode": "W1B 2EL",
+  "phone": "020 7153 9000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R092.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Thursday",
+     "Monday",
+     "Tuesday",
+     "Friday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "12:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/regentstreet/",
+  "nativeName": "Apple Regent Street"
+ },
+ {
+  "storeNumber": "R410",
+  "slug": "stratfordcity",
+  "name": "Stratford City",
+  "city": "London",
+  "region": "Greater London",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.543998,
+  "lng": -0.006824,
+  "street": "The Arcade Westfield Stratford City",
+  "postalCode": "E20 1EQ",
+  "phone": "020 8277 2200",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R410.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "12:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Friday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/stratfordcity/",
+  "nativeName": "Apple Stratford City"
+ },
+ {
+  "storeNumber": "R226",
+  "slug": "whitecity",
+  "name": "White City",
+  "city": "London",
+  "region": "Greater London",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.5074,
+  "lng": -0.22094,
+  "street": "Westfield London Ariel Way",
+  "postalCode": "W12 7GF",
+  "phone": "020 8433 4600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R226.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "12:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/whitecity/",
+  "nativeName": "Apple White City"
+ },
+ {
+  "storeNumber": "R215",
+  "slug": "manchesterarndale",
+  "name": "Manchester Arndale",
+  "city": "Manchester",
+  "region": "Greater Manchester",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 53.48384,
+  "lng": -2.24067,
+  "street": "New Cannon Street Mall Arndale Centre",
+  "postalCode": "M4 3AJ",
+  "phone": "0161 455 1900",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R215.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:30:00",
+    "closes": "17:30:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/manchesterarndale/",
+  "nativeName": "Apple Manchester Arndale"
+ },
+ {
+  "storeNumber": "R136",
+  "slug": "traffordcentre",
+  "name": "Trafford Centre",
+  "city": "Manchester",
+  "region": "Greater Manchester",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 53.465385,
+  "lng": -2.3463136,
+  "street": "130 Peel Avenue",
+  "postalCode": "M17 8BL",
+  "phone": "0161 240 1000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R136.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Thursday",
+     "Friday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "10:00:00",
+    "closes": "22:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "12:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/traffordcentre/",
+  "nativeName": "Apple Trafford Centre"
+ },
+ {
+  "storeNumber": "R482",
+  "slug": "festivalplace",
+  "name": "Festival Place",
+  "city": "Basingstoke",
+  "region": "Hampshire",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.26526,
+  "lng": -1.08538,
+  "street": "Upper Level Queen Anne’s Walk",
+  "postalCode": "RG21 7BE",
+  "phone": "01256 696 000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R482.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "09:30:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/festivalplace/",
+  "nativeName": "Apple Festival Place"
+ },
+ {
+  "storeNumber": "R174",
+  "slug": "southampton",
+  "name": "Southampton",
+  "city": "Southampton",
+  "region": "Hampshire",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 50.90393,
+  "lng": -1.40536,
+  "street": "Upper Shopping Westquay Shopping Centre",
+  "postalCode": "SO15 1QE",
+  "phone": "023 8030 3100",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R174.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Friday",
+     "Monday",
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/southampton/",
+  "nativeName": "Apple Southampton"
+ },
+ {
+  "storeNumber": "R527",
+  "slug": "watford",
+  "name": "Watford",
+  "city": "Watford",
+  "region": "Hertfordshire",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.655216,
+  "lng": -0.39291,
+  "street": "Harlequin Watford Units 156 - 158",
+  "postalCode": "WD17 2TN",
+  "phone": "01923 421 700",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/eaa/9a5/3fc/eaf/8f9/c93/767/2f4/ed6/cf7/caf46a42-95a6-3920-96d4-3e9dd6ccc335_R527_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/watford/",
+  "nativeName": "Apple Watford"
+ },
+ {
+  "storeNumber": "R496",
+  "slug": "bromley",
+  "name": "Bromley",
+  "city": "Bromley",
+  "region": "Kent",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.40263,
+  "lng": 0.01568,
+  "street": "The Glades Shopping Centre High Street",
+  "postalCode": "BR1 1DN",
+  "phone": "020 8225 5500",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R496.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Monday",
+     "Tuesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/bromley/",
+  "nativeName": "Apple Bromley"
+ },
+ {
+  "storeNumber": "R113",
+  "slug": "bluewater",
+  "name": "Bluewater",
+  "city": "Greenhithe",
+  "region": "Kent",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.43913,
+  "lng": 0.26941,
+  "street": "Upper Mall",
+  "postalCode": "DA9 9ST",
+  "phone": "01322 640 100",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R113.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Monday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/bluewater/",
+  "nativeName": "Apple Bluewater"
+ },
+ {
+  "storeNumber": "R308",
+  "slug": "highcross",
+  "name": "Highcross",
+  "city": "Leicester",
+  "region": "Leicestershire",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 52.637029,
+  "lng": -1.137136,
+  "street": "Upper Mall, Highcross",
+  "postalCode": "LE1 4FT",
+  "phone": "0116 201 1900",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R308.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Wednesday",
+     "Thursday",
+     "Monday",
+     "Tuesday"
+    ],
+    "opens": "09:30:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/highcross/",
+  "nativeName": "Apple Highcross"
+ },
+ {
+  "storeNumber": "R239",
+  "slug": "liverpool",
+  "name": "Liverpool",
+  "city": "Liverpool",
+  "region": "Merseyside",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 53.4034,
+  "lng": -2.9872,
+  "street": "Liverpool One Upper Level, South John Street",
+  "postalCode": "L1 8BU",
+  "phone": "0151 472 7200",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R239.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Monday"
+    ],
+    "opens": "09:30:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/liverpool/",
+  "nativeName": "Apple Liverpool"
+ },
+ {
+  "storeNumber": "R391",
+  "slug": "norwich",
+  "name": "Norwich",
+  "city": "Norwich",
+  "region": "Norfolk",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 52.6259,
+  "lng": 1.28956,
+  "street": "Merchants Hall Chantry Place",
+  "postalCode": "NR2 1SU",
+  "phone": "01603 216 600",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R391.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Monday",
+     "Tuesday",
+     "Wednesday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "10:30:00",
+    "closes": "16:30:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/norwich/",
+  "nativeName": "Apple Norwich"
+ },
+ {
+  "storeNumber": "R313",
+  "slug": "belfast",
+  "name": "Belfast",
+  "city": "Belfast",
+  "region": "Northern Ireland",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 54.59907,
+  "lng": -5.92852,
+  "street": "3 Cornmarket",
+  "postalCode": "BT1 4DA",
+  "phone": "028 9016 1900",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R313.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Wednesday",
+     "Monday",
+     "Tuesday",
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "13:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/belfast/",
+  "nativeName": "Apple Belfast"
+ },
+ {
+  "storeNumber": "R335",
+  "slug": "southgate",
+  "name": "SouthGate",
+  "city": "Bath",
+  "region": "Somerset",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 51.3788290897083,
+  "lng": -2.35888078808784,
+  "street": "SU39, Southgate Place",
+  "postalCode": "BA1 1AP",
+  "phone": "01225 487 000",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/edb/cb0/577/61a/a88/ec9/fba/f76/561/bce/8fe2ad62-c351-30a1-aba0-a4390bfa32f5_Southgate_20261028_HC_Hero_2880%20x%201612_large_2x.jpg",
+  "hours": [
+   {
+    "days": [
+     "Wednesday",
+     "Tuesday",
+     "Thursday",
+     "Monday",
+     "Friday",
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/southgate/",
+  "nativeName": "Apple SouthGate"
+ },
+ {
+  "storeNumber": "R153",
+  "slug": "meadowhall",
+  "name": "Meadowhall",
+  "city": "Sheffield",
+  "region": "South Yorkshire",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 53.41398,
+  "lng": -1.41171,
+  "street": "Upper High Street Meadowhall Shopping Centre",
+  "postalCode": "S9 1EN",
+  "phone": "0114 212 1000",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R153.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday"
+    ],
+    "opens": "10:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/meadowhall/",
+  "nativeName": "Apple Meadowhall"
+ },
+ {
+  "storeNumber": "R423",
+  "slug": "metrocentre",
+  "name": "Metrocentre",
+  "city": "Gateshead",
+  "region": "Tyne and Wear",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 54.95689,
+  "lng": -1.67187,
+  "street": "Metrocentre",
+  "postalCode": "NE11 9YG",
+  "phone": "0191 402 2500",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/762/e90/d4e/00d/2a7/84c/2e2/5e5/df4/f37/7dfde08a-e561-35dc-9c76-d6bfd62b9c37_R423_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Friday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Monday"
+    ],
+    "opens": "09:00:00",
+    "closes": "21:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/metrocentre/",
+  "nativeName": "Apple Metrocentre"
+ },
+ {
+  "storeNumber": "R341",
+  "slug": "eldonsquare",
+  "name": "Eldon Square",
+  "city": "Newcastle upon Tyne",
+  "region": "Tyne and Wear",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 54.97296,
+  "lng": -1.61683,
+  "street": "St Andrew’s Way",
+  "postalCode": "NE1 7XD",
+  "phone": "0191 270 6100",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R341.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Wednesday",
+     "Tuesday",
+     "Saturday",
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/eldonsquare/",
+  "nativeName": "Apple Eldon Square"
+ },
+ {
+  "storeNumber": "R118",
+  "slug": "birmingham",
+  "name": "Birmingham",
+  "city": "Birmingham",
+  "region": "West Midlands",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 52.479041,
+  "lng": -1.898282,
+  "street": "128 New Street",
+  "postalCode": "B2 4JH",
+  "phone": "0121 224 2100",
+  "image": "https://rtlimages.apple.com/cmc/dieter/store/16_9/R118.png?resize=2880:1612&output-format=jpg&output-quality=85&interpolation=progressive-bicubic",
+  "hours": [
+   {
+    "days": [
+     "Saturday",
+     "Wednesday",
+     "Monday",
+     "Tuesday",
+     "Thursday",
+     "Friday"
+    ],
+    "opens": "09:00:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/birmingham/",
+  "nativeName": "Apple Birmingham"
+ },
+ {
+  "storeNumber": "R255",
+  "slug": "touchwoodcentre",
+  "name": "Touchwood Centre",
+  "city": "Solihull",
+  "region": "West Midlands",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 52.4125,
+  "lng": -1.77888888888889,
+  "street": "The Touchwood Centre Crescent Arcade",
+  "postalCode": "B91 3GJ",
+  "phone": "0121 224 1300",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/d08/dd3/ae3/1cb/333/f10/86d/373/b0a/e8e/9cc33417-2125-3c9d-8e09-7f29291d80bb_Gallery_01_large_2x_large_2x.jpg",
+  "hours": [
+   {
+    "days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Friday"
+    ],
+    "opens": "09:30:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Saturday"
+    ],
+    "opens": "09:00:00",
+    "closes": "18:00:00"
+   },
+   {
+    "days": [
+     "Thursday"
+    ],
+    "opens": "09:30:00",
+    "closes": "19:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/touchwoodcentre/",
+  "nativeName": "Apple Touchwood Centre"
+ },
+ {
+  "storeNumber": "R372",
+  "slug": "trinityleeds",
+  "name": "Trinity Leeds",
+  "city": "Leeds",
+  "region": "West Yorkshire",
+  "regionCode": null,
+  "country": "GB",
+  "lat": 53.79655,
+  "lng": -1.54379,
+  "street": "Albion Street 209 Trinity Leeds",
+  "postalCode": "LS1 5AR",
+  "phone": "0113 251 1000",
+  "image": "https://digitalassets-retail.cdn-apple.com//retail-image-server/352/f40/ea8/60f/79f/b6e/e81/30c/00f/8b9/a09ebc17-af91-3f24-badd-6d1ed63299a9_PNG_TrinityLeeds_hero_2880px_large_2x.png",
+  "hours": [
+   {
+    "days": [
+     "Tuesday",
+     "Friday",
+     "Saturday",
+     "Wednesday",
+     "Thursday",
+     "Monday"
+    ],
+    "opens": "09:00:00",
+    "closes": "20:00:00"
+   },
+   {
+    "days": [
+     "Sunday"
+    ],
+    "opens": "11:00:00",
+    "closes": "17:00:00"
+   }
+  ],
+  "timezone": "Europe/London",
+  "url": "https://www.apple.com/uk/retail/trinityleeds/",
+  "nativeName": "Apple Trinity Leeds"
+ }
+]

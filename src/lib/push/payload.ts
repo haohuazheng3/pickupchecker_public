@@ -3,7 +3,17 @@
  * so keep them small: push services cap payloads at 4 KB and iOS shows ~2 lines of body.
  */
 import type { AlertLine } from "../mail/resend";
-import { appleBuyUrl, storePath, stateCodeOf, appleName } from "../apple/catalog";
+import { appleBuyUrl, storePath, storeLocality, appleName } from "../apple/catalog-us";
+import { COUNTRIES_WITH_PAGES } from "../apple/countries";
+
+/**
+ * Apple's pickup quote, only where it is English: the US answers "Available Today", other countries answer in
+ * their own language ("本日", "Heute verfügbar"), which would sit oddly in an English alert. Elsewhere the alert
+ * says what it always means — in stock for pickup — and leaves the quote out.
+ */
+export function alertQuote(line: Pick<AlertLine, "store" | "quote">): string | null {
+  return (line.store.country ?? "us") === "us" ? line.quote : null;
+}
 
 export type PushKind = "restock" | "test";
 
@@ -42,17 +52,20 @@ export function restockTag(watchId: string, storeNumber: string, partNumber: str
 export function restockPayload(lines: AlertLine | AlertLine[], watchId: string, now = new Date()): PushPayload {
   const first = Array.isArray(lines) ? lines[0] : lines;
   const title = `In stock: ${first.item.model} ${first.item.storage} ${first.item.color}`;
-  const where = `${appleName(first.store)} · ${first.store.city}, ${stateCodeOf(first.store)}`;
-  const body = `${where}${first.quote ? ` — ${first.quote}` : ""}. Tap to reserve on apple.com.`;
+  // "Apple SoHo · New York, NY"; elsewhere "Apple Regent Street · London, UK".
+  const where = `${appleName(first.store)} · ${storeLocality(first.store)}`;
+  const quote = alertQuote(first);
+  const body = `${where}${quote ? ` — ${quote}` : ""}. Tap to reserve on apple.com.`;
   return {
     v: 1,
     kind: "restock",
     title: title.slice(0, 120),
     body: body.slice(0, 200),
-    url: `${storePath(first.store)}?from=push`,
+    // The store's page where its country's pages are live; elsewhere the account page (never a 404).
+    url: COUNTRIES_WITH_PAGES.has(first.store.country ?? "us") ? `${storePath(first.store)}?from=push` : "/account?from=push",
     tag: restockTag(watchId, first.store.storeNumber, first.item.partNumber),
     at: now.toISOString(),
-    data: { buyUrl: appleBuyUrl(first.item), storeNumber: first.store.storeNumber, partNumber: first.item.partNumber },
+    data: { buyUrl: appleBuyUrl(first.item, first.store.country), storeNumber: first.store.storeNumber, partNumber: first.item.partNumber },
   };
 }
 

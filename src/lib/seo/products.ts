@@ -11,7 +11,7 @@
  * ("iphone-duo-night-sky") or one exact configuration ("iphone-duo-512gb-night-sky"): 3 + 12 + 10 + 40 = 65.
  * Every page links to its neighbours along both axes, so moving between them is one tap.
  */
-import { MODELS, STORES, STATE_CODES, catalogFor, citiesWithStores, citySlug, colorsFor, stateSlug, storagesFor, storeTimeZone, type ModelKey, type Store, appleName } from "../apple/catalog";
+import { MODELS, STORES, STATE_CODES, catalogFor, citiesWithStores, citySlug, colorsFor, stateSlug, storagesFor, storeTimeZone, type ModelKey, type Store, appleName } from "../apple/catalog-us";
 
 export type ProductKind = "model" | "storage" | "color" | "config";
 
