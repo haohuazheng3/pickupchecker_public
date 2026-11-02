@@ -42,7 +42,7 @@ export default function Pricing() {
           );
         })}
       </div>
-      <p className="mt-6 text-sm text-ink-3">Stripe billing, card or Link. Plan changes are prorated. Not for you? <Link href="/refunds" className="underline">Refund within 7 days</Link>.</p>
+      <p className="mt-6 text-sm text-ink-3">Stripe billing, card or Link. Plan changes are prorated. Not for you? <Link href="/refunds" className="underline">Full refund within 7 days</Link> if no restock alert has reached you yet.</p>
     </div>
   );
 }

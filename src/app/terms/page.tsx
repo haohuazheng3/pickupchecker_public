@@ -9,7 +9,7 @@ export default function Terms() {
       <h2>Accounts</h2>
       <p>You sign in with a one-time email code. Keep access to that mailbox secure; you are responsible for activity under your account.</p>
       <h2>Subscriptions</h2>
-      <p>Browsing live stock, the map and the restock log is free. Alerts need a plan: Plus (US$5/month, 10 alerts), Pro (US$10/month, 20) or Max (US$20/month, 50), billed in advance by Stripe and renewing monthly until cancelled. Cancel anytime; alerts keep sending to the end of the paid period, then stop. Plan changes are prorated. Prices may change with 30 days&apos; notice.</p>
+      <p>Browsing live stock, the map and the restock log is free. Alerts need a plan: Plus (US$5/month, 10 alerts), Pro (US$10/month, 20) or Max (US$20/month, 50), billed in advance by Stripe and renewing monthly until cancelled. Cancel anytime; alerts keep sending to the end of the paid period, then stop. Plan changes are prorated. Refunds follow the <a href="/refunds">Refund Policy</a>: within 7 days of a payment, as long as no restock alert has reached you since. Prices may change with 30 days&apos; notice.</p>
       <h2>Acceptable use</h2>
       <p>Personal, non-commercial use. No scraping, reselling of alerts, or automated accounts.</p>
       <h2>Availability and accuracy</h2>
