@@ -6,12 +6,21 @@
 package_update: true
 package_upgrade: true
 packages: [git, curl, ca-certificates, ufw, fail2ban, unattended-upgrades]
+# Key-only SSH: the root password provision.sh sets is random and thrown away, and password guesses against
+# root showed up every few minutes. Lost keys: Linode's LISH console.
+ssh_pwauth: false
 users:
   - name: poller
     system: true
     shell: /usr/sbin/nologin
     homedir: /opt/pickupchecker
 write_files:
+  # Read before the main sshd_config (first value wins), so cloud-init's and the image's own settings can't undo it.
+  - path: /etc/ssh/sshd_config.d/10-pickupchecker.conf
+    content: |
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin prohibit-password
   - path: /etc/sysctl.d/90-anyip.conf
     content: |
       net.ipv6.ip_nonlocal_bind = 1
