@@ -262,8 +262,8 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
           // after the sighting instead of ~15 s), and a one-response blip is refuted on the spot.
           const firstAvailable = r.pending.filter((p) => p.status === "available");
           if (firstAvailable.length && opts.confirm !== false) {
-            // Same timeout as the round's own requests (the US passes none: 4.5 s as always); other countries
-            // share a bound on confirms in flight.
+            // Same timeout as the round's own requests (the poller's US sweep passes 6 s; without one, 4.5 s);
+            // other countries share a bound on confirms in flight.
             const confirmOpts = { egress: opts.egress, label: id, known, notified, timeoutMs: opts.timeoutMs, ...(intl ? { gate: intlConfirmGate } : {}) };
             notifyJobs.push(confirmPendingRestocks(firstAvailable, confirmOpts).then((c) => { logRows.push(...c.rows); confirmed += c.confirmed; requests += c.requests; }).catch(() => undefined));
           }

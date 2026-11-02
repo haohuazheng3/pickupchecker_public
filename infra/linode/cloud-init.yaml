@@ -141,13 +141,50 @@ write_files:
       #!/bin/bash
       # Check out main (or the commit given) and restart the poller (run by root; also used by the first
       # boot and by autoupdate.sh).
+      # A release has to prove itself: within GATE_SEC the new process must finish two full US sweeps that
+      # each covered ≥ 250 of the 269 stores. If it does not, the previous commit goes back in and is gated
+      # the same way: healthy → the release was bad, stay on the previous one; also unhealthy → the code is
+      # not the cause (Apple, the network), so the release goes back in. The owner is mailed either way.
       set -euo pipefail
-      cd /opt/pickupchecker/app
-      git fetch -q origin main && git reset -q --hard "${1:-origin/main}"
-      /usr/local/bin/npm ci --no-audit --no-fund --omit=dev --ignore-scripts >/dev/null
-      /usr/local/bin/npm install --no-save --no-audit --no-fund tsx >/dev/null
-      chown -R poller:poller /opt/pickupchecker/app
-      systemctl restart pickupchecker-poller
+      APP=/opt/pickupchecker/app; GATE_SEC=${GATE_SEC:-150}
+      cd "$APP"
+      prev=$(git rev-parse HEAD 2>/dev/null || true)
+      install() {
+        git fetch -q origin main && git reset -q --hard "$1"
+        /usr/local/bin/npm ci --no-audit --no-fund --omit=dev --ignore-scripts >/dev/null
+        /usr/local/bin/npm install --no-save --no-audit --no-fund tsx >/dev/null
+        chown -R poller:poller "$APP"
+        systemctl restart pickupchecker-poller
+      }
+      healthy() {
+        local since=$(date +%s) n
+        while [ $(( $(date +%s) - since )) -lt "$GATE_SEC" ]; do
+          sleep 10
+          n=$(sudo -u postgres psql -d pickupchecker -qXtAc "select count(*) from sweeps where mode = 'full' and started_at > to_timestamp($since) and finished_at is not null and stores_covered >= 250" 2>/dev/null || echo 0)
+          [ "${n:-0}" -ge 2 ] && return 0
+        done
+        return 1
+      }
+      mail() {
+        local url token
+        url=$(sed -n 's/^MAIL_WORKER_URL=//p' /opt/pickupchecker/poller.env | head -1 | sed 's/^"\(.*\)"$/\1/')
+        token=$(sed -n 's/^MAIL_WORKER_TOKEN=//p' /opt/pickupchecker/poller.env | head -1 | sed 's/^"\(.*\)"$/\1/')
+        echo "$1: $2"
+        [ -n "$url" ] && [ -n "$token" ] || return 0
+        python3 -c 'import json,sys; print(json.dumps({"subject": sys.argv[1], "text": sys.argv[2]}))' "$1" "$2" |
+          curl -fsS -m 40 -X POST "${url%/}/notify" -H "Authorization: Bearer ${token}" -H "content-type: application/json" --data-binary @- >/dev/null || echo "owner email failed"
+      }
+      install "${1:-origin/main}"
+      new=$(git rev-parse HEAD)
+      { [ -n "$prev" ] && [ "$prev" != "$new" ] && [ "$GATE_SEC" -gt 0 ]; } || exit 0
+      healthy && exit 0
+      install "$prev"
+      if healthy; then
+        mail "[PickupChecker] Poller release ${new:0:7} rolled back" "The poller on ${new:0:7} did not finish two full sweeps (≥ 250 stores each) within ${GATE_SEC} s. ${prev:0:7} is running again and polling normally. The site may expect the newer poller code: fix the release and deploy again."
+      else
+        install "$new"
+        mail "[PickupChecker] Poller unhealthy on both ${new:0:7} and ${prev:0:7}" "Neither release finished two full sweeps within ${GATE_SEC} s, so the release is not the cause (Apple answers, the IPv6 route, the database). ${new:0:7} is running again. See /admin/poller."
+      fi
   - path: /opt/pickupchecker/autoupdate.sh
     permissions: "0755"
     content: |

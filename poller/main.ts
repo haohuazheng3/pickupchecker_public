@@ -7,7 +7,9 @@
  *    (instant confirm) so an alert follows a sighting in ~1–2 s. Runs only in full mode (IPv6 egress).
  *  • egress "ipv6": each request binds a fresh random address inside IPV6_PREFIX (/64 or /56) that
  *    was routed to this host (AnyIP) — Apple counts per /128, so the per-IP budget never bites
- *  • a failed request is retried once at the end of the sweep from a fresh address (sweep.ts)
+ *  • a failed request is retried once at the end of the sweep from a fresh address (sweep.ts). An anchor request
+ *    gives up after SWEEP_TIMEOUT_MS (6 s; answers take 1.8 s, 99.99% under 4.5 s): with the old 15 s one hung
+ *    request held its whole round to ~25 s (69 rounds a day, measured 2026-11-02)
  *  • adaptive: 541 share > 25% ⇒ back off and alert; ≥ 90% failing for 2 rounds (541s, a dead route,
  *    anything) ⇒ switch to the spare egress — the host's own IPv4, then the Vercel function — spent on
  *    watched stores first (fallback.ts); full mode is probed again every 15 min
@@ -24,9 +26,11 @@
  *  • a sweep stuck for STUCK_MS exits the process, and systemd starts a fresh one. A round of the other
  *    countries stuck for INTL_STUCK_MS only restarts their own loop (the US sweep never restarts for them).
  *
- *  Env: DATABASE_URL, RESEND_API_KEY, IPV6_PREFIX (e.g. 2600:3c0a:e000:1b::/56, or "auto" = read
+ *  Env: DATABASE_URL (the poller's own role, which has reserved connection slots: infra/linode/postgres.sh),
+ *       RESEND_API_KEY, IPV6_PREFIX (e.g. 2600:3c0a:e000:1b::/56, or "auto" = read
  *       IPV6_PREFIX_FILE written by anyip.sh, else derive the /64 of the first global address), SITE_URL,
- *       POLLER_TOKEN (for the vercel egress fallback), CADENCE_SEC, CONCURRENCY, HOST_LABEL,
+ *       POLLER_TOKEN (for the vercel egress fallback), CADENCE_SEC, CONCURRENCY, SWEEP_TIMEOUT_MS (6000),
+ *       HOST_LABEL,
  *       FAST_CADENCE_SEC (5; 0 disables the fast lane), FAST_CONCURRENCY (8), FAST_TIMEOUT_MS (4500),
  *       POLL_COUNTRIES (unset or "" = none; "ca,uk" = those; "all" = all 18), INTL_CADENCE_SEC (15),
  *       INTL_CONCURRENCY (12), INTL_TIMEOUT_MS (6000)
@@ -50,6 +54,7 @@ import { pollerCodeHash } from "./codeHash.mjs";
 
 const CADENCE_SEC = Number(process.env.CADENCE_SEC ?? 15);
 const CONCURRENCY = Number(process.env.CONCURRENCY ?? 14);
+const SWEEP_TIMEOUT_MS = Number(process.env.SWEEP_TIMEOUT_MS ?? 6000);
 const FAST_CADENCE_SEC = Number(process.env.FAST_CADENCE_SEC ?? 5);
 const FAST_CONCURRENCY = Number(process.env.FAST_CONCURRENCY ?? 8);
 const FAST_TIMEOUT_MS = Number(process.env.FAST_TIMEOUT_MS ?? 4500);
@@ -61,7 +66,7 @@ const HOST = process.env.HOST_LABEL ?? os.hostname();
 const PREFIX = resolvePrefix(process.env.IPV6_PREFIX ?? "");
 const SITE = process.env.SITE_URL ?? "https://pickupchecker.com";
 const POLLER_TOKEN = process.env.POLLER_TOKEN ?? "";
-/** Longer than the worst honest sweep (84 requests all timing out: 6 waves × 15 s), short enough to matter. */
+/** Longer than the worst honest sweep (84 requests all timing out, then retried: 2 × 6 waves × 6 s), short enough to matter. */
 const STUCK_MS = 180_000;
 
 /**
@@ -421,7 +426,8 @@ async function main() {
       // Spare identities have a few requests per half hour: spend them on watched, stale pairs first.
       // About 50 requests per 35 min between the two (25 each): one every 40 s spreads them evenly.
       const tasks = egress === spare ? (await fallbackOrder(buildTasks()).catch(() => buildTasks())).slice(0, 1) : undefined;
-      const r = await runSweep({ egress, tasks, concurrency: mode === "full" ? CONCURRENCY : 1, mode, host: HOST, retryFailed: egress !== spare, confirm: egress !== spare });
+      // The spare egress keeps the 15 s default (the Vercel hop adds its own latency).
+      const r = await runSweep({ egress, tasks, concurrency: mode === "full" ? CONCURRENCY : 1, mode, host: HOST, retryFailed: egress !== spare, confirm: egress !== spare, ...(egress === spare ? {} : { timeoutMs: SWEEP_TIMEOUT_MS }) });
       const throttledShare = r.requests ? r.throttled / r.requests : 0;
       const failedShare = r.tasks ? r.unresolved / r.tasks : 0;
       await writeHeartbeat({

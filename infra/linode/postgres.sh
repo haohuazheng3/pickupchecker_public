@@ -7,7 +7,8 @@
 #   scp infra/linode/postgres.sh root@HOST:/root/ && ssh root@HOST bash /root/postgres.sh
 #
 # Leaves, root-only: /root/pg-secrets/<db>.url (remote: TLS to this host's IPv4), /root/pg-secrets/<db>-local.url
-# (loopback, for the poller) and /root/pg-ca/ca.crt (the site pins it as DATABASE_CA). Copy db-maintenance.sh
+# (loopback), /root/pg-secrets/poller-local.url (the poller's own role, with reserved connections) and
+# /root/pg-ca/ca.crt (the site pins it as DATABASE_CA). Copy db-maintenance.sh
 # next to this script to (re)install the daily maintenance. Postgres restarts only when its settings change.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -51,12 +52,16 @@ if ! openssl x509 -in "$CONF/server.crt" -noout -ext subjectAltName 2>/dev/null 
   chown postgres:postgres "$CONF/server.key" "$CONF/server.crt"; chmod 600 "$CONF/server.key"
 fi
 
-# Sized for a 1 GB machine; few connections (the site keeps 3 per instance, the poller 8). UTC like Neon.
+# Sized for a 1 GB machine. Connections: the site keeps up to 3 per Vercel instance, the poller 8. A burst of
+# instances once took all 50 slots for a minute (2026-11-01 01:48, 417 refused) and the poller's writes failed
+# with them, so slots are now reserved for the poller's own role (reserved_connections, Postgres 16+): the site
+# can never starve polling and alerts. UTC like Neon.
 restart=0; reload=0
 put "$CONF/conf.d/pickupchecker.conf" <<CONF && restart=1
 listen_addresses = '*'
 port = 5432
-max_connections = 50
+max_connections = 100
+reserved_connections = 10
 shared_buffers = 96MB
 effective_cache_size = 384MB
 work_mem = 4MB
@@ -130,6 +135,14 @@ for db in "${DBS[@]}"; do
    printf 'postgres://%s:%s@%s:5432/%s' "$db" "$(cat "$pw")" "$IP4" "$db" > "$SECRETS/$db.url"
    printf 'postgres://%s:%s@127.0.0.1:5432/%s' "$db" "$(cat "$pw")" "$db" > "$SECRETS/$db-local.url")
 done
+
+# The poller's own login (loopback only): a member of pickupchecker, so it has exactly that role's rights, plus
+# the reserved connection slots. poller.env's DATABASE_URL takes /root/pg-secrets/poller-local.url.
+pw="$SECRETS/poller.pw"
+[ -s "$pw" ] || (umask 077; openssl rand -base64 64 | tr -dc 'A-Za-z0-9' | head -c 40 > "$pw")
+sudo -u postgres psql -qtAc "SELECT 1 FROM pg_roles WHERE rolname = 'poller'" | grep -q 1 || sudo -u postgres psql -qc "CREATE ROLE poller LOGIN"
+printf "ALTER ROLE poller WITH LOGIN PASSWORD :'pw';\nGRANT pickupchecker TO poller;\nGRANT pg_use_reserved_connections TO poller;\n" | sudo -u postgres psql -q -v pw="$(cat "$pw")" >/dev/null
+(umask 077; printf 'postgres://poller:%s@127.0.0.1:5432/pickupchecker' "$(cat "$pw")" > "$SECRETS/poller-local.url")
 
 ufw allow 5432/tcp >/dev/null
 
