@@ -13,7 +13,9 @@ import { STOCK_CHANGED } from "./LiveChecked";
 
 const AWAY_MS = 60_000;
 const OPEN_MS = 5 * 60_000;
-const MIN_GAP_MS = 10_000;
+// A refresh also re-prefetches every link on screen (router.refresh clears the router cache: 6 header links,
+// measured on production), so stock changes re-render at most twice a minute.
+const MIN_GAP_MS = 30_000;
 
 export function FreshOnReturn() {
   const router = useRouter();
