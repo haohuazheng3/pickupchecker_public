@@ -80,3 +80,21 @@ describe("promoteStep — a takeover needs a minute of agreement from two vantag
     expect(promoteStep({ misses: 5 }, true, null)).toMatchObject({ promote: false, next: { misses: 0 } });
   });
 });
+
+describe("standbyVerdict — the owner hears about a broken standby", async () => {
+  const { standbyVerdict } = await import("@/lib/stock/cluster");
+  const sb = { host: "linode-2", role: "standby" as const, duties: "intl", at: ago(10), replica: { status: "streaming", lagSec: 0.4 } };
+  it("ok while it reports and streams", () => {
+    expect(standbyVerdict([sb], now).state).toBe("ok");
+  });
+  it("none without a standby", () => {
+    expect(standbyVerdict([{ ...sb, role: "primary" }], now).state).toBe("none");
+  });
+  it("down when its record is stale", () => {
+    expect(standbyVerdict([{ ...sb, at: ago(90) }], now).state).toBe("down");
+  });
+  it("lagging when the replica stops streaming or falls behind", () => {
+    expect(standbyVerdict([{ ...sb, replica: { status: "waiting", lagSec: 1 } }], now).state).toBe("lagging");
+    expect(standbyVerdict([{ ...sb, replica: { status: "streaming", lagSec: 120 } }], now).state).toBe("lagging");
+  });
+});

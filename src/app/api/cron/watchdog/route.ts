@@ -9,7 +9,7 @@ import { PARTIAL_SEC, freshness, intlVerdict, intlWatchStep, pollerVerdict, type
 import type { CountryCode } from "@/lib/apple/countries";
 import { CAPACITY_IDLE, CLEAR_RUNS, FAST_STORES_WARN, ROUND_WINDOW_MIN, capacityReasons, capacityStep, recentRounds, watchedLagP90, type CapacityState } from "@/lib/stock/capacity";
 import { SPEED } from "@/lib/plans";
-import { intlRunner } from "@/lib/stock/cluster";
+import { intlRunner, readAlive, standbyVerdict } from "@/lib/stock/cluster";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,6 +63,7 @@ export async function GET(req: Request) {
     if (hb && hb.value.mode !== "degraded" && (v.state === "ok" || v.state === "partial")) {
       await watchCapacity(hb.value, now).catch((e) => recordError("web", `watchdog (capacity) failed: ${errorMessage(e)}`));
     }
+    await watchStandby(now).catch((e) => recordError("web", `watchdog (standby) failed: ${errorMessage(e)}`));
 
     if (v.state === "silent" || v.state === "blind") {
       const firstTime = !wd.down || wd.kind !== v.state;
@@ -130,6 +131,33 @@ async function watchIntl(iv: IntlVerdict | null, judged: boolean, now: Date, usS
     await notifyOwner(`[PickupChecker] Other countries are being checked again`, `Stock checks recovered in ${(st.countries ?? []).join(", ").toUpperCase() || "every country"} (failing since ${st.since ?? "?"}).`).catch(() => undefined);
   }
   if (step.write) await writeState("watchdog:intl", { ...step.next });
+}
+
+/**
+ * The standby host (state key "watchdog:standby"): its alive record stale, or its replica not streaming / behind,
+ * for STANDBY_RUNS runs in a row → one mail; one when it is back. Nothing breaks for users meanwhile (the primary
+ * takes the other countries back by itself), but without a healthy standby there is no takeover.
+ */
+const STANDBY_RUNS = 3;
+async function watchStandby(now: Date): Promise<void> {
+  // A day's window, so a standby that died long ago still counts as part of the setup until it is removed.
+  const v = standbyVerdict(await readAlive(24 * 60), now);
+  if (v.state === "none") return;
+  const st = (await readState<{ runs: number; mailed: boolean; since?: string | null }>("watchdog:standby"))?.value ?? { runs: 0, mailed: false };
+  const bad = v.state !== "ok";
+  const runs = bad ? st.runs + 1 : 0;
+  let mailed = st.mailed, since = st.since ?? null;
+  if (bad && runs >= STANDBY_RUNS && !st.mailed) {
+    mailed = true; since = now.toISOString();
+    await logOps("cron", "warn", `standby ${v.state}: ${v.summary}`, { host: v.host });
+    await notifyOwner(`[PickupChecker] Standby ${v.host ?? ""} is ${v.state === "down" ? "down" : "not keeping up"}`, `${v.summary}.\nUsers are not affected: the primary polls the other countries again by itself. But until the standby is back there is no automatic takeover if the primary fails. Check the host (systemctl status pickupchecker-poller postgresql) and /admin.`).catch(() => undefined);
+  } else if (!bad && st.mailed) {
+    mailed = false;
+    await logOps("cron", "info", `standby back: ${v.summary}`, { host: v.host });
+    await notifyOwner(`[PickupChecker] Standby ${v.host ?? ""} is back`, `${v.summary} (it was out since ${st.since ?? "?"}).`).catch(() => undefined);
+    since = null;
+  }
+  if (runs !== st.runs || mailed !== st.mailed) await writeState("watchdog:standby", { runs, mailed, since });
 }
 
 /** Capacity early warning (state key "watchdog:capacity"; the rules are capacity.ts's). */

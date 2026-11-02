@@ -160,9 +160,10 @@ export async function overview(country: CountryCode = "us") {
     // country's requests per round (two batches per store) minus the failures; fast-lane requests are logged.
     // Rounds count only for a country the poller says it polls (heartbeat): sweeps rows do not name countries,
     // and with POLL_COUNTRIES="ca,uk" a German page must not claim the round's checks. (A country resting after a
-    // failed round still counts its rounds here: an overstatement for at most its backoff.)
-    const [hb] = await d.select({ value: schema.pollerState.value }).from(schema.pollerState).where(eq(schema.pollerState.key, "heartbeat")).limit(1);
-    const polled = ((hb?.value as { intl?: { countries?: string[] } } | undefined)?.intl?.countries ?? []).includes(country);
+    // failed round still counts its rounds here: an overstatement for at most its backoff.) The other countries
+    // may run on the standby host: its alive record carries their stats then.
+    const states = (await d.execute(sql`select value from poller_state where key = 'heartbeat' or (key like 'alive:%' and updated_at > now() - interval '2 minutes')`)).rows as { value: { intl?: { countries?: string[] } | null } }[];
+    const polled = states.some((s) => (s.value.intl?.countries ?? []).includes(country));
     const [r] = polled ? await d.select({ n: sql<number>`count(*)::int` }).from(schema.sweeps).where(and(eq(schema.sweeps.mode, "intl"), gt(schema.sweeps.startedAt, hourAgo))) : [{ n: 0 }];
     const [c] = await d.select({ ok: sql<number>`count(*) filter (where ${schema.pollLog.ok})::int`, failed: sql<number>`count(*) filter (where not ${schema.pollLog.ok})::int` }).from(schema.pollLog).where(and(gt(schema.pollLog.at, hourAgo), eq(schema.pollLog.country, country)));
     checks = (c?.ok ?? 0) + Math.max(0, (r?.n ?? 0) * storesOf(country).length * Math.ceil(partNumbersOf(country).length / 20) - (c?.failed ?? 0));

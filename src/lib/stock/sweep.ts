@@ -73,9 +73,10 @@ export const INTL_CONFIRM_CONCURRENCY = 8;
 const intlConfirmGate = gate(INTL_CONFIRM_CONCURRENCY);
 /**
  * Ingests of the per-store round of other countries running at once. The poller's database pool (8 connections)
- * is shared with the US sweep and the fast lane: without a bound, 12 intl workers could hold all of it.
+ * is shared with the US sweep and the fast lane: without a bound, 12 intl workers could hold all of it. The
+ * standby host runs only these, against the primary's database 17 ms away, so it sets more (poller.env).
  */
-export const INTL_INGEST_CONCURRENCY = 4;
+export const INTL_INGEST_CONCURRENCY = Number(process.env.INTL_INGEST_CONCURRENCY) || 4;
 const intlIngestGate = gate(INTL_INGEST_CONCURRENCY);
 
 /** A country whose round failed this much (any reason: 541, refused, timeouts, missing store) rests on its own. */

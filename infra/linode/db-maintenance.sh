@@ -8,6 +8,8 @@
 #     leaves yesterday's copy. A failure mails the owner. Each run leaves a line in ops_log (source host).
 set -uo pipefail
 P=(sudo -u postgres psql -v ON_ERROR_STOP=1 -qX -d pickupchecker)
+# Installed on both hosts; only the one whose database is the primary does anything (a replica is read-only).
+[ "$("${P[@]}" -tAc 'select pg_is_in_recovery()' 2>/dev/null)" = "f" ] || exit 0
 log() { printf "insert into ops_log (source, level, message, data) values ('host', :'lvl', :'msg', :'data'::jsonb);\n" | "${P[@]}" -v lvl="$1" -v msg="$2" -v data="$3" >/dev/null 2>&1 || true; }
 val() { sed -n "s/^$1=//p" /opt/pickupchecker/poller.env | head -1 | sed 's/^"\(.*\)"$/\1/'; }
 notify() {

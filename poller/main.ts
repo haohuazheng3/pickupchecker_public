@@ -40,7 +40,7 @@
  *       HOST_LABEL,
  *       FAST_CADENCE_SEC (5; 0 disables the fast lane), FAST_CONCURRENCY (8), FAST_TIMEOUT_MS (4500),
  *       POLL_COUNTRIES (unset or "" = none; "ca,uk" = those; "all" = all 18), INTL_CADENCE_SEC (15),
- *       INTL_CONCURRENCY (12), INTL_TIMEOUT_MS (6000)
+ *       INTL_CONCURRENCY (12), INTL_TIMEOUT_MS (6000), INTL_INGEST_CONCURRENCY (4), DATABASE_POOL_MAX
  */
 import "dotenv/config";
 import os from "node:os";
@@ -439,9 +439,14 @@ async function clusterLoop(intlConfigured: boolean) {
         await logOps("poller", "error", `${HOST} is fenced: ${duty.why}`, { host: HOST, cluster }).catch(() => undefined);
         await notifyOwner(`[PickupChecker] ${HOST} is fenced (${cluster.primary} is the primary now)`, `${HOST} came back after ${cluster.primary} took over (epoch ${cluster.epoch}). It does not poll, and the site never chooses its database again. Make it the new standby with infra/linode/standby.sh (docs/architecture.md, 热备主机).`).catch(() => undefined);
       }
+      let replicaInfo: { status: string | null; lagSec: number | null } | null = null;
       if (ROLE === "standby") {
         const local = targetPool("standby"), remote = targetPool("primary");
         const replica = local ? Boolean((await withTimeout(local.query("select pg_is_in_recovery() as r"), 3_000)).rows[0]?.r) : false;
+        if (replica && local) {
+          const r = (await withTimeout(local.query("select (select status from pg_stat_wal_receiver) as status, extract(epoch from now() - pg_last_xact_replay_timestamp())::float8 as lag"), 3_000)).rows[0] as { status: string | null; lag: number | null };
+          replicaInfo = { status: r?.status ?? null, lagSec: r?.lag == null ? null : Number(r.lag) };
+        }
         if (replica && remote) {
           const primaryOk = await withTimeout(remote.query("select 1"), 3_000).then(() => true, () => false);
           const step = promoteStep(promote, primaryOk, primaryOk ? true : await siteSaysPrimaryOk());
@@ -459,7 +464,7 @@ async function clusterLoop(intlConfigured: boolean) {
       if (writable) {
         await writeState(`alive:${HOST}`, {
           host: HOST, at: new Date().toISOString(), role: ROLE, duties: label, why: duty.why, epoch: cluster?.epoch ?? null, commit: COMMIT,
-          intl: duty.intl ? intlStats : null, fast: duty.us ? fastStats : null, sys: hostVitals(), db: st ? { using: st.using, writable: st.writable } : null,
+          intl: duty.intl ? intlStats : null, fast: duty.us ? fastStats : null, sys: hostVitals(), db: st ? { using: st.using, writable: st.writable } : null, replica: replicaInfo,
         });
       }
     } catch (e) {

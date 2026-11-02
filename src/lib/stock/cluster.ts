@@ -17,7 +17,9 @@ import { db } from "../db";
 
 export type PollerRole = "primary" | "standby";
 export interface ClusterRecord { primary: string; epoch: number; fencedAt?: string }
-export interface AliveRecord { host: string; at: string; role: PollerRole; duties: string; epoch?: number }
+/** A standby's view of its replica: the WAL receiver's status ("streaming") and how far behind replay is. */
+export interface ReplicaInfo { status: string | null; lagSec: number | null }
+export interface AliveRecord { host: string; at: string; role: PollerRole; duties: string; epoch?: number; replica?: ReplicaInfo | null }
 
 export const ALIVE_EVERY_MS = 10_000;
 /** Another host's alive record younger than this means it is doing what it says. */
@@ -77,8 +79,8 @@ export async function readCluster(): Promise<ClusterRecord | null> {
   return r?.value ?? null;
 }
 
-export async function readAlive(): Promise<AliveRecord[]> {
-  const rows = (await db().execute(sql`select value from poller_state where key like 'alive:%' and updated_at > now() - interval '10 minutes'`)).rows as { value: AliveRecord }[];
+export async function readAlive(withinMin = 10): Promise<AliveRecord[]> {
+  const rows = (await db().execute(sql`select value from poller_state where key like 'alive:%' and updated_at > now() - make_interval(mins => ${withinMin})`)).rows as { value: AliveRecord }[];
   return rows.map((r) => r.value);
 }
 
@@ -87,4 +89,26 @@ export async function intlRunner(): Promise<{ host: string; at: string; intl: Re
   const rows = (await db().execute(sql`select value from poller_state where key like 'alive:%' and updated_at > now() - make_interval(secs => ${ALIVE_FRESH_MS / 1000}) and value->>'duties' like '%intl%' order by updated_at desc limit 1`)).rows as { value: AliveRecord & { intl?: Record<string, unknown> } }[];
   const v = rows[0]?.value;
   return v?.intl ? { host: v.host, at: v.at, intl: v.intl } : null;
+}
+
+/** A standby is unhealthy when its alive record is older than this, or its replica not streaming / this far behind. */
+export const STANDBY_STALE_MS = 60_000;
+export const STANDBY_LAG_SEC = 60;
+
+/**
+ * Pure: how the standby stands, for the watchdog. "none" when no host has reported as a standby in the window
+ * the caller read (a single-host setup); "down" when its record went stale; "lagging" when its replica is not
+ * streaming or falls behind. The primary takes the other countries back by itself either way: this is for the
+ * owner, because a broken standby means no takeover.
+ */
+export function standbyVerdict(alive: AliveRecord[], now: Date): { state: "ok" | "down" | "lagging" | "none"; host: string | null; summary: string } {
+  const sb = alive.filter((a) => a.role === "standby").sort((a, b) => b.at.localeCompare(a.at))[0];
+  if (!sb) return { state: "none", host: null, summary: "no standby" };
+  const age = now.getTime() - new Date(sb.at).getTime();
+  if (age > STANDBY_STALE_MS) return { state: "down", host: sb.host, summary: `${sb.host} last reported ${Math.round(age / 1000)} s ago` };
+  // A promoted standby has no replica any more: that is the takeover, mailed by the standby itself.
+  if (sb.replica === null || sb.replica === undefined) return { state: "ok", host: sb.host, summary: `${sb.host} reports, no replica info` };
+  if (sb.replica.status !== "streaming") return { state: "lagging", host: sb.host, summary: `${sb.host}: replica ${sb.replica.status ?? "not receiving"}` };
+  if ((sb.replica.lagSec ?? 0) > STANDBY_LAG_SEC) return { state: "lagging", host: sb.host, summary: `${sb.host}: replica ${Math.round(sb.replica.lagSec!)} s behind` };
+  return { state: "ok", host: sb.host, summary: `${sb.host} streaming, ${sb.replica.lagSec == null ? "?" : sb.replica.lagSec.toFixed(1)} s behind` };
 }

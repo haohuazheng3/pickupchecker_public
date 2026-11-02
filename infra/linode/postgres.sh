@@ -6,6 +6,14 @@
 #
 #   scp infra/linode/postgres.sh root@HOST:/root/ && ssh root@HOST bash /root/postgres.sh
 #
+# Two hosts (docs/architecture.md「热备主机」): HOST_LABEL names this server (postgresql.conf pickupchecker.host,
+# which the site reads to tell the primary from a fenced old one), PEER_IP is the other host's IPv4.
+#   primary:  HOST_LABEL=linode-1 PEER_IP=<standby> bash postgres.sh   (replication role and slot, peer access)
+#   standby:  copy /root/pg-ca and /root/pg-secrets from the primary first (one CA, one set of passwords), then
+#             ROLE=standby HOST_LABEL=linode-2 PEER_IP=<primary> bash postgres.sh — a streaming replica made with
+#             pg_basebackup (the data directory is replaced unless it already is a replica). Run the same on a
+#             fenced old primary to make it the standby of the host that took over.
+#
 # Leaves, root-only: /root/pg-secrets/<db>.url (remote: TLS to this host's IPv4), /root/pg-secrets/<db>-local.url
 # (loopback), /root/pg-secrets/poller-local.url (the poller's own role, with reserved connections) and
 # /root/pg-ca/ca.crt (the site pins it as DATABASE_CA). Copy db-maintenance.sh
@@ -20,6 +28,10 @@ SECRETS=/root/pg-secrets
 CA=/root/pg-ca
 CONF=/etc/postgresql/$PGV/main
 IP4=$(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | head -1)
+ROLE=${ROLE:-primary}; HOST_LABEL=${HOST_LABEL:-linode-1}; PEER_IP=${PEER_IP:-}
+[ "$ROLE" = primary ] || [ "$ROLE" = standby ] || { echo "ROLE must be primary or standby" >&2; exit 1; }
+[ "$ROLE" = primary ] || [ -n "$PEER_IP" ] || { echo "a standby needs PEER_IP (the primary)" >&2; exit 1; }
+[ "$ROLE" = primary ] || [ -s "$SECRETS/replicator.pw" ] || { echo "copy /root/pg-secrets and /root/pg-ca from the primary first" >&2; exit 1; }
 
 # Postgres 17 from the PGDG repository: Ubuntu 24.04 ships 16, and pg_dump must be at least the server
 # version of any database we copy from (Neon runs 17).
@@ -62,6 +74,13 @@ listen_addresses = '*'
 port = 5432
 max_connections = 100
 reserved_connections = 10
+pickupchecker.host = '$HOST_LABEL'
+wal_level = replica
+max_wal_senders = 5
+# A standby that is down for long must not fill this disk: past this, its slot is dropped (it then re-syncs).
+max_slot_wal_keep_size = 4GB
+hot_standby = on
+hot_standby_feedback = on
 shared_buffers = 96MB
 effective_cache_size = 384MB
 work_mem = 4MB
@@ -98,6 +117,7 @@ hostssl pickupchecker          pickupchecker          0.0.0.0/0      scram-sha-2
 hostssl pickupchecker          pickupchecker          ::/0           scram-sha-256
 hostssl pickupchecker_preview  pickupchecker_preview  0.0.0.0/0      scram-sha-256
 hostssl pickupchecker_preview  pickupchecker_preview  ::/0           scram-sha-256
+$( [ -n "$PEER_IP" ] && printf 'hostssl replication            replicator             %s/32  scram-sha-256\nhostssl pickupchecker          poller                 %s/32  scram-sha-256\n' "$PEER_IP" "$PEER_IP" )
 HBA
 chown postgres:postgres "$CONF/conf.d/pickupchecker.conf" "$CONF/pg_hba.conf"
 
@@ -123,8 +143,32 @@ if [ "$restart" = 1 ] || ! systemctl is-active -q postgresql@$PGV-main; then sys
 for _ in $(seq 1 30); do sudo -u postgres pg_isready -q && break; sleep 1; done
 [ "$poller_unit" = 1 ] && systemctl is-active -q pickupchecker-poller && systemctl restart pickupchecker-poller
 
-# One role and one database per environment; passwords made once, never printed.
 install -d -m 700 "$SECRETS"
+if [ "$ROLE" = standby ]; then
+  # A streaming replica of the primary. Roles, passwords and data all come with it.
+  if [ ! -f /var/lib/postgresql/$PGV/main/standby.signal ]; then
+    (umask 077; printf '%s:5432:replication:replicator:%s\n' "$PEER_IP" "$(cat "$SECRETS/replicator.pw")" > /var/lib/postgresql/.pgpass)
+    chown postgres:postgres /var/lib/postgresql/.pgpass
+    install -m 644 -o postgres -g postgres "$CA/ca.crt" "$CONF/root.crt"
+    systemctl stop postgresql@$PGV-main
+    rm -rf /var/lib/postgresql/$PGV/main.old && mv /var/lib/postgresql/$PGV/main /var/lib/postgresql/$PGV/main.old
+    install -d -m 700 -o postgres -g postgres /var/lib/postgresql/$PGV/main
+    sudo -u postgres pg_basebackup -D /var/lib/postgresql/$PGV/main -R -X stream -S standby -P \
+      -d "host=$PEER_IP port=5432 user=replicator sslmode=verify-ca sslrootcert=$CONF/root.crt application_name=$HOST_LABEL"
+    systemctl start postgresql@$PGV-main
+    for _ in $(seq 1 30); do sudo -u postgres pg_isready -q && break; sleep 1; done
+    rm -rf /var/lib/postgresql/$PGV/main.old
+  fi
+  for db in "${DBS[@]}"; do
+    (umask 077
+     printf 'postgres://%s:%s@%s:5432/%s' "$db" "$(cat "$SECRETS/$db.pw")" "$IP4" "$db" > "$SECRETS/$db.url"
+     printf 'postgres://%s:%s@127.0.0.1:5432/%s' "$db" "$(cat "$SECRETS/$db.pw")" "$db" > "$SECRETS/$db-local.url")
+  done
+  (umask 077
+   printf 'postgres://poller:%s@127.0.0.1:5432/pickupchecker' "$(cat "$SECRETS/poller.pw")" > "$SECRETS/poller-local.url"
+   printf 'postgres://poller:%s@%s:5432/pickupchecker' "$(cat "$SECRETS/poller.pw")" "$IP4" > "$SECRETS/poller-remote.url")
+else
+# One role and one database per environment; passwords made once, never printed.
 for db in "${DBS[@]}"; do
   pw="$SECRETS/$db.pw"
   [ -s "$pw" ] || (umask 077; openssl rand -base64 64 | tr -dc 'A-Za-z0-9' | head -c 40 > "$pw")
@@ -142,7 +186,21 @@ pw="$SECRETS/poller.pw"
 [ -s "$pw" ] || (umask 077; openssl rand -base64 64 | tr -dc 'A-Za-z0-9' | head -c 40 > "$pw")
 sudo -u postgres psql -qtAc "SELECT 1 FROM pg_roles WHERE rolname = 'poller'" | grep -q 1 || sudo -u postgres psql -qc "CREATE ROLE poller LOGIN"
 printf "ALTER ROLE poller WITH LOGIN PASSWORD :'pw';\nGRANT pickupchecker TO poller;\nGRANT pg_use_reserved_connections TO poller;\n" | sudo -u postgres psql -q -v pw="$(cat "$pw")" >/dev/null
-(umask 077; printf 'postgres://poller:%s@127.0.0.1:5432/pickupchecker' "$(cat "$pw")" > "$SECRETS/poller-local.url")
+(umask 077; printf 'postgres://poller:%s@127.0.0.1:5432/pickupchecker' "$(cat "$pw")" > "$SECRETS/poller-local.url"
+ printf 'postgres://poller:%s@%s:5432/pickupchecker' "$(cat "$pw")" "$IP4" > "$SECRETS/poller-remote.url")
+# The standby's takeover promotes its replica as the poller role, which also reads the replica's receiver status.
+sudo -u postgres psql -qc "GRANT EXECUTE ON FUNCTION pg_promote(boolean, integer) TO poller" -d pickupchecker >/dev/null
+sudo -u postgres psql -qc "GRANT pg_read_all_stats TO poller" >/dev/null 2>&1 || true
+
+# Streaming replication to the standby: its own login and a physical slot (WAL is kept until it has it, up to
+# max_slot_wal_keep_size). The cluster record names the primary (stock/cluster.ts); epoch 1 until a takeover.
+pw="$SECRETS/replicator.pw"
+[ -s "$pw" ] || (umask 077; openssl rand -base64 64 | tr -dc 'A-Za-z0-9' | head -c 40 > "$pw")
+sudo -u postgres psql -qtAc "SELECT 1 FROM pg_roles WHERE rolname = 'replicator'" | grep -q 1 || sudo -u postgres psql -qc "CREATE ROLE replicator WITH REPLICATION LOGIN"
+printf "ALTER ROLE replicator WITH REPLICATION LOGIN PASSWORD :'pw';\n" | sudo -u postgres psql -q -v pw="$(cat "$pw")" >/dev/null
+sudo -u postgres psql -qtAc "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'standby'" | grep -q 1 || sudo -u postgres psql -qc "SELECT pg_create_physical_replication_slot('standby')" >/dev/null
+sudo -u postgres psql -d pickupchecker -qc "INSERT INTO poller_state (key, value) VALUES ('cluster', jsonb_build_object('primary', '$HOST_LABEL', 'epoch', 1)) ON CONFLICT (key) DO NOTHING" >/dev/null 2>&1 || true
+fi
 
 ufw allow 5432/tcp >/dev/null
 

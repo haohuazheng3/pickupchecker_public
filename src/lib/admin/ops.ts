@@ -4,6 +4,7 @@
  */
 import { and, desc, eq, gt, inArray, isNotNull, isNull, ne, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "../db";
+import { intlRunner } from "../stock/cluster";
 import { readState } from "../stock/sweep";
 import { stripePermissions } from "./stripeCheck";
 import { env } from "../env";
@@ -167,7 +168,8 @@ export async function healthSnapshot(): Promise<HealthSnapshot> {
   const toIso = (v: string | Date | null | undefined) => (v ? new Date(v).toISOString() : null);
   return {
     now,
-    heartbeat: heartbeat?.value ?? null,
+    // The other countries may run on the standby host: show its numbers on the same node.
+    heartbeat: heartbeat?.value ? { ...heartbeat.value, intl: heartbeat.value.intl ?? ((await intlRunner().catch(() => null))?.intl as Heartbeat["intl"]) } : null,
     heartbeatUpdatedAt: heartbeat ? heartbeat.updatedAt.toISOString() : null,
     watchdog: watchdog?.value ?? null,
     dbLatencyMs, dbConnectMs, dbError,

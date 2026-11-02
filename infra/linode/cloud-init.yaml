@@ -250,7 +250,7 @@ runcmd:
   - mkdir -p /opt/pickupchecker && chown -R poller:poller /opt/pickupchecker
   - chmod 700 /root/.ssh
   # update.sh runs as root on a tree owned by poller: tell git that is fine
-  - git config --global --add safe.directory /opt/pickupchecker/app
+  - HOME=/root git config --global --add safe.directory /opt/pickupchecker/app
   - git clone --depth 1 -b main git@github.com:haohuazheng3/pickupchecker_private.git /opt/pickupchecker/app
   - chown poller:poller /opt/pickupchecker/poller.env && chmod 0600 /opt/pickupchecker/poller.env
   - if [ "__HOLD__" = 1 ]; then touch /opt/pickupchecker/hold; fi
