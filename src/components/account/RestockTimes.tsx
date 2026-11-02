@@ -9,6 +9,8 @@
  */
 import { MODELS, STORE_INDEX, partNumbersFor, storeTimeZone, storesOf } from "@/lib/apple/catalog";
 import { placeStats, restockPattern, restockReportStats, restockSlots } from "@/lib/stock/queries";
+import { sellouts } from "@/lib/stock/sellouts";
+import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { buildTimeline, hourLabel, hourSpan, majorityZone, minuteIn, nextWindow, topHours, zoneName } from "@/lib/restockTimes";
 import { fmtDuration } from "@/lib/seo/enrich";
 import { RestockTimeline, type TimelineRow } from "./RestockTimeline";
@@ -42,7 +44,7 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
   const zoneStores = countries.flatMap((cc) => storesOf(cc)).filter((s) => storeTimeZone(s) === tz).map((s) => s.storeNumber);
   const others = zoneStores.filter((n) => !own.includes(n));
 
-  const [mine, mineSlots, stay, rep] = await Promise.all([restockPattern(own, parts, [], tz), restockSlots(own, parts, tz), placeStats({ storeNumbers: own, parts, tz }), restockReportStats(own, tz, 30, undefined, parts)]);
+  const [mine, mineSlots, stay, rep, sell] = await Promise.all([restockPattern(own, parts, [], tz), restockSlots(own, parts, tz), placeStats({ storeNumbers: own, parts, tz }), restockReportStats(own, tz, 30, undefined, parts), sellouts({ storeNumbers: own, parts })]);
   const thin = mine.total < THIN && others.length > 0;
   const [area, areaSlots] = thin ? await Promise.all([restockPattern(zoneStores, parts, [], tz), restockSlots(others, parts, tz)]) : [null, []];
 
@@ -141,6 +143,13 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
         {rep && <ReportsNote reports={rep} mark={patterned ? "Dashed" : "Hollow dots"} />}
       </section>
       <RestockTimeline rows={rows} nowMin={nowMin} tz={tz} zone={zone} days={mine.days} hidden={ownLine.hidden} yours={yours} mixed={Boolean(areaLine && areaLine.points.length)} {...(repLine?.points.length && rep ? { reported: { sources: rep.sources, models: rep.models, from: rep.from, to: rep.to } } : {})} />
+      <section className="pane p-5 sm:p-6" aria-labelledby="sellout-times">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h2 id="sellout-times" className="text-xl font-semibold">How fast your restocks sell out</h2>
+          <span className="text-xs text-ink-3">{what} · {plural(own.length, "store")} · last {sell.summary.days} days</span>
+        </div>
+        <div className="mt-3"><SellOutTimes data={sell} label={`at ${yours}`} showStore={own.length > 1} limit={15} /></div>
+      </section>
     </>
   );
 }

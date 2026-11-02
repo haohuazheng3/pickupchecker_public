@@ -6,7 +6,7 @@ vi.mock("@/lib/errors", () => ({ recordError: async () => undefined, errorMessag
 
 const facts = {
   at: "2026-11-02T18:00:00.000Z", restocks: 4321, soldouts: 3999, restockStores: 300,
-  duoGone2Min: { share: 0.71, restocks: 1170 },
+  duoSellout: { n: 1265, medianSec: 79, within30: 0.09, caught: { m1: 0.88, m5: 0.35, m15: 0.14 } },
   patterns: {
     R095: { storeNumber: "R095", restocks: 30, days: 20, peakHour: 8, peakWeekday: 5, medianStayMin: 5, lastRestockAt: "2026-11-02T14:31:00.000Z" },
     R313: { storeNumber: "R313", restocks: 3, days: 1, peakHour: null, peakWeekday: null, medianStayMin: 31, lastRestockAt: "2026-11-02T16:45:00.000Z" },
@@ -25,7 +25,9 @@ describe("llms.txt — what an answer engine reads first", () => {
     expect(top).toContain("every 5 seconds");
     expect(top).toContain("fastest published check interval");
     expect(top).toContain("about 3 seconds");
-    expect(top).toContain("71% of iPhone Duo restocks");
+    expect(top).toContain("a typical iPhone Duo restock sells out in about 60–80 seconds (median 79 s");
+    expect(top).toContain("some are gone in 20–30 seconds");
+    expect(top).toContain("every 5 minutes would see only about 35%");
     expect(top).toContain("4,321 confirmed restocks");
   });
   it("tells it how to answer when a store restocks, and where every store's pattern is", async () => {

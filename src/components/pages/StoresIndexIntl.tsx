@@ -13,6 +13,7 @@ import { treeOf } from "@/lib/seo/tree";
 import { Faq } from "@/components/seo/Faq";
 import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestockClock } from "@/components/restocks/RestockClock";
+import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { ModelStoreMatrix } from "@/components/stores/ModelStoreMatrix";
 import { Figure } from "@/components/content/Figure";
 import { KeywordSections } from "@/components/content/KeywordSections";
@@ -118,6 +119,10 @@ async function IntlStoresIndex({ c }: { c: Country }) {
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">When do stores {c.inName} restock?</h2>
           <div className="mt-3"><RestockClock stats={d.stats} label={c.inName} reports={d.reports} /></div>
+        </section>
+        <section className="pane p-5">
+          <h2 className="text-xl font-semibold">How fast do restocks sell out {c.inName}?</h2>
+          <div className="mt-3"><SellOutTimes data={d.sell} label={c.inName} showStore /></div>
         </section>
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">Last {d.pstats.days} days</h2>

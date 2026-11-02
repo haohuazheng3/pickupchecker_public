@@ -9,6 +9,7 @@ import { ALL_STORES, STORES, storePath, appleName } from "@/lib/apple/catalog";
 import { INTL_CODES } from "@/lib/apple/countries";
 import { PLANS, SPEED, OTHER_TRACKERS } from "@/lib/plans";
 import { PATTERN_DAYS, TRACKING_SINCE_INTL, TRACKING_SINCE_US, WEEKDAYS, hourLabel, siteFacts, type SiteFacts } from "@/lib/content/siteFacts";
+import { medianBand } from "@/lib/stock/sellouts";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,8 @@ export default async function HowItWorks() {
   const facts = await getFacts();
   const ex = example(f);
   const intl = ALL_STORES.length - STORES.length;
-  const gone = f.duoGone2Min ? `${pct(f.duoGone2Min.share)} of iPhone Duo restocks in the last 7 days were gone within 2 minutes` : "most iPhone Duo restocks are gone within 2 minutes";
+  const ds = f.duoSellout;
+  const typical = ds ? `about ${medianBand(ds.medianSec)}` : "about a minute";
   const exampleLine = ex
     ? `At [${ex.name}](${ex.path}), for example: ${ex.p.restocks} restocks in the last ${PATTERN_DAYS} days, most around **${hourLabel(ex.p.peakHour!)}** local time${ex.p.peakWeekday != null ? `, **${WEEKDAYS[ex.p.peakWeekday]}** the busiest day` : ""}${ex.p.medianStayMin != null ? `, and a typical restock stayed listed about ${ex.p.medianStayMin} minutes` : ""}.`
     : "Each store page shows the hour restocks usually land, the busiest weekday and the last 30 days, day by day.";
@@ -49,8 +51,10 @@ export default async function HowItWorks() {
       ["A first \"available\" is asked again before it counts", "about 1 second later"],
       ["A confirmed restock reaches your phone", `about **${SPEED.alertSec} seconds**`],
       ["What other iPhone stock trackers publish", OTHER_TRACKERS],
-    ], caption: "PickupChecker's check cycle, around the clock", source: "PickupChecker's poller; other trackers' intervals as published on their own sites (November 2026)" },
-    { t: "p", text: `We think speed is the whole product. **${gone[0].toUpperCase()}${gone.slice(1)}** (from our [restock log](/restocks)). A tracker that looks every few minutes reports a restock that has already sold out; at ${SPEED.fastSec} seconds you hear about it while it is still there to reserve.` },
+      ["How long a typical iPhone Duo restock lasts", `${typical}; some are gone in 20–30 s`],
+    ], caption: "PickupChecker's check cycle, around the clock", source: "PickupChecker's poller and restock log; other trackers' intervals as published on their own sites (November 2026)" },
+    { t: "p", text: `We think speed is the whole product. **A typical iPhone Duo restock sells out in ${typical}${ds ? ` (median ${ds.medianSec} s over the last 7 days, ${n(ds.n)} restocks)` : ""}, and some are gone in 20–30 seconds.** A listing that short can fall between two checks of a slower tracker and never be seen at all${ds ? `: a tracker checking every 5 minutes would see only about ${pct(ds.caught.m5)} of these restocks, one checking every 15 minutes about ${pct(ds.caught.m15)}` : ""}. At ${SPEED.fastSec} seconds you hear about it while it is still there to reserve.` },
+    { t: "p", text: "Every store, city, state and country page has a **\"How fast do restocks sell out?\"** section: each restock with the seconds it lasted, measured between two of our checks (\"sold out in 45–60 s\"), and the share gone within 30 seconds and within a minute. We count the seconds because that is the margin you have." },
     { t: "img", id: "phone-notification" },
   ];
   const real: Block[] = [

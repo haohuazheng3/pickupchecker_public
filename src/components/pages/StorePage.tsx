@@ -28,6 +28,8 @@ import { StoreInfo, HoursTable } from "@/components/stores/StoreInfo";
 import { NearbyStores } from "@/components/stores/NearbyStores";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
+import { SellOutTimes } from "@/components/restocks/SellOutTimes";
+import { sellouts } from "@/lib/stock/sellouts";
 import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestocksByConfig } from "@/components/restocks/RestocksByConfig";
 import { MiniMap } from "@/components/stores/MiniMap";
@@ -61,7 +63,7 @@ const load = cache(async (s: Store) => {
   const outside = nearestOutsideState(s, 3);
   const inState = nearestInState(s, 4, { excludeCity: true });
   const others = [...new Set([...nearby, ...outside, ...inState].map((n) => n.storeNumber))];
-  const [rows, stock, feed, stats, pstats, reports, lookupOff] = await Promise.all([
+  const [rows, stock, feed, stats, pstats, reports, lookupOff, sell] = await Promise.all([
     storeStatus(s.storeNumber),
     storesStock([s.storeNumber, ...others]),
     restockFeed({ storeNumber: s.storeNumber, kind: "all", limit: 30, country: s.country }),
@@ -69,11 +71,12 @@ const load = cache(async (s: Store) => {
     placeStats({ storeNumbers: [s.storeNumber], tz }),
     restockReportStats([s.storeNumber], tz, 30),
     pickupLookupOff(s.storeNumber),
+    sellouts({ storeNumbers: [s.storeNumber], country: s.country }),
   ]);
   const summary = stock.get(s.storeNumber);
   const stockNow = Object.fromEntries(MODELS.map((m) => [m.key, summary?.perModel[m.key].available ?? 0])) as Record<ModelKey, number>;
   const configs = Object.fromEntries(MODELS.map((m) => [m.key, rows.filter((r) => modelKeyFor(r.item.model) === m.key).length || catalogFor(m.key, s.country).length])) as Record<ModelKey, number>;
-  return { tz, nearby, outside, inState, rows, stock, summary, feed, stats, pstats, reports, lookupOff, stockNow, configs };
+  return { tz, nearby, outside, inState, rows, stock, summary, feed, stats, pstats, reports, lookupOff, stockNow, configs, sell };
 });
 
 /** True when this is the only Apple Store in its city (the city query lands here). */
@@ -218,6 +221,10 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
           <section className="pane p-5">
             <h2 className="text-xl font-semibold">When does {s.name} restock?</h2>
             <div className="mt-3"><RestockClock stats={d.stats} label="here" reports={d.reports} /></div>
+          </section>
+          <section className="pane p-5">
+            <h2 className="text-xl font-semibold">How fast do restocks sell out at {s.name}?</h2>
+            <div className="mt-3"><SellOutTimes data={d.sell} label="here" /></div>
           </section>
           <section className="pane p-5">
             <h2 className="text-xl font-semibold">Last {d.pstats.days} days, day by day</h2>

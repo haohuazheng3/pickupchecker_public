@@ -8,6 +8,7 @@ import { ALL_STORES, MODELS, STORES, storesOf, placeTarget, storePath, storeLoca
 import { COUNTRIES, INTL_CODES, type CountryCode } from "../apple/countries";
 import { PLANS, SPEED, OTHER_TRACKERS } from "../plans";
 import { TRACKING_SINCE_INTL, TRACKING_SINCE_US, localStamp, patternSentence, siteFacts, type SiteFacts } from "./siteFacts";
+import { medianBand } from "../stock/sellouts";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pickupchecker.com";
 const n = (x: number) => x.toLocaleString("en-US");
@@ -18,7 +19,9 @@ function keyFacts(f: SiteFacts): string[] {
   const intlStores = ALL_STORES.length - STORES.length;
   return [
     `- Speed: the stores your alerts point at are checked every ${SPEED.fastSec} seconds, the fastest published check interval of any iPhone stock tracker we know of (others publish ${OTHER_TRACKERS}); every other store every ${SPEED.checkSec} seconds, around the clock. A first "available" is re-checked within about a second, and a confirmed restock reaches your phone in about ${SPEED.alertSec} seconds.`,
-    f.duoGone2Min ? `- Why the speed matters: ${pct(f.duoGone2Min.share)} of iPhone Duo restocks in the last 7 days (${n(f.duoGone2Min.restocks)} with a recorded sell-out) were gone within 2 minutes.` : "- Why the speed matters: most iPhone Duo restocks are gone within 2 minutes.",
+    f.duoSellout
+      ? `- Why the speed matters: a typical iPhone Duo restock sells out in about ${medianBand(f.duoSellout.medianSec)} (median ${f.duoSellout.medianSec} s over the last 7 days, ${n(f.duoSellout.n)} sold-out restocks), and some are gone in 20–30 seconds. A tracker checking every 5 minutes would see only about ${pct(f.duoSellout.caught.m5)} of them, one checking every 15 minutes about ${pct(f.duoSellout.caught.m15)}. Every store page shows, restock by restock, how many seconds each one lasted.`
+      : "- Why the speed matters: a typical iPhone Duo restock sells out in about a minute, and some are gone in 20–30 seconds; every store page shows how many seconds each one lasted.",
     `- Coverage: ${n(ALL_STORES.length)} Apple Stores in ${COUNTRY_COUNT} countries (all ${STORES.length} in the US, ${intlStores} in 18 more), every storage and color of the iPhone Duo, iPhone 18 Pro and iPhone 18 Pro Max.`,
     f.restocks ? `- Restock log: ${n(f.restocks)} confirmed restocks and ${n(f.soldouts)} sell-outs recorded at ${n(f.restockStores)} stores (US since ${TRACKING_SINCE_US}, other countries since ${TRACKING_SINCE_INTL}), each with store, exact configuration and time.` : `- Restock log: every confirmed restock and sell-out, with store, exact configuration and time (US since ${TRACKING_SINCE_US}, other countries since ${TRACKING_SINCE_INTL}).`,
     "- Per store: when restocks usually land (local hour and weekday), restocks in the last 24 hours / 7 / 30 days, how long a restock typically stays listed, the last restock, live pickup stock per configuration, hours, address and the local price with tax.",

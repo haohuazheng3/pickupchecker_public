@@ -25,6 +25,8 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { HOME_TITLES } from "@/content/titles";
 import { HOME_INTRO, HOME_SECTIONS, HOME_FAQ, HOME_SOURCES } from "@/content/home";
 import { ORG_ID, SITE_DESCRIPTION, SITE_FEATURES } from "@/lib/seo/siteLd";
+import { SellOutTimes } from "@/components/restocks/SellOutTimes";
+import { sellouts } from "@/lib/stock/sellouts";
 import { getFacts } from "@/lib/content/facts";
 import { Inline } from "@/components/content/Inline";
 import { KeywordSections, slugId, type KeywordSection } from "@/components/content/KeywordSections";
@@ -63,7 +65,7 @@ export async function HomePage({ country: c, searchParams: sp }: { country: Coun
   const model: ModelKey = start.initialModel;
   const startSignIn = sp.signin === "1";
   const next = typeof sp.next === "string" ? sp.next : undefined;
-  const facts = await getFacts();
+  const [facts, sell] = await Promise.all([getFacts(), sellouts({ country: "us" })]);
   const sections = HOME_TITLES.h2.map((h) => ({ id: slugId(h.keyword), h2: h.title, ...HOME_SECTIONS[h.keyword] }));
   const ld = {
     "@context": "https://schema.org",
@@ -106,6 +108,10 @@ export async function HomePage({ country: c, searchParams: sp }: { country: Coun
 
       <div className="mx-auto mt-12 max-w-3xl">
         <KeywordSections sections={sections} facts={facts} />
+        <section className="pane mt-10 p-5" aria-labelledby="sellout-h">
+          <h2 id="sellout-h" className="text-xl font-semibold">How fast do iPhone restocks sell out?</h2>
+          <div className="mt-3"><SellOutTimes data={sell} label="at US Apple Stores" showStore /></div>
+        </section>
         <div className="mt-10"><RichFaq items={HOME_FAQ} facts={facts} title="Questions" /></div>
         <div className="mt-8"><SourceList sources={HOME_SOURCES} facts={facts} /></div>
       </div>
@@ -163,7 +169,7 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
   const model: ModelKey = start.model ?? "duo";
   const startSignIn = sp.signin === "1";
   const next = typeof sp.next === "string" ? sp.next : undefined;
-  const facts = await getFacts(cc);
+  const [facts, sell] = await Promise.all([getFacts(cc), sellouts({ country: cc })]);
   const stores = storesOf(cc);
   const n = stores.length;
   const where = theName(c);
@@ -243,6 +249,10 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
 
       <div className="mx-auto mt-12 max-w-3xl">
         <KeywordSections sections={sections} facts={facts} />
+        <section className="pane mt-10 p-5" aria-labelledby="sellout-h">
+          <h2 id="sellout-h" className="text-xl font-semibold">How fast do iPhone restocks sell out {c.inName}?</h2>
+          <div className="mt-3"><SellOutTimes data={sell} label={`at Apple Stores ${c.inName}`} showStore={n > 1} /></div>
+        </section>
         <div className="mt-10"><RichFaq items={faq} facts={facts} title="Questions" /></div>
         <div className="mt-8"><SourceList sources={[pickupHelp(cc), storeListSource(cc), TAX_SOURCES[cc as Exclude<typeof cc, "us">], { label: "Apple Newsroom: iPhone Duo arrives at Apple Store locations worldwide (Oct 23, 2026)", url: "https://www.apple.com/newsroom/2026/10/iphone-duo-arrives-at-apple-store-locations-worldwide/" }]} facts={facts} where={allStoresPhrase(cc)} since={INTL_TRACKING_LABEL} /></div>
       </div>

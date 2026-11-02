@@ -194,6 +194,11 @@ export const availabilityEvents = pgTable(
     notifiedAt: ts("notified_at"),
     /** unknown → available: the first time we ever saw the pair, not a real restock (excluded from feeds/stats). */
     firstSeen: boolean("first_seen").notNull().default(false),
+    /**
+     * Sell-outs only: the last check that still saw the pair available (migration 0012). With the restock's `at` and
+     * this event's `at` it bounds how long the restock lasted, to the spacing of two checks (5–15 s).
+     */
+    seenUntil: ts("seen_until"),
   },
   (t) => [index("events_at_idx").on(t.at), index("events_part_idx").on(t.partNumber, t.at), index("events_store_idx").on(t.storeNumber, t.at)],
 );

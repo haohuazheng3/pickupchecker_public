@@ -26,6 +26,8 @@ import { Faq } from "@/components/seo/Faq";
 import { PlaceCountList, ProductGrid, ProductNav, ProductStoreList, StatusCard } from "@/components/seo/ProductParts";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
+import { SellOutTimes } from "@/components/restocks/SellOutTimes";
+import { sellouts } from "@/lib/stock/sellouts";
 import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestocksByConfig } from "@/components/restocks/RestocksByConfig";
 import { LiveAgo } from "@/components/site/LiveAgo";
@@ -57,7 +59,7 @@ const load = cache(async (cc: Country["cc"], slug: string, path: string) => {
   if (!place) return null;
   if ("redirect" in place) return { kind: "redirect" as const, to: productPath(product, { segments: place.redirect, country: product.country }) };
   const numbers = place.stores.map((s) => s.storeNumber);
-  const [duo, pro, max, stats, clock, feed, reports] = await Promise.all([
+  const [duo, pro, max, stats, clock, feed, reports, sell] = await Promise.all([
     modelStock("duo", cc),
     modelStock("18-pro", cc),
     modelStock("18-pro-max", cc),
@@ -65,6 +67,7 @@ const load = cache(async (cc: Country["cc"], slug: string, path: string) => {
     restockStats(numbers, place.tz, 30, undefined, product.parts, cc),
     restockFeed({ parts: product.parts, storeNumbers: numbers, kind: "all", limit: 8, country: cc }),
     restockReportStats(numbers, place.tz, 30, undefined, product.parts, cc),
+    sellouts({ storeNumbers: numbers, parts: product.parts, country: cc }),
   ]);
   const ix = indexStock({ duo, "18-pro": pro, "18-pro-max": max });
   const lines = storeLines(ix, product, place.stores);
@@ -73,7 +76,7 @@ const load = cache(async (cc: Country["cc"], slug: string, path: string) => {
   // place-level product page and every exact configuration is noindex, follow: the /stores page of that place
   // is the one indexed page for "iPhone Duo in <place>", which keeps near-duplicates out of the index.
   const indexable = isIndexedProductPage(product, place);
-  return { kind: "page" as const, product, place, ix, lines, inStock, stats, clock, feed, reports, indexable };
+  return { kind: "page" as const, product, place, ix, lines, inStock, stats, clock, feed, reports, indexable, sell };
 });
 
 /** Another country's model page binds its own titles (seo.md §12). */
@@ -122,7 +125,7 @@ export async function ProductPage({ country: c, params: p }: { country: Country;
   if (d.kind === "redirect") permanentRedirect(d.to);
   const us = c.cc === "us";
   const t = treeOf(c.cc);
-  const { product, place, ix, lines, inStock, stats, clock, feed, reports } = d;
+  const { product, place, ix, lines, inStock, stats, clock, feed, reports, sell } = d;
   const top = place.level === "country";
   const atStore = place.level === "store";
   const line = lines[0];
@@ -272,6 +275,10 @@ export async function ProductPage({ country: c, params: p }: { country: Country;
         <section className="pane p-5">
           <h2 className="text-lg font-semibold">When it restocks</h2>
           <div className="mt-3"><RestockClock stats={clock} label={top && !us ? c.inName : inPlace(place)} reports={reports} /></div>
+        </section>
+        <section className="pane p-5">
+          <h2 className="text-lg font-semibold">How fast it sells out</h2>
+          <div className="mt-3"><SellOutTimes data={sell} label={top && !us ? c.inName : inPlace(place)} showStore={place.stores.length > 1} /></div>
         </section>
         {stats.month > 0 && (
           <section className="pane p-5">

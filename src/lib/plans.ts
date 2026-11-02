@@ -24,7 +24,9 @@ export const PLANS: Record<PlanKey, PlanDef> = {
  *  • fastSec: the stores paid alerts point at are asked every 5 s (the poller's fast lane, stock/fastlane.ts);
  *    every store every 15 s (24 h max gap 30 s, measured 2026-11-02). A first "available" is re-asked
  *    within a second (instant confirm) and the push is handed off 0.26 s (p50) / 1.4 s (p90) after that,
- *    so "about 3 s" is conservative. 7 in 10 iPhone Duo restocks were gone within 2 minutes (1,170 in 7 days).
+ *    so "about 3 s" is conservative. A typical iPhone Duo restock sells out in 60–80 s (median 79 s, 1,265 in 7 days to
+ *    2026-11-02; 9% within 30 s, a floor: shorter listings can fall between two 15 s checks); the live figures come
+ *    from content/siteFacts.ts and every page's sell-out section (stock/sellouts.ts).
  *  • OTHER_TRACKERS: the check intervals other iPhone stock trackers publish about themselves
  *    (docs/research.md §7, 2026-11-02: 8 s, 15 s, 1 min, 5 min, 15 min). We compare to their published
  *    numbers only, never to a measurement we do not have.

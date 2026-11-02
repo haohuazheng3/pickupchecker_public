@@ -41,13 +41,27 @@ export interface SiteFacts {
   restocks: number;
   soldouts: number;
   restockStores: number;
-  /** Share (0–1) of iPhone Duo restocks in the last 7 days that were gone within 2 minutes, and how many restocks that is about. */
-  duoGone2Min: { share: number; restocks: number } | null;
+  /**
+   * iPhone Duo restocks of the last 7 days that sold out: how many, the median seconds until gone, the share gone
+   * within 30 s, and the share a tracker checking every 1 / 5 / 15 minutes would ever see (a listing lasting d seconds
+   * is caught by a check every T seconds with chance min(1, d/T)). Durations are upper bounds (to the next check),
+   * so the catch rates flatter slower trackers, never us.
+   */
+  duoSellout: { n: number; medianSec: number; within30: number; caught: { m1: number; m5: number; m15: number } } | null;
   /** Store → pattern over the last PATTERN_DAYS, for every store with at least one restock. */
   patterns: Record<string, StorePattern>;
 }
 
-const EMPTY: SiteFacts = { at: new Date(0).toISOString(), restocks: 0, soldouts: 0, restockStores: 0, duoGone2Min: null, patterns: {} };
+const EMPTY: SiteFacts = { at: new Date(0).toISOString(), restocks: 0, soldouts: 0, restockStores: 0, duoSellout: null, patterns: {} };
+
+/** Pure: the Duo sell-out facts from restock lifetimes (seconds); null under 20. */
+export function duoSelloutFrom(secs: number[]): SiteFacts["duoSellout"] {
+  if (secs.length < 20) return null;
+  const v = [...secs].sort((a, b) => a - b);
+  const median = v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
+  const caught = (t: number) => v.reduce((a, d) => a + Math.min(1, d / t), 0) / v.length;
+  return { n: v.length, medianSec: Math.round(median), within30: v.filter((d) => d <= 30).length / v.length, caught: { m1: caught(60), m5: caught(300), m15: caught(900) } };
+}
 
 /** Pure: local hour, weekday and date (YYYY-MM-DD) of an instant in a zone. */
 export function localHourDay(iso: string, tz: string): { hour: number; weekday: number; date: string } {
@@ -116,11 +130,11 @@ const cached = unstable_cache(
       restocks: totals?.restocks ?? 0,
       soldouts: totals?.soldouts ?? 0,
       restockStores: totals?.stores ?? 0,
-      duoGone2Min: duo.length >= 20 ? { share: duo.filter((p) => Number(p.secs) <= 120).length / duo.length, restocks: duo.length } : null,
+      duoSellout: duoSelloutFrom(duo.map((p) => Number(p.secs))),
       patterns: patternsFrom(recent.map((r) => ({ storeNumber: r.store_number, at: iso(r.at) })), stays, tzOfStore),
     };
   },
-  ["site-facts-v2"],
+  ["site-facts-v3"],
   { revalidate: 3600 },
 );
 

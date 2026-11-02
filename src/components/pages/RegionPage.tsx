@@ -28,6 +28,8 @@ import { StoreBlock } from "@/components/stores/StoreBlock";
 import { NearbyStores } from "@/components/stores/NearbyStores";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
+import { SellOutTimes } from "@/components/restocks/SellOutTimes";
+import { sellouts } from "@/lib/stock/sellouts";
 import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestocksByConfig } from "@/components/restocks/RestocksByConfig";
 import { placeTitle, placeDescription, placeIntro, placeSections, taxFaq, type PlaceCopyInput } from "@/lib/seo/placeCopy";
@@ -62,7 +64,7 @@ const load = cache(async (cc: Country["cc"], slug: string) => {
   const thin = stores.length <= THIN;
   const outside = nearestOutsideState({ ...centroid(stores), state: s.name, country: cc }, 6);
   const extra = thin ? [...new Set([...outside, ...stores.flatMap((x) => nearestOutsideState(x, 4))].map((x) => x.storeNumber))] : outside.map((x) => x.storeNumber);
-  const [stock, feed, stats, pstats, full, duoStats, maxStats, reports] = await Promise.all([
+  const [stock, feed, stats, pstats, full, duoStats, maxStats, reports, sell] = await Promise.all([
     storesStock([...numbers, ...extra]),
     restockFeed({ state: s.name, limit: 12, country: cc }),
     restockStats(numbers, tz, 30),
@@ -71,12 +73,13 @@ const load = cache(async (cc: Country["cc"], slug: string) => {
     placeStats({ storeNumbers: numbers, model: "duo", tz }),
     placeStats({ storeNumbers: numbers, model: "18-pro-max", tz }),
     restockReportStats(numbers, tz, 30),
+    sellouts({ storeNumbers: numbers, country: cc }),
   ]);
   const stockNow = Object.fromEntries(MODELS.map((m) => [m.key, stores.filter((x) => (stock.get(x.storeNumber)?.perModel[m.key].available ?? 0) > 0).length])) as Record<ModelKey, number>;
   const duoStores = stores.filter((x) => (stock.get(x.storeNumber)?.perModel[DEFAULT_MODEL].available ?? 0) > 0);
   const copy: PlaceCopyInput = { kind: "state", name: s.name, state: s.name, stateSlug: s.slug, stores, cities: cities.length, stockNow, stock, duo: duoStats, max: maxStats };
   const intl: IntlPlaceInput | null = cc === "us" ? null : { cc, kind: "state", name: s.name, region: s.name, regionSlug: s.slug, stores, cities: cities.length, stockNow, stock, duo: duoStats, max: maxStats };
-  return { s, stores, cities, numbers, tz, thin, outside, stock, feed, stats, pstats, full, stockNow, duoStores, copy, intl, reports };
+  return { s, stores, cities, numbers, tz, thin, outside, stock, feed, stats, pstats, full, stockNow, duoStores, copy, intl, reports, sell };
 });
 
 export async function regionMetadata(c: Country, p: { state: string }): Promise<Metadata> {
@@ -165,6 +168,10 @@ export async function RegionPage({ country: c, params: p }: { country: Country; 
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">When do {s.name} stores restock?</h2>
           <div className="mt-3"><RestockClock stats={d.stats} label={`in ${s.name}`} reports={d.reports} /></div>
+        </section>
+        <section className="pane p-5">
+          <h2 className="text-xl font-semibold">How fast do restocks sell out in {s.name}?</h2>
+          <div className="mt-3"><SellOutTimes data={d.sell} label={`in ${s.name}`} showStore /></div>
         </section>
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">Last {d.pstats.days} days, day by day</h2>

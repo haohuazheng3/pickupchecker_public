@@ -20,6 +20,8 @@ import { US as US_PLACE } from "@/lib/seo/products";
 import { Faq } from "@/components/seo/Faq";
 import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestockClock } from "@/components/restocks/RestockClock";
+import { SellOutTimes } from "@/components/restocks/SellOutTimes";
+import { sellouts } from "@/lib/stock/sellouts";
 import { Figure } from "@/components/content/Figure";
 import { SourceList } from "@/components/content/RichFaq";
 import { emptyFacts } from "@/lib/content/facts";
@@ -44,7 +46,7 @@ export const loadIndex = cache(async (cc: Country["cc"]) => {
   const stores = storesOf(cc);
   const tz = cc === "us" ? "America/New_York" : treeOf(cc).root.tz;
   const numbers = stores.map((s) => s.storeNumber);
-  const [stockNow, pstats, stats, stock, duo, max, reports] = await Promise.all([
+  const [stockNow, pstats, stats, stock, duo, max, reports, sell] = await Promise.all([
     storesWithStockNow(undefined, cc),
     placeStats({ tz, country: cc }),
     restockStats(numbers, tz, 30),
@@ -52,8 +54,9 @@ export const loadIndex = cache(async (cc: Country["cc"]) => {
     cc === "us" ? Promise.resolve(null) : placeStats({ model: "duo", tz, country: cc }),
     cc === "us" ? Promise.resolve(null) : placeStats({ model: "18-pro-max", tz, country: cc }),
     restockReportStats(numbers, tz, 30, undefined, undefined, cc),
+    sellouts({ country: cc }),
   ]);
-  return { stockNow, pstats, stats, stock, duo, max, reports };
+  return { stockNow, pstats, stats, stock, duo, max, reports, sell };
 });
 
 /** " by province and city", " by city" or nothing (Singapore: one city). */
@@ -131,6 +134,10 @@ export async function StoresIndexPage({ country: c }: { country: Country }) {
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">When do stores restock?</h2>
           <div className="mt-3"><RestockClock stats={d.stats} label="across the US" reports={d.reports} /></div>
+        </section>
+        <section className="pane p-5">
+          <h2 className="text-xl font-semibold">How fast do restocks sell out across the US?</h2>
+          <div className="mt-3"><SellOutTimes data={d.sell} label="across the US" showStore /></div>
         </section>
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">Last {d.pstats.days} days</h2>

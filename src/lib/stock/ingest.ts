@@ -40,6 +40,8 @@ export interface Transition {
   firstSeen: boolean;
   /** When the new status was first observed — the event time. */
   at: Date;
+  /** Sell-outs: the last check that still saw it available (how long a restock lasted is between that and `at`). */
+  seenUntil?: Date | null;
 }
 
 /** An observation held back as pending: the caller may re-check that store at once instead of next round. */
@@ -168,6 +170,7 @@ export async function ingestStores(
         pendingStatus: schema.storeSkuStatus.pendingStatus,
         pendingSince: schema.storeSkuStatus.pendingSince,
         pendingSeen: schema.storeSkuStatus.pendingSeen,
+        lastAvailableAt: schema.storeSkuStatus.lastAvailableAt,
       })
       .from(schema.storeSkuStatus)
       .where(and(inArray(schema.storeSkuStatus.storeNumber, storeNumbers), inArray(schema.storeSkuStatus.partNumber, partNumbers)));
@@ -178,6 +181,8 @@ export async function ingestStores(
       ]),
     );
 
+    // The last check that still saw each pair available: a sell-out's lower bound on how long the restock lasted.
+    const lastSeen = new Map(current.map((c) => [`${c.storeNumber}|${c.partNumber}`, c.lastAvailableAt]));
     const transitions: Transition[] = [];
     const pending: PendingObs[] = [];
     const refuted: RefutedObs[] = [];
@@ -185,7 +190,7 @@ export async function ingestStores(
     const rows = obs.map((o) => {
       const before = prev.get(`${o.storeNumber}|${o.partNumber}`);
       const dec = decide(before, o, now);
-      if (dec.commit) transitions.push({ storeNumber: o.storeNumber, partNumber: o.partNumber, kind: dec.commit.kind, quote: o.quote, firstSeen: dec.commit.firstSeen, at: dec.commit.since });
+      if (dec.commit) transitions.push({ storeNumber: o.storeNumber, partNumber: o.partNumber, kind: dec.commit.kind, quote: o.quote, firstSeen: dec.commit.firstSeen, at: dec.commit.since, ...(dec.commit.kind === "soldout" ? { seenUntil: lastSeen.get(`${o.storeNumber}|${o.partNumber}`) ?? null } : {}) });
       if (dec.held) { held++; pending.push({ storeNumber: o.storeNumber, partNumber: o.partNumber, status: dec.pendingStatus!, since: dec.pendingSince ?? now, seen: dec.pendingSeen }); }
       if (refutes(before, dec)) refuted.push({ storeNumber: o.storeNumber, partNumber: o.partNumber, pendingStatus: before!.pendingStatus!, pendingSince: before!.pendingSince, pendingSeen: before!.pendingSeen });
       return { ...o, dec };
@@ -253,7 +258,7 @@ export async function ingestStores(
     if (transitions.length > 0) {
       const inserted = await d
         .insert(schema.availabilityEvents)
-        .values(transitions.map((t) => ({ storeNumber: t.storeNumber, partNumber: t.partNumber, kind: t.kind, quote: t.quote, at: t.at, sweepId, firstSeen: t.firstSeen })))
+        .values(transitions.map((t) => ({ storeNumber: t.storeNumber, partNumber: t.partNumber, kind: t.kind, quote: t.quote, at: t.at, sweepId, firstSeen: t.firstSeen, seenUntil: t.seenUntil ?? null })))
         .returning({ id: schema.availabilityEvents.id });
       eventIds.push(...inserted.map((r) => r.id));
     }
