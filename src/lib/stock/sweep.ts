@@ -8,6 +8,7 @@ import { batchParts, fetchPickup, type FetchLike, type PickupResponse } from "..
 import { db, schema } from "../db";
 import { ingestStores, type Transition } from "./ingest";
 import { notifyRestocks } from "./notify";
+import { confirmPendingRestocks, logRefuted } from "./fastlane";
 import { recordError, errorMessage } from "../errors";
 
 export interface SweepTask {
@@ -44,6 +45,11 @@ export interface SweepOptions {
    * behind. Skipped when the first pass mostly failed or ran long: that is an outage, not a blip.
    */
   retryFailed?: boolean;
+  /**
+   * Ask a store again at once when a response shows a first "available" (fastlane.ts), instead of
+   * waiting a round for the confirming observation. Default on; off on a budgeted spare egress.
+   */
+  confirm?: boolean;
 }
 
 /** Retry pass rules: only when failures are a minority and the first pass left time for it. */
@@ -67,6 +73,8 @@ export interface SweepSummary {
   transitions: number;
   /** Observations held back as unconfirmed (Apple blips) — see ingest.ts CONFIRM. */
   held: number;
+  /** Restocks committed by the instant confirm (a second ask of the store within the sweep). */
+  confirmed: number;
   notified: { matched: number; sent: number; failed: number; skipped: number };
   durationMs: number;
   exhausted: boolean;
@@ -84,7 +92,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
   const covered = new Set<string>();
   const allTransitions: Transition[] = [];
   const allEventIds: number[] = [];
-  let requests = 0, failures = 0, throttled = 0, timeouts = 0, held = 0, exhausted = false;
+  let requests = 0, failures = 0, throttled = 0, timeouts = 0, held = 0, confirmed = 0, exhausted = false;
   const logRows: (typeof schema.pollLog.$inferInsert)[] = [];
 
   let queue = tasks, cursor = 0;
@@ -128,6 +136,13 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
           if (r.transitions.some((t) => t.kind === "restock")) {
             notifyJobs.push(notifyRestocks(r.transitions, r.eventIds).then((n) => { notified.matched += n.matched; notified.sent += n.sent; notified.failed += n.failed; notified.skipped += n.skipped; }).catch(() => undefined));
           }
+          if (r.refuted.length) notifyJobs.push(logRefuted(id, r.refuted));
+          // A first "available": ask that store again in a second rather than next round (alerts ~1–2 s
+          // after the sighting instead of ~15 s), and a one-response blip is refuted on the spot.
+          const firstAvailable = r.pending.filter((p) => p.status === "available");
+          if (firstAvailable.length && opts.confirm !== false) {
+            notifyJobs.push(confirmPendingRestocks(firstAvailable, { egress: opts.egress, label: id, known, notified }).then((c) => { logRows.push(...c.rows); confirmed += c.confirmed; requests += c.requests; }).catch(() => undefined));
+          }
         } catch (e) {
           await recordError("poller", `ingest failed: ${errorMessage(e)}`, { anchor: task.anchor.location, batch: task.batchIndex });
         }
@@ -161,7 +176,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
     .update(schema.sweeps)
     .set({ finishedAt: finished, requests, failures, storesCovered: covered.size, transitions: allTransitions.length, durationMs: finished.getTime() - started.getTime() })
     .where((await import("drizzle-orm")).eq(schema.sweeps.id, id));
-  return { id, requests, failures, recovered, unresolved, tasks: tasks.length, throttled, timeouts, storesCovered: covered.size, transitions: allTransitions.length, held, notified, durationMs: finished.getTime() - started.getTime(), exhausted };
+  return { id, requests, failures, recovered, unresolved, tasks: tasks.length, throttled, timeouts, storesCovered: covered.size, transitions: allTransitions.length + confirmed, held, confirmed, notified, durationMs: finished.getTime() - started.getTime(), exhausted };
 }
 
 /** Heartbeat written after every sweep; the watchdog and the admin page read it. */

@@ -13,6 +13,12 @@ describe("buildPickupUrl", () => {
   it("refuses more than 20 parts", () => {
     expect(() => buildPickupUrl(Array.from({ length: 21 }, (_, i) => `P${i}`), "10001")).toThrow();
   });
+  it("asks one store by number instead of a ZIP for the fast lane and the instant confirm", () => {
+    const u = new URL(buildPickupUrl(["MJQ34LL/A"], "", { store: "R085" }));
+    expect(u.searchParams.get("store")).toBe("R085");
+    expect(u.searchParams.has("location")).toBe(false);
+    expect(u.searchParams.get("cppart")).toBe("UNLOCKED/US");
+  });
 });
 
 describe("batchParts", () => {

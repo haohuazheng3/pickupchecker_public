@@ -35,7 +35,11 @@ export interface PickupResponse {
   error?: string;
 }
 
-export function buildPickupUrl(parts: string[], location: string): string {
+/**
+ * `location` (a ZIP) returns the 12 nearest stores; `store` (an R-number) returns that one store only —
+ * the fast lane and the instant confirm use it: ~7 KB instead of ~200 KB, ~0.3 s instead of ~1.8 s.
+ */
+export function buildPickupUrl(parts: string[], location: string, opts: { store?: string } = {}): string {
   if (parts.length === 0) throw new Error("no parts");
   if (parts.length > MAX_PARTS_PER_CALL) throw new Error(`max ${MAX_PARTS_PER_CALL} parts per call`);
   const u = new URL(APPLE_PICKUP_URL);
@@ -43,7 +47,8 @@ export function buildPickupUrl(parts: string[], location: string): string {
   u.searchParams.set("mts.0", "regular");
   u.searchParams.set("cppart", "UNLOCKED/US");
   parts.forEach((p, i) => u.searchParams.set(`parts.${i}`, p));
-  u.searchParams.set("location", location);
+  if (opts.store) u.searchParams.set("store", opts.store);
+  else u.searchParams.set("location", location);
   return u.toString();
 }
 
@@ -105,7 +110,20 @@ export async function fetchPickup(
   fetchImpl: FetchLike = fetch as unknown as FetchLike,
   timeoutMs = 15000,
 ): Promise<PickupResponse> {
-  const url = buildPickupUrl(parts, location);
+  return fetchParsed(buildPickupUrl(parts, location), location, fetchImpl, timeoutMs);
+}
+
+/** One store only (`store=R###`): the small, fast call behind the fast lane and the instant confirm. */
+export async function fetchPickupAtStore(
+  parts: string[],
+  storeNumber: string,
+  fetchImpl: FetchLike = fetch as unknown as FetchLike,
+  timeoutMs = 4500,
+): Promise<PickupResponse> {
+  return fetchParsed(buildPickupUrl(parts, "", { store: storeNumber }), storeNumber, fetchImpl, timeoutMs);
+}
+
+async function fetchParsed(url: string, location: string, fetchImpl: FetchLike, timeoutMs: number): Promise<PickupResponse> {
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), timeoutMs);
   try {

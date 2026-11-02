@@ -21,17 +21,21 @@ export const PLANS: Record<PlanKey, PlanDef> = {
 };
 /**
  * The speed every paid plan gets, as sold on the pricing page, the plan pickers and Stripe Checkout.
- * Measured 2026-11-02: each store × configuration re-checked every 15 s (24 h max gap 30 s); a push is
- * handed off 0.26 s (p50) / 1.4 s (p90) after the restock is confirmed, so ~3 s to the phone is
- * conservative. 7 in 10 iPhone Duo restocks were gone within 2 minutes (1,170 in 7 days).
- * No "N seconds faster than other trackers" claim: no measurement backs one.
+ *  • fastSec: the stores paid alerts point at are asked every 5 s (the poller's fast lane, stock/fastlane.ts);
+ *    every store every 15 s (24 h max gap 30 s, measured 2026-11-02). A first "available" is re-asked
+ *    within a second (instant confirm) and the push is handed off 0.26 s (p50) / 1.4 s (p90) after that,
+ *    so "about 3 s" is conservative. 7 in 10 iPhone Duo restocks were gone within 2 minutes (1,170 in 7 days).
+ *  • OTHER_TRACKERS: the check intervals other iPhone stock trackers publish about themselves
+ *    (docs/research.md §7, 2026-11-02: 8 s, 15 s, 1 min, 5 min, 15 min). We compare to their published
+ *    numbers only, never to a measurement we do not have.
  */
-export const SPEED = { checkSec: 15, alertSec: 3 } as const;
+export const SPEED = { fastSec: 5, checkSec: 15, alertSec: 3 } as const;
+export const OTHER_TRACKERS = "8 seconds to 15 minutes";
 export const SPEED_PERKS = [
-  `Every store re-checked every ${SPEED.checkSec} s`,
+  `Your stores checked every ${SPEED.fastSec} s, all 269 every ${SPEED.checkSec} s`,
   `Push about ${SPEED.alertSec} s after a restock is confirmed`,
 ] as const;
-export const SPEED_LINE = `Every store re-checked every ${SPEED.checkSec} s, and a push about ${SPEED.alertSec} s after a restock is confirmed.`;
+export const SPEED_LINE = `Your stores are checked every ${SPEED.fastSec} s (every store every ${SPEED.checkSec} s), with a push about ${SPEED.alertSec} s after a restock is confirmed.`;
 export const PLAN_ORDER: PlanKey[] = ["free", "plus", "pro", "max"];
 export const PAID_PLANS: PaidPlanKey[] = ["plus", "pro", "max"];
 /** What a visitor without a plan may line up in the wizard: exactly what Plus will switch on. */

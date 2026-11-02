@@ -2,6 +2,9 @@
  * PickupChecker poller — runs on the VPS host (Linode or Hetzner, systemd), full mode.
  *
  *  • every CADENCE_SEC (15) a sweep: 42 anchors × 2 part batches = 84 requests, CONCURRENCY at once (14)
+ *  • the fast lane (stock/fastlane.ts): every FAST_CADENCE_SEC (5) each store a paid alert points at is
+ *    asked on its own (`store=R###`, ~7 KB); a first "available" anywhere is re-asked within a second
+ *    (instant confirm) so an alert follows a sighting in ~1–2 s. Runs only in full mode (IPv6 egress).
  *  • egress "ipv6": each request binds a fresh random address inside IPV6_PREFIX (/64 or /56) that
  *    was routed to this host (AnyIP) — Apple counts per /128, so the per-IP budget never bites
  *  • a failed request is retried once at the end of the sweep from a fresh address (sweep.ts)
@@ -13,7 +16,8 @@
  *
  *  Env: DATABASE_URL, RESEND_API_KEY, IPV6_PREFIX (e.g. 2600:3c0a:e000:1b::/56, or "auto" = read
  *       IPV6_PREFIX_FILE written by anyip.sh, else derive the /64 of the first global address), SITE_URL,
- *       POLLER_TOKEN (for the vercel egress fallback), CADENCE_SEC, CONCURRENCY, HOST_LABEL
+ *       POLLER_TOKEN (for the vercel egress fallback), CADENCE_SEC, CONCURRENCY, HOST_LABEL,
+ *       FAST_CADENCE_SEC (5; 0 disables the fast lane), FAST_CONCURRENCY (8), FAST_TIMEOUT_MS (4500)
  */
 import "dotenv/config";
 import os from "node:os";
@@ -22,6 +26,7 @@ import { execFileSync } from "node:child_process";
 import { Agent, fetch as undiciFetch } from "undici";
 import { buildTasks, runSweep, singleIdentityEgress, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
 import { fallbackOrder } from "../src/lib/stock/fallback";
+import { loadFastTargets, runFastRound } from "../src/lib/stock/fastlane";
 import { expireStale } from "../src/lib/stock/ingest";
 import { recordError, errorMessage } from "../src/lib/errors";
 import { prefixFromInterfaces, randomAddressIn } from "./ipv6";
@@ -32,6 +37,9 @@ import { pollerCodeHash } from "./codeHash.mjs";
 
 const CADENCE_SEC = Number(process.env.CADENCE_SEC ?? 15);
 const CONCURRENCY = Number(process.env.CONCURRENCY ?? 14);
+const FAST_CADENCE_SEC = Number(process.env.FAST_CADENCE_SEC ?? 5);
+const FAST_CONCURRENCY = Number(process.env.FAST_CONCURRENCY ?? 8);
+const FAST_TIMEOUT_MS = Number(process.env.FAST_TIMEOUT_MS ?? 4500);
 const HOST = process.env.HOST_LABEL ?? os.hostname();
 const PREFIX = resolvePrefix(process.env.IPV6_PREFIX ?? "");
 const SITE = process.env.SITE_URL ?? "https://pickupchecker.com";
@@ -165,6 +173,54 @@ function rewrap(j: { ok: boolean; location?: string; stores?: { storeNumber: str
   };
 }
 
+/* ---------------- fast lane ---------------- */
+
+/** Running totals since the process started; they ride along with every heartbeat (admin Poller node). */
+const fastStats = {
+  cadenceSec: FAST_CADENCE_SEC, stores: 0, pairs: 0, rounds: 0, requests: 0, failures: 0, throttled: 0, timeouts: 0,
+  transitions: 0, confirmed: 0, refuted: 0, errors: 0, paused: false, lastAt: null as string | null, lastDurationMs: 0, targetsAt: null as string | null,
+};
+
+/**
+ * Every FAST_CADENCE_SEC: the stores paid alerts point at, one request each. The target list is re-read
+ * every minute (a new alert joins the fast lane within a minute). Pauses while the sweep is in degraded
+ * mode (the spare egress has a few requests per half hour) and for 60 s after a round that was mostly 541s.
+ */
+async function fastLoop(egress: Egress, active: () => boolean) {
+  let targets = new Map<string, string[]>(), targetsAt = 0, backoffUntil = 0, lastErrorLog = 0;
+  console.log(`[fast] start cadence=${FAST_CADENCE_SEC}s concurrency=${FAST_CONCURRENCY}`);
+  for (;;) {
+    const t0 = Date.now();
+    try {
+      fastStats.paused = !active() || Date.now() < backoffUntil;
+      if (!fastStats.paused) {
+        if (Date.now() - targetsAt > 60_000) {
+          targets = await loadFastTargets(); targetsAt = Date.now();
+          fastStats.stores = targets.size; fastStats.pairs = [...targets.values()].reduce((a, p) => a + p.length, 0); fastStats.targetsAt = new Date(targetsAt).toISOString();
+        }
+        if (targets.size > 0) {
+          const r = await runFastRound({ egress, targets, concurrency: FAST_CONCURRENCY, timeoutMs: FAST_TIMEOUT_MS });
+          fastStats.rounds++; fastStats.requests += r.requests; fastStats.failures += r.failures; fastStats.throttled += r.throttled; fastStats.timeouts += r.timeouts;
+          fastStats.transitions += r.transitions; fastStats.confirmed += r.confirmed; fastStats.refuted += r.refuted;
+          fastStats.lastAt = new Date().toISOString(); fastStats.lastDurationMs = r.durationMs;
+          if (r.transitions || r.failures || r.confirmed || r.refuted) console.log(`[fast ${r.id.slice(5, 13)}] req=${r.requests} fail=${r.failures} 541=${r.throttled} trans=${r.transitions} confirmed=${r.confirmed} refuted=${r.refuted} ${r.durationMs}ms`);
+          if (r.requests >= 4 && r.throttled / r.requests >= 0.5) {
+            backoffUntil = Date.now() + 60_000;
+            await logOps("poller", "warn", `fast lane throttled: ${r.throttled} of ${r.requests} requests — pausing it for 60 s`, { host: HOST }).catch(() => undefined);
+          }
+        }
+      }
+    } catch (e) {
+      fastStats.errors++;
+      if (Date.now() - lastErrorLog > 10 * 60_000) {
+        lastErrorLog = Date.now();
+        await recordError("poller", `fast lane round failed: ${errorMessage(e)}`, { host: HOST }).catch(() => undefined);
+      }
+    }
+    await new Promise((r) => setTimeout(r, Math.max(500, FAST_CADENCE_SEC * 1000 - (Date.now() - t0))));
+  }
+}
+
 /* ---------------- main loop ---------------- */
 
 async function main() {
@@ -177,8 +233,9 @@ async function main() {
   /** When the spare egress took over; full mode is tried again 15 min later (not on the next round). */
   let degradedSince = 0;
   console.log(`[poller] start host=${HOST} mode=${mode} cadence=${CADENCE_SEC}s prefix=${PREFIX || "(none)"}`);
-  await writeState("poller:config", { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, prefix: PREFIX || null, startedAt: new Date().toISOString(), commit: COMMIT, node: process.version });
-  await logOps("poller", "info", `poller started (${mode})`, { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, prefix: PREFIX || null, commit: COMMIT, node: process.version });
+  await writeState("poller:config", { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, fastCadenceSec: FAST_CADENCE_SEC, prefix: PREFIX || null, startedAt: new Date().toISOString(), commit: COMMIT, node: process.version });
+  await logOps("poller", "info", `poller started (${mode})`, { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, fastCadenceSec: FAST_CADENCE_SEC, prefix: PREFIX || null, commit: COMMIT, node: process.version });
+  if (ipv6 && FAST_CADENCE_SEC > 0) void fastLoop(ipv6, () => mode === "full");
   for (const sig of ["SIGTERM", "SIGINT"] as const) {
     process.on(sig, () => {
       logOps("poller", "info", `poller stopping (${sig})`, { host: HOST, commit: COMMIT }).finally(() => process.exit(0));
@@ -203,17 +260,17 @@ async function main() {
       // Spare identities have a few requests per half hour: spend them on watched, stale pairs first.
       // About 50 requests per 35 min between the two (25 each): one every 40 s spreads them evenly.
       const tasks = egress === spare ? (await fallbackOrder(buildTasks()).catch(() => buildTasks())).slice(0, 1) : undefined;
-      const r = await runSweep({ egress, tasks, concurrency: mode === "full" ? CONCURRENCY : 1, mode, host: HOST, retryFailed: egress !== spare });
+      const r = await runSweep({ egress, tasks, concurrency: mode === "full" ? CONCURRENCY : 1, mode, host: HOST, retryFailed: egress !== spare, confirm: egress !== spare });
       const throttledShare = r.requests ? r.throttled / r.requests : 0;
       const failedShare = r.tasks ? r.unresolved / r.tasks : 0;
       await writeHeartbeat({
         at: new Date().toISOString(), host: HOST, mode, cadenceSec: CADENCE_SEC, lastSweepId: r.id,
         requests: r.requests, failures: r.failures, recovered: r.recovered, unresolved: r.unresolved, throttled: r.throttled, storesCovered: r.storesCovered,
-        transitions: r.transitions, held: r.held, notified: r.notified, durationMs: r.durationMs, egress: egress.name,
-        ipv6Stats: ipv6 ? ipv6.stats : null, sys: hostVitals(), sweeps: ++sweepsSinceStart, consecutiveBad,
+        transitions: r.transitions, held: r.held, confirmed: r.confirmed, notified: r.notified, durationMs: r.durationMs, egress: egress.name,
+        ipv6Stats: ipv6 ? ipv6.stats : null, fast: ipv6 && FAST_CADENCE_SEC > 0 ? fastStats : null, sys: hostVitals(), sweeps: ++sweepsSinceStart, consecutiveBad,
       });
       lastProgress = Date.now();
-      console.log(`[sweep ${r.id.slice(0, 8)}] ${mode}/${egress.name} req=${r.requests} fail=${r.failures} recovered=${r.recovered} unresolved=${r.unresolved} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} held=${r.held} sent=${r.notified.sent} ${r.durationMs}ms`);
+      console.log(`[sweep ${r.id.slice(0, 8)}] ${mode}/${egress.name} req=${r.requests} fail=${r.failures} recovered=${r.recovered} unresolved=${r.unresolved} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} confirmed=${r.confirmed} held=${r.held} sent=${r.notified.sent} ${r.durationMs}ms`);
 
       if (mode === "full" && (throttledShare >= 0.25 || failedShare >= 0.5)) {
         consecutiveBad++;

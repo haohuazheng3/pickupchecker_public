@@ -42,10 +42,32 @@ export interface Transition {
   at: Date;
 }
 
+/** An observation held back as pending: the caller may re-check that store at once instead of next round. */
+export interface PendingObs {
+  storeNumber: string;
+  partNumber: string;
+  /** The status waiting for confirmation. */
+  status: StockStatus;
+  since: Date;
+  seen: number;
+}
+
+/** A pending change that this observation cancelled: the committed status was seen again. */
+export interface RefutedObs {
+  storeNumber: string;
+  partNumber: string;
+  pendingStatus: StockStatus;
+  pendingSince: Date | null;
+  pendingSeen: number;
+}
+
 export interface IngestResult {
   updated: number;
   /** Observations that disagreed with the committed status and were held back as pending. */
   held: number;
+  pending: PendingObs[];
+  /** Pending changes this response refuted (an Apple blip, or a listing too short to confirm). */
+  refuted: RefutedObs[];
   transitions: Transition[];
   eventIds: number[];
 }
@@ -90,6 +112,11 @@ export function decide(prev: StatusRow | undefined, obs: { available: boolean; q
   return { status: before, quote: prev?.quote ?? null, pendingStatus: after, pendingSince: pending.since, pendingSeen: pending.seen, commit: null, held: true };
 }
 
+/** Pure: did this decision cancel a pending change without committing it (the committed status was seen again)? */
+export function refutes(prev: StatusRow | undefined, dec: Decision): boolean {
+  return Boolean(prev?.pendingStatus) && dec.pendingStatus === null && !dec.commit && !dec.held;
+}
+
 /**
  * Per-store write serialisation: two responses that cover the same store (overlapping anchors) must
  * not read-then-write the same rows concurrently, or a pending count is lost / a commit reverted.
@@ -126,7 +153,7 @@ export async function ingestStores(
     if (knownStores && !knownStores.has(s.storeNumber)) continue;
     for (const p of s.parts) obs.push({ storeNumber: s.storeNumber, partNumber: p.partNumber, available: p.available, quote: p.quote });
   }
-  if (obs.length === 0) return { updated: 0, held: 0, transitions: [], eventIds: [] };
+  if (obs.length === 0) return { updated: 0, held: 0, pending: [], refuted: [], transitions: [], eventIds: [] };
 
   const storeNumbers = [...new Set(obs.map((p) => p.storeNumber))];
   const partNumbers = [...new Set(obs.map((p) => p.partNumber))];
@@ -152,11 +179,15 @@ export async function ingestStores(
     );
 
     const transitions: Transition[] = [];
+    const pending: PendingObs[] = [];
+    const refuted: RefutedObs[] = [];
     let held = 0;
     const rows = obs.map((o) => {
-      const dec = decide(prev.get(`${o.storeNumber}|${o.partNumber}`), o, now);
+      const before = prev.get(`${o.storeNumber}|${o.partNumber}`);
+      const dec = decide(before, o, now);
       if (dec.commit) transitions.push({ storeNumber: o.storeNumber, partNumber: o.partNumber, kind: dec.commit.kind, quote: o.quote, firstSeen: dec.commit.firstSeen, at: dec.commit.since });
-      if (dec.held) held++;
+      if (dec.held) { held++; pending.push({ storeNumber: o.storeNumber, partNumber: o.partNumber, status: dec.pendingStatus!, since: dec.pendingSince ?? now, seen: dec.pendingSeen }); }
+      if (refutes(before, dec)) refuted.push({ storeNumber: o.storeNumber, partNumber: o.partNumber, pendingStatus: before!.pendingStatus!, pendingSince: before!.pendingSince, pendingSeen: before!.pendingSeen });
       return { ...o, dec };
     });
 
@@ -206,7 +237,7 @@ export async function ingestStores(
         .returning({ id: schema.availabilityEvents.id });
       eventIds.push(...inserted.map((r) => r.id));
     }
-    return { updated: rows.length, held, transitions, eventIds };
+    return { updated: rows.length, held, pending, refuted, transitions, eventIds };
   });
 }
 

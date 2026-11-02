@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { decide, withStoreLocks, CONFIRM, type StatusRow, type Decision } from "@/lib/stock/ingest";
+import { decide, refutes, withStoreLocks, CONFIRM, type StatusRow, type Decision } from "@/lib/stock/ingest";
 
 const t0 = new Date("2026-10-30T00:00:00Z");
 const at = (sec: number) => new Date(t0.getTime() + sec * 1000);
@@ -22,8 +22,24 @@ describe("decide — one response never flips a status on its own", () => {
   });
 
   it("an agreeing observation refreshes the quote and cancels any pending change", () => {
-    const d = decide(row({ pendingStatus: "unavailable", pendingSince: at(-30), pendingSeen: 3 }), { available: true, quote: "Available Tomorrow" }, t0);
+    const prev = row({ pendingStatus: "unavailable", pendingSince: at(-30), pendingSeen: 3 });
+    const d = decide(prev, { available: true, quote: "Available Tomorrow" }, t0);
     expect(d).toMatchObject({ status: "available", quote: "Available Tomorrow", pendingStatus: null, pendingSince: null, pendingSeen: 0, commit: null, held: false });
+    expect(refutes(prev, d)).toBe(true);
+  });
+
+  it("refutes() names only a cancelled pending change — not a plain agreement, a hold or a commit", () => {
+    const plain = row();
+    expect(refutes(plain, decide(plain, avail, t0))).toBe(false);
+    const sold = row({ status: "unavailable", quote: "Currently unavailable" });
+    const first = decide(sold, avail, t0);
+    expect(first.held).toBe(true);
+    expect(refutes(sold, first)).toBe(false);
+    const confirmed = decide(rowAfter(first), avail, at(1));
+    expect(confirmed.commit?.kind).toBe("restock");
+    expect(refutes(rowAfter(first), confirmed)).toBe(false);
+    // the instant confirm says "unavailable" again: the lone "available" was a blip
+    expect(refutes(rowAfter(first), decide(rowAfter(first), gone, at(1)))).toBe(true);
   });
 
   it("holds a lone 'unavailable'; the next sweep (≥ 15 s later) confirms the sell-out", () => {

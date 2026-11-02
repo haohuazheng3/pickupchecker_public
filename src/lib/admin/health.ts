@@ -22,6 +22,8 @@ export interface Heartbeat {
   sys?: { load1?: number; load5?: number; cpus?: number; memTotalMb?: number; memFreeMb?: number; rssMb?: number; uptimeSec?: number; procUptimeSec?: number; node?: string; commit?: string | null; codeHash?: string | null; pid?: number };
   sweeps?: number; consecutiveBad?: number;
   ipv6Stats?: { requests: number; throttled: number; errors: number } | null;
+  /** The 5 s fast lane over the stores paid alerts point at (poller/main.ts fastStats). */
+  fast?: { cadenceSec: number; stores: number; pairs: number; rounds: number; requests: number; failures: number; throttled: number; confirmed: number; refuted: number; paused: boolean; lastAt: string | null } | null;
 }
 
 export interface HealthSnapshot {
@@ -86,7 +88,7 @@ export function computeNodes(s: HealthSnapshot): NodeHealth[] {
     key: "poller", name: "Poller (Linode)", href: "/admin/poller",
     state: hbAge < 2.5 * MIN ? (hb?.mode === "degraded" ? "warn" : "ok") : hbAge < 10 * MIN ? "warn" : "bad",
     value: hb ? `${hb.mode ?? "?"} · ${fmtAge(hbAge)}` : "no heartbeat",
-    detail: hb ? `${hb.host ?? "?"} · every ${hb.cadenceSec ?? "?"} s via ${hb.egress ?? "?"} · last sweep ${hb.requests ?? 0} req, ${hb.storesCovered ?? 0} stores, ${hb.durationMs ? (hb.durationMs / 1000).toFixed(1) : "?"} s · ${hb.held ?? 0} unconfirmed blips held` : "the host has never written a heartbeat",
+    detail: hb ? `${hb.host ?? "?"} · every ${hb.cadenceSec ?? "?"} s via ${hb.egress ?? "?"} · last sweep ${hb.requests ?? 0} req, ${hb.storesCovered ?? 0} stores, ${hb.durationMs ? (hb.durationMs / 1000).toFixed(1) : "?"} s · ${hb.held ?? 0} unconfirmed blips held${hb.fast ? ` · fast lane ${hb.fast.stores} stores every ${hb.fast.cadenceSec} s${hb.fast.paused ? " (paused)" : ""}, ${hb.fast.failures} of ${hb.fast.requests} failed` : ""}` : "the host has never written a heartbeat",
   });
 
   // 2. host vitals

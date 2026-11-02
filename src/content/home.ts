@@ -28,7 +28,7 @@ export const HOME_SECTIONS: Record<string, { lead: string; blocks: Block[] }> = 
 };
 
 export const HOME_FAQ: Faq[] = [
-  { q: "How fast are the alerts?", a: "Every US Apple Store is re-checked about every 15 seconds, and the push reaches your phone about 3 seconds after a restock is confirmed (a second check rules out Apple glitches). Duo restocks stay listed for a median of {{duo.medianStay}}, which is why speed matters." },
+  { q: "How fast are the alerts?", a: "The stores your alerts point at are checked every 5 seconds, every US Apple Store every 15. A first \"available\" is checked again within a second so an Apple glitch never becomes an alert, and the push reaches your phone about 3 seconds after that. Duo restocks stay listed for a median of {{duo.medianStay}}, which is why speed matters." },
   { q: "What is one alert?", a: "One Apple Store × one exact phone (model, storage and color). Watching three stores for one configuration is three alerts." },
   { q: "What does it cost?", a: "Live stock, the map and the restock log are free. Alerts are Plus $5/month for 10, Pro $10 for 20 and Max $20 for 50; cancel anytime ([pricing](/pricing))." },
   { q: "How do I get notifications on my iPhone?", a: "Open pickupchecker.com in Safari, add it to your Home Screen, open it from there, sign in and allow notifications ([step by step](/install))." },
