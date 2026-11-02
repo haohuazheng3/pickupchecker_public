@@ -19,6 +19,19 @@ export const PLANS: Record<PlanKey, PlanDef> = {
   pro: { key: "pro", name: "Pro", priceUsd: 10, limit: 20, blurb: "20 alerts" },
   max: { key: "max", name: "Max", priceUsd: 20, limit: 50, blurb: "50 alerts" },
 };
+/**
+ * The speed every paid plan gets, as sold on the pricing page, the plan pickers and Stripe Checkout.
+ * Measured 2026-11-02: each store × configuration re-checked every 15 s (24 h max gap 30 s); a push is
+ * handed off 0.26 s (p50) / 1.4 s (p90) after the restock is confirmed, so ~3 s to the phone is
+ * conservative. 7 in 10 iPhone Duo restocks were gone within 2 minutes (1,170 in 7 days).
+ * No "N seconds faster than other trackers" claim: no measurement backs one.
+ */
+export const SPEED = { checkSec: 15, alertSec: 3 } as const;
+export const SPEED_PERKS = [
+  `Every store re-checked every ${SPEED.checkSec} s`,
+  `Push about ${SPEED.alertSec} s after a restock is confirmed`,
+] as const;
+export const SPEED_LINE = `Every store re-checked every ${SPEED.checkSec} s, and a push about ${SPEED.alertSec} s after a restock is confirmed.`;
 export const PLAN_ORDER: PlanKey[] = ["free", "plus", "pro", "max"];
 export const PAID_PLANS: PaidPlanKey[] = ["plus", "pro", "max"];
 /** What a visitor without a plan may line up in the wizard: exactly what Plus will switch on. */

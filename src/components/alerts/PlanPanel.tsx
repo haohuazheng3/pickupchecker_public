@@ -8,7 +8,7 @@
  */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PAID_PLANS, PLANS, comparePlans, type PaidPlanKey, type PlanKey } from "@/lib/plans";
+import { PAID_PLANS, PLANS, SPEED_LINE, comparePlans, type PaidPlanKey, type PlanKey } from "@/lib/plans";
 import { track } from "@/lib/track";
 import { forgetMe } from "@/lib/me";
 
@@ -191,7 +191,10 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
           )}
         </div>
       ) : (
-        <p className="text-sm text-ink-2">{plan.used > 0 ? `Your ${plan.used} alert${plan.used === 1 ? " is" : "s are"} saved but off until a plan is active.` : "Alerts start the moment a plan is active."} Monthly, cancel anytime.</p>
+        <>
+          <p className="text-sm text-ink-2">{plan.used > 0 ? `Your ${plan.used} alert${plan.used === 1 ? " is" : "s are"} saved but off until a plan is active.` : "Alerts start the moment a plan is active."} Monthly, cancel anytime.</p>
+          <p className="mt-2 text-xs text-ink-3"><span aria-hidden>⚡ </span>{SPEED_LINE}</p>
+        </>
       )}
       {done && <p role="status" className="mt-3 rounded-xl bg-accent/10 px-3 py-2 text-sm text-ink">✓ {done}</p>}
 

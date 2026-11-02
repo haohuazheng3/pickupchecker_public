@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "./db";
 import { stripe } from "./stripe";
 import { env } from "./env";
-import { PLANS, comparePlans, planFromPrice, priceIdFor, effectivePlan, type PaidPlanKey } from "./plans";
+import { SPEED_LINE, PLANS, comparePlans, planFromPrice, priceIdFor, effectivePlan, type PaidPlanKey } from "./plans";
 
 /** Upsert a subscription row from a Stripe subscription object (idempotent). */
 export async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
@@ -97,7 +97,7 @@ async function checkoutSession(userId: string, email: string, plan: PaidPlanKey,
     metadata: meta,
     subscription_data: { metadata: meta },
     custom_text: {
-      submit: { message: `${PLANS[plan].name}: ${PLANS[plan].limit} alerts. Monthly, cancel anytime.` },
+      submit: { message: `${PLANS[plan].name}: ${PLANS[plan].limit} alerts. ${SPEED_LINE} Monthly, cancel anytime.` },
     },
     // Per-session branding: the Stripe account is shared with sibling products, so the brand is set here.
     branding_settings: { display_name: "PickupChecker", background_color: "#f6f7f5", button_color: "#0a7f49", border_style: "rounded" },

@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { MODELS, STORE_INDEX, type ModelKey } from "@/lib/apple/catalog";
-import { PAID_PLANS, PLANS, type PaidPlanKey } from "@/lib/plans";
+import { PAID_PLANS, PLANS, SPEED_LINE, type PaidPlanKey } from "@/lib/plans";
 import { alertSetOf, phoneKey, togglePhone, toggleStore, type AlertSet, type Phone } from "@/lib/alertSet";
 import { fetchMe } from "@/lib/me";
 import type { AlertStart } from "@/lib/alertStart";
@@ -184,7 +184,10 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
       {mode === "draft" && count > 0 && (
         <div className={inner ? "pane-2 p-4" : "pane p-5 sm:p-6"}>
           <div className="font-semibold">Turn on {count === 1 ? "this alert" : `these ${count} alerts`}</div>
-          <p className="mt-1 mb-3 text-sm text-ink-2">{fit ? `Then pick a plan: ${PLANS[fit].name} covers them for $${PLANS[fit].priceUsd}/month, cancel anytime.` : "Untick a few first: the largest plan holds 50."}</p>
+          <div className="mt-1 mb-3">
+            <p className="text-sm text-ink-2">{fit ? `Then pick a plan: ${PLANS[fit].name} covers them for $${PLANS[fit].priceUsd}/month, cancel anytime.` : "Untick a few first: the largest plan holds 50."}</p>
+            {fit && <p className="mt-1 text-xs text-ink-3"><span aria-hidden>⚡ </span>{SPEED_LINE}</p>}
+          </div>
           {fit && <EmailSignIn onSignedIn={afterSignIn} onVerifying={() => { signingIn.current = true; }} cta={`Continue with ${count} alert${count === 1 ? "" : "s"}`} />}
         </div>
       )}
@@ -204,7 +207,7 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
               ))}
             </div>
           )}
-          <p className="mt-2 text-xs text-ink-3">Monthly, cancel anytime. Stripe checkout, card or Link.</p>
+          <p className="mt-2 text-xs text-ink-3"><span aria-hidden>⚡ </span>{SPEED_LINE} Monthly, cancel anytime. Stripe checkout, card or Link.</p>
         </div>
       )}
 
