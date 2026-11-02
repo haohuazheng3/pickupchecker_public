@@ -58,6 +58,7 @@
   "src/lib/push/payload.ts",
   "src/lib/push/policy.ts",
   "src/lib/push/server.ts",
+  "src/lib/stock/cluster.ts",
   "src/lib/stock/fallback.ts",
   "src/lib/stock/fastlane.ts",
   "src/lib/stock/ingest.ts",

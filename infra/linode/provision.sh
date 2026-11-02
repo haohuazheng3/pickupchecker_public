@@ -8,6 +8,9 @@
 #   ./infra/linode/provision.sh [label] [type] [region] [prefix-length]
 #
 # Defaults: label pickupchecker-poller, type g6-nanode-1 ($5/mo), region us-ord (Chicago), /56.
+# HOST_LABEL (default linode-1) names the host in heartbeats and sweeps. HOLD=1 provisions a second host whose
+# poller stays stopped until it has been configured (infra/linode/standby.sh): it must never start polling the
+# US next to the primary with a guessed configuration.
 # Optional: SSH_PUBKEY="ssh-ed25519 AAAA…" to be able to log in as root; REPO (default
 # haohuazheng3/pickupchecker_private). Needs `gh auth` (or GH_TOKEN) to register the read-only deploy key.
 # LINODE_ID=<id> rebuilds that existing Linode in place (keeps its IPv4 and the attached IPv6 range)
@@ -35,7 +38,8 @@ DEPLOY_KEY_B64="$(base64 < "$tmp/key" | tr -d '\n')"
 render() {
   sed -e "s|__DATABASE_URL__|$DATABASE_URL|" -e "s|__RESEND_API_KEY__|$RESEND_API_KEY|" -e "s|__POLLER_TOKEN__|$POLLER_TOKEN|" \
       -e "s|__MAIL_WORKER_URL__|$MAIL_WORKER_URL|" -e "s|__MAIL_WORKER_TOKEN__|$MAIL_WORKER_TOKEN|" -e "s|__DEPLOY_KEY_B64__|$DEPLOY_KEY_B64|" \
-      -e "s|__VAPID_PUBLIC_KEY__|${VAPID_PUBLIC_KEY:-}|" -e "s|__VAPID_PRIVATE_KEY__|${VAPID_PRIVATE_KEY:-}|" "$here/cloud-init.yaml"
+      -e "s|__VAPID_PUBLIC_KEY__|${VAPID_PUBLIC_KEY:-}|" -e "s|__VAPID_PRIVATE_KEY__|${VAPID_PRIVATE_KEY:-}|" \
+      -e "s|__HOST_LABEL__|${HOST_LABEL:-linode-1}|" -e "s|__HOLD__|${HOLD:-0}|" "$here/cloud-init.yaml"
 }
 USER_DATA_B64="$(render | base64 | tr -d '\n')"
 ROOT_PASS="$(openssl rand -base64 30 | tr -d '/+=' | cut -c1-32)"
@@ -73,7 +77,9 @@ for plen in "$PLEN" 64; do
         -d "{\"linode_id\":$ID,\"prefix_length\":$plen}" || true)
   RANGE=$(echo "$r" | python3 -c 'import json,sys
 try:
-    d=json.load(sys.stdin); print(str(d["range"]) + "/" + str(d["prefix"]))
+    d=json.load(sys.stdin); r=str(d["range"])
+    # The API has answered both "range": "x::" + "prefix": 56 and "range": "x::/56" (2026-11-02).
+    print(r if "/" in r else r + "/" + str(d["prefix"]))
 except Exception: print("")' 2>/dev/null || true)
   if [ -n "$RANGE" ]; then echo "ipv6 range attached: $RANGE"; break; fi
   echo "range /$plen refused: $(echo "$r" | head -c 200)"

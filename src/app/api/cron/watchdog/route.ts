@@ -9,6 +9,7 @@ import { PARTIAL_SEC, freshness, intlVerdict, intlWatchStep, pollerVerdict, type
 import type { CountryCode } from "@/lib/apple/countries";
 import { CAPACITY_IDLE, CLEAR_RUNS, FAST_STORES_WARN, ROUND_WINDOW_MIN, capacityReasons, capacityStep, recentRounds, watchedLagP90, type CapacityState } from "@/lib/stock/capacity";
 import { SPEED } from "@/lib/plans";
+import { intlRunner } from "@/lib/stock/cluster";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,13 +42,17 @@ export async function GET(req: Request) {
   try {
     const hb = await readState<Heartbeat>("heartbeat");
     const age = hb ? Date.now() - new Date(hb.value.at ?? hb.updatedAt).getTime() : Infinity;
-    const fresh = await freshness({ intlCadenceSec: hb?.value.intl?.cadenceSec }).catch(() => null);
+    // The other countries run on the standby host when there is one: their stats are then in its alive record.
+    const runner = hb?.value.intl ? null : await intlRunner().catch(() => null);
+    const intlInfo = (hb?.value.intl ?? runner?.intl ?? null) as HeartbeatIntl;
+    const fresh = await freshness({ intlCadenceSec: intlInfo?.cadenceSec }).catch(() => null);
     const v = pollerVerdict(age, fresh);
     const wd = (await readState<WatchdogState>("watchdog"))?.value ?? { down: false };
     const now = new Date();
-    // A blind US (the shared IPv6 egress failing) starves every country: only the US mail goes out then.
-    const intlOn = Boolean(hb?.value.intl && !hb.value.intl.paused && hb.value.mode !== "degraded" && (v.state === "ok" || v.state === "partial"));
-    const iv = intlOn ? intlVerdict(fresh, hb!.value.intl!.countries) : null;
+    // On the US host, a blind US (the shared IPv6 egress failing) starves every country: only the US mail goes out
+    // then. On their own host they are judged on their own.
+    const intlOn = Boolean(intlInfo && !intlInfo.paused && (runner || (hb!.value.mode !== "degraded" && (v.state === "ok" || v.state === "partial"))));
+    const iv = intlOn ? intlVerdict(fresh, intlInfo!.countries) : null;
     // One debug row per run: the admin health strip proves the cron itself is alive.
     await logOps("cron", "debug", "watchdog tick", {
       ageMs: Number.isFinite(age) ? Math.round(age) : null, state: v.state, degraded: v.fill,

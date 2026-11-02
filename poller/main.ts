@@ -23,10 +23,17 @@
  *    poll_log keeps only its failures (one sweeps row per round, mode "intl"); totals ride along with the
  *    heartbeat. Runs only in full mode (the spare egress is budgeted for the US).
  *  • heartbeat after every sweep (the Vercel watchdog alerts when it stops, or when the data goes stale)
+ *  • two hosts (POLLER_ROLE primary | standby, stock/cluster.ts): every ALIVE_EVERY_MS each one decides its duties
+ *    from the cluster record — the cluster primary polls the US, the standby the other countries (the primary
+ *    takes them back when no one else reports doing them) — and writes alive:<host>. The standby promotes its
+ *    database replica when the primary database is unreachable from it and from the site for a minute; an old
+ *    primary that finds a newer epoch fences itself (docs/architecture.md「热备主机」)
  *  • a sweep stuck for STUCK_MS exits the process, and systemd starts a fresh one. A round of the other
  *    countries stuck for INTL_STUCK_MS only restarts their own loop (the US sweep never restarts for them).
  *
  *  Env: DATABASE_URL (the poller's own role, which has reserved connection slots: infra/linode/postgres.sh),
+ *       DATABASE_URL_STANDBY (the other host's database: TLS from the primary, loopback on the standby),
+ *       POLLER_ROLE (primary | standby),
  *       RESEND_API_KEY, IPV6_PREFIX (e.g. 2600:3c0a:e000:1b::/56, or "auto" = read
  *       IPV6_PREFIX_FILE written by anyip.sh, else derive the /64 of the first global address), SITE_URL,
  *       POLLER_TOKEN (for the vercel egress fallback), CADENCE_SEC, CONCURRENCY, SWEEP_TIMEOUT_MS (6000),
@@ -51,6 +58,8 @@ import { pickupCountryOf, type FetchLike } from "../src/lib/apple/client";
 import { notifyOwner } from "../src/lib/mail/owner";
 import { logOps } from "../src/lib/ops";
 import { pollerCodeHash } from "./codeHash.mjs";
+import { dbStatus, recheckDatabases, targetPool } from "../src/lib/db";
+import { ALIVE_EVERY_MS, dutyLabel, duties, promoteStep, readAlive, readCluster, type ClusterRecord, type Duties, type PollerRole, type PromoteState } from "../src/lib/stock/cluster";
 
 const CADENCE_SEC = Number(process.env.CADENCE_SEC ?? 15);
 const CONCURRENCY = Number(process.env.CONCURRENCY ?? 14);
@@ -63,6 +72,7 @@ const INTL_CADENCE_SEC = Number(process.env.INTL_CADENCE_SEC ?? 15);
 const INTL_CONCURRENCY = Number(process.env.INTL_CONCURRENCY ?? 12);
 const INTL_TIMEOUT_MS = Number(process.env.INTL_TIMEOUT_MS ?? 6000);
 const HOST = process.env.HOST_LABEL ?? os.hostname();
+const ROLE: PollerRole = process.env.POLLER_ROLE === "standby" ? "standby" : "primary";
 const PREFIX = resolvePrefix(process.env.IPV6_PREFIX ?? "");
 const SITE = process.env.SITE_URL ?? "https://pickupchecker.com";
 const POLLER_TOKEN = process.env.POLLER_TOKEN ?? "";
@@ -370,6 +380,95 @@ async function intlLoop(egress: Egress, active: () => boolean, generation: numbe
   console.warn(`[intl] loop ${generation} ended (superseded by ${intlGeneration})`);
 }
 
+/* ---------------- cluster: duties, takeover, fence ---------------- */
+
+/** What this host polls now (stock/cluster.ts decides; nothing until the first check has run). */
+let duty: Duties = { us: false, intl: false, fenced: false, why: "starting" };
+
+async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([p, new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`no answer in ${ms} ms`)), ms))]);
+}
+
+/** The site's view of the primary database (/api/health?db=1); null when the site does not answer. */
+async function siteSaysPrimaryOk(): Promise<boolean | null> {
+  try {
+    const r = await fetch(`${SITE}/api/health?shallow=1&db=1`, { signal: AbortSignal.timeout(8_000), headers: { "cache-control": "no-cache" } });
+    const j = (await r.json()) as { databases?: { primary?: { ok?: boolean } } };
+    return typeof j.databases?.primary?.ok === "boolean" ? j.databases.primary.ok : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Standby only: promote the local replica to primary, with the next epoch (see cluster.ts). */
+async function takeOver(cluster: ClusterRecord | null, why: string) {
+  const local = targetPool("standby");
+  if (!local) return;
+  console.error(`[cluster] taking over: ${why}`);
+  await local.query("select pg_promote(true, 60)");
+  const record: ClusterRecord & { promotedAt: string; from: string | null } = { primary: HOST, epoch: (cluster?.epoch ?? 1) + 1, promotedAt: new Date().toISOString(), from: cluster?.primary ?? null };
+  await local.query("insert into poller_state (key, value, updated_at) values ('cluster', $1, now()) on conflict (key) do update set value = excluded.value, updated_at = now()", [JSON.stringify(record)]);
+  await recheckDatabases();
+  await logOps("poller", "error", `${HOST} took over: its database is now the primary (epoch ${record.epoch})`, { host: HOST, why, from: record.from }).catch(() => undefined);
+  await notifyOwner(
+    `[PickupChecker] ${HOST} took over from ${record.from ?? "the primary"}`,
+    `The primary database was unreachable from ${HOST} and from the site for a minute (${why}).\n${HOST} promoted its replica (epoch ${record.epoch}) and now polls the US, the fast lane and the other countries, and sends the alerts. The site follows by itself.\n\nWhen the old primary is back it fences itself (no polling, never chosen by the site). Make it the new standby with infra/linode/standby.sh (docs/architecture.md, 热备主机).`,
+  ).catch(() => undefined);
+}
+
+/** Old primary only: record in its own database who the primary is now, so nothing ever picks it again. */
+async function fence(cluster: ClusterRecord) {
+  const local = targetPool("primary");
+  if (!local) return;
+  await local.query("update poller_state set value = $1, updated_at = now() where key = 'cluster'", [JSON.stringify({ ...cluster, fencedAt: new Date().toISOString() })]);
+}
+
+/** Every ALIVE_EVERY_MS: decide this host's duties, run the takeover check (standby) or fence (old primary), report alive. */
+async function clusterLoop(intlConfigured: boolean) {
+  const promote: PromoteState = { misses: 0 };
+  let fenced = false, last = "";
+  for (;;) {
+    try {
+      const st = await dbStatus();
+      const writable = st ? st.writable : true;
+      const [cluster, alive] = await Promise.all([readCluster().catch(() => null), readAlive().catch(() => [])]);
+      duty = duties({ me: HOST, role: ROLE, cluster, alive, now: new Date(), intlConfigured, writable });
+      if (duty.fenced && cluster && !fenced) {
+        fenced = true;
+        await fence(cluster);
+        await logOps("poller", "error", `${HOST} is fenced: ${duty.why}`, { host: HOST, cluster }).catch(() => undefined);
+        await notifyOwner(`[PickupChecker] ${HOST} is fenced (${cluster.primary} is the primary now)`, `${HOST} came back after ${cluster.primary} took over (epoch ${cluster.epoch}). It does not poll, and the site never chooses its database again. Make it the new standby with infra/linode/standby.sh (docs/architecture.md, 热备主机).`).catch(() => undefined);
+      }
+      if (ROLE === "standby") {
+        const local = targetPool("standby"), remote = targetPool("primary");
+        const replica = local ? Boolean((await withTimeout(local.query("select pg_is_in_recovery() as r"), 3_000)).rows[0]?.r) : false;
+        if (replica && remote) {
+          const primaryOk = await withTimeout(remote.query("select 1"), 3_000).then(() => true, () => false);
+          const step = promoteStep(promote, primaryOk, primaryOk ? true : await siteSaysPrimaryOk());
+          promote.misses = step.next.misses;
+          if (step.next.misses === 1) console.warn(`[cluster] ${step.why}`);
+          if (step.promote) await takeOver(cluster, step.why);
+        }
+      }
+      const label = dutyLabel(duty);
+      if (label !== last) {
+        console.log(`[cluster] ${HOST} (${ROLE}) duties: ${label} — ${duty.why}`);
+        await logOps("poller", "info", `${HOST} duties: ${label} (${duty.why})`, { host: HOST, role: ROLE, epoch: cluster?.epoch ?? null }).catch(() => undefined);
+        last = label;
+      }
+      if (writable) {
+        await writeState(`alive:${HOST}`, {
+          host: HOST, at: new Date().toISOString(), role: ROLE, duties: label, why: duty.why, epoch: cluster?.epoch ?? null, commit: COMMIT,
+          intl: duty.intl ? intlStats : null, fast: duty.us ? fastStats : null, sys: hostVitals(), db: st ? { using: st.using, writable: st.writable } : null,
+        });
+      }
+    } catch (e) {
+      console.warn(`[cluster] check failed: ${errorMessage(e)}`);
+    }
+    await new Promise((r) => setTimeout(r, ALIVE_EVERY_MS));
+  }
+}
+
 /* ---------------- main loop ---------------- */
 
 async function main() {
@@ -382,12 +481,18 @@ async function main() {
   /** When the spare egress took over; full mode is tried again 15 min later (not on the next round). */
   let degradedSince = 0;
   const intlOn = Boolean(ipv6 && POLL_COUNTRIES.length > 0 && INTL_CADENCE_SEC > 0);
-  console.log(`[poller] start host=${HOST} mode=${mode} cadence=${CADENCE_SEC}s prefix=${PREFIX || "(none)"}${intlOn ? ` intl=${POLL_COUNTRIES.join(",")}/${INTL_CADENCE_SEC}s` : ""}`);
+  console.log(`[poller] start host=${HOST} role=${ROLE} mode=${mode} cadence=${CADENCE_SEC}s prefix=${PREFIX || "(none)"}${intlOn ? ` intl=${POLL_COUNTRIES.join(",")}/${INTL_CADENCE_SEC}s` : ""}`);
   const intlConfig = intlOn ? { pollCountries: POLL_COUNTRIES, intlCadenceSec: INTL_CADENCE_SEC, intlConcurrency: INTL_CONCURRENCY } : {};
-  await writeState("poller:config", { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, fastCadenceSec: FAST_CADENCE_SEC, ...intlConfig, prefix: PREFIX || null, startedAt: new Date().toISOString(), commit: COMMIT, node: process.version });
-  await logOps("poller", "info", `poller started (${mode})`, { host: HOST, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, fastCadenceSec: FAST_CADENCE_SEC, ...intlConfig, prefix: PREFIX || null, commit: COMMIT, node: process.version });
-  if (ipv6 && FAST_CADENCE_SEC > 0) void fastLoop(ipv6, () => mode === "full");
-  const startIntl = () => { if (intlOn && ipv6) void intlLoop(ipv6, () => mode === "full", intlGeneration); };
+  const config = { host: HOST, role: ROLE, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, fastCadenceSec: FAST_CADENCE_SEC, ...intlConfig, prefix: PREFIX || null, startedAt: new Date().toISOString(), commit: COMMIT, node: process.version };
+  // "poller:config" is the primary's (the admin System page reads it); every host also keeps its own.
+  if (ROLE === "primary") await writeState("poller:config", config);
+  await writeState(`poller:config:${HOST}`, config);
+  await logOps("poller", "info", `poller started (${mode}, ${ROLE})`, { host: HOST, role: ROLE, cadenceSec: CADENCE_SEC, concurrency: CONCURRENCY, fastCadenceSec: FAST_CADENCE_SEC, ...intlConfig, prefix: PREFIX || null, commit: COMMIT, node: process.version });
+  // Duties first: a standby must not poll the US for even one round before it knows it is not the primary.
+  void clusterLoop(intlOn);
+  for (let i = 0; i < 30 && duty.why === "starting"; i++) await new Promise((r) => setTimeout(r, 500));
+  if (ipv6 && FAST_CADENCE_SEC > 0) void fastLoop(ipv6, () => mode === "full" && duty.us);
+  const startIntl = () => { if (intlOn && ipv6) void intlLoop(ipv6, () => mode === "full" && duty.intl, intlGeneration); };
   startIntl();
   for (const sig of ["SIGTERM", "SIGINT"] as const) {
     process.on(sig, () => {
@@ -431,6 +536,12 @@ async function main() {
 
   for (;;) {
     const t0 = Date.now();
+    if (!duty.us) {
+      // Not the cluster primary (or no writable database): nothing to sweep, and idling is not being stuck.
+      lastProgress = Date.now();
+      await new Promise((r) => setTimeout(r, 2_000));
+      continue;
+    }
     try {
       const egress = mode === "full" && ipv6 ? ipv6 : spare;
       // Spare identities have a few requests per half hour: spend them on watched, stale pairs first.
@@ -444,7 +555,7 @@ async function main() {
         at: new Date().toISOString(), host: HOST, mode, cadenceSec: CADENCE_SEC, lastSweepId: r.id,
         requests: r.requests, failures: r.failures, recovered: r.recovered, unresolved: r.unresolved, throttled: r.throttled, storesCovered: r.storesCovered,
         transitions: r.transitions, held: r.held, confirmed: r.confirmed, notified: r.notified, durationMs: r.durationMs, egress: egress.name,
-        ipv6Stats: ipv6 ? ipv6.stats : null, fast: ipv6 && FAST_CADENCE_SEC > 0 ? fastStats : null, ...(intlOn ? { intl: intlStats } : {}), sys: hostVitals(), sweeps: ++sweepsSinceStart, consecutiveBad,
+        ipv6Stats: ipv6 ? ipv6.stats : null, fast: ipv6 && FAST_CADENCE_SEC > 0 ? fastStats : null, ...(duty.intl ? { intl: intlStats } : {}), sys: hostVitals(), sweeps: ++sweepsSinceStart, consecutiveBad, role: ROLE,
       });
       lastProgress = Date.now();
       console.log(`[sweep ${r.id.slice(0, 8)}] ${mode}/${egress.name} req=${r.requests} fail=${r.failures} recovered=${r.recovered} unresolved=${r.unresolved} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} confirmed=${r.confirmed} held=${r.held} sent=${r.notified.sent} ${r.durationMs}ms`);

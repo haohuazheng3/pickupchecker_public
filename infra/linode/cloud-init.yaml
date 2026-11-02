@@ -74,6 +74,8 @@ write_files:
       Requires=pickupchecker-anyip.service
       # Never stop retrying: a crash loop is still better than silence (the watchdog mails either way).
       StartLimitIntervalSec=0
+      # A second host is provisioned on hold (HOLD=1): its poller starts only once it has been configured.
+      ConditionPathExists=!/opt/pickupchecker/hold
       [Service]
       User=poller
       WorkingDirectory=/opt/pickupchecker/app
@@ -103,7 +105,7 @@ write_files:
       IPV6_PREFIX=auto
       CADENCE_SEC=15
       CONCURRENCY=14
-      HOST_LABEL=linode-1
+      HOST_LABEL=__HOST_LABEL__
   - path: /opt/pickupchecker/probe.sh
     permissions: "0755"
     content: |
@@ -165,11 +167,15 @@ write_files:
         chown -R poller:poller "$APP"
         systemctl restart pickupchecker-poller
       }
+      HOST=$(sed -n 's/^HOST_LABEL=//p' /opt/pickupchecker/poller.env | head -1)
+      # Healthy = this host finished two rounds of its duty (a full US sweep covering ≥ 250 stores, or an
+      # other-country round covering ≥ 150), or it reported itself alive with no duty at all (a standby).
+      # The local database answers either way (a standby's replica carries the primary's rows within a second).
       healthy() {
         local since=$(date +%s) n
         while [ $(( $(date +%s) - since )) -lt "$GATE_SEC" ]; do
           sleep 10
-          n=$(sudo -u postgres psql -d pickupchecker -qXtAc "select count(*) from sweeps where mode = 'full' and started_at > to_timestamp($since) and finished_at is not null and stores_covered >= 250" 2>/dev/null || echo 0)
+          n=$(sudo -u postgres psql -d pickupchecker -qXtAc "select (select count(*) from sweeps where host = '$HOST' and started_at > to_timestamp($since) and finished_at is not null and ((mode = 'full' and stores_covered >= 250) or (mode = 'intl' and stores_covered >= 150))) + (select count(*) * 2 from poller_state where key = 'alive:$HOST' and updated_at > to_timestamp($since) and value->>'duties' = 'none')" 2>/dev/null || echo 0)
           [ "${n:-0}" -ge 2 ] && return 0
         done
         return 1
@@ -185,7 +191,7 @@ write_files:
       }
       install "${1:-origin/main}"
       new=$(git rev-parse HEAD)
-      { [ -n "$prev" ] && [ "$prev" != "$new" ] && [ "$GATE_SEC" -gt 0 ]; } || exit 0
+      { [ -n "$prev" ] && [ "$prev" != "$new" ] && [ "$GATE_SEC" -gt 0 ] && [ ! -f /opt/pickupchecker/hold ]; } || exit 0
       healthy && exit 0
       install "$prev"
       if healthy; then
@@ -247,6 +253,7 @@ runcmd:
   - git config --global --add safe.directory /opt/pickupchecker/app
   - git clone --depth 1 -b main git@github.com:haohuazheng3/pickupchecker_private.git /opt/pickupchecker/app
   - chown poller:poller /opt/pickupchecker/poller.env && chmod 0600 /opt/pickupchecker/poller.env
+  - if [ "__HOLD__" = 1 ]; then touch /opt/pickupchecker/hold; fi
   - systemctl daemon-reload
   - systemctl enable --now pickupchecker-anyip.service
   - /opt/pickupchecker/update.sh
