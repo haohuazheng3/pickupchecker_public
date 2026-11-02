@@ -8,6 +8,8 @@ import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { BrowseModels, BrowseStates } from "@/components/seo/Browse";
 import { BrowseCountryModels, BrowseCountryPopular, BrowseCountryRegions } from "@/components/seo/CountryBrowse";
 import { RelatedBlock } from "@/components/seo/Related";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { ORG_ID } from "@/lib/seo/siteLd";
 
 const LIMIT = 50;
 
@@ -45,8 +47,18 @@ export async function RestocksPage({ country: c, searchParams: sp }: { country: 
     return `${self}?${q.toString()}`;
   };
   const regionLabel = us ? "state" : (c.regionNoun ?? "area");
+  // The log as a dataset (answer engines and dataset search): what is recorded, where, since when, by whom.
+  const url = `https://pickupchecker.com${self}`;
+  const dataset = {
+    "@context": "https://schema.org", "@type": "Dataset", "@id": `${url}#dataset`, url,
+    name: us ? "US Apple Store iPhone pickup restock log" : `Apple Store iPhone pickup restock log ${c.inName}`,
+    description: `Every confirmed restock and sell-out of the iPhone Duo, iPhone 18 Pro and iPhone 18 Pro Max for in-store pickup at ${us ? "all 269 US Apple Stores" : `the Apple Stores ${c.inName}`}, with store, exact configuration and time. A restock is logged only after two matching answers from apple.com, checked every 15 seconds (every 5 for stores with alerts).`,
+    creator: { "@id": ORG_ID }, isAccessibleForFree: true, temporalCoverage: `${us ? "2026-10-29" : "2026-11-02"}/..`,
+    spatialCoverage: us ? "United States" : c.name, variableMeasured: ["Apple Store", "iPhone model, storage and color", "restock time", "sell-out time"],
+  };
   return (
     <div className="mx-auto max-w-4xl px-4 pt-8">
+      <JsonLd data={dataset} />
       <h1 className="display text-3xl sm:text-5xl">{us ? "Restock log" : `Restock log ${c.inName}`}</h1>
       <p className="mt-2 text-ink-2">{counts.day} restock{counts.day === 1 ? "" : "s"} in 24 hours · {counts.week} this week{model ? ` · ${modelByKey(model)!.name}` : ""}{state ? ` · ${state}` : ""}. Times in your time zone.</p>
       <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">

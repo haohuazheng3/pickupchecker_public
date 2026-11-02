@@ -92,7 +92,7 @@ export const HOME_TITLES: EntryTitles = {
     { keyword: "apple inventory checker", title: "Apple inventory checker: Duo, 18 Pro and Pro Max by store" },
     { keyword: "apple store stock checker", title: "Apple Store stock checker with restock alerts" },
   ],
-  description: "Check iPhone Duo, 18 Pro and 18 Pro Max pickup stock at all 269 US Apple Stores, live every 15 seconds. Free to browse; alerts check your stores every 5.",
+  description: "Your Apple Stores checked every 5 s, a push ~3 s after a restock. Live iPhone Duo, 18 Pro and Pro Max pickup stock and restock times at all 269 US stores.",
 };
 
 /** Store pages bound to measured keywords, keyed by store slug. `city` is set when a one-store city's query is bound too. */

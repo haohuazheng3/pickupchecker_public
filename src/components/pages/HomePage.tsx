@@ -24,6 +24,7 @@ import { RelatedBlock } from "@/components/seo/Related";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { HOME_TITLES } from "@/content/titles";
 import { HOME_INTRO, HOME_SECTIONS, HOME_FAQ, HOME_SOURCES } from "@/content/home";
+import { ORG_ID, SITE_DESCRIPTION, SITE_FEATURES } from "@/lib/seo/siteLd";
 import { getFacts } from "@/lib/content/facts";
 import { Inline } from "@/components/content/Inline";
 import { KeywordSections, slugId, type KeywordSection } from "@/components/content/KeywordSections";
@@ -67,9 +68,8 @@ export async function HomePage({ country: c, searchParams: sp }: { country: Coun
   const ld = {
     "@context": "https://schema.org",
     "@graph": [
-      { "@type": "Organization", name: "PickupChecker", url: "https://pickupchecker.com", logo: "https://pickupchecker.com/icon.svg" },
-      { "@type": "WebSite", name: "PickupChecker", url: "https://pickupchecker.com" },
-      { "@type": "WebApplication", name: "PickupChecker iPhone stock checker", url: "https://pickupchecker.com", applicationCategory: "UtilitiesApplication", operatingSystem: "Web, iOS and Android (Home Screen app)", offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Live stock, map and restock log are free; alerts from $5/month" }, publisher: { "@type": "Organization", name: "PickupChecker" } },
+      // Organization and WebSite come from the root layout (lib/seo/siteLd.ts).
+      { "@type": "WebApplication", name: "PickupChecker iPhone stock checker", url: "https://pickupchecker.com", description: SITE_DESCRIPTION, featureList: SITE_FEATURES, applicationCategory: "UtilitiesApplication", operatingSystem: "Web, iOS and Android (Home Screen app)", offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Live stock, restock times, map and restock log are free; alerts from $5/month" }, publisher: { "@id": ORG_ID } },
     ],
   };
   return (

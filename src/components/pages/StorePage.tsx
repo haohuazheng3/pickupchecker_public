@@ -177,6 +177,8 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
     : [{ href: prefixOf(cc), label: c.short }, ...(index?.indexable ? [{ href: storesIndexPath(cc), label: "Apple Stores" }] : []), ...(hasStatePage(s.state, cc) ? [{ href: statePath(s.state, cc), label: s.state }] : []), ...(alone || !placeTarget(cc, stateSlug(s.state), citySlug(s.city))?.indexable ? [] : [{ href: cityPath(s.state, s.city, cc), label: s.city }]), { label: place }];
   const restocksAll = `${restocksPath(cc)}?model=all&state=${stateSlug(s.state)}`;
   const regionWord = us ? "state" : (c.regionNoun ?? "area");
+  // The restock pattern in the first paragraph: the sentence answer engines lift for "when does this store restock".
+  const peak = peakOf(d.stats);
   return (
     <div className="mx-auto max-w-6xl px-4 pt-8">
       <JsonLd data={storeJsonLd(s, week)} />
@@ -184,7 +186,7 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="display text-3xl sm:text-5xl">{title}</h1>
-          <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2">{place}{street ? ` at ${street}` : ""} lists <b className="text-ink">{d.stockNow.duo} of {d.configs.duo}</b> iPhone Duo, <b className="text-ink">{d.stockNow["18-pro"]} of {d.configs["18-pro"]}</b> iPhone 18 Pro and <b className="text-ink">{d.stockNow["18-pro-max"]} of {d.configs["18-pro-max"]}</b> iPhone 18 Pro Max configurations for pickup right now. {today.label}. {taxLine}</p>
+          <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2">{place}{street ? ` at ${street}` : ""} lists <b className="text-ink">{d.stockNow.duo} of {d.configs.duo}</b> iPhone Duo, <b className="text-ink">{d.stockNow["18-pro"]} of {d.configs["18-pro"]}</b> iPhone 18 Pro and <b className="text-ink">{d.stockNow["18-pro-max"]} of {d.configs["18-pro-max"]}</b> iPhone 18 Pro Max configurations for pickup right now.{peak ? <> Restocks here usually land around <b className="text-ink">{peak.hour}</b> local time, {peak.day} the busiest day ({peak.total} in the last 30 days).</> : null} {today.label}. {taxLine}</p>
           <div className="mt-3"><StoreInfo store={s} showMapLink={false} /></div>
           {d.lookupOff && <p className="mt-2 text-sm font-medium text-warn">Apple isn&apos;t offering in-store pickup lookups at this store right now. We ask again every 30 minutes and show its stock as soon as Apple answers.</p>}
           <p className="mt-2 text-sm text-ink-3">Checked <LiveChecked iso={d.summary?.lastCheckedAt ?? null} stores={[s.storeNumber]} /> · {CHECK_NOTE}</p>

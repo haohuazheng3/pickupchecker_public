@@ -11,6 +11,7 @@ import { Consent } from "@/components/site/Consent";
 import { PwaBoot } from "@/components/pwa/PwaBoot";
 import { NavSkeleton } from "@/components/ui/NavSkeleton";
 import { FreshOnReturn } from "@/components/site/FreshOnReturn";
+import { siteLd } from "@/lib/seo/siteLd";
 
 // "optional": the page renders in the web font only if it is there within ~100 ms (cached after the first
 // visit); otherwise it keeps the metric-matched fallback for that view instead of swapping mid-read. Pages now
@@ -49,6 +50,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         {/* Runs as the parser reaches it — before any paint — so a dark reader never sees a light flash. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+        {/* Who PickupChecker is and what it does, on every page an answer engine may land on (lib/seo/siteLd.ts). */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteLd) }} />
       </head>
       <body className="flex min-h-full flex-col">
         <ClerkProvider
