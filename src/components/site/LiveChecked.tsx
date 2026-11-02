@@ -5,6 +5,9 @@
  * looked like a fake counter. Every LiveChecked on a page registers its scope (lib/liveScope.ts); one shared
  * timer asks /api/live for all of them every POLL_MS (CDN-cached 4 s, so many open tabs cost one read) and
  * each figure jumps back when a newer check lands. Paused while the tab is hidden.
+ * When a scope's stock itself changed since the last poll (a restock or a sell-out was committed), it fires
+ * STOCK_CHANGED and FreshOnReturn re-renders the page: people in the Home Screen app kept tapping "Duo stock"
+ * to refresh a list that had gone stale under them (FlowGlance, 2026-11-02).
  */
 import { useEffect, useState } from "react";
 import { formatAgo } from "./LiveAgo";
@@ -15,6 +18,9 @@ import type { CountryCode } from "@/lib/apple/countries";
 const POLL_MS = 5000;
 const listeners = new Map<string, Set<(iso: string) => void>>();
 const latest = new Map<string, string>();
+/** The newest committed stock change seen per scope; the first poll only sets the baseline. */
+const changedSeen = new Map<string, number>();
+export const STOCK_CHANGED = "pc:stock-changed";
 let timer: number | null = null;
 let inFlight = false;
 
@@ -25,7 +31,16 @@ async function poll() {
     const keys = [...listeners.keys()].sort();
     const res = await fetch(`/api/live?${keys.map((k) => `k=${encodeURIComponent(k)}`).join("&")}`);
     if (!res.ok) return;
-    const body = (await res.json()) as { checked?: Record<string, string | null> };
+    const body = (await res.json()) as { checked?: Record<string, string | null>; changed?: Record<string, string | null> };
+    let moved = false;
+    for (const [k, iso] of Object.entries(body.changed ?? {})) {
+      if (!iso || !listeners.has(k)) continue;
+      const t = new Date(iso).getTime();
+      const prev = changedSeen.get(k);
+      if (prev !== undefined && t > prev) moved = true;
+      if (prev === undefined || t > prev) changedSeen.set(k, t);
+    }
+    if (moved) window.dispatchEvent(new Event(STOCK_CHANGED));
     for (const [k, iso] of Object.entries(body.checked ?? {})) {
       if (!iso) continue;
       const prev = latest.get(k);

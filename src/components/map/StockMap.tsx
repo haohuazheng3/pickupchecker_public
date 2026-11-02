@@ -13,6 +13,7 @@ import type { MapSnapshot } from "@/lib/stock/queries";
 import { LiveAgo } from "@/components/site/LiveAgo";
 import { MAP_INK, MAP_WORKER_URL as WORKER_URL, mapStyleFor } from "@/lib/map";
 import { currentTheme, onThemeChange, type Theme } from "@/lib/theme";
+import { rememberHere } from "@/lib/lastPlace";
 
 export interface MapStore { n: string; name: string; city: string; state: string; code: string; path: string; cityHref: string; stateHref: string; lat: number; lng: number }
 function dotColor(t: Theme) { const ink = MAP_INK[t]; return ["match", ["get", "state"], "ok", ink.ok, "unknown", ink.unknown, ink.none] as unknown as string; }
@@ -205,6 +206,7 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false);
+        rememberHere({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         const map = mapRef.current;
         if (!map) return;
         const here: [number, number] = [pos.coords.longitude, pos.coords.latitude];

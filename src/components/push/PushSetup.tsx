@@ -66,7 +66,9 @@ function Explain({ p }: { p: PushState }) {
     case "unsupported": return <>This browser can&apos;t receive notifications, so alerts go to your email.</>;
     case "needs-signin": return <>Sign in on this device to turn on notifications.</>;
     case "denied": return <>{p.platform === "ios" ? <>Allow in <b>Settings → Notifications → PickupChecker</b>,</> : <>Allow in your browser&apos;s site settings,</>} then reload.</>;
-    case "ready": return <>{p.standalone ? "You're in the app. " : ""}Matching restocks land on this device in seconds.</>;
+    // "Off" must read as off: "you're in the app, restocks land here in seconds" over an Off pill left a paying
+    // user believing they were set while every alert went to their email (FlowGlance, 2026-11-02).
+    case "ready": return <>Off on this {p.standalone || p.platform === "ios" ? "device" : "browser"}, so your alerts go to your email for now. Tap <b>Turn on notifications</b>{p.platform === "ios" ? <>, then <b>Allow</b>,</> : ""} to get them here within seconds.</>;
     case "on": return <>Restocks arrive here in seconds, even with the app closed.</>;
   }
 }

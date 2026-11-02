@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { STORES, stateCodeOf, appleName, type ModelKey } from "@/lib/apple/catalog-us";
 import { rankStores, searchAnchor, formatDrive, formatMiles, zipAt, type Anchor } from "@/lib/geo";
 import { useZipPoint } from "@/lib/useZipPoint";
+import { recallHere, rememberHere } from "@/lib/lastPlace";
 import { productBySlug, productFor, productPath, storePlace } from "@/lib/seo/products";
 
 export interface QuickCheckData {
@@ -55,11 +56,17 @@ export function QuickCheck({ data, initialModel }: { data: QuickCheckData; initi
     return [...STORES].sort((a, b) => (stock[b.storeNumber] ?? 0) - (stock[a.storeNumber] ?? 0) || a.name.localeCompare(b.name)).slice(0, storesNow > 0 ? 6 : 0).map((s) => ({ ...s, distance: -1 }));
   }, [anchor, stock, storesNow]);
 
+  // Where this device was last located (lib/lastPlace.ts): the nearest stores at once, no prompt.
+  useEffect(() => {
+    const t = window.setTimeout(() => { const h = recallHere(); if (h) setHere((cur) => cur ?? h); }, 0);
+    return () => window.clearTimeout(t);
+  }, []);
+
   const locate = () => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) { setLoc("unavailable"); return; }
     setLoc("asking");
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setHere({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setQ(""); setLoc("idle"); },
+      (pos) => { const h = { lat: pos.coords.latitude, lng: pos.coords.longitude }; rememberHere(h); setHere(h); setQ(""); setLoc("idle"); },
       (err) => setLoc(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable"),
       GEO_OPTS,
     );

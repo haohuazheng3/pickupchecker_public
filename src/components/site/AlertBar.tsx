@@ -64,16 +64,19 @@ function usAlertHref(pathname: string): string {
 
 export function AlertBar() {
   const pathname = usePathname() ?? "/";
-  const [wizardMounted, setWizardMounted] = useState(false);
+  const [announced, setAnnounced] = useState(0);
   const [wizardVisible, setWizardVisible] = useState(pathname === "/"); // the home page owns the wizard: no flash before the observer settles
-  // The wizard announces itself (pc:wizard) — a route's loading skeleton has no #notify yet.
+  // The wizard announces itself (pc:wizard) when it mounts later (a route's loading skeleton has no #notify yet).
+  // On a page's first render its announcement comes before this listener exists (a child's effects run first),
+  // so the effect below also looks for #notify itself: relying on the event alone left this button over the
+  // open alert setup on every page, where tapping it reset the picks being made (FlowGlance, 2026-11-02).
   useEffect(() => {
-    const on = (e: Event) => setWizardMounted(Boolean((e as CustomEvent<boolean>).detail));
+    const on = () => setAnnounced((n) => n + 1);
     window.addEventListener("pc:wizard", on);
     return () => window.removeEventListener("pc:wizard", on);
   }, []);
   useEffect(() => {
-    const el = wizardMounted ? document.getElementById("notify") : null;
+    const el = document.getElementById("notify");
     if (!el || typeof IntersectionObserver === "undefined") {
       const t = window.setTimeout(() => setWizardVisible(false), 0); // no wizard on screen: show the button
       return () => window.clearTimeout(t);
@@ -81,7 +84,7 @@ export function AlertBar() {
     const io = new IntersectionObserver(([e]) => setWizardVisible(e.isIntersecting), { threshold: 0 });
     io.observe(el);
     return () => io.disconnect();
-  }, [pathname, wizardMounted]);
+  }, [pathname, announced]);
   // The dashboard is the alert setup itself.
   if (pathname.startsWith("/admin") || pathname.startsWith("/checkout") || pathname.startsWith("/account")) return null;
   return (

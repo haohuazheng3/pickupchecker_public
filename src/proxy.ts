@@ -36,7 +36,11 @@ export default clerkMiddleware(async (auth, req) => {
     h.set("x-pathname", req.nextUrl.pathname);
     return NextResponse.next({ request: { headers: h } });
   }
-  if (isProtected(req)) await auth.protect({ unauthenticatedUrl: new URL(`/?signin=1&next=${encodeURIComponent(req.nextUrl.pathname)}`, req.url).toString() });
+  if (isProtected(req)) {
+    // The success page means nothing without its Checkout session (a Home Screen app saved from it opens it bare): after signing in, the account.
+    const back = req.nextUrl.pathname.startsWith("/checkout/success") ? "/account" : req.nextUrl.pathname;
+    await auth.protect({ unauthenticatedUrl: new URL(`/?signin=1&next=${encodeURIComponent(back)}`, req.url).toString() });
+  }
 });
 
 export const config = {

@@ -15,6 +15,7 @@ import { STORES, distanceMiles, cityLine, appleName } from "@/lib/apple/catalog-
 import { ALL_CODES, COUNTRIES, type CountryCode } from "@/lib/apple/countries";
 import { centroid, formatDrive, formatRoad, rankStores, searchAnchor, zipAt, type Anchor, type GeoStore } from "@/lib/geo";
 import { useZipPoint } from "@/lib/useZipPoint";
+import { recallHere, rememberHere } from "@/lib/lastPlace";
 import type { PickerStore } from "./PhoneMatrix";
 
 const PAGE = 10;
@@ -87,7 +88,7 @@ export function StorePicker({ value, onToggle, onPretick, room, owned = [], pref
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) { setLoc("unavailable"); return; }
     setLoc("asking");
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setHere({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLoc("ok"); },
+      (pos) => { const h = { lat: pos.coords.latitude, lng: pos.coords.longitude }; rememberHere(h); setHere(h); setLoc("ok"); },
       (err) => setLoc(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable"),
       GEO_OPTS,
     );
@@ -96,6 +97,9 @@ export function StorePicker({ value, onToggle, onPretick, room, owned = [], pref
   // allows it (no prompt), so distances are from the visitor rather than from a store.
   useEffect(() => {
     if (here || (mem && mem.loc !== "idle")) return;
+    // Located before on this device (lib/lastPlace.ts): use that, no prompt; Near me asks again.
+    const known = recallHere();
+    if (known) { const t = window.setTimeout(() => { setHere(known); setLoc("ok"); }, 0); return () => window.clearTimeout(t); }
     if (!preferred && !seed) { const t = window.setTimeout(locate, 0); return () => window.clearTimeout(t); }
     let live = true;
     void navigator.permissions?.query({ name: "geolocation" as PermissionName }).then((st) => { if (live && st.state === "granted") locate(); }).catch(() => undefined);

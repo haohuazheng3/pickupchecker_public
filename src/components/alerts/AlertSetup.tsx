@@ -5,7 +5,7 @@
  * one open it with their pre-fill instead of leaving the page (AlertLinkHost). The floating button hides
  * while it is on screen (pc:wizard).
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertEditor } from "./AlertEditor";
 import { Section } from "./Section";
 import type { PhoneCatalog } from "./PhoneMatrix";
@@ -21,11 +21,15 @@ function useAnnounce() {
   }, []);
 }
 
-/** The home page's block. */
+/**
+ * The home page's block. Opened as the sign-in page (?signin=1, where the Home Screen app lands before its first
+ * sign-in) it comes before the stock board on a phone: below it, the form sat ~1,100 px down and people opening
+ * the app for the first time wandered off to other pages instead of signing in (FlowGlance, 2026-11-02).
+ */
 export function HomeAlertSetup({ catalog, start, signInOnly, next }: { catalog: PhoneCatalog; start: AlertStart; signInOnly?: boolean; next?: string }) {
   useAnnounce();
   return (
-    <div id="notify" className="pane relative min-w-0 scroll-mt-28 p-4 sm:p-7">
+    <div id="notify" className={`pane relative min-w-0 scroll-mt-28 p-4 sm:p-7 ${signInOnly ? "order-first lg:order-none" : ""}`}>
       {!signInOnly && (
         <div className="mb-4">
           <h2 className="display text-2xl sm:text-3xl">Get an alert</h2>
@@ -44,12 +48,18 @@ export function AlertPanel({ catalog, start, title, summary }: { catalog: PhoneC
   const [run, setRun] = useState(0);
   const [shown, setShown] = useState(false); // the editor mounts on first open (no location prompt while folded)
   const show = useCallback(() => setShown(true), []);
+  const current = useRef(start);
   useEffect(() => {
     const on = (e: Event) => {
       const q = new URLSearchParams((e as CustomEvent<string>).detail ?? "");
       // Another country's page resolves the link against its own stores and catalogue.
       const next = catalog.stores ? startFromPool((k) => q.get(k), catalog.stores, catalog.configs) : startFrom((k) => q.get(k));
-      setS({ ...start, ...Object.fromEntries(Object.entries(next).filter(([, v]) => v)) });
+      const want: AlertStart = { ...start, ...Object.fromEntries(Object.entries(next).filter(([, v]) => v)) };
+      // The same pre-fill again (the floating "Alert me", or the page's own button) only opens the panel:
+      // starting the editor over would throw away what is being ticked in it.
+      if (JSON.stringify(want) === JSON.stringify(current.current)) return;
+      current.current = want;
+      setS(want);
       setRun((n) => n + 1);
     };
     window.addEventListener("pc:alert", on);
