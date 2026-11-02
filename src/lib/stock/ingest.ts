@@ -191,11 +191,31 @@ export async function ingestStores(
       return { ...o, dec };
     });
 
-    // Upsert in chunks; `since`/`last_changed_at` only move on a committed change, `last_available_at`
+    // Write in chunks; `since`/`last_changed_at` only move on a committed change, `last_available_at`
     // only when the committed status is available and this observation agrees.
+    // Rows we just read are written with a plain UPDATE: an upsert that hits its conflict locks the row first,
+    // and that lock is a WAL record of its own (18% of all WAL at ~2,000 rows a second, 2026-11-02). Only
+    // pairs seen for the first time go through the insert.
     const CH = 200;
-    for (let i = 0; i < rows.length; i += CH) {
-      const chunk = rows.slice(i, i + CH);
+    const known = rows.filter((r) => prev.has(`${r.storeNumber}|${r.partNumber}`));
+    const fresh = rows.filter((r) => !prev.has(`${r.storeNumber}|${r.partNumber}`));
+    for (let i = 0; i < known.length; i += CH) {
+      const values = sql.join(
+        known.slice(i, i + CH).map((r) => sql`(${r.storeNumber}::text, ${r.partNumber}::text, ${r.dec.status}::text, ${r.dec.quote}::text, ${r.dec.commit?.since ?? now}::timestamptz, ${r.available && r.dec.status === "available" ? now : null}::timestamptz, ${r.dec.pendingStatus}::text, ${r.dec.pendingSince}::timestamptz, ${r.dec.pendingSeen}::int)`),
+        sql`, `,
+      );
+      await d.execute(sql`
+        update store_sku_status as s set
+          status = v.status, quote = v.quote, last_checked_at = ${now}::timestamptz,
+          since = case when s.status is distinct from v.status then v.since else s.since end,
+          last_changed_at = case when s.status is distinct from v.status then ${now}::timestamptz else s.last_changed_at end,
+          last_available_at = coalesce(v.last_available_at, s.last_available_at),
+          pending_status = v.pending_status, pending_since = v.pending_since, pending_seen = v.pending_seen
+        from (values ${values}) as v(store_number, part_number, status, quote, since, last_available_at, pending_status, pending_since, pending_seen)
+        where s.store_number = v.store_number and s.part_number = v.part_number`);
+    }
+    for (let i = 0; i < fresh.length; i += CH) {
+      const chunk = fresh.slice(i, i + CH);
       await d
         .insert(schema.storeSkuStatus)
         .values(

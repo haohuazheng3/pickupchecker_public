@@ -7,6 +7,8 @@ import { recordError, errorMessage } from "@/lib/errors";
 import { logOps } from "@/lib/ops";
 import { PARTIAL_SEC, freshness, intlVerdict, intlWatchStep, pollerVerdict, type IntlVerdict, type IntlWatchState, type PollerState } from "@/lib/stock/fallback";
 import type { CountryCode } from "@/lib/apple/countries";
+import { CAPACITY_IDLE, CLEAR_RUNS, FAST_STORES_WARN, ROUND_WINDOW_MIN, capacityReasons, capacityStep, recentRounds, watchedLagP90, type CapacityState } from "@/lib/stock/capacity";
+import { SPEED } from "@/lib/plans";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +20,7 @@ const PARTIAL_RUNS = 3;
 
 interface WatchdogState { down: boolean; kind?: PollerState; since?: string; lastMail?: string; partialRuns?: number; partialMailed?: boolean }
 type HeartbeatIntl = { cadenceSec?: number; countries?: CountryCode[]; paused?: boolean } | null;
+interface Heartbeat { at?: string; host?: string; mode?: string; cadenceSec?: number; intl?: HeartbeatIntl; fast?: { stores?: number; pairs?: number } | null; sys?: { load5?: number; cpus?: number; cpuWaitPct?: number | null } }
 
 /**
  * Vercel Cron, every minute. Judges polling by the data (fallback.ts), not only by the heartbeat:
@@ -30,11 +33,13 @@ type HeartbeatIntl = { cadenceSec?: number; countries?: CountryCode[]; paused?: 
  * a country with under half its pairs fresh for three runs in a row → one mail naming it, one when it clears.
  * Never the fill-in (it serves the US only). Judged only while the US itself is fine (ok or partial): when the
  * poller is silent, blind or degraded, or has them paused, their staleness says nothing about them.
+ * Capacity (stock/capacity.ts) is judged under the same condition: slow rounds from a host near its limit, mailed
+ * before anything fails.
  */
 export async function GET(req: Request) {
   if (!bearerOk(req, env.cronSecret())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   try {
-    const hb = await readState<{ at?: string; host?: string; mode?: string; intl?: HeartbeatIntl }>("heartbeat");
+    const hb = await readState<Heartbeat>("heartbeat");
     const age = hb ? Date.now() - new Date(hb.value.at ?? hb.updatedAt).getTime() : Infinity;
     const fresh = await freshness({ intlCadenceSec: hb?.value.intl?.cadenceSec }).catch(() => null);
     const v = pollerVerdict(age, fresh);
@@ -50,6 +55,9 @@ export async function GET(req: Request) {
       ...(iv ? { intl: iv.state, intlFresh: Object.fromEntries(iv.countries.map((c) => [c.cc, Math.round(c.share * 100)])) } : {}),
     });
     await watchIntl(iv, intlOn, now, v.state).catch((e) => recordError("web", `watchdog (other countries) failed: ${errorMessage(e)}`));
+    if (hb && hb.value.mode !== "degraded" && (v.state === "ok" || v.state === "partial")) {
+      await watchCapacity(hb.value, now).catch((e) => recordError("web", `watchdog (capacity) failed: ${errorMessage(e)}`));
+    }
 
     if (v.state === "silent" || v.state === "blind") {
       const firstTime = !wd.down || wd.kind !== v.state;
@@ -117,6 +125,36 @@ async function watchIntl(iv: IntlVerdict | null, judged: boolean, now: Date, usS
     await notifyOwner(`[PickupChecker] Other countries are being checked again`, `Stock checks recovered in ${(st.countries ?? []).join(", ").toUpperCase() || "every country"} (failing since ${st.since ?? "?"}).`).catch(() => undefined);
   }
   if (step.write) await writeState("watchdog:intl", { ...step.next });
+}
+
+/** Capacity early warning (state key "watchdog:capacity"; the rules are capacity.ts's). */
+async function watchCapacity(hb: Heartbeat, now: Date): Promise<void> {
+  const st = (await readState<CapacityState>("watchdog:capacity"))?.value ?? CAPACITY_IDLE;
+  const [rounds, lag] = await Promise.all([recentRounds(), watchedLagP90()]);
+  const fastStores = hb.fast?.stores ?? null;
+  const cadence = { full: hb.cadenceSec ?? 15, intl: hb.intl?.cadenceSec ?? 15 };
+  const { reasons, lagHigh } = capacityReasons({ fastStores, rounds, cadence, watchedLagP90Sec: lag, fastCadenceSec: SPEED.fastSec });
+  const step = capacityStep(st, now, reasons, lagHigh, lag, SPEED.fastSec);
+  if (step.mail) {
+    const roundLine = rounds.filter((r) => cadence[r.mode as keyof typeof cadence]).map((r) => `${r.mode === "intl" ? "other countries" : "US"} on ${r.host} ${r.p50Sec.toFixed(1)} s`).join(", ") || "no rounds";
+    const sys = hb.sys ?? {};
+    const figures = [
+      `Fast lane: ${fastStores ?? "?"} stores, ${hb.fast?.pairs ?? "?"} store × phone pairs (warning line ${FAST_STORES_WARN} stores).`,
+      `Round medians, last ${ROUND_WINDOW_MIN} min: ${roundLine} (cadence ${cadence.full} s / ${cadence.intl} s).`,
+      `Stores with paid alerts, 90th percentile time since their last check: ${lag == null ? "none watched" : `${lag.toFixed(1)} s`} (fast lane every ${SPEED.fastSec} s).`,
+      `Host ${hb.host ?? "?"}: 5-min load ${sys.load5 ?? "?"} on ${sys.cpus ?? "?"} vCPU, a task waiting for CPU ${sys.cpuWaitPct ?? "?"}% of the time.`,
+    ].join("\n");
+    const advice = "Nothing is failing yet: this is the time to add capacity before checks slow down. In order: split the poller into processes (free; it is one Node thread), move the other countries to the second host, then resize. Numbers and measurements: docs/architecture.md (capacity warning).";
+    const subject = step.mail === "warn" ? "[PickupChecker] Polling is nearing its host's capacity"
+      : step.mail === "remind" ? "[PickupChecker] Polling is still near its host's capacity"
+      : "[PickupChecker] Polling is back within capacity";
+    const text = step.mail === "clear"
+      ? `Every check has stayed within its limits for ${CLEAR_RUNS} minutes (the warning started ${st.since ?? "?"}).\n\n${figures}`
+      : `${step.active.map((r) => `• ${r.text}`).join("\n")}\n\nNow:\n${figures}\n\n${advice}`;
+    await logOps("cron", step.mail === "clear" ? "info" : "warn", `capacity ${step.mail}: ${step.active.map((r) => r.key).join(", ") || "clear"}`, { fastStores, lag, rounds });
+    await notifyOwner(subject, text).catch((e) => recordError("web", `capacity mail failed: ${errorMessage(e)}`));
+  }
+  if (JSON.stringify(step.next) !== JSON.stringify(st)) await writeState("watchdog:capacity", { ...step.next });
 }
 
 /**

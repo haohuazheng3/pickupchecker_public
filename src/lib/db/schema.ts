@@ -176,7 +176,7 @@ export const storeSkuStatus = pgTable(
   (t) => [
     primaryKey({ columns: [t.storeNumber, t.partNumber] }),
     index("sss_part_status_idx").on(t.partNumber, t.status),
-    index("sss_last_available_idx").on(t.lastAvailableAt),
+    // No index on last_available_at: it moves on most writes, which would keep them from being HOT (migration 0011).
   ],
 );
 

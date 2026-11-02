@@ -97,10 +97,20 @@ const COMMIT = currentCommit();
 const CODE_HASH = (() => { try { return pollerCodeHash(process.cwd()); } catch { return null; } })();
 
 /** Host vitals that ride along with every heartbeat (the admin status board shows them). */
+/** Share of the last 5 minutes some task waited for a CPU (Linux PSI), percent; null where PSI is missing. */
+function cpuPressure(): number | null {
+  try {
+    const m = /some avg10=[\d.]+ avg60=[\d.]+ avg300=([\d.]+)/.exec(readFileSync("/proc/pressure/cpu", "utf8"));
+    return m ? Number(m[1]) : null;
+  } catch {
+    return null;
+  }
+}
+
 function hostVitals() {
   const [load1, load5] = os.loadavg();
   return {
-    load1: Math.round(load1 * 100) / 100, load5: Math.round(load5 * 100) / 100, cpus: os.cpus().length,
+    load1: Math.round(load1 * 100) / 100, load5: Math.round(load5 * 100) / 100, cpus: os.cpus().length, cpuWaitPct: cpuPressure(),
     memTotalMb: Math.round(os.totalmem() / 1048576), memFreeMb: Math.round(os.freemem() / 1048576),
     rssMb: Math.round(process.memoryUsage().rss / 1048576), uptimeSec: Math.round(os.uptime()), procUptimeSec: Math.round(process.uptime()),
     node: process.version, commit: COMMIT, codeHash: CODE_HASH, pid: process.pid,
