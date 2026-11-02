@@ -15,6 +15,7 @@ import {
   bigserial,
   index,
   uniqueIndex,
+  unique,
   primaryKey,
   date,
 } from "drizzle-orm/pg-core";
@@ -195,6 +196,26 @@ export const availabilityEvents = pgTable(
     firstSeen: boolean("first_seen").notNull().default(false),
   },
   (t) => [index("events_at_idx").on(t.at), index("events_part_idx").on(t.partNumber, t.at), index("events_store_idx").on(t.storeNumber, t.at)],
+);
+
+/**
+ * Restocks published by other trackers (migration 0010; scripts/import-restock-reports.ts). Not PickupChecker's
+ * confirmed restocks: never counted, never in a feed or an alert — pages draw them as a separate, labelled series
+ * (src/lib/restockReports.ts). source = the tracker's name ("DuoReady"); kind = snapshot | candidate, as published.
+ */
+export const restockReports = pgTable(
+  "restock_reports",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    storeNumber: text("store_number").notNull(),
+    partNumber: text("part_number").notNull(),
+    at: ts("at").notNull(),
+    source: text("source").notNull(),
+    sourceUrl: text("source_url"),
+    kind: text("kind").notNull(),
+    importedAt: ts("imported_at").notNull().defaultNow(),
+  },
+  (t) => [unique("restock_reports_store_part_at_source_key").on(t.storeNumber, t.partNumber, t.at, t.source), index("restock_reports_store_idx").on(t.storeNumber, t.at)],
 );
 
 export const notifications = pgTable(

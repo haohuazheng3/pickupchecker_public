@@ -1,5 +1,5 @@
 import { STORES, STORAGE_ORDER, catalogFor, colorsFor, storagesFor, modelByKey, type ModelKey } from "@/lib/apple/catalog";
-import { restockFeed, restockStats } from "@/lib/stock/queries";
+import { restockFeed, restockStats, restockReportStats } from "@/lib/stock/queries";
 import { fmtPrice } from "@/lib/seo/enrich";
 import { productFor, productPath } from "@/lib/seo/products";
 import type { Facts } from "@/lib/content/facts";
@@ -73,8 +73,9 @@ export async function LiveWidget({ id, model = "duo", facts }: { id: LiveWidgetI
     return <div className="my-5"><RestockFeed rows={rows} model={model} showModel={false} emptyText={`No ${m.name} restock logged yet.`} /></div>;
   }
   if (id === "clock") {
-    const stats = await restockStats(STORES.map((s) => s.storeNumber), "America/New_York", 30, model);
-    return <div className="pane-2 my-5 p-4"><RestockClock stats={stats} label={`for the ${m.name} nationwide`} /></div>;
+    const numbers = STORES.map((s) => s.storeNumber);
+    const [stats, reports] = await Promise.all([restockStats(numbers, "America/New_York", 30, model), restockReportStats(numbers, "America/New_York", 30, model, undefined, "us")]);
+    return <div className="pane-2 my-5 p-4"><RestockClock stats={stats} label={`for the ${m.name} nationwide`} reports={reports} /></div>;
   }
   if (id === "stores-now" || id === "status") {
     const f = facts.models[model];

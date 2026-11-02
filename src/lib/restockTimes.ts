@@ -84,12 +84,20 @@ export function buildTimeline(rows: { slot: number; store: string; drops: number
   return { points: [], step: 60, total, hidden: 0 };
 }
 
-/** Where "now" falls among the points: how many come before it, and the next one (tomorrow's first after the last). */
-export function placeNow(points: { min: number }[], nowMin: number): { before: number; next: number | null; inMin: number; tomorrow: boolean } {
+/**
+ * Where "now" falls among the points: how many come before it, and the next one (tomorrow's first after the
+ * last). Only points `counts` accepts can be "next" (the timeline passes over other trackers' reports); with
+ * none of those, there is no next.
+ */
+export function placeNow<T extends { min: number }>(points: T[], nowMin: number, counts: (p: T) => boolean = () => true): { before: number; next: number | null; inMin: number; tomorrow: boolean } {
   if (points.length === 0) return { before: 0, next: null, inMin: 0, tomorrow: false };
   const i = points.findIndex((p) => p.min >= nowMin);
-  if (i === -1) return { before: points.length, next: 0, inMin: 1440 - nowMin + points[0].min, tomorrow: true };
-  return { before: i, next: i, inMin: points[i].min - nowMin, tomorrow: false };
+  const before = i === -1 ? points.length : i;
+  const ahead = points.findIndex((p, k) => k >= before && counts(p));
+  if (ahead !== -1) return { before, next: ahead, inMin: points[ahead].min - nowMin, tomorrow: false };
+  const first = points.findIndex(counts);
+  if (first === -1) return { before, next: null, inMin: 0, tomorrow: false };
+  return { before, next: first, inMin: 1440 - nowMin + points[first].min, tomorrow: true };
 }
 
 /** 565 → "9:25 AM". */

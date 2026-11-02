@@ -21,7 +21,7 @@ import { PlaceStatStrip } from "@/components/seo/StatStrip";
 import { ModelPlaceCards } from "@/components/seo/ModelPlaceCards";
 import { storePlace } from "@/lib/seo/products";
 import { Faq } from "@/components/seo/Faq";
-import { storesStock, storeStatus, restockFeed, restockStats, placeStats } from "@/lib/stock/queries";
+import { storesStock, storeStatus, restockFeed, restockStats, placeStats, restockReportStats, pickupLookupOff } from "@/lib/stock/queries";
 import { StockByModel } from "@/components/stores/StockByModel";
 import { ConfigTable } from "@/components/stores/ConfigTable";
 import { StoreInfo, HoursTable } from "@/components/stores/StoreInfo";
@@ -53,7 +53,7 @@ function find(c: Country, state: string, city: string, store: string) {
   return storesOf(c.cc).find((s) => s.slug === store && stateSlug(s.state) === state && citySlug(s.city) === city);
 }
 
-/** Everything the page and its metadata need, loaded once per request (8 queries: 5 live + 3 cached statistics). */
+/** Everything the page and its metadata need, loaded once per request (10 queries: 5 live + 5 cached). */
 const load = cache(async (s: Store) => {
   const tz = storeTimeZone(s);
   const us = s.country === "us";
@@ -61,17 +61,19 @@ const load = cache(async (s: Store) => {
   const outside = nearestOutsideState(s, 3);
   const inState = nearestInState(s, 4, { excludeCity: true });
   const others = [...new Set([...nearby, ...outside, ...inState].map((n) => n.storeNumber))];
-  const [rows, stock, feed, stats, pstats] = await Promise.all([
+  const [rows, stock, feed, stats, pstats, reports, lookupOff] = await Promise.all([
     storeStatus(s.storeNumber),
     storesStock([s.storeNumber, ...others]),
     restockFeed({ storeNumber: s.storeNumber, kind: "all", limit: 30, country: s.country }),
     restockStats([s.storeNumber], tz, 30),
     placeStats({ storeNumbers: [s.storeNumber], tz }),
+    restockReportStats([s.storeNumber], tz, 30),
+    pickupLookupOff(s.storeNumber),
   ]);
   const summary = stock.get(s.storeNumber);
   const stockNow = Object.fromEntries(MODELS.map((m) => [m.key, summary?.perModel[m.key].available ?? 0])) as Record<ModelKey, number>;
   const configs = Object.fromEntries(MODELS.map((m) => [m.key, rows.filter((r) => modelKeyFor(r.item.model) === m.key).length || catalogFor(m.key, s.country).length])) as Record<ModelKey, number>;
-  return { tz, nearby, outside, inState, rows, stock, summary, feed, stats, pstats, stockNow, configs };
+  return { tz, nearby, outside, inState, rows, stock, summary, feed, stats, pstats, reports, lookupOff, stockNow, configs };
 });
 
 /** True when this is the only Apple Store in its city (the city query lands here). */
@@ -184,6 +186,7 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
           <h1 className="display text-3xl sm:text-5xl">{title}</h1>
           <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2">{place}{street ? ` at ${street}` : ""} lists <b className="text-ink">{d.stockNow.duo} of {d.configs.duo}</b> iPhone Duo, <b className="text-ink">{d.stockNow["18-pro"]} of {d.configs["18-pro"]}</b> iPhone 18 Pro and <b className="text-ink">{d.stockNow["18-pro-max"]} of {d.configs["18-pro-max"]}</b> iPhone 18 Pro Max configurations for pickup right now. {today.label}. {taxLine}</p>
           <div className="mt-3"><StoreInfo store={s} showMapLink={false} /></div>
+          {d.lookupOff && <p className="mt-2 text-sm font-medium text-warn">Apple isn&apos;t offering in-store pickup lookups at this store right now. We ask again every 30 minutes and show its stock as soon as Apple answers.</p>}
           <p className="mt-2 text-sm text-ink-3">Checked <LiveChecked iso={d.summary?.lastCheckedAt ?? null} stores={[s.storeNumber]} /> · {CHECK_NOTE}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -198,10 +201,10 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold">Pickup stock right now</h2>
-        <div className="mt-3"><StockByModel summary={d.summary} storeNumber={s.storeNumber} /></div>
+        <div className="mt-3"><StockByModel summary={d.summary} storeNumber={s.storeNumber} {...(d.lookupOff ? { lookupOff: true } : {})} /></div>
       </section>
 
-      <div className="mt-6" id="configs"><ConfigTable store={s} rows={d.rows} /></div>
+      <div className="mt-6" id="configs"><ConfigTable store={s} rows={d.rows} {...(d.lookupOff ? { lookupOff: true } : {})} /></div>
 
       <div className="mx-auto mt-8 max-w-3xl">
         <Figure id={photo1} />
@@ -212,7 +215,7 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
         <div className="space-y-6">
           <section className="pane p-5">
             <h2 className="text-xl font-semibold">When does {s.name} restock?</h2>
-            <div className="mt-3"><RestockClock stats={d.stats} label="here" /></div>
+            <div className="mt-3"><RestockClock stats={d.stats} label="here" reports={d.reports} /></div>
           </section>
           <section className="pane p-5">
             <h2 className="text-xl font-semibold">Last {d.pstats.days} days, day by day</h2>

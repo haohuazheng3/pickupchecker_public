@@ -18,7 +18,7 @@ import { childPlaces, configGrid, facetsFor, indexStock, lastChecked, nearestWit
 import { priceLabel, productDescription, productFaq, productJsonLdFor, productTitle } from "@/lib/seo/productCopy";
 import { modelDescription, modelIntro, modelPageTitles, priceSection, priceRange, taxFaqIntl } from "@/lib/seo/countryCopy";
 import { alertHref, distText, fmtDuration, listWords, plural } from "@/lib/seo/enrich";
-import { modelStock, placeStats, restockFeed, restockStats } from "@/lib/stock/queries";
+import { modelStock, placeStats, restockFeed, restockStats, restockReportStats } from "@/lib/stock/queries";
 import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { StatStrip, type Stat } from "@/components/seo/StatStrip";
@@ -57,13 +57,14 @@ const load = cache(async (cc: Country["cc"], slug: string, path: string) => {
   if (!place) return null;
   if ("redirect" in place) return { kind: "redirect" as const, to: productPath(product, { segments: place.redirect, country: product.country }) };
   const numbers = place.stores.map((s) => s.storeNumber);
-  const [duo, pro, max, stats, clock, feed] = await Promise.all([
+  const [duo, pro, max, stats, clock, feed, reports] = await Promise.all([
     modelStock("duo", cc),
     modelStock("18-pro", cc),
     modelStock("18-pro-max", cc),
     placeStats({ storeNumbers: numbers, parts: product.parts, tz: place.tz, country: cc }),
     restockStats(numbers, place.tz, 30, undefined, product.parts, cc),
     restockFeed({ parts: product.parts, storeNumbers: numbers, kind: "all", limit: 8, country: cc }),
+    restockReportStats(numbers, place.tz, 30, undefined, product.parts, cc),
   ]);
   const ix = indexStock({ duo, "18-pro": pro, "18-pro-max": max });
   const lines = storeLines(ix, product, place.stores);
@@ -72,7 +73,7 @@ const load = cache(async (cc: Country["cc"], slug: string, path: string) => {
   // place-level product page and every exact configuration is noindex, follow: the /stores page of that place
   // is the one indexed page for "iPhone Duo in <place>", which keeps near-duplicates out of the index.
   const indexable = isIndexedProductPage(product, place);
-  return { kind: "page" as const, product, place, ix, lines, inStock, stats, clock, feed, indexable };
+  return { kind: "page" as const, product, place, ix, lines, inStock, stats, clock, feed, reports, indexable };
 });
 
 /** Another country's model page binds its own titles (seo.md §12). */
@@ -121,7 +122,7 @@ export async function ProductPage({ country: c, params: p }: { country: Country;
   if (d.kind === "redirect") permanentRedirect(d.to);
   const us = c.cc === "us";
   const t = treeOf(c.cc);
-  const { product, place, ix, lines, inStock, stats, clock, feed } = d;
+  const { product, place, ix, lines, inStock, stats, clock, feed, reports } = d;
   const top = place.level === "country";
   const atStore = place.level === "store";
   const line = lines[0];
@@ -270,7 +271,7 @@ export async function ProductPage({ country: c, params: p }: { country: Country;
         </section>
         <section className="pane p-5">
           <h2 className="text-lg font-semibold">When it restocks</h2>
-          <div className="mt-3"><RestockClock stats={clock} label={top && !us ? c.inName : inPlace(place)} /></div>
+          <div className="mt-3"><RestockClock stats={clock} label={top && !us ? c.inName : inPlace(place)} reports={reports} /></div>
         </section>
         {stats.month > 0 && (
           <section className="pane p-5">

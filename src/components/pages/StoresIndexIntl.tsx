@@ -117,7 +117,7 @@ async function IntlStoresIndex({ c }: { c: Country }) {
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">When do stores {c.inName} restock?</h2>
-          <div className="mt-3"><RestockClock stats={d.stats} label={c.inName} /></div>
+          <div className="mt-3"><RestockClock stats={d.stats} label={c.inName} reports={d.reports} /></div>
         </section>
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">Last {d.pstats.days} days</h2>

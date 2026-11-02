@@ -10,7 +10,7 @@ import { cache } from "react";
 import { citiesWithStores, cityPath, statePath, statesWithStores, storesOf, DEFAULT_MODEL, MODELS } from "@/lib/apple/catalog";
 import { prefixOf, type Country } from "@/lib/apple/countries";
 import { alertHref, faq, peakOf, itemListJsonLd } from "@/lib/seo/enrich";
-import { storesWithStockNow, storesStock, placeStats, restockStats } from "@/lib/stock/queries";
+import { storesWithStockNow, storesStock, placeStats, restockStats, restockReportStats } from "@/lib/stock/queries";
 import { BrowseModels, BrowsePopular } from "@/components/seo/Browse";
 import { LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -44,15 +44,16 @@ export const loadIndex = cache(async (cc: Country["cc"]) => {
   const stores = storesOf(cc);
   const tz = cc === "us" ? "America/New_York" : treeOf(cc).root.tz;
   const numbers = stores.map((s) => s.storeNumber);
-  const [stockNow, pstats, stats, stock, duo, max] = await Promise.all([
+  const [stockNow, pstats, stats, stock, duo, max, reports] = await Promise.all([
     storesWithStockNow(undefined, cc),
     placeStats({ tz, country: cc }),
     restockStats(numbers, tz, 30),
     cc === "us" ? Promise.resolve(new Map()) : storesStock(numbers),
     cc === "us" ? Promise.resolve(null) : placeStats({ model: "duo", tz, country: cc }),
     cc === "us" ? Promise.resolve(null) : placeStats({ model: "18-pro-max", tz, country: cc }),
+    restockReportStats(numbers, tz, 30, undefined, undefined, cc),
   ]);
-  return { stockNow, pstats, stats, stock, duo, max };
+  return { stockNow, pstats, stats, stock, duo, max, reports };
 });
 
 /** " by province and city", " by city" or nothing (Singapore: one city). */
@@ -129,7 +130,7 @@ export async function StoresIndexPage({ country: c }: { country: Country }) {
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">When do stores restock?</h2>
-          <div className="mt-3"><RestockClock stats={d.stats} label="across the US" /></div>
+          <div className="mt-3"><RestockClock stats={d.stats} label="across the US" reports={d.reports} /></div>
         </section>
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">Last {d.pstats.days} days</h2>

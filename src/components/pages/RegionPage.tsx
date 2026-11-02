@@ -22,7 +22,7 @@ import { ModelPlaceCards } from "@/components/seo/ModelPlaceCards";
 import { statePlace } from "@/lib/seo/products";
 import { treeOf } from "@/lib/seo/tree";
 import { Faq } from "@/components/seo/Faq";
-import { storesStock, storesStatusFull, restockFeed, restockStats, placeStats } from "@/lib/stock/queries";
+import { storesStock, storesStatusFull, restockFeed, restockStats, placeStats, restockReportStats } from "@/lib/stock/queries";
 import { ModelStoreMatrix } from "@/components/stores/ModelStoreMatrix";
 import { StoreBlock } from "@/components/stores/StoreBlock";
 import { NearbyStores } from "@/components/stores/NearbyStores";
@@ -62,7 +62,7 @@ const load = cache(async (cc: Country["cc"], slug: string) => {
   const thin = stores.length <= THIN;
   const outside = nearestOutsideState({ ...centroid(stores), state: s.name, country: cc }, 6);
   const extra = thin ? [...new Set([...outside, ...stores.flatMap((x) => nearestOutsideState(x, 4))].map((x) => x.storeNumber))] : outside.map((x) => x.storeNumber);
-  const [stock, feed, stats, pstats, full, duoStats, maxStats] = await Promise.all([
+  const [stock, feed, stats, pstats, full, duoStats, maxStats, reports] = await Promise.all([
     storesStock([...numbers, ...extra]),
     restockFeed({ state: s.name, limit: 12, country: cc }),
     restockStats(numbers, tz, 30),
@@ -70,12 +70,13 @@ const load = cache(async (cc: Country["cc"], slug: string) => {
     thin ? storesStatusFull(numbers) : Promise.resolve(new Map()),
     placeStats({ storeNumbers: numbers, model: "duo", tz }),
     placeStats({ storeNumbers: numbers, model: "18-pro-max", tz }),
+    restockReportStats(numbers, tz, 30),
   ]);
   const stockNow = Object.fromEntries(MODELS.map((m) => [m.key, stores.filter((x) => (stock.get(x.storeNumber)?.perModel[m.key].available ?? 0) > 0).length])) as Record<ModelKey, number>;
   const duoStores = stores.filter((x) => (stock.get(x.storeNumber)?.perModel[DEFAULT_MODEL].available ?? 0) > 0);
   const copy: PlaceCopyInput = { kind: "state", name: s.name, state: s.name, stateSlug: s.slug, stores, cities: cities.length, stockNow, stock, duo: duoStats, max: maxStats };
   const intl: IntlPlaceInput | null = cc === "us" ? null : { cc, kind: "state", name: s.name, region: s.name, regionSlug: s.slug, stores, cities: cities.length, stockNow, stock, duo: duoStats, max: maxStats };
-  return { s, stores, cities, numbers, tz, thin, outside, stock, feed, stats, pstats, full, stockNow, duoStores, copy, intl };
+  return { s, stores, cities, numbers, tz, thin, outside, stock, feed, stats, pstats, full, stockNow, duoStores, copy, intl, reports };
 });
 
 export async function regionMetadata(c: Country, p: { state: string }): Promise<Metadata> {
@@ -163,7 +164,7 @@ export async function RegionPage({ country: c, params: p }: { country: Country; 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">When do {s.name} stores restock?</h2>
-          <div className="mt-3"><RestockClock stats={d.stats} label={`in ${s.name}`} /></div>
+          <div className="mt-3"><RestockClock stats={d.stats} label={`in ${s.name}`} reports={d.reports} /></div>
         </section>
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">Last {d.pstats.days} days, day by day</h2>

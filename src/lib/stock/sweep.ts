@@ -10,7 +10,7 @@
 import { randomUUID } from "node:crypto";
 import { COVERAGE, ALL_PART_NUMBERS, STORES, storesOf, partNumbersOf, type CoverageAnchor } from "../apple/catalog";
 import { INTL_CODES, isCountryCode, type CountryCode } from "../apple/countries";
-import { batchParts, fetchPickup, fetchPickupAtStore, type FetchLike, type PickupResponse } from "../apple/client";
+import { batchParts, fetchPickup, fetchPickupAtStore, isNoStoreAnswer, type FetchLike, type PickupResponse } from "../apple/client";
 import { db, schema } from "../db";
 import { ingestStores, type Transition } from "./ingest";
 import { notifyRestocks } from "./notify";
@@ -166,6 +166,12 @@ export interface SweepSummary {
   exhausted: boolean;
   /** Per country, for tasks that name one (the per-store round of other countries); absent on US sweeps. */
   byCountry?: Partial<Record<CountryCode, CountryRound>>;
+  /**
+   * Per-store requests only: the stores Apple answered "There is no store associated with this search" for
+   * (store → country and Apple's message; not failures, see notOffered.ts) and the stores that answered with
+   * themselves. Absent on US anchor sweeps.
+   */
+  pickup?: { notOffered: Record<string, { country: string; message: string }>; answered: string[] };
 }
 
 export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
@@ -190,6 +196,8 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
   let retrying = false, recovered = 0;
   const intl = opts.mode === "intl";
   const byCountry: Partial<Record<CountryCode, CountryRound>> = {};
+  const notOffered: Record<string, { country: string; message: string }> = {};
+  const answered = new Set<string>();
   for (const t of tasks) if (t.country) (byCountry[t.country] ??= { tasks: 0, failed: 0, unresolved: 0, throttled: 0 }).tasks++;
   // The per-store round reports an error message once per round (one failing country would otherwise write the
   // same error_groups row a few hundred times a round); poll_log still has every failed request.
@@ -218,9 +226,14 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
       slot.release(status);
       requests++;
       let ok = Boolean(res?.ok);
-      // A one-store request answered without that store (closed, renumbered, or Apple's answer changed) is a
-      // failure: logged, retried, counted — never a silent "covered one store fewer" until the pairs expire.
-      if (ok && task.store && !res!.stores.some((s) => s.storeNumber === task.store)) { ok = false; err = "store missing from response"; }
+      // Apple saying it offers no pickup lookups at this store is an answer, not a failure: not retried, not
+      // logged, not counted against the country (notOffered.ts decides when to ask it again).
+      const noStore = ok && Boolean(task.store) && isNoStoreAnswer(res!);
+      if (noStore) notOffered[task.store!] = { country: task.country ?? "us", message: res!.message ?? "" };
+      // Any other one-store request answered without that store (closed, renumbered, or Apple's answer changed) is
+      // a failure: logged, retried, counted — never a silent "covered one store fewer" until the pairs expire.
+      else if (ok && task.store && !res!.stores.some((s) => s.storeNumber === task.store)) { ok = false; err = "store missing from response"; }
+      else if (ok && task.store) answered.add(task.store);
       const cr = task.country ? byCountry[task.country] : undefined;
       if (!ok) { failures++; if (!retrying) { failed.push(task); if (cr) { cr.failed++; cr.unresolved++; } } }
       else if (retrying) { recovered++; if (cr) cr.unresolved--; }
@@ -228,11 +241,11 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
       if (logOk || !ok) logRows.push({
         at: new Date(), sweepId: id, egress: slot.label, anchor: task.anchor.location, batch: task.batchIndex,
         httpStatus: status || null, ok, durationMs: ms, bytes: res?.bytes ?? null, storesSeen: res?.stores.length ?? null,
-        error: err ?? res?.error ?? null,
+        error: err ?? res?.error ?? (noStore ? "pickup lookup not offered" : null),
         ...(task.country && task.country !== "us" ? { country: task.country } : {}),
       });
       opts.onResult?.({ task, status, ok, ms, label: slot.label });
-      if (ok && res) {
+      if (ok && res && !noStore) {
         try {
           const ingest = () => ingestStores(res.stores, id, new Date(), known);
           const r = await (intl ? intlIngestGate(ingest) : ingest());
@@ -294,6 +307,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
   return {
     id, requests, failures, recovered, unresolved, tasks: tasks.length, throttled, timeouts, storesCovered: covered.size, transitions: allTransitions.length + confirmed, held, confirmed, notified, durationMs: finished.getTime() - started.getTime(), exhausted,
     ...(Object.keys(byCountry).length ? { byCountry } : {}),
+    ...(tasks.some((t) => t.store) ? { pickup: { notOffered, answered: [...answered].sort() } } : {}),
   };
 }
 

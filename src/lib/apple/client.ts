@@ -40,6 +40,8 @@ export interface PickupResponse {
   stores: PickupStoreResult[];
   bytes: number;
   error?: string;
+  /** Apple's own body.errorMessage, when it sent one (e.g. "There is no store associated with this search…"). */
+  message?: string;
 }
 
 /**
@@ -101,10 +103,11 @@ export function parsePickupBody(json: unknown, httpStatus: number, bytes: number
   const body = root?.body;
   if (!body || typeof body !== "object") throw new Error("pickup-message: missing body");
   const location = String(body.location ?? "");
+  const message = typeof body.errorMessage === "string" && body.errorMessage.trim() ? { message: body.errorMessage.trim() } : {};
   const rawStores = body.stores;
   if (!Array.isArray(rawStores)) {
     // Apple answers with an empty store list for unknown zips: treat as "no stores", not an error.
-    if (rawStores === undefined || rawStores === null) return { ok: true, httpStatus, location, stores: [], bytes };
+    if (rawStores === undefined || rawStores === null) return { ok: true, httpStatus, location, stores: [], bytes, ...message };
     throw new Error("pickup-message: stores is not an array");
   }
   const stores: PickupStoreResult[] = rawStores.map((s) => {
@@ -127,7 +130,20 @@ export function parsePickupBody(json: unknown, httpStatus: number, bytes: number
       parts,
     };
   });
-  return { ok: true, httpStatus, location, stores, bytes };
+  return { ok: true, httpStatus, location, stores, bytes, ...message };
+}
+
+/** Apple's words for a store it offers no pickup lookups for. */
+export const NO_STORE_MESSAGE = /no store associated with this search/i;
+
+/**
+ * Apple's explicit answer to a one-store request for a store it offers no pickup lookups for: HTTP 200, no
+ * stores, and its own message "There is no store associated with this search. Please try another search
+ * value." (R384 Chermside, 2026-11-02). Not a failure: asking again will not change it (stock/notOffered.ts).
+ * Any other answer without the store asked for stays a failure ("store missing from response").
+ */
+export function isNoStoreAnswer(res: PickupResponse): boolean {
+  return res.ok && res.stores.length === 0 && NO_STORE_MESSAGE.test(res.message ?? "");
 }
 
 export interface FetchLike {

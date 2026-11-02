@@ -102,6 +102,29 @@ describe("runSweep — the other countries' per-store round", () => {
     for (const row of logged) expect(row).toMatchObject({ ok: false, error: "store missing from response", anchor: `ca:${stores[0]}` });
   });
 
+  it("Apple's \"no store associated with this search\" is an answer, not a failure: not retried, logged or counted", async () => {
+    const { runSweep, buildIntlTasks } = await import("@/lib/stock/sweep");
+    const all = buildIntlTasks(["au"]);
+    const tasks = all.filter((t) => t.store === "R384" || t.store === all[0].store); // Chermside + one more, two batches each
+    const other = all[0].store!;
+    const asked: string[] = [];
+    // What Apple answered for store=R384 on 2026-11-02: HTTP 200, an empty list, and its own message.
+    const noStore = JSON.stringify({ head: { status: "200" }, body: { stores: [], errorMessage: "There is no store associated with this search. Please try another search value." } });
+    const egress = { name: "t", async acquire() { return { label: "t", release() {}, fetch: async (url: string) => {
+      const store = new URL(url).searchParams.get("store")!;
+      asked.push(store);
+      return { status: 200, text: async () => (store === "R384" ? noStore : body(store)) };
+    } }; } };
+    const r = await runSweep({ egress, tasks, concurrency: 1, mode: "intl", host: "test", known: new Set(["R384", other]), logOk: false, timeoutMs: 6000 });
+    expect(asked.filter((x) => x === "R384")).toHaveLength(2); // its two batches, no retry pass
+    expect(r.failures).toBe(0);
+    expect(r.unresolved).toBe(0);
+    expect(r.byCountry).toEqual({ au: { tasks: 4, failed: 0, unresolved: 0, throttled: 0 } });
+    expect(r.pickup).toEqual({ notOffered: { R384: { country: "au", message: "There is no store associated with this search. Please try another search value." } }, answered: [other] });
+    expect(inserted.filter((i) => i.table === "poll_log")).toHaveLength(0);
+    expect(errors).toEqual([]);
+  });
+
   it("a country whose round mostly failed is not retried (an outage), the others are; one error per message per round", async () => {
     const { runSweep, buildIntlTasks } = await import("@/lib/stock/sweep");
     const tasks = [...buildIntlTasks(["sg"]), ...buildIntlTasks(["hk"])]; // SG 3 stores, HK 6 stores

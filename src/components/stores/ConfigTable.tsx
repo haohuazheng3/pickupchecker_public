@@ -13,7 +13,7 @@ export function Swatch({ color, className = "h-3 w-3" }: { color: string; classN
 
 type Row = { item: CatalogItem; status: StoreStatusRow | undefined };
 
-function Line({ r, store }: { r: Row; store: Store }) {
+function Line({ r, store, lookupOff }: { r: Row; store: Store; lookupOff?: boolean }) {
   const st = r.status;
   const ok = st?.status === "available";
   const unknown = !st || st.status === "unknown";
@@ -26,7 +26,7 @@ function Line({ r, store }: { r: Row; store: Store }) {
           <span className="text-xs text-ink-3">{store.country === "us" ? fmtPrice(r.item.price) : formatPrice(COUNTRIES[store.country], r.item.price)}</span>
         </div>
         <div className="flex flex-wrap items-center gap-x-2 text-xs text-ink-3">
-          <span className={`inline-flex items-center gap-1.5 ${ok ? "text-accent" : ""}`}><Dot state={ok ? "ok" : unknown ? "warn" : "idle"} live={ok} />{ok ? (st?.quote ?? "Available") : unknown ? "not checked yet" : (st?.quote ?? "Unavailable")}</span>
+          <span className={`inline-flex items-center gap-1.5 ${ok ? "text-accent" : ""}`}><Dot state={ok ? "ok" : unknown ? "warn" : "idle"} live={ok} />{ok ? (st?.quote ?? "Available") : unknown ? (lookupOff ? "no pickup lookup" : "not checked yet") : (st?.quote ?? "Unavailable")}</span>
           {ok && st?.since && <span>since <LiveAgo iso={st.since} /></span>}
           {!ok && st?.lastAvailableAt && <span>last available <LiveAgo iso={st.lastAvailableAt} /></span>}
           {!ok && st && !st.lastAvailableAt && !unknown && <span>never seen in stock here</span>}
@@ -40,13 +40,16 @@ function Line({ r, store }: { r: Row; store: Store }) {
   );
 }
 
-/** Every tracked configuration at one store: storage, colour, price, status, since / last available, and an alert link per row. */
-export function ConfigTable({ store, rows, title = "Every configuration at this store" }: { store: Store; rows: StoreStatusRow[]; title?: string }) {
+/**
+ * Every tracked configuration at one store: storage, colour, price, status, since / last available, and an alert
+ * link per row. `lookupOff`: Apple offers no pickup lookups at this store right now (stock/notOffered.ts).
+ */
+export function ConfigTable({ store, rows, title = "Every configuration at this store", lookupOff = false }: { store: Store; rows: StoreStatusRow[]; title?: string; lookupOff?: boolean }) {
   const byPart = new Map(rows.map((r) => [r.partNumber, r]));
   return (
     <section className="pane p-5 sm:p-6" aria-label={title}>
       <h2 className="text-xl font-semibold">{title}</h2>
-      <p className="mt-1 text-sm text-ink-3">{rows.length ? `${rows.length} configurations tracked` : "First sweep in progress — statuses appear within a minute"}</p>
+      <p className="mt-1 text-sm text-ink-3">{lookupOff ? "Apple isn't offering in-store pickup lookups at this store right now" + (rows.length ? ` (the last answers it gave are below)` : "") : rows.length ? `${rows.length} configurations tracked` : "First sweep in progress — statuses appear within a minute"}</p>
       <div className="mt-3 grid gap-5 lg:grid-cols-3">
         {MODELS.map((m) => {
           const items = sortConfigs(catalogFor(m.key, store.country)).map((item) => ({ item, status: byPart.get(item.partNumber) }));
@@ -54,7 +57,7 @@ export function ConfigTable({ store, rows, title = "Every configuration at this 
           return (
             <div key={m.key} className="min-w-0">
               <div className="flex items-baseline justify-between gap-2"><h3 className="font-semibold">{m.name}</h3><span className={`text-xs ${avail ? "text-accent" : "text-ink-3"}`}>{avail} of {items.length} in stock</span></div>
-              <ul className="mt-1 divide-y divide-line">{items.map((r) => <Line key={r.item.partNumber} r={r} store={store} />)}</ul>
+              <ul className="mt-1 divide-y divide-line">{items.map((r) => <Line key={r.item.partNumber} r={r} store={store} lookupOff={lookupOff} />)}</ul>
             </div>
           );
         })}

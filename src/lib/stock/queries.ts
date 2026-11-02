@@ -4,6 +4,8 @@ import { db, hasDatabase, schema } from "../db";
 import { PART_INDEX, STORE_INDEX, MODELS, itemFor, modelKeyFor, partNumbersFor, partNumbersOf, storesOf, countryOfStore, hasOwnPartNumbers, type ModelKey, type CatalogItem, type Store } from "../apple/catalog";
 import type { CountryCode } from "../apple/countries";
 import { recordError, errorMessage } from "../errors";
+import { reportSeries, type ReportInput, type ReportSeries } from "../restockReports";
+import { NOT_OFFERED_KEY, parseNotOffered, type PickupOffEntry } from "./notOffered";
 
 /*
  * Every read here is confined to one country (default the US): the database holds every country's stores and
@@ -611,4 +613,69 @@ const cachedActivePairs = unstable_cache(
 export async function activePairs(days = 30, country: CountryCode = "us"): Promise<{ storeNumber: string; partNumber: string }[] | null> {
   if (!hasDatabase()) return [];
   return outsideCache(null, () => cachedActivePairs(days, country));
+}
+
+/* ------------------------------------------------------------------ other trackers' reports: drawn apart, never counted */
+
+const RR = { store: schema.restockReports.storeNumber, part: schema.restockReports.partNumber };
+/** Cached compactly: [store, part, epoch seconds, tracker]. */
+type PackedReport = [string, string, number, string];
+
+const cachedReports = unstable_cache(
+  async (cc: CountryCode, days: number): Promise<PackedReport[]> => {
+    const rr = schema.restockReports;
+    const rows = await must("restock reports", () =>
+      db().select({ s: rr.storeNumber, p: rr.partNumber, at: rr.at, src: rr.source }).from(rr)
+        .where(and(gt(rr.at, sql`now() - interval '1 day' * ${days}`), ...scopeConds(countryScope(cc, null, null), RR))),
+    );
+    return rows.map((r) => [r.s, r.p, sec(r.at), r.src]);
+  },
+  ["restock-reports-v1"],
+  // They change only when the owner imports a file: one read an hour per country serves every page.
+  { revalidate: 3600 },
+);
+
+/** One country's reports over the last `days` (every page filters the same cached list); [] when the read fails. */
+async function reportRows(cc: CountryCode, days: number): Promise<ReportInput[]> {
+  const packed = await outsideCache([] as PackedReport[], () => cachedReports(cc, days));
+  return packed.map(([storeNumber, partNumber, at, source]) => ({ storeNumber, partNumber, at: new Date(at * 1000).toISOString(), source, model: storeItem(storeNumber, partNumber)?.model }));
+}
+
+/**
+ * Other trackers' reports at these stores, for a restock module to draw beside our own: the same stores, zone,
+ * window and model/parts filter as its restockStats call. null when there are none (the module then renders
+ * exactly as it did before reports existed). Nothing here ever feeds a count.
+ */
+export async function restockReportStats(storeNumbers: string[], tz: string, days = 30, model?: ModelKey, onlyParts?: string[], country?: CountryCode): Promise<ReportSeries | null> {
+  if (!hasDatabase() || storeNumbers.length === 0) return null;
+  // An account's stores can be in several countries; a page's are in one.
+  const countries = country ? [country] : [...new Set(storeNumbers.map((n) => countryOfStore(n) ?? "us"))];
+  const parts = onlyParts ?? (model ? countries.flatMap((cc) => partNumbersFor(model, [], [], cc)) : null);
+  if (parts && parts.length === 0) return null;
+  const rows = (await Promise.all(countries.map((cc) => reportRows(cc, days)))).flat();
+  return reportSeries(rows, { tz, days, stores: storeNumbers, parts });
+}
+
+/* ------------------------------------------------------------------ stores Apple offers no pickup lookups for */
+
+const cachedPickupOff = unstable_cache(
+  async (): Promise<Record<string, PickupOffEntry>> => {
+    const [r] = await must("pickup lookups not offered", () =>
+      db().select({ value: schema.pollerState.value }).from(schema.pollerState).where(eq(schema.pollerState.key, NOT_OFFERED_KEY)).limit(1),
+    );
+    return parseNotOffered(r?.value);
+  },
+  ["pickup-not-offered-v1"],
+  { revalidate: 60 },
+);
+
+/**
+ * Set when Apple answers a one-store lookup with "There is no store associated with this search" (the poller
+ * marks it and asks again every 30 min; src/lib/stock/notOffered.ts): the store page says so instead of "not
+ * checked yet". null for every other store, and without a database.
+ */
+export async function pickupLookupOff(storeNumber: string): Promise<PickupOffEntry | null> {
+  if (!hasDatabase()) return null;
+  const all = await outsideCache({} as Record<string, PickupOffEntry>, () => cachedPickupOff());
+  return Object.hasOwn(all, storeNumber) ? all[storeNumber] : null;
 }

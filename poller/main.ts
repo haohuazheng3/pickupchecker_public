@@ -15,6 +15,9 @@
  *    their stores on its own (`store=R###`, the country's 40 part numbers in 2 batches), INTL_CONCURRENCY at once
  *    (12), through the same IPv6 egress, ingest, instant confirm and alerts; failed requests retried once in the
  *    round. A country whose round mostly failed (any reason) is paused on its own, 60 s doubling to 16 min.
+ *    A store Apple answers "There is no store associated with this search" for is not a failure: twice in a
+ *    row marks it "pickup lookup not offered" (poller_state, the store page says so) and it is asked again
+ *    only every 30 min (stock/notOffered.ts).
  *    poll_log keeps only its failures (one sweeps row per round, mode "intl"); totals ride along with the
  *    heartbeat. Runs only in full mode (the spare egress is budgeted for the US).
  *  • heartbeat after every sweep (the Vercel watchdog alerts when it stops, or when the data goes stale)
@@ -33,7 +36,8 @@ import os from "node:os";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { Agent, fetch as undiciFetch } from "undici";
-import { buildIntlTasks, buildTasks, nextCountryBackoff, parsePollCountries, runSweep, singleIdentityEgress, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
+import { buildIntlTasks, buildTasks, nextCountryBackoff, parsePollCountries, readState, runSweep, singleIdentityEgress, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
+import { NOT_OFFERED_KEY, nextNotOffered, notOfferedDue, persistNotOffered, restoreNotOffered, type NotOfferedState } from "../src/lib/stock/notOffered";
 import { fallbackOrder } from "../src/lib/stock/fallback";
 import { loadFastTargets, runFastRound } from "../src/lib/stock/fastlane";
 import { expireStale } from "../src/lib/stock/ingest";
@@ -250,6 +254,8 @@ const intlStats = {
   restarts: 0,
   /** Stuck too often: left off until the process restarts. */
   stopped: false,
+  /** Stores Apple offers no pickup lookups for (asked every 30 min instead of every round). */
+  notOffered: [] as string[],
 };
 /** When the intl loop last finished a round (or decided to rest): the STUCK watchdog reads it. */
 let intlProgress = Date.now();
@@ -279,6 +285,16 @@ async function intlLoop(egress: Egress, active: () => boolean, generation: numbe
   let backoffUntil = 0, lastErrorLog = 0;
   /** Per-country rest (nextCountryBackoff); a country absent here is asked every round. */
   const countryRest = new Map<string, { level: number; until: number }>();
+  /** Stores Apple answers "no store associated with this search" for: asked every 30 min, not every round. */
+  let noPickup: NotOfferedState = {};
+  try {
+    const saved = await readState(NOT_OFFERED_KEY);
+    noPickup = restoreNotOffered(saved?.value, known);
+    if (saved && Object.keys(persistNotOffered(noPickup).stores).length !== Object.keys((saved.value as { stores?: object }).stores ?? {}).length) await writeState(NOT_OFFERED_KEY, persistNotOffered(noPickup));
+  } catch (e) {
+    console.warn(`[intl] could not read ${NOT_OFFERED_KEY}: ${errorMessage(e)}`);
+  }
+  intlStats.notOffered = Object.keys(persistNotOffered(noPickup).stores).sort();
   console.log(`[intl] start countries=${POLL_COUNTRIES.join(",")} stores=${known.size} requests/round=${tasks.length} cadence=${INTL_CADENCE_SEC}s concurrency=${INTL_CONCURRENCY}${generation ? ` (restart ${generation})` : ""}`);
   while (generation === intlGeneration) {
     const t0 = Date.now();
@@ -287,7 +303,7 @@ async function intlLoop(egress: Egress, active: () => boolean, generation: numbe
       const now = Date.now();
       const resting = new Set([...countryRest].filter(([, r]) => r.until > now).map(([cc]) => cc));
       intlStats.pausedCountries = Object.fromEntries([...countryRest].filter(([cc]) => resting.has(cc)).map(([cc, r]) => [cc, new Date(r.until).toISOString()]));
-      const round = tasks.filter((t) => !resting.has(t.country!));
+      const round = tasks.filter((t) => !resting.has(t.country!) && notOfferedDue(noPickup, t.store!, now));
       if (!intlStats.paused && round.length) {
         const r = await runSweep({ egress, tasks: round, concurrency: INTL_CONCURRENCY, mode: "intl", host: HOST, known, timeoutMs: INTL_TIMEOUT_MS, logOk: false });
         if (generation !== intlGeneration) break; // abandoned while it ran (a stuck round came back late)
@@ -295,6 +311,23 @@ async function intlLoop(egress: Egress, active: () => boolean, generation: numbe
         intlStats.throttled += r.throttled; intlStats.timeouts += r.timeouts; intlStats.transitions += r.transitions; intlStats.confirmed += r.confirmed; intlStats.held += r.held; intlStats.notified += r.notified.sent;
         intlStats.lastAt = new Date().toISOString(); intlStats.lastDurationMs = r.durationMs; intlStats.lastSweepId = r.id; intlStats.lastStoresCovered = r.storesCovered;
         if (r.transitions || r.unresolved || r.throttled) console.log(`[intl ${r.id.slice(0, 8)}] req=${r.requests} fail=${r.failures} recovered=${r.recovered} unresolved=${r.unresolved} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} confirmed=${r.confirmed} ${r.durationMs}ms`);
+        if (r.pickup) {
+          const step = nextNotOffered(noPickup, r.pickup, new Date());
+          noPickup = step.state;
+          if (step.marked.length || step.cleared.length || step.rechecked.length) {
+            await writeState(NOT_OFFERED_KEY, persistNotOffered(noPickup)).catch((e) => console.warn(`[intl] could not save ${NOT_OFFERED_KEY}: ${errorMessage(e)}`));
+            intlStats.notOffered = Object.keys(persistNotOffered(noPickup).stores).sort();
+          }
+          for (const store of step.marked) {
+            const e = noPickup[store];
+            console.log(`[intl] ${store} (${e.country}): pickup lookup not offered — asked again every 30 min`);
+            await logOps("poller", "info", `${store} (${e.country}): Apple offers no pickup lookups there ("${e.message}") — asking it again every 30 min instead of every round`, { host: HOST, store, country: e.country, since: e.since }).catch(() => undefined);
+          }
+          for (const store of step.cleared) {
+            console.log(`[intl] ${store}: pickup lookups back — polled every round again`);
+            await logOps("poller", "info", `${store}: Apple answers pickup lookups there again — back in every round`, { host: HOST, store }).catch(() => undefined);
+          }
+        }
         if (r.requests >= 10 && r.throttled / r.requests >= 0.5) {
           backoffUntil = Date.now() + 60_000;
           await logOps("poller", "warn", `other countries throttled: ${r.throttled} of ${r.requests} requests — pausing them for 60 s`, { host: HOST }).catch(() => undefined);

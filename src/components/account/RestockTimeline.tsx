@@ -4,14 +4,17 @@
  * window, earliest at the top, with "now" placed among them. Gaps between lines grow with the time between
  * (capped), and the stretch from now to the next one is drawn dashed with its length in words. While the
  * user's stores have had few restocks, times from the other stores in their zone are mixed in, hollow and
- * grey. The minute ticks on the client in the stores' zone; the first render uses the server's, so
- * hydration matches.
+ * grey. Other trackers' reports at the user's stores (`reported`), when there are any, are rows of their own:
+ * dashed rings, "Reported ·", never the "next" time. The minute ticks on the client in the stores' zone; the
+ * first render uses the server's, so hydration matches.
  */
 import { useEffect, useState } from "react";
 import { clockLabel, gapLabel, minuteIn, placeNow } from "@/lib/restockTimes";
+import { REPORT_MARK, ReportLegendItem, ReportsNote, type ReportMeta } from "@/components/restocks/ReportsNote";
 
-export interface TimelineRow { min: number; drops: number; mine: boolean; where: string; whereAll: string }
-interface Props { rows: TimelineRow[]; nowMin: number; tz: string; zone: string; days: number; hidden: number; yours: string; mixed: boolean }
+/** `reported`: a time other trackers published restocks at (restock_reports), not one of ours. */
+export interface TimelineRow { min: number; drops: number; mine: boolean; where: string; whereAll: string; reported?: boolean }
+interface Props { rows: TimelineRow[]; nowMin: number; tz: string; zone: string; days: number; hidden: number; yours: string; mixed: boolean; reported?: ReportMeta }
 
 /** One line's height (h-8) and the space above a line for `min` minutes since the one before. */
 const ROW = 32;
@@ -20,7 +23,7 @@ const gapPx = (min: number) => Math.round(Math.min(40, 4 + min * 0.1));
 const COLS = "grid-cols-[4.5rem_1.25rem_minmax(0,1fr)_auto] gap-x-2.5";
 const RAIL_X = "left-[5.75rem]";
 
-export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, mixed }: Props) {
+export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, mixed, reported }: Props) {
   const [now, setNow] = useState(nowMin);
   useEffect(() => {
     const tick = () => setNow(minuteIn(tz));
@@ -29,7 +32,8 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, m
     return () => { window.clearInterval(t); document.removeEventListener("visibilitychange", tick); };
   }, [tz]);
 
-  const at = placeNow(rows, now);
+  // Reports never make the "next" time: that is read from our own restocks (and the zone's) only.
+  const at = placeNow(rows, now, (r) => !r.reported);
   // One scale for every line, the user's and the other stores' alike, so the bars compare honestly.
   const max = Math.max(1, ...rows.map((r) => r.drops));
   const soon = at.inMin === 0 ? "about now" : `in ${gapLabel(at.inMin)}`;
@@ -53,12 +57,14 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, m
     const sinceAbove = i === at.before ? r.min - now : i === 0 ? 0 : r.min - rows[i - 1].min;
     const pad = i === 0 && at.before !== 0 ? 0 : isNext && !at.tomorrow ? Math.max(28, gapPx(sinceAbove)) : gapPx(sinceAbove);
     const size = r.drops >= 4 ? 12 : r.drops >= 2 ? 10 : 8;
-    const node = r.mine
-      ? <span className={`block rounded-full ${isNext ? "bg-accent ring-4 ring-accent/15" : dim ? "bg-ink/20" : "bg-accent/60"}`} style={{ width: size, height: size }} />
-      : <span className={`block rounded-full border-[1.5px] bg-[var(--pane-solid)] ${isNext ? "border-accent ring-4 ring-accent/15" : dim ? "border-ink/20" : "border-ink/35"}`} style={{ width: size, height: size }} />;
+    const node = r.reported
+      ? <span data-series="reported" className={`block rounded-full bg-[var(--pane-solid)] ${REPORT_MARK} ${dim ? "opacity-50" : ""}`} style={{ width: size, height: size }} />
+      : r.mine
+        ? <span className={`block rounded-full ${isNext ? "bg-accent ring-4 ring-accent/15" : dim ? "bg-ink/20" : "bg-accent/60"}`} style={{ width: size, height: size }} />
+        : <span className={`block rounded-full border-[1.5px] bg-[var(--pane-solid)] ${isNext ? "border-accent ring-4 ring-accent/15" : dim ? "border-ink/20" : "border-ink/35"}`} style={{ width: size, height: size }} />;
     items.push(
-      <li key={`${r.mine ? "m" : "a"}${r.min}`} className={`relative grid items-center ${COLS}`} style={{ paddingTop: pad }}
-        aria-label={`${clockLabel(r.min)}: ${r.drops} restock${r.drops === 1 ? "" : "s"} at ${r.mine ? r.where : `${r.where} on ${zone} time`}${isNext ? (at.tomorrow ? ", next, tomorrow" : ", next") : ""}`}>
+      <li key={`${r.reported ? "r" : r.mine ? "m" : "a"}${r.min}`} className={`relative grid items-center ${COLS}`} style={{ paddingTop: pad }}
+        aria-label={r.reported ? `${clockLabel(r.min)}: ${r.drops} restock${r.drops === 1 ? "" : "s"} reported by other trackers at ${r.where}` : `${clockLabel(r.min)}: ${r.drops} restock${r.drops === 1 ? "" : "s"} at ${r.mine ? r.where : `${r.where} on ${zone} time`}${isNext ? (at.tomorrow ? ", next, tomorrow" : ", next") : ""}`}>
         {isNext && !at.tomorrow && (
           <>
             <span aria-hidden className={`absolute top-0 ${RAIL_X} -translate-x-1/2 border-l-2 border-dashed border-accent/70`} style={{ height: pad + ROW / 2 }} />
@@ -68,10 +74,10 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, m
         <span className={`text-right text-sm tabular-nums ${isNext ? "font-semibold text-accent" : dim || !r.mine ? "text-ink-3" : "font-medium text-ink"}`}>{clockLabel(r.min)}</span>
         <span className="relative z-10 flex h-8 items-center justify-center">{node}</span>
         <span className={`min-w-0 truncate text-sm ${dim || !r.mine ? "text-ink-3" : "text-ink-2"}`} title={r.whereAll}>
-          {r.where}
+          {r.reported && "Reported · "}{r.where}
           {isNext && at.tomorrow && <span className="ml-2 rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent">tomorrow</span>}
         </span>
-        <span className="flex items-center gap-1.5" title={`${r.drops} restock${r.drops === 1 ? "" : "s"} around this time in the last ${days} days`}>
+        <span className="flex items-center gap-1.5" title={`${r.drops} restock${r.drops === 1 ? "" : "s"} ${r.reported ? "reported by other trackers " : ""}around this time in the last ${days} days`}>
           <span className="flex w-10 justify-end sm:w-28"><span className={`h-1.5 rounded-full ${dim || !r.mine ? "bg-ink/12" : "bg-accent/45"}`} style={{ width: `${Math.max(14, Math.round((100 * r.drops) / max))}%` }} /></span>
           <span className="w-7 text-right text-xs tabular-nums text-ink-3">{r.drops}×</span>
         </span>
@@ -90,10 +96,11 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, m
         Restock times at {yours} over the last {days} days, {zone} time, earliest first; a longer bar means more often.
         {mixed && <> {anyMine ? "Yours are few so far, so" : "None at yours yet, so"} other stores on {zone} time fill in.</>} A record of the past, not a forecast: use it as a guide.
       </p>
-      {mixed && (
+      {(mixed || reported) && (
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-ink-3">
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-accent/70" />{yours.replace(/^your/, "Your")}</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full border-[1.5px] border-ink/35" />Other stores on {zone} time</span>
+          {mixed && <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full border-[1.5px] border-ink/35" />Other stores on {zone} time</span>}
+          {reported && <ReportLegendItem reports={reported} round />}
         </div>
       )}
       {rows.length === 0 ? (
@@ -104,8 +111,9 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, m
             <span aria-hidden className={`absolute top-4 bottom-4 ${RAIL_X} w-px -translate-x-1/2 bg-line-2`} />
             {items}
           </ol>
-          {at.tomorrow && <p className="mt-3 pl-[7rem] text-xs font-semibold text-accent">Next: {clockLabel(rows[0].min)} tomorrow, {soon}</p>}
+          {at.tomorrow && at.next != null && <p className="mt-3 pl-[7rem] text-xs font-semibold text-accent">Next: {clockLabel(rows[at.next].min)} tomorrow, {soon}</p>}
           {hidden > 0 && <p className="mt-3 text-xs text-ink-3">Your busiest times; {hidden} restock{hidden === 1 ? "" : "s"} at quieter times aren&apos;t listed.</p>}
+          {reported && <ReportsNote reports={reported} mark="Dashed rings" />}
         </>
       )}
     </section>

@@ -61,6 +61,7 @@
   "src/lib/stock/fallback.ts",
   "src/lib/stock/fastlane.ts",
   "src/lib/stock/ingest.ts",
+  "src/lib/stock/notOffered.ts",
   "src/lib/stock/notify.ts",
   "src/lib/stock/sweep.ts"
 ]
