@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CHECK_NOTE } from "@/lib/plans";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { cache } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -107,7 +108,7 @@ export default async function CityPage({ params }: PageProps<"/stores/[state]/[c
         <div className="min-w-0">
           <h1 className="display text-3xl sm:text-5xl">{placeTitle(d.copy)}</h1>
           <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2"><Inline text={placeIntro(d.copy)} facts={facts} /></p>
-          <p className="mt-1 text-sm text-ink-3">{stores.length} stores · checked every 15 s</p>
+          <p className="mt-1 text-sm text-ink-3">{stores.length} stores · checked {CHECK_NOTE}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/map?stores=${d.numbers.join(",")}&model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Show on map</Link>

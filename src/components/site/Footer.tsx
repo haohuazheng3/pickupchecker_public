@@ -11,7 +11,7 @@ export function Footer() {
           <div>
             <Logo />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-3">
-              iPhone pickup restock alerts for all 269 US Apple Stores, checked every 15 seconds.
+              iPhone pickup restock alerts for all 269 US Apple Stores: every store checked every 15 seconds, the stores your alerts point at every 5.
             </p>
             <p className="mt-3 text-xs text-ink-3">Not affiliated with or endorsed by Apple Inc. Apple, iPhone and Apple Store are trademarks of Apple Inc.</p>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 /**
  * Live pickup-stock map: every US Apple Store as a dot, sized and colored by how many of the
- * selected configurations it lists for pickup right now. Re-polls /api/map every 20 s.
+ * selected configurations it lists for pickup right now. Re-polls /api/map on REFRESH_MS, so "Updated … ago" never drifts past one sweep.
  * MapLibre + OpenFreeMap tiles (no key, no quota); the library loads only on this page.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -26,7 +26,7 @@ const REGIONS: Record<string, Bounds> = {
   Hawaii: [[-161, 18.5], [-154, 22.5]],
   "Puerto Rico": [[-67.5, 17.8], [-65.2, 18.6]],
 };
-const REFRESH_MS = 20_000;
+const REFRESH_MS = 10_000;
 
 type ModelFilter = ModelKey | "all";
 interface Filter { model: ModelFilter; storage: string; color: string }

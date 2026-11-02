@@ -11,9 +11,10 @@ Live at <https://pickupchecker.com>. Independent service, not affiliated with Ap
 ## How it works
 
 * `poller/` — a Node process (Linode host, systemd) that asks apple.com's pickup availability for
-  33 anchor ZIP codes × 2 part batches every 20 seconds (66 requests per sweep), binding a fresh
-  IPv6 source address inside the host's /64 for every request (Apple throttles per address).
-* `src/lib/stock/` — the shared engine: parse → diff against the last state → `restock` / `soldout` (a change only counts once confirmed: a soldout must persist 2 min and a restock needs two agreeing responses, because Apple's pickup API blips)
+  42 anchor ZIP codes × 2 part batches every 15 seconds (84 requests per sweep), plus a fast lane
+  that asks each store a paid alert points at on its own every 5 seconds; every request binds a fresh
+  IPv6 source address inside the host's routed prefix (Apple throttles per address).
+* `src/lib/stock/` — the shared engine: parse → diff against the last state → `restock` / `soldout` (a change only counts once confirmed: a soldout must be seen again 15 s later and a restock needs two agreeing responses — a first "available" is re-asked within a second — because Apple's pickup API blips)
   events → match active alerts → one alert per restock (Web Push to every enabled device via
   `src/lib/push`, else an email via Resend), with cool-downs and dedupe.
 * `src/lib/push/` + `public/sw.js` + `src/app/manifest.ts` — the PWA: service worker (push,

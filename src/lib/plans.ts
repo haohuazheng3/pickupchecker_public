@@ -31,6 +31,9 @@ export const PLANS: Record<PlanKey, PlanDef> = {
  */
 export const SPEED = { fastSec: 5, checkSec: 15, alertSec: 3 } as const;
 export const OTHER_TRACKERS = "8 seconds to 15 minutes";
+/** The one way the site states its cadence (labels, footer, intros): every mention reads the same. */
+export const CHECK_NOTE = `every ${SPEED.checkSec} s, ${SPEED.fastSec} s with an alert`;
+export const CHECK_SENTENCE = `every store is checked every ${SPEED.checkSec} seconds, and the stores your alerts point at every ${SPEED.fastSec}`;
 export const SPEED_PERKS = [
   `Your stores checked every ${SPEED.fastSec} s, all 269 every ${SPEED.checkSec} s`,
   `Push about ${SPEED.alertSec} s after a restock is confirmed`,

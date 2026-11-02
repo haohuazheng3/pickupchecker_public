@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LiveChecked } from "@/components/site/LiveChecked";
 import { cache } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
@@ -150,7 +151,7 @@ export default async function ProductPlacePage({ params }: { params: Promise<Par
           ? (one ? <b className={inStock ? "text-accent" : "text-ink"}>{inStock ? "In stock now" : "Not in stock now"}</b> : <span><b className="text-ink">{line?.available.length ?? 0}</b> of {product.parts.length} configurations in stock</span>)
           : <span>In stock at <b className="text-ink">{inStock}</b> of {place.stores.length} store{place.stores.length === 1 ? "" : "s"}</span>}
       </p>
-      <p className="mt-0.5 text-sm text-ink-3">Checked <LiveAgo iso={checked} /> · {priceLabel(product)}</p>
+      <p className="mt-0.5 text-sm text-ink-3">Checked <LiveChecked iso={checked} model={product.model} stores={place.level === "us" ? null : place.stores.map((s) => s.storeNumber)} /> · {priceLabel(product)}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         <Link href={placeAlert(product, place)} className="btn btn-primary btn-sm">Alert me</Link>
         {configItem && !atStore && <a href={appleBuyUrl(configItem)} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm">Buy on apple.com</a>}

@@ -5,7 +5,7 @@ import type { StoreStockSummary } from "@/lib/stock/queries";
 import { normalizeHours, todayLabel } from "@/lib/seo/enrich";
 import { storeTimeZone } from "@/lib/apple/catalog";
 import { Dot } from "@/components/stock/StatusBits";
-import { LiveAgo } from "@/components/site/LiveAgo";
+import { LiveChecked } from "@/components/site/LiveChecked";
 
 /**
  * Model × store matrix for state and city pages: one row per store, one cell per model with
@@ -27,7 +27,7 @@ export function ModelStoreMatrix({ stores, stock, showCity = true, now = new Dat
             <li key={s.storeNumber} className="grid grid-cols-[1fr_repeat(3,3.4rem)] items-center gap-x-2 px-3 py-2.5 sm:grid-cols-[1fr_repeat(3,5.5rem)_7rem] sm:px-4">
               <div className="min-w-0">
                 <Link href={storePath(s)} className="block truncate font-medium text-ink hover:underline">Apple {s.name}</Link>
-                <div className="truncate text-xs text-ink-3">{showCity ? `${s.city}, ${stateCodeOf(s)} · ` : ""}{today.label}<span className="sm:hidden"> · <LiveAgo iso={r?.lastCheckedAt ?? null} /></span></div>
+                <div className="truncate text-xs text-ink-3">{showCity ? `${s.city}, ${stateCodeOf(s)} · ` : ""}{today.label}<span className="sm:hidden"> · <LiveChecked iso={r?.lastCheckedAt ?? null} stores={[s.storeNumber]} /></span></div>
               </div>
               {MODELS.map((m) => {
                 const c = r?.perModel[m.key];
@@ -38,7 +38,7 @@ export function ModelStoreMatrix({ stores, stock, showCity = true, now = new Dat
                   </Link>
                 );
               })}
-              <span className="hidden text-right text-xs text-ink-3 sm:block"><LiveAgo iso={r?.lastCheckedAt ?? null} /></span>
+              <span className="hidden text-right text-xs text-ink-3 sm:block"><LiveChecked iso={r?.lastCheckedAt ?? null} stores={[s.storeNumber]} /></span>
             </li>
           );
         })}

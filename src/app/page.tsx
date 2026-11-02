@@ -7,7 +7,8 @@ import { wizardStartFrom } from "@/lib/wizardStart";
 import { productFor, productPath, storePlace } from "@/lib/seo/products";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { Dot } from "@/components/stock/StatusBits";
-import { LiveAgo } from "@/components/site/LiveAgo";
+import { LiveChecked } from "@/components/site/LiveChecked";
+import { CHECK_NOTE } from "@/lib/plans";
 import { BrowseModels, BrowsePopular } from "@/components/seo/Browse";
 import { RelatedBlock } from "@/components/seo/Related";
 import type { Metadata } from "next";
@@ -49,7 +50,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
 
       <section className="pt-6 sm:pt-10">
-        <div className="eyebrow inline-flex items-center gap-2"><span className="dot dot-ok dot-live" /> Live · all 269 US Apple Stores · checked every 15 s</div>
+        <div className="eyebrow inline-flex items-center gap-2"><span className="dot dot-ok dot-live" /> Live · all 269 US Apple Stores · {CHECK_NOTE}</div>
         <h1 className="display mt-3 text-3xl sm:text-5xl">{HOME_TITLES.main.h1}</h1>
         <p className="mt-2 max-w-3xl text-ink-2"><Inline text={HOME_INTRO} facts={facts} /></p>
       </section>
@@ -103,7 +104,7 @@ async function Board({ model }: { model: ModelKey }) {
           <div className="truncate text-xs text-ink-3">restocks 24 h<span className="hidden sm:inline"> · {counts.week} wk</span></div>
         </Link>
         <div className="min-w-0 rounded-2xl border border-line bg-[var(--pane-solid)] p-3">
-          <div className="truncate text-2xl font-semibold tabular-nums"><LiveAgo iso={newest} /></div>
+          <div className="truncate text-2xl font-semibold tabular-nums"><LiveChecked iso={newest} model={model} /></div>
           <div className="truncate text-xs text-ink-3">last check</div>
         </div>
       </div>

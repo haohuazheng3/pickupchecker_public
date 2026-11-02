@@ -2,6 +2,8 @@
  * Building blocks of the /stock/{product}/{place} pages. Every chip, row and cell is a plain link to
  * another page of the tree, so the pages read like one app with filters — and stay crawlable.
  */
+import { CHECK_NOTE } from "@/lib/plans";
+import { LiveChecked } from "@/components/site/LiveChecked";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { appleBuyUrl, stateCodeOf } from "@/lib/apple/catalog";
 import { productPath, storePlace, type Place, type Product } from "@/lib/seo/products";
@@ -139,7 +141,7 @@ export function StatusCard({ line }: { line: StoreLine }) {
         {on ? <>{st?.quote ?? "Available for pickup"}{st?.since && <> · since <LiveAgo iso={st.since} /></>}</> : st?.lastAvailableAt ? <>Last in stock <LiveAgo iso={st.lastAvailableAt} /></> : st ? "Never seen in stock here yet" : "First check within a minute"}
       </p>
       {on && item && <a href={appleBuyUrl(item)} target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-4">Buy on apple.com</a>}
-      <p className="mt-3 text-xs text-ink-3">Checked <LiveAgo iso={line.lastCheckedAt} /> · every 15 s</p>
+      <p className="mt-3 text-xs text-ink-3">Checked <LiveChecked iso={line.lastCheckedAt} stores={[line.store.storeNumber]} /> · {CHECK_NOTE}</p>
     </div>
   );
 }
