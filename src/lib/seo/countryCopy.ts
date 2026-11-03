@@ -432,9 +432,11 @@ export function homeFaq(cc: CountryCode, rt: RestockTimesBrief): Faq[] {
     : rt.peakHour != null
       ? `Most land around **${hourLabel(rt.peakHour)} local time**: ${rt.n.toLocaleString("en-US")} confirmed restocks at ${rt.stores} of ${rt.storesTotal} stores since November 2. [Hour by hour and day by day](${rt.path}).`
       : `${rt.n.toLocaleString("en-US")} confirmed restocks at ${rt.stores} of ${rt.storesTotal} stores since November 2, on too few days to name a usual hour yet. [Hour by hour and day by day](${rt.path}).`;
+  // English country homes keep the FAQ they had (pages with search and AI traffic stay as they are); the native
+  // versions answer the restock-times question too (their own place builders).
+  void when;
   return [
     { q: `Which Apple Stores ${c.inName} have the iPhone Duo right now?`, a: `{{duo.storesNow}} of ${n} at the last check ({{asOf}}). [iPhone Duo stock ${c.inName}](${p}/stock/iphone-duo) names each store and configuration, updated every 15 seconds.` },
-    { q: `When does Apple restock the iPhone Duo ${c.inName}?`, a: when },
     { q: "How fast are the alerts?", a: `The stores your alerts point at are checked every 5 seconds, every Apple Store ${c.inName} every 15. A first "available" is checked again within a second so an Apple glitch never becomes an alert, and the push reaches your phone about 3 seconds after that.` },
     { q: "What does it cost?", a: "Live stock, the map and the restock log are free. Alerts are Plus $5/month for 10, Pro $10 for 20 and Max $20 for 50, billed in US dollars; cancel anytime ([pricing](/pricing))." },
     taxFaqIntl(cc, theName(c)),

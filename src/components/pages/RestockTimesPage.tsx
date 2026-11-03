@@ -49,7 +49,7 @@ export async function restockTimesMetadata(c: Country, loc: Locale = englishLoca
   return {
     title: { absolute: `${title} · PickupChecker` },
     description,
-    alternates: { canonical: url, languages: hreflangFor("restock-times") },
+    alternates: { canonical: url, languages: hreflangFor("restock-times", loc) },
     openGraph: { type: "article", siteName: "PickupChecker", title, description, url },
   };
 }

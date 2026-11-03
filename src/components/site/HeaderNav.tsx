@@ -1,8 +1,8 @@
 "use client";
 /**
- * The header's section links for the country the page is about: /stock/iphone-duo on US pages, /jp/stock/iphone-duo
- * on Japan's English pages, /ja-jp/stock/iphone-duo on its Japanese ones; app pages (dashboard, pricing) use the
- * person's language version. From the pathname, so a soft navigation between countries keeps them right.
+ * The header's section links. English pages (the US and every English country tree) keep the links they always had
+ * (/stock/iphone-duo…: pages with search and AI traffic keep their internal links as they were); a native version
+ * links into its own tree (/ja-jp/stock/iphone-duo), and app pages into the person's language version.
  */
 import { usePathname } from "next/navigation";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
@@ -12,7 +12,7 @@ import { isAppPath, localeFromSegment } from "@/lib/i18n/locales";
 /** The prefix of the country tree a path belongs to ("" for the US). */
 export function treePrefix(pathname: string, app: string | null): string {
   const seg = pathname.split("/")[1];
-  if (localeFromSegment(seg)) return `/${seg}`;
+  if (localeFromSegment(seg)?.native) return `/${seg}`;
   return isAppPath(pathname) && app ? `/${app}` : "";
 }
 

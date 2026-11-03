@@ -46,7 +46,7 @@ type SearchParams = Record<string, string | string[] | undefined>;
 
 /** The home's metadata: the US one as it always was (plus hreflang), another country's from its formula. */
 export function homeMetadata(c: Country, loc: Locale = englishLocale(c.cc)): Metadata {
-  const languages = hreflangFor("home");
+  const languages = hreflangFor("home", loc);
   if (c.cc === "us") {
     return {
       title: { absolute: `${HOME_TITLES.main.title} · PickupChecker` },
@@ -229,7 +229,7 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
         {MODELS.filter((x) => x.key !== model).map((x) => <Link key={x.key} href={`${p}?model=${x.key}`} className="chip px-3 py-1.5 text-xs">{x.name}</Link>)}
         <Link href={mapPath(cc)} className="chip px-3 py-1.5 text-xs">{H.liveMap}</Link>
         {index && <Link href={index.path} className="chip px-3 py-1.5 text-xs">{index.indexable ? (c.regionNoun && n > 3 ? P.home.storesByRegion(cc) : H.allStores) : N.apple(stores[0])}</Link>}
-        <Link href={rtPath} className="chip px-3 py-1.5 text-xs">{P.home.restockTimesChip}</Link>
+        {loc.native && <Link href={rtPath} className="chip px-3 py-1.5 text-xs">{P.home.restockTimesChip}</Link>}
       </section>
 
       <div className="mt-6"><Last24Hours data={recent} label={P.home.last24Label(cc)} stores={stores} country={cc} alert={alertHref({ model: "duo", country: cc })} /></div>

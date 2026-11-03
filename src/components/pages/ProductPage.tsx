@@ -114,7 +114,7 @@ export async function productMetadata(c: Country, p: ProductParams, loc: Locale 
   const url = inLoc(productPath(d.product, d.place));
   const canonical = inLoc(productPath(d.product, t.canonicalPlace(d.place)));
   // The three model pages are the same page in every country (hreflang, x-default = the US one).
-  const languages = d.place.level === "country" && d.product.kind === "model" ? hreflangFor({ model: d.product.slug }) : undefined;
+  const languages = d.place.level === "country" && d.product.kind === "model" ? hreflangFor({ model: d.product.slug }, loc) : undefined;
   return {
     title, description, alternates: { canonical, ...(languages ? { languages } : {}) },
     ...(INDEXABLE && !d.indexable ? { robots: { index: false, follow: true } } : {}),

@@ -70,7 +70,7 @@ export async function storesIndexMetadata(c: Country, loc: Locale = englishLocal
     ? `The list of all ${n} Apple Stores in the US by state and city, with live iPhone Duo, 18 Pro and Pro Max pickup stock: ${d.stockNow.duo} have the Duo now.`.slice(0, 160)
     : D.views.storesIndex.metaDescription(c, n, statesWithStores(c.cc).length, citiesWithStores(c.cc).length, d.stockNow.duo, d.stockNow["18-pro-max"]).slice(0, 160);
   const url = loc.native ? pathInLocale(`${prefixOf(c.cc)}/stores`, loc) : `${prefixOf(c.cc)}/stores`;
-  return { title, description, alternates: { canonical: url, languages: hreflangFor("stores") }, openGraph: { type: "website", siteName: "PickupChecker", title, description, url } };
+  return { title, description, alternates: { canonical: url, languages: hreflangFor("stores", loc) }, openGraph: { type: "website", siteName: "PickupChecker", title, description, url } };
 }
 
 /** The US index. Another country's is StoresIndexIntl.tsx (a module of its own, so the US page loads none of its client code). */

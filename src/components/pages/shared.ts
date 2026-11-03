@@ -17,40 +17,46 @@ export function equivalentPath(cc: CountryCode, page: EquivalentPage): string | 
 }
 
 /**
- * hreflang alternates between the countries' equivalent pages (home, store index, the three model pages, the
- * restock-times page; seo.md §12) and every language version of each (docs/i18n.md §6): en-US ↔ en-CA ↔ fr-CA ↔
- * en-JP ↔ ja-JP …, x-default = the US page.
+ * hreflang between the countries' equivalent pages (home, store index, the three model pages, the restock-times page;
+ * seo.md §12). English pages keep exactly the cluster they always had — en-US ↔ en-CA ↔ en-GB …, x-default = the US
+ * page — so pages that already earn search and AI traffic are not touched (站长 2026-11-03). The native versions
+ * (docs/i18n.md §6) form their own cluster: ja-JP ↔ de-DE ↔ fr-CA …
  */
-export function hreflangFor(page: EquivalentPage): Record<string, string> {
+export function hreflangFor(page: EquivalentPage, loc?: Locale): Record<string, string> {
   const out: Record<string, string> = {};
+  if (loc?.native) {
+    for (const l of NATIVE_LOCALES) {
+      const p = equivalentPath(l.cc, page);
+      if (p) out[l.tag] = pathInLocale(p, l);
+    }
+    return out;
+  }
   for (const cc of ALL_CODES) {
     const p = equivalentPath(cc, page);
-    if (!p) continue;
-    out[COUNTRIES[cc].hreflang] = p;
-    for (const l of NATIVE_LOCALES) if (l.cc === cc) out[l.tag] = pathInLocale(p, l);
+    if (p) out[COUNTRIES[cc].hreflang] = p;
   }
   out["x-default"] = equivalentPath("us", page)!;
   return out;
 }
 
 /**
- * hreflang for a page that exists in one country only (a store, region, city, product, map or log page): its
- * English and native versions point at each other, x-default = the English one. US pages have no versions: {}.
+ * hreflang for a page that exists in one country only (a store, region, city, product, map or log page). English
+ * pages carry none, as before. A native page names its country's other native versions (Switzerland's German and
+ * French, Belgium's French and Dutch) when there is more than one; otherwise none.
  */
 export function versionsOf(path: string): Record<string, string> {
-  const en = englishPath(path);
-  const seg = en.split(/[?#]/)[0].split("/")[1];
+  const seg = path.split(/[?#]/)[0].split("/")[1];
   const loc = localeFromSegment(seg);
-  if (!loc) return {};
-  const vs = localesOf(loc.cc);
-  if (vs.length < 2) return {};
-  const out: Record<string, string> = {};
-  for (const l of vs) out[l.tag] = pathInLocale(en, l);
-  out["x-default"] = en;
-  return out;
+  if (!loc?.native) return {};
+  const natives = localesOf(loc.cc).filter((l) => l.native);
+  if (natives.length < 2) return {};
+  const en = englishPath(path);
+  return Object.fromEntries(natives.map((l) => [l.tag, pathInLocale(en, l)]));
 }
 
-/** canonical (this version's own URL) + hreflang for a page given in its English form. */
-export function alternatesIn(path: string, loc: Locale, languages?: Record<string, string>): { canonical: string; languages: Record<string, string> } {
-  return { canonical: pathInLocale(path, loc), languages: languages ?? versionsOf(path) };
+/** canonical (this version's own URL) + hreflang (versionsOf) for a page given in its English form. */
+export function alternatesIn(path: string, loc: Locale, languages?: Record<string, string>): { canonical: string; languages?: Record<string, string> } {
+  const own = pathInLocale(path, loc);
+  const langs = languages ?? versionsOf(own);
+  return Object.keys(langs).length ? { canonical: own, languages: langs } : { canonical: own };
 }

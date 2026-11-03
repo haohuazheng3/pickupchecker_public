@@ -6,7 +6,7 @@ import { dict } from "@/lib/i18n/dict";
 export default async function NotFound() {
   const loc = await requestLocale();
   const F = dict(loc.lang).chrome.notFound;
-  const p = loc.id ? `/${loc.id}` : "";
+  const p = loc.native ? `/${loc.id}` : "";
   const cls = "underline decoration-line-2 hover:text-ink";
   return (
     <div className="mx-auto max-w-2xl px-4 pt-24 text-center">

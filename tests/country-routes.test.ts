@@ -136,23 +136,20 @@ describe("hreflang between equivalent pages", () => {
     expect(home["en-US"]).toBe("/");
     expect(home["en-GB"]).toBe("/uk");
     expect(home["x-default"]).toBe("/");
-    // 19 English trees + 16 native versions + x-default.
-    expect(home["ja-JP"]).toBe("/ja-jp");
-    expect(home["fr-CA"]).toBe("/fr-ca");
-    expect(Object.keys(home)).toHaveLength(36);
+    // English pages keep exactly the cluster they had (pages with traffic are not touched): 19 trees + x-default.
+    expect(home["ja-JP"]).toBeUndefined();
+    expect(Object.keys(home)).toHaveLength(20);
     const stores = hreflangFor("stores");
     // Austria's and Belgium's /stores is their only store: no equivalent index.
     expect(stores["en-AT"]).toBeUndefined();
     expect(stores["en-BE"]).toBeUndefined();
-    expect(stores["nl-BE"]).toBeUndefined();
-    expect(stores["de-DE"]).toBe("/de-de/stores");
+    expect(stores["de-DE"]).toBeUndefined();
     expect(stores["en-CA"]).toBe("/ca/stores");
     expect(hreflangFor({ model: "iphone-duo" })["en-JP"]).toBe("/jp/stock/iphone-duo");
     const times = hreflangFor("restock-times");
     expect(times["x-default"]).toBe("/iphone-duo-restock-times");
     expect(times["en-AU"]).toBe("/au/iphone-duo-restock-times");
-    expect(times["zh-HK"]).toBe("/zh-hk/iphone-duo-restock-times");
-    expect(Object.keys(times)).toHaveLength(36);
+    expect(Object.keys(times)).toHaveLength(20);
   });
 });
 

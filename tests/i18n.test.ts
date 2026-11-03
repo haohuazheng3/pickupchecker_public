@@ -60,14 +60,19 @@ describe("language versions and paths (docs/i18n.md §6)", () => {
     // Every store page of every version answers.
     for (const l of NATIVE_LOCALES) for (const s of storesOf(l.cc)) expect(publicRouteCheck(pathInLocale(storePath(s), l)), `${l.id} ${s.slug}`).toBeNull();
   });
-  it("hreflang: a store's versions point at each other; equivalent pages across every version", () => {
-    const v = versionsOf("/ch/stores/zurich/zurich/rennweg");
-    expect(v).toEqual({ "en-CH": "/ch/stores/zurich/zurich/rennweg", "de-CH": "/de-ch/stores/zurich/zurich/rennweg", "fr-CH": "/fr-ch/stores/zurich/zurich/rennweg", "x-default": "/ch/stores/zurich/zurich/rennweg" });
-    expect(versionsOf("/ja-jp/stores")).toEqual(versionsOf("/jp/stores"));
+  it("hreflang: English pages keep theirs exactly; native versions point at each other", () => {
+    // English pages (they carry the search and AI traffic) are untouched: no alternates on single-country pages.
+    expect(versionsOf("/ch/stores/zurich/zurich/rennweg")).toEqual({});
     expect(versionsOf("/stores/michigan")).toEqual({});
-    expect(versionsOf("/sg/stores")).toEqual({}); // English only
-    const home = hreflangFor("home");
-    for (const l of NATIVE_LOCALES) expect(home[l.tag]).toBe(`/${l.id}`);
+    // Switzerland's two native versions name each other; a country with one native version names none.
+    expect(versionsOf("/de-ch/stores/zurich/zurich/rennweg")).toEqual({ "de-CH": "/de-ch/stores/zurich/zurich/rennweg", "fr-CH": "/fr-ch/stores/zurich/zurich/rennweg" });
+    expect(versionsOf("/ja-jp/stores")).toEqual({});
+    const en = hreflangFor("home");
+    for (const l of NATIVE_LOCALES) expect(en[l.tag]).toBeUndefined();
+    expect(en["x-default"]).toBe("/");
+    const native = hreflangFor("home", NATIVE_LOCALES[0]);
+    for (const l of NATIVE_LOCALES) expect(native[l.tag]).toBe(`/${l.id}`);
+    expect(native["en-US"]).toBeUndefined();
   });
   it("offers a native version to a browser that prefers it, never on native or US pages", () => {
     expect(offerFor("/jp/stores", ["ja-JP", "en"])?.id).toBe("ja-jp");
