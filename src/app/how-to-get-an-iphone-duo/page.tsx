@@ -149,7 +149,7 @@ export default async function HowToGetDuo() {
       "**Wait for Apple's pickup email.** The reservation is an order; Apple confirms the pickup time by email and notification.",
       `**Bring the order number (the email carries a QR code) and a government photo ID.** Apple's pickup emails and [its shipping and pickup help](${PICKUP_HELP}) list what the store asks for.`,
     ] },
-    { t: "note", text: `Why seconds matter: ${typical ? `a typical iPhone Duo listing is gone in ${typical}` : "iPhone Duo listings are gone in minutes"}, and PickupChecker's push reaches your phone about ${SPEED.alertSec} seconds after a restock is confirmed. Between those two numbers is the whole game.` },
+    { t: "note", text: `Why seconds matter: ${typical ? `a typical iPhone Duo listing is gone in ${typical}` : "iPhone Duo listings are gone in minutes"}, and PickupChecker's push reaches your phone about ${SPEED.alertSec} seconds after a restock is confirmed. Between those two numbers is the whole game — the tap-by-tap version, with Apple's checkout staged before the window, is [Grab an iPhone Duo restock in 20 seconds](/how-to-grab-an-iphone-duo-restock).` },
     { t: "img", id: "phone-card-payment" },
     { t: "cta", label: "Set up your alerts", href: "/#notify", sub: `Plus is $${PLANS.plus.priceUsd}/month for ${PLANS.plus.limit} alerts; [pricing](/pricing).` },
   ];

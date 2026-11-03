@@ -14,6 +14,7 @@ import { timeAgo } from "@/components/stock/StatusBits";
 import { env } from "@/lib/env";
 import { summarizeDevices } from "@/lib/devices";
 import { RestockTimes, RestockTimesSkeleton } from "@/components/account/RestockTimes";
+import { FastCheckoutCard } from "@/components/account/FastCheckoutCard";
 import { RefreshOnAlertsChange } from "@/components/account/RefreshOnAlertsChange";
 import { AlertEditor } from "@/components/alerts/AlertEditor";
 import { Section } from "@/components/alerts/Section";
@@ -77,6 +78,9 @@ export default async function Account() {
           <DeviceList devices={devices.map((d) => ({ id: d.id, platform: d.platform, standalone: d.standalone, added: timeAgo(d.createdAt), lastAlert: d.lastSentAt ? timeAgo(d.lastSentAt) : null, disabledAt: d.disabledAt?.toISOString() ?? null, lastError: d.lastError }))} />
         )}
       </div>
+
+      {/* What to do before the next alert, so the push leaves four taps; the guide and the window below. */}
+      <FastCheckoutCard />
 
       {/* Streams in after the rest: thirty days of events for every store the user watches. */}
       <Suspense fallback={active ? <RestockTimesSkeleton /> : null}>

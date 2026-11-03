@@ -117,7 +117,7 @@ export default async function DuoStockAlerts() {
       "**Finish checkout.** The reservation is the order; Apple emails you when it is ready and states the pickup window in that email.",
       `**Bring what Apple asks for**: the order number or QR code from the pickup email and a government-issued photo ID ([Apple: Shipping & Pickup help](${APPLE_HELP})).`,
     ] },
-    { t: "p", text: "The longer version is on [how to get an iPhone Duo](/how-to-get-an-iphone-duo); what the wording on apple.com means is on [Apple pickup availability explained](/apple-store-pickup-availability-explained)." },
+    { t: "p", text: "The tap-by-tap version, with Apple's checkout staged before the window so the alert leaves four taps, is [Grab an iPhone Duo restock in 20 seconds](/how-to-grab-an-iphone-duo-restock); the wider plan is on [how to get an iPhone Duo](/how-to-get-an-iphone-duo); what the wording on apple.com means is on [Apple pickup availability explained](/apple-store-pickup-availability-explained)." },
   ];
 
   const sections: { id: string; nav: string; h2: string; lead: string; blocks: Block[] }[] = [

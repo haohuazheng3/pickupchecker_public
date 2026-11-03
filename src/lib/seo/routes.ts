@@ -12,7 +12,7 @@ const RETIRED: Record<string, string> = { "/blog/how-to-find-iphone-18-pro-in-st
 export const TOP_LEVEL: ReadonlySet<string> = new Set([
   "about", "account", "admin", "api", "checkout", "contact", "how-it-works", "install", "map", "pricing", "privacy", "refunds", "restocks", "stock", "stores", "terms",
   // The iPhone Duo question pages (seo.md §13): one answer page per question people put to search and answer engines.
-  "iphone-duo-restock-times", "iphone-duo-sell-out-times", "iphone-duo-stock-alerts", "iphone-duo-near-me", "how-to-get-an-iphone-duo", "which-iphone-duo-restocks-most", "apple-store-pickup-availability-explained",
+  "iphone-duo-restock-times", "iphone-duo-sell-out-times", "iphone-duo-stock-alerts", "iphone-duo-near-me", "how-to-get-an-iphone-duo", "which-iphone-duo-restocks-most", "apple-store-pickup-availability-explained", "how-to-grab-an-iphone-duo-restock",
   "blog", "opengraph-image", "_not-found", "icons", "img", "vendor", "zip",
 ]);
 

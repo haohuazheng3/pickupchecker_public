@@ -114,10 +114,10 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
     const all = (await sitemap()).map((e) => e.url);
     expect(new Set(all).size).toBe(all.length);
     const us = all.filter((u) => !INTL_CODES.some((cc) => u === `${base}/${cc}` || u.startsWith(`${base}/${cc}/`)));
-    // 356 US pages of seo.md §10–11, plus the seven iPhone Duo question pages of §13.
-    expect(us).toHaveLength(356 + 7);
-    for (const p of ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained"]) expect(us).toContain(`${base}${p}`);
-    expect(all.length).toBe(363 + Object.values(per).reduce((a, l) => a + l.length, 0));
+    // 356 US pages of seo.md §10–11, plus the eight iPhone Duo question pages of §13.
+    expect(us).toHaveLength(356 + 8);
+    for (const p of ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock"]) expect(us).toContain(`${base}${p}`);
+    expect(all.length).toBe(364 + Object.values(per).reduce((a, l) => a + l.length, 0));
   });
 });
 

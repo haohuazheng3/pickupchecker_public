@@ -40,7 +40,7 @@ export function countryEntries(cc: Exclude<CountryCode, "us">, base: string, now
  * The iPhone Duo question pages (seo.md §13): one answer page per question people put to search and answer
  * engines. Their numbers are live, so they change with the restock log.
  */
-export const QUESTION_PAGES = ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained"] as const;
+export const QUESTION_PAGES = ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock"] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pickupchecker.com";

@@ -62,6 +62,7 @@ export function Footer() {
             <li><Link href="/iphone-duo-stock-alerts" className="hover:text-ink">Fastest way to get notified</Link></li>
             <li><Link href="/iphone-duo-near-me" className="hover:text-ink">iPhone Duo in stock near me</Link></li>
             <li><Link href="/how-to-get-an-iphone-duo" className="hover:text-ink">How to get an iPhone Duo</Link></li>
+            <li><Link href="/how-to-grab-an-iphone-duo-restock" className="hover:text-ink">Grab a restock in 20 seconds</Link></li>
             <li><Link href="/which-iphone-duo-restocks-most" className="hover:text-ink">Which configuration restocks most?</Link></li>
             <li><Link href="/apple-store-pickup-availability-explained" className="hover:text-ink">What “unavailable for pickup” means</Link></li>
           </ul>
