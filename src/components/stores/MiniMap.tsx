@@ -24,7 +24,8 @@ export function MiniMap({ lat, lng, label, href }: { lat: number; lng: number; l
       const lib = await import("maplibre-gl");
       if (cancelled || !el.current) return;
       lib.setWorkerUrl(MAP_WORKER_URL);
-      map = new lib.Map({ container: el.current, style: mapStyleFor(currentTheme()), center: [lng, lat], zoom: 12.5, interactive: false, attributionControl: { compact: true } });
+      // No WebGL2 → MapLibre throws; leave the plain card (it still links to the live map).
+      try { map = new lib.Map({ container: el.current, style: mapStyleFor(currentTheme()), center: [lng, lat], zoom: 12.5, interactive: false, attributionControl: { compact: true } }); } catch { return; }
       map.on("load", () => {
         if (!map) return;
         map.addSource("pin", { type: "geojson", data: { type: "Feature", geometry: { type: "Point", coordinates: [lng, lat] }, properties: {} } });

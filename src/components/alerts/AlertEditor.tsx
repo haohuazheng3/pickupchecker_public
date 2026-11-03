@@ -49,6 +49,15 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
   const [draft, setDraft] = useState<AlertSet>(() => startSet(catalog, start));
   const [loaded, setLoaded] = useState(Boolean(account)); // the account's set is on screen
   const [notice, setNotice] = useState<string | null>(null);
+  // Bumped on every refused tick: the inline notice sits above the lists, out of view once someone has
+  // scrolled into the store list on a phone (paying members tapped the same row 7 times, 11-03), so a
+  // refused tick also flashes the reason at the bottom of the screen for a few seconds.
+  const [refused, setRefused] = useState(0);
+  useEffect(() => {
+    if (!refused) return;
+    const t = setTimeout(() => setRefused(0), 6000);
+    return () => clearTimeout(t);
+  }, [refused]);
   const [justSaved, setJustSaved] = useState(false);
   const [devices, setDevices] = useState<{ active: number; label: string | null } | null>(null);
   const signingIn = useRef(false);
@@ -110,9 +119,11 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
       setNotice(plan && plan.key !== "free" && plan.key !== "max"
         ? `That makes ${n} alerts; ${PLANS[plan.key].name} holds ${plan.limit}. Upgrade, or untick something first.`
         : `That makes ${n} alerts; the largest plan holds ${MOST}. Untick something first.`);
+      setRefused((k) => k + 1);
       return;
     }
     setNotice(null);
+    setRefused(0);
     if (mode === "account") live.apply(next); else setDraft(next);
   }, [max, count, plan, mode, live]);
   const onPhone = (p: Phone) => change({ ...set, phones: togglePhone(set.phones, p) });
@@ -197,6 +208,10 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
             ? <button type="button" className="btn btn-primary btn-sm" onClick={() => openSection("plan")}>See plans</button>
             : <a href="/account#plan" className="btn btn-primary btn-sm">See plans</a>)}
         </div>
+      )}
+
+      {notice && refused > 0 && (
+        <div key={refused} role="status" className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-2xl border border-warn/40 bg-bg px-4 py-3 text-sm shadow-lg sm:bottom-6">{notice}</div>
       )}
 
       <Section id={inner ? "alert-phones" : "phones"} inner={inner} title="Phones" badge={<Count n={set.phones.length} />} summary={phonesText(set.phones)} defaultOpen>

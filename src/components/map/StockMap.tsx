@@ -136,10 +136,18 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
       lib.setWorkerUrl(WORKER_URL);
       const focusStore = focus.store ? stores.find((s) => s.n === focus.store) : undefined;
       const focusBounds = focus.stores?.length ? boundsOf(stores.filter((s) => focus.stores!.includes(s.n)), 0.3) : focus.stateCode ? boundsOf(stores.filter((s) => s.code === focus.stateCode)) : null;
-      const map = new lib.Map({
-        container: el, style: mapStyleFor(currentTheme()), minZoom: 2, maxZoom: 16, attributionControl: { compact: true },
-        ...(focusStore ? { center: [focusStore.lng, focusStore.lat] as [number, number], zoom: 11 } : { bounds: focusBounds ?? (country ? Object.values(regions)[0] : REGIONS["Lower 48"]), fitBoundsOptions: { padding: 40 } }),
-      });
+      let map: maplibregl.Map;
+      try {
+        map = new lib.Map({
+          container: el, style: mapStyleFor(currentTheme()), minZoom: 2, maxZoom: 16, attributionControl: { compact: true },
+          ...(focusStore ? { center: [focusStore.lng, focusStore.lat] as [number, number], zoom: 11 } : { bounds: focusBounds ?? (country ? Object.values(regions)[0] : REGIONS["Lower 48"]), fitBoundsOptions: { padding: 40 } }),
+        });
+      } catch {
+        // MapLibre throws synchronously when the browser has no WebGL2 (old GPUs, some locked-down Chromes);
+        // show the fallback note instead of an unhandled rejection — the store list below works without it.
+        setMapError("This browser can't draw the map (WebGL2 is off or unsupported)");
+        return;
+      }
       mapRef.current = map;
       if (process.env.NODE_ENV !== "production") (window as unknown as { __pcMap?: maplibregl.Map }).__pcMap = map;
       map.addControl(new lib.NavigationControl({ showCompass: false }), "top-left");
