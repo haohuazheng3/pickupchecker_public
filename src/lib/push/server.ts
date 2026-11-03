@@ -6,6 +6,8 @@
  * row also disable the row. 400/401/403/413 are our problem (payload, VAPID) and land in the error
  * inbox so the admin "Web Push" node turns red.
  */
+import { notifyText } from "../i18n/notify";
+import type { Lang } from "../i18n/locales";
 import webpush from "web-push";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db, schema } from "../db";
@@ -142,25 +144,24 @@ const PUSH_STOPPED_EMAIL_EVERY_MS = 30 * 24 * 60 * 60 * 1000;
  * subscription is revoked, and a user who never opens the app would otherwise never learn their
  * alerts moved to email. users.push_stopped_notified_at keeps it to one email per 30 days.
  */
-export async function notifyPushStopped(userId: string, email: string, disabledRows: PushRow[], now = new Date()): Promise<boolean> {
+export async function notifyPushStopped(userId: string, email: string, disabledRows: PushRow[], now = new Date(), lang: Lang = "en"): Promise<boolean> {
   if (disabledRows.length === 0) return false;
   const d = db();
   const [u] = await d.select({ at: schema.users.pushStoppedNotifiedAt }).from(schema.users).where(eq(schema.users.id, userId)).limit(1);
   if (u?.at && now.getTime() - u.at.getTime() < PUSH_STOPPED_EMAIL_EVERY_MS) return false;
   const platforms = new Set(disabledRows.map((r) => r.platform));
-  const device = platforms.has("ios") ? "iPhone" : platforms.has("android") ? "Android phone" : platforms.has("desktop") ? "computer" : "device";
-  const reopen = platforms.has("ios")
-    ? "Open PickupChecker from your Home Screen (not Safari) and tap \"Turn on notifications\" on the Account page."
-    : "Open PickupChecker, go to Account and tap \"Turn on notifications\".";
-  const subject = `Notifications stopped on your ${device} — open PickupChecker from the Home Screen`;
+  const T = notifyText(lang).stopped;
+  const device = platforms.has("ios") ? T.deviceWord.ios : platforms.has("android") ? T.deviceWord.android : platforms.has("desktop") ? T.deviceWord.desktop : T.deviceWord.other;
+  const reopen = platforms.has("ios") ? T.reopenIos : T.reopenOther;
+  const subject = T.subject(device);
   const text = [
-    `Your ${device} stopped accepting PickupChecker notifications (the push service reported the subscription is gone).`,
-    "Restock alerts for your rules now arrive by email until you turn notifications back on.",
+    T.gone(device),
+    T.byEmail,
     "",
     reopen,
     `${env.siteUrl()}/account`,
     "",
-    "Common causes: the app was removed from the Home Screen, notifications were switched off in Settings, or the phone was restored.",
+    T.causes,
   ].join("\n");
   try {
     await sendPlainEmail(email, subject, text);

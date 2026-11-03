@@ -75,7 +75,7 @@ export const COUNTRIES: Record<CountryCode, Country> = {
   at: C({ cc: "at", iso: "AT", name: "Austria", inName: "in Austria", adjective: "Austrian", currency: "EUR", locale: "en-AT", priceLocale: "en-DE", hreflang: "en-AT", unit: "km", regionNoun: "state", retailPath: "at", shopPath: "at", cppart: "UNLOCKED/AT", pricesIncludeTax: true, taxNote: "VAT (20%) included", timeZone: "Europe/Vienna" }),
   be: C({ cc: "be", iso: "BE", name: "Belgium", inName: "in Belgium", adjective: "Belgian", currency: "EUR", locale: "en-BE", hreflang: "en-BE", unit: "km", regionNoun: "region", retailPath: "befr", shopPath: "be-fr", cppart: "UNLOCKED/BE", pricesIncludeTax: true, taxNote: "VAT (21%) included", timeZone: "Europe/Brussels" }),
   kr: C({ cc: "kr", iso: "KR", name: "South Korea", inName: "in South Korea", adjective: "Korean", currency: "KRW", locale: "en-KR", hreflang: "en-KR", unit: "km", regionNoun: "province", retailPath: "kr", shopPath: "kr", cppart: "UNLOCKED/KR", pricesIncludeTax: true, taxNote: "VAT (10%) included", timeZone: "Asia/Seoul" }),
-  tw: C({ cc: "tw", iso: "TW", name: "Taiwan", inName: "in Taiwan", adjective: "Taiwanese", currency: "TWD", locale: "en-TW", hreflang: "en-TW", unit: "km", regionNoun: "city", retailPath: "tw", shopPath: "tw", cppart: "UNLOCKED/TW", pricesIncludeTax: true, taxNote: "VAT (5%) included", timeZone: "Asia/Taipei" }),
+  tw: C({ cc: "tw", iso: "TW", name: "Taiwan", inName: "in Taiwan", adjective: "Taiwanese", currency: "TWD", locale: "en-TW", hreflang: "en-TW", unit: "km", regionNoun: "city", regionNounPlural: "cities", retailPath: "tw", shopPath: "tw", cppart: "UNLOCKED/TW", pricesIncludeTax: true, taxNote: "VAT (5%) included", timeZone: "Asia/Taipei" }),
 };
 
 export const US = COUNTRIES.us;

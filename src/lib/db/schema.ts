@@ -32,6 +32,8 @@ export const users = pgTable("users", {
   lastSeenAt: ts("last_seen_at"),
   /** When we last emailed "notifications stopped on your phone" (one email per 30 days, not per dead device). */
   pushStoppedNotifiedAt: ts("push_stopped_notified_at"),
+  /** The person's language version ("ja-jp", "de-ch"…; null = English): pushes, emails, Stripe and the dashboard follow it (docs/i18n.md §6). */
+  locale: text("locale"),
 });
 
 export const subscriptions = pgTable(

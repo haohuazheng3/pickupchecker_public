@@ -1,16 +1,19 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
+import { t, pageLocale } from "@/lib/i18n/server";
+import { localizePath } from "@/lib/i18n/locales";
 
 export interface Crumb { href?: string; label: string }
 
-/** Breadcrumb trail + BreadcrumbList JSON-LD (the last crumb is the current page). */
+/** Breadcrumb trail + BreadcrumbList JSON-LD (the last crumb is the current page; its URLs in the page's language version). */
 export function Breadcrumbs({ items, base = "https://pickupchecker.com" }: { items: Crumb[]; base?: string }) {
+  const lang = pageLocale().lang;
   const ld = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: items.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.label, ...(c.href ? { item: `${base}${c.href}` } : {}) })),
+    itemListElement: items.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.label, ...(c.href ? { item: `${base}${localizePath(c.href, lang)}` } : {}) })),
   };
   return (
-    <nav className="text-sm text-ink-3" aria-label="Breadcrumb">
+    <nav className="text-sm text-ink-3" aria-label={t().content.breadcrumb}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       {items.map((c, i) => (
         <span key={i}>{i > 0 && " / "}{c.href ? <Link href={c.href} className="hover:text-ink">{c.label}</Link> : <span className="text-ink-2">{c.label}</span>}</span>
@@ -35,10 +38,11 @@ export function LinkRow({ title, links, more, className = "" }: { title: string;
 }
 
 /** Container for the "keep exploring" block at the bottom of an SEO page. */
-export function RelatedBlock({ children, title = "Keep exploring" }: { children: React.ReactNode; title?: string }) {
+export function RelatedBlock({ children, title }: { children: React.ReactNode; title?: string }) {
+  const heading = title ?? t().content.keepExploring;
   return (
-    <section className="pane mt-8 space-y-5 p-5 sm:p-6" aria-label={title}>
-      <h2 className="text-lg font-semibold">{title}</h2>
+    <section className="pane mt-8 space-y-5 p-5 sm:p-6" aria-label={heading}>
+      <h2 className="text-lg font-semibold">{heading}</h2>
       {children}
     </section>
   );

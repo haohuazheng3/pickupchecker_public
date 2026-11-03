@@ -11,10 +11,26 @@
 import { useEffect, useState } from "react";
 import { clockLabel, gapLabel, minuteIn, placeNow } from "@/lib/restockTimes";
 import { REPORT_MARK, ReportLegendItem, ReportsNote, type ReportMeta } from "@/components/restocks/ReportsNote";
+import { useLang, useT } from "@/components/i18n/LangProvider";
+import { clock, fill, plural, secs } from "@/lib/i18n/format";
+import type { Lang } from "@/lib/i18n/locales";
 
 /** `reported`: a time other trackers published restocks at (restock_reports), not one of ours. */
 export interface TimelineRow { min: number; drops: number; mine: boolean; where: string; whereAll: string; reported?: boolean }
-interface Props { rows: TimelineRow[]; nowMin: number; tz: string; zone: string; days: number; hidden: number; yours: string; mixed: boolean; reported?: ReportMeta }
+/**
+ * `zone`: "Eastern" in English, the full zone name in another language (the dictionary's templates say which).
+ * `Yours`: `yours` at the start of a line ("Your 2 stores"); English derives it.
+ */
+interface Props { rows: TimelineRow[]; nowMin: number; tz: string; zone: string; days: number; hidden: number; yours: string; Yours?: string; mixed: boolean; reported?: ReportMeta }
+
+/** 565 → "9:25 AM" (English) / "9:25" in the reader's language. */
+function clockOf(lang: Lang, min: number): string {
+  return lang === "en" ? clockLabel(min) : clock(lang, new Date(Date.UTC(2000, 0, 1, Math.floor(min / 60) % 24, min % 60)), "UTC");
+}
+/** 125 → "2 h 5 min" (English) / "2 Std. 5 Min.". */
+function gapOf(lang: Lang, min: number): string {
+  return lang === "en" ? gapLabel(min) : secs(lang, min * 60);
+}
 
 /** One line's height (h-8) and the space above a line for `min` minutes since the one before. */
 const ROW = 32;
@@ -23,7 +39,10 @@ const gapPx = (min: number) => Math.round(Math.min(40, 4 + min * 0.1));
 const COLS = "grid-cols-[4.5rem_1.25rem_minmax(0,1fr)_auto] gap-x-2.5";
 const RAIL_X = "left-[5.75rem]";
 
-export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, mixed, reported }: Props) {
+export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Yours = yours.replace(/^your/, "Your"), mixed, reported }: Props) {
+  const d = useT().account.timeline;
+  const lang = useLang();
+  const hm = (min: number) => clockOf(lang, min);
   const [now, setNow] = useState(nowMin);
   useEffect(() => {
     const tick = () => setNow(minuteIn(tz));
@@ -36,17 +55,17 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, m
   const at = placeNow(rows, now, (r) => !r.reported);
   // One scale for every line, the user's and the other stores' alike, so the bars compare honestly.
   const max = Math.max(1, ...rows.map((r) => r.drops));
-  const soon = at.inMin === 0 ? "about now" : `in ${gapLabel(at.inMin)}`;
+  const soon = at.inMin === 0 ? d.aboutNow : fill(d.in, { gap: gapOf(lang, at.inMin) });
   const anyMine = rows.some((r) => r.mine);
 
   const items: React.ReactNode[] = [];
   const nowLine = (pad: number) => (
-    <li key="now" aria-current="time" aria-label={`Now, ${clockLabel(now)}${at.next != null ? `. Next restock time ${soon}` : ""}`} className={`relative grid items-center ${COLS}`} style={{ paddingTop: pad }}>
-      <span className="text-right text-sm font-bold tabular-nums text-accent">{clockLabel(now)}</span>
+    <li key="now" aria-current="time" aria-label={`${fill(d.nowLabel, { time: hm(now) })}${at.next != null ? fill(d.nowNext, { soon }) : ""}`} className={`relative grid items-center ${COLS}`} style={{ paddingTop: pad }}>
+      <span className="text-right text-sm font-bold tabular-nums text-accent">{hm(now)}</span>
       <span className="relative z-10 flex h-8 items-center justify-center"><span className="dot dot-ok dot-live" /></span>
       <span className="col-span-2 flex min-w-0 items-center gap-2">
         <span className="h-[2px] flex-1 rounded-full bg-accent/40" />
-        <span className="shrink-0 rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-ink)" }}>Now</span>
+        <span className="shrink-0 rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-ink)" }}>{d.now}</span>
       </span>
     </li>
   );
@@ -64,20 +83,22 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, m
         : <span className={`block rounded-full border-[1.5px] bg-[var(--pane-solid)] ${isNext ? "border-accent ring-4 ring-accent/15" : dim ? "border-ink/20" : "border-ink/35"}`} style={{ width: size, height: size }} />;
     items.push(
       <li key={`${r.reported ? "r" : r.mine ? "m" : "a"}${r.min}`} className={`relative grid items-center ${COLS}`} style={{ paddingTop: pad }}
-        aria-label={r.reported ? `${clockLabel(r.min)}: ${r.drops} restock${r.drops === 1 ? "" : "s"} reported by other trackers at ${r.where}` : `${clockLabel(r.min)}: ${r.drops} restock${r.drops === 1 ? "" : "s"} at ${r.mine ? r.where : `${r.where} on ${zone} time`}${isNext ? (at.tomorrow ? ", next, tomorrow" : ", next") : ""}`}>
+        aria-label={r.reported
+          ? fill(plural(lang, r.drops, d.rowReported), { time: hm(r.min), n: r.drops, where: r.where })
+          : `${fill(plural(lang, r.drops, r.mine ? d.rowMine : d.rowArea), { time: hm(r.min), n: r.drops, where: r.where, zone })}${isNext ? (at.tomorrow ? d.rowNextTomorrow : d.rowNext) : ""}`}>
         {isNext && !at.tomorrow && (
           <>
             <span aria-hidden className={`absolute top-0 ${RAIL_X} -translate-x-1/2 border-l-2 border-dashed border-accent/70`} style={{ height: pad + ROW / 2 }} />
             <span aria-hidden className="absolute left-[7rem] text-xs font-semibold text-accent" style={{ top: Math.max(0, pad / 2 - 8) }}>{soon}</span>
           </>
         )}
-        <span className={`text-right text-sm tabular-nums ${isNext ? "font-semibold text-accent" : dim || !r.mine ? "text-ink-3" : "font-medium text-ink"}`}>{clockLabel(r.min)}</span>
+        <span className={`text-right text-sm tabular-nums ${isNext ? "font-semibold text-accent" : dim || !r.mine ? "text-ink-3" : "font-medium text-ink"}`}>{hm(r.min)}</span>
         <span className="relative z-10 flex h-8 items-center justify-center">{node}</span>
         <span className={`min-w-0 truncate text-sm ${dim || !r.mine ? "text-ink-3" : "text-ink-2"}`} title={r.whereAll}>
-          {r.reported && "Reported · "}{r.where}
-          {isNext && at.tomorrow && <span className="ml-2 rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent">tomorrow</span>}
+          {r.reported && d.reportedPrefix}{r.where}
+          {isNext && at.tomorrow && <span className="ml-2 rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent">{d.tomorrow}</span>}
         </span>
-        <span className="flex items-center gap-1.5" title={`${r.drops} restock${r.drops === 1 ? "" : "s"} ${r.reported ? "reported by other trackers " : ""}around this time in the last ${days} days`}>
+        <span className="flex items-center gap-1.5" title={fill(plural(lang, r.drops, r.reported ? d.oftenReported : d.often), { n: r.drops, days })}>
           <span className="flex w-10 justify-end sm:w-28"><span className={`h-1.5 rounded-full ${dim || !r.mine ? "bg-ink/12" : "bg-accent/45"}`} style={{ width: `${Math.max(14, Math.round((100 * r.drops) / max))}%` }} /></span>
           <span className="w-7 text-right text-xs tabular-nums text-ink-3">{r.drops}×</span>
         </span>
@@ -89,31 +110,31 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, m
   return (
     <section className="pane p-5 sm:p-6" aria-labelledby="restock-timeline">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-        <h2 id="restock-timeline" className="text-xl font-semibold">Restock timeline</h2>
-        <span className="rounded-full border border-line-2 px-2.5 py-0.5 text-[11px] font-medium text-ink-2">Past restocks · not a forecast</span>
+        <h2 id="restock-timeline" className="text-xl font-semibold">{d.title}</h2>
+        <span className="rounded-full border border-line-2 px-2.5 py-0.5 text-[11px] font-medium text-ink-2">{d.badge}</span>
       </div>
       <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-ink-3">
-        <span>{yours.replace(/^your/, "Your")} · last {days} days</span><span>{zone} time, earliest first</span><span>longer bar = more often</span>
-        {mixed && <span>{anyMine ? "yours are few, so other stores on this zone fill in" : "none at yours yet: other stores on this zone fill in"}</span>}
+        <span>{fill(d.window, { yours: Yours, days })}</span><span>{fill(d.order, { zone })}</span><span>{d.bars}</span>
+        {mixed && <span>{anyMine ? d.mixedSome : d.mixedNone}</span>}
       </div>
       {(mixed || reported) && (
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-ink-3">
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-accent/70" />{yours.replace(/^your/, "Your")}</span>
-          {mixed && <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full border-[1.5px] border-ink/35" />Other stores on {zone} time</span>}
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-accent/70" />{Yours}</span>
+          {mixed && <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full border-[1.5px] border-ink/35" />{fill(d.otherStores, { zone })}</span>}
           {reported && <ReportLegendItem reports={reported} round />}
         </div>
       )}
       {rows.length === 0 ? (
-        <p className="mt-4 text-sm text-ink-3">Nothing yet. This fills in as restocks happen.</p>
+        <p className="mt-4 text-sm text-ink-3">{d.empty}</p>
       ) : (
         <>
-          <ol className="relative mt-5 max-w-3xl" aria-label={`Restock times, ${zone} time`}>
+          <ol className="relative mt-5 max-w-3xl" aria-label={fill(d.listLabel, { zone })}>
             <span aria-hidden className={`absolute top-4 bottom-4 ${RAIL_X} w-px -translate-x-1/2 bg-line-2`} />
             {items}
           </ol>
-          {at.tomorrow && at.next != null && <p className="mt-3 pl-[7rem] text-xs font-semibold text-accent">Next: {clockLabel(rows[at.next].min)} tomorrow, {soon}</p>}
-          {hidden > 0 && <p className="mt-3 text-xs text-ink-3">Your busiest times; {hidden} restock{hidden === 1 ? "" : "s"} at quieter times aren&apos;t listed.</p>}
-          {reported && <ReportsNote reports={reported} mark="Dashed rings" />}
+          {at.tomorrow && at.next != null && <p className="mt-3 pl-[7rem] text-xs font-semibold text-accent">{fill(d.nextTomorrow, { time: hm(rows[at.next].min), soon })}</p>}
+          {hidden > 0 && <p className="mt-3 text-xs text-ink-3">{fill(plural(lang, hidden, d.hidden), { n: hidden })}</p>}
+          {reported && <ReportsNote reports={reported} mark={d.reportMark} />}
         </>
       )}
     </section>

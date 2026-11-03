@@ -17,6 +17,7 @@ import { logOps } from "../ops";
 import { restockPayload } from "../push/payload";
 import { coveredWatchIds, effectivePlan } from "../plans";
 import type { Transition } from "./ingest";
+import { langOfUser } from "../i18n/notify";
 
 const COOLDOWN_MS = 30 * 60 * 1000; // same watch × store × part at most every 30 min
 
@@ -46,7 +47,7 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
 
   const models = [...new Set(restocks.map((x) => modelKeyFor(PART_INDEX.get(x.t.partNumber)?.model ?? "")))];
   const candidates = await d
-    .select({ watch: schema.watches, email: schema.users.email })
+    .select({ watch: schema.watches, email: schema.users.email, locale: schema.users.locale })
     .from(schema.watches)
     .innerJoin(schema.users, eq(schema.users.id, schema.watches.userId))
     .where(and(eq(schema.watches.active, true), eq(schema.watches.paused, false), inArray(schema.watches.model, models)));
@@ -116,14 +117,16 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
       return { item, store, quote: x.t.quote };
     });
     const devices = pushByUser.get(w.userId) ?? [];
+    // The person's language (their account's, set when they signed up in it or chose it): text, store names, the page the push opens.
+    const lang = langOfUser(g.c.locale);
     let channel: "push" | "email" = devices.length ? "push" : "email";
     try {
       let providerId: string | null = null;
       if (channel === "push") {
-        const r = await sendPushToRows(devices, restockPayload(lines, w.id, now), { source: "poller" });
+        const r = await sendPushToRows(devices, restockPayload(lines, w.id, now, lang), { source: "poller" });
         // Only when nothing reached the user: a device the push service dropped (410) while another
         // device received the alert is a rotation, not an outage.
-        if (r.sent === 0 && r.disabledRows.length) await notifyPushStopped(w.userId, g.c.email, r.disabledRows, now).catch(() => undefined);
+        if (r.sent === 0 && r.disabledRows.length) await notifyPushStopped(w.userId, g.c.email, r.disabledRows, now, lang).catch(() => undefined);
         if (r.sent > 0) providerId = r.firstId;
         else {
           // Every device failed: the alert still goes out, by email, instead of being lost.
@@ -132,7 +135,7 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
         }
       }
       if (channel === "email") {
-        providerId = await sendAlertEmail(g.c.email, lines, w.id);
+        providerId = await sendAlertEmail(g.c.email, lines, w.id, lang);
       }
       const latency = Date.now() - started;
       await d

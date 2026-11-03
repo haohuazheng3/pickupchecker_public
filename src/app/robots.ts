@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { INTL_CODES } from "@/lib/apple/countries";
+import { NATIVE_LOCALES } from "@/lib/i18n/locales";
 
 /** Search and AI answer engines are welcome everywhere public; private areas stay out for everyone. */
 const PRIVATE = ["/admin", "/account", "/api/", "/checkout/"];
@@ -10,7 +11,7 @@ const PRIVATE = ["/admin", "/account", "/api/", "/checkout/"];
  * faceted URLs you don't need indexed is to block crawling in robots.txt. National product pages
  * (/stock/{product}) and every /stores page stay open. Every other country repeats the three under its prefix.
  */
-export const FACETS = ["/stock/*/", "/map?", "/restocks?", ...INTL_CODES.flatMap((cc) => [`/${cc}/stock/*/`, `/${cc}/map?`, `/${cc}/restocks?`])];
+export const FACETS = ["/stock/*/", "/map?", "/restocks?", ...[...INTL_CODES, ...NATIVE_LOCALES.map((l) => l.id)].flatMap((p) => [`/${p}/stock/*/`, `/${p}/map?`, `/${p}/restocks?`])];
 const AI_AGENTS = [
   "GPTBot", "OAI-SearchBot", "ChatGPT-User",
   "ClaudeBot", "Claude-SearchBot", "Claude-User", "anthropic-ai",

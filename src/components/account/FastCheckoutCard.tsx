@@ -7,34 +7,27 @@ import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { duoRestockTimes } from "@/lib/content/restockTimes";
 import { SPEED } from "@/lib/plans";
 import { Stat, StatGrid, StepStrip } from "@/components/ui/Viz";
+import { t } from "@/lib/i18n/server";
 
 export async function FastCheckoutCard() {
-  const t = await duoRestockTimes("us");
-  const median = t.sellout?.medianSec ?? null;
+  const d = t().account.fast, u = t().account.units;
+  const times = await duoRestockTimes("us");
+  const median = times.sellout?.medianSec ?? null;
   return (
     <section className="pane p-5 sm:p-6" aria-labelledby="fast-checkout">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 id="fast-checkout" className="text-xl font-semibold">Reserve it in 20 seconds</h2>
-        <span className="text-xs text-ink-3">do everything but the last four taps now</span>
+        <h2 id="fast-checkout" className="text-xl font-semibold">{d.title}</h2>
+        <span className="text-xs text-ink-3">{d.sub}</span>
       </div>
       <StatGrid cols={3} className="mt-3">
-        <Stat value={median ?? "~60"} unit="s" label="a typical Duo listing lasts" tone="warn" />
-        <Stat value={SPEED.alertSec} unit="s" label="confirmed → push on your phone" />
-        <Stat value="4" unit="taps" label="left for you once the push lands" tone="accent" />
+        <Stat value={median ?? "~60"} unit={u.s} label={d.lasts} tone="warn" />
+        <Stat value={SPEED.alertSec} unit={u.s} label={d.push} />
+        <Stat value="4" unit={u.taps} label={d.tapsLeft} tone="accent" />
       </StatGrid>
-      <StepStrip
-        className="mt-3"
-        steps={[
-          { title: "Find your window", hint: "your stores' hours, below · staged 10 min early" },
-          { title: "Stage Apple's checkout", hint: "exact storage + colour → Delivery & Pickup" },
-          { title: "Tick terms · or go unlocked", hint: "unlocked, paid in full: no box at all" },
-          { title: "Keep it awake", hint: "Auto-Lock → Never · touch it every 10–15 min" },
-          { title: "Alert: read, don't tap", hint: "Pickup → the store named → first slot → Apple Pay" },
-        ]}
-      />
+      <StepStrip className="mt-3" steps={d.steps} />
       <div className="mt-4 flex flex-wrap gap-2">
-        <Link href="/how-to-grab-an-iphone-duo-restock" className="btn btn-primary btn-sm">The 2-minute guide</Link>
-        <a href="#restock-times" className="btn btn-ghost btn-sm">Your restock window</a>
+        <Link href="/how-to-grab-an-iphone-duo-restock" className="btn btn-primary btn-sm">{d.guide}</Link>
+        <a href="#restock-times" className="btn btn-ghost btn-sm">{d.window}</a>
       </div>
     </section>
   );

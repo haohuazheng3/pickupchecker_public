@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { MODELS, PART_INDEX, STORE_INDEX, type ModelKey } from "@/lib/apple/catalog";
 import type { PlaceStats } from "@/lib/stock/queries";
-import { fmtDuration } from "@/lib/seo/enrich";
+import { countIn, fmtDuration } from "@/lib/seo/enrich";
+import { t, pageLocale } from "@/lib/i18n/server";
+import { num } from "@/lib/i18n/format";
+import { colorLabel, storeLabel } from "@/lib/i18n/places";
 import { LiveAgo } from "@/components/site/LiveAgo";
 import { Dot } from "@/components/stock/StatusBits";
 
@@ -37,17 +40,22 @@ export function PlaceStatStrip({ stores, cities, stockNow, stats, storeMode = fa
   /** Model page: show just this model's stock. */
   model?: ModelKey;
 }) {
+  const d = t().content.statStrip;
+  const lang = pageLocale().lang;
+  // Tile values stay numbers in English (as before); other languages group digits ("1.234").
+  const v = (x: number) => (lang === "en" ? x : num(lang, x));
+  const s = (x: number) => (lang === "en" ? String(x) : num(lang, x));
   const items: Stat[] = [];
-  if (model) items.push({ label: "In stock now", value: stockNow[model], hint: `of ${stores} stores`, live: stockNow[model] > 0 });
+  if (model) items.push({ label: d.inStockNow, value: v(stockNow[model]), hint: d.ofStores(s(stores)), live: stockNow[model] > 0 });
   else {
-    items.push({ label: "Stores", value: stores, hint: cities != null ? `${cities} ${cities === 1 ? "city" : "cities"}` : "tracked" });
-    for (const m of MODELS) items.push({ label: `${m.short} now`, value: stockNow[m.key], hint: storeMode ? "configs in stock" : `store${stockNow[m.key] === 1 ? "" : "s"} with stock`, live: stockNow[m.key] > 0 });
+    items.push({ label: d.stores, value: v(stores), hint: cities != null ? countIn(lang, cities, d.nCities) : d.tracked });
+    for (const m of MODELS) items.push({ label: d.modelNow(m.short), value: v(stockNow[m.key]), hint: storeMode ? d.configsInStock : countIn(lang, stockNow[m.key], d.storesWithStock), live: stockNow[m.key] > 0 });
   }
-  items.push({ label: "Restocks 24 h", value: stats.day, hint: `${stats.week} in 7 d · ${stats.month} in ${stats.days} d` });
-  items.push({ label: `Sell-outs ${stats.days} d`, value: stats.soldouts, hint: stats.medianMs != null ? `stays ~${fmtDuration(stats.medianMs)}` : "no pairs yet" });
+  items.push({ label: d.restocks24h, value: v(stats.day), hint: d.restocksHint(s(stats.week), s(stats.month), s(stats.days)) });
+  items.push({ label: d.sellOuts(s(stats.days)), value: v(stats.soldouts), hint: stats.medianMs != null ? d.stays(fmtDuration(stats.medianMs, lang)) : d.noPairs });
   const lr = stats.lastRestock;
   const lrStore = lr ? STORE_INDEX.get(lr.storeNumber) : undefined;
   const lrItem = lr ? PART_INDEX.get(lr.partNumber) : undefined;
-  items.push({ label: "Last restock", value: lr ? <LiveAgo iso={lr.at} /> : "none yet", hint: lr && lrItem ? `${lrItem.storage} ${lrItem.color}${lrStore && !storeMode ? ` · ${lrStore.name}` : ""}` : `in the last ${stats.days} days` });
+  items.push({ label: d.lastRestock, value: lr ? <LiveAgo iso={lr.at} /> : d.noneYet, hint: lr && lrItem ? `${lrItem.storage} ${colorLabel(lrItem.color, lang)}${lrStore && !storeMode ? ` · ${storeLabel(lrStore, lang)}` : ""}` : d.inLastDays(s(stats.days)) });
   return <StatStrip items={items} />;
 }

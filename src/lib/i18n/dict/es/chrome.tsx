@@ -1,0 +1,43 @@
+import type { ReactNode } from "react";
+import type { Dict } from "../en";
+
+/** Spanish (Spain): chrome — footer, 404 page. */
+export const chrome: Dict["chrome"] = {
+  footer: {
+    blurb: "Alertas de reposición de iPhone para recogida en los 269 Apple Store de EE. UU.: cada tienda se comprueba cada 15 segundos; las de tus alertas, cada 5.",
+    blurbIn: (allStores: string) => `Alertas de reposición de iPhone para recogida en ${allStores}: cada tienda se comprueba cada 15 segundos; las de tus alertas, cada 5.`,
+    trademark: "Sin relación con Apple Inc. ni respaldado por ella. Apple, iPhone y Apple Store son marcas comerciales de Apple Inc.",
+    product: "Producto",
+    duoStock: "Stock del iPhone Duo",
+    proStock: "Stock del iPhone 18 Pro",
+    proMaxStock: "Stock del iPhone 18 Pro Max",
+    restockLog: "Registro de reposiciones",
+    liveMap: "Mapa en directo",
+    storesByState: "Tiendas por estado",
+    pricing: "Precios",
+    company: "Empresa",
+    howItWorks: "Cómo funciona",
+    getApp: "Instala la app",
+    about: "Quiénes somos",
+    contact: "Contacto",
+    allStates: "Todos los estados y ciudades →",
+    storesIn: "Apple Store",
+    allStores: "Todas las tiendas →",
+    legal: "Legal",
+    privacy: "Privacidad",
+    terms: "Condiciones",
+    refunds: "Reembolsos",
+    englishOnly: "En inglés",
+    questions: "Preguntas sobre el iPhone Duo",
+    restockTimes: "¿Cuándo repone Apple el iPhone Duo?",
+    countries: "Países",
+    status: "Estado del servicio",
+  },
+  notFound: {
+    title: "Aquí no hay nada",
+    body: (stores: ReactNode, map: ReactNode) => <>Esa página no existe. Prueba con {stores} o con el {map}.</>,
+    stores: "la lista de tiendas",
+    map: "mapa en directo",
+    home: "Volver al inicio",
+  },
+};

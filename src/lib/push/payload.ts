@@ -4,15 +4,34 @@
  */
 import type { AlertLine } from "../mail/resend";
 import { appleBuyUrl, storePath, storeLocality, appleName } from "../apple/catalog-us";
-import { COUNTRIES_WITH_PAGES } from "../apple/countries";
+import { COUNTRIES_WITH_PAGES, type CountryCode } from "../apple/countries";
+import { baseLang, localizePath, type Lang } from "../i18n/locales";
+import { appleStoreLabel, cityLabel, colorLabel, countryLabel } from "../i18n/places";
+import { notifyText } from "../i18n/notify";
 
 /**
  * Apple's pickup quote, only where it is English: the US answers "Available Today", other countries answer in
  * their own language ("本日", "Heute verfügbar"), which would sit oddly in an English alert. Elsewhere the alert
  * says what it always means — in stock for pickup — and leaves the quote out.
  */
-export function alertQuote(line: Pick<AlertLine, "store" | "quote">): string | null {
-  return (line.store.country ?? "us") === "us" ? line.quote : null;
+export function alertQuote(line: Pick<AlertLine, "store" | "quote">, lang: Lang = "en"): string | null {
+  const cc = line.store.country ?? "us";
+  if (lang === "en") return cc === "us" ? line.quote : null;
+  // Another language: the quote when the store's country answers in it (a Tokyo store for a Japanese reader).
+  return QUOTE_LANG[cc] && QUOTE_LANG[cc] === baseLang(lang) ? line.quote : null;
+}
+/** The language each country's pickup API answers in (its shop path). */
+const QUOTE_LANG: Partial<Record<CountryCode, string>> = { jp: "ja", kr: "ko", tw: "zh", de: "de", at: "de", ch: "de", fr: "fr", be: "fr", it: "it", es: "es", nl: "nl", se: "sv" };
+
+/** "iPhone Duo 256GB Night Sky" as a reader of `lang` writes it (Apple's colour names). */
+export function configText(item: { model: string; storage: string; color: string }, lang: Lang = "en"): string {
+  return `${item.model} ${item.storage} ${colorLabel(item.color, lang)}`;
+}
+/** "Apple SoHo · New York, NY" / "Apple 銀座 · 東京, 日本". */
+export function whereText(store: AlertLine["store"], lang: Lang = "en", long = false): string {
+  if (lang === "en") return `${appleName(store)} · ${storeLocality(store, long)}`;
+  const cc = store.country ?? "us";
+  return `${appleStoreLabel(store, lang)} · ${cc === "us" ? storeLocality(store, long) : `${cityLabel(cc, store.city, lang)}, ${countryLabel(cc, lang)}`}`;
 }
 
 export type PushKind = "restock" | "test";
@@ -49,20 +68,22 @@ export function restockTag(watchId: string, storeNumber: string, partNumber: str
   return `restock-${watchId}-${storeNumber}-${sanitizePartNumber(partNumber)}`;
 }
 
-export function restockPayload(lines: AlertLine | AlertLine[], watchId: string, now = new Date()): PushPayload {
+export function restockPayload(lines: AlertLine | AlertLine[], watchId: string, now = new Date(), lang: Lang = "en"): PushPayload {
   const first = Array.isArray(lines) ? lines[0] : lines;
-  const title = `In stock: ${first.item.model} ${first.item.storage} ${first.item.color}`;
-  // "Apple SoHo · New York, NY"; elsewhere "Apple Regent Street · London, UK".
-  const where = `${appleName(first.store)} · ${storeLocality(first.store)}`;
-  const quote = alertQuote(first);
-  const body = `${where}${quote ? ` — ${quote}` : ""}. Tap to reserve on apple.com.`;
+  const T = notifyText(lang);
+  const title = T.pushTitle(configText(first.item, lang));
+  // "Apple SoHo · New York, NY"; elsewhere "Apple Regent Street · London, UK"; in Japanese "Apple 銀座 · 東京, 日本".
+  const where = whereText(first.store, lang);
+  const quote = alertQuote(first, lang);
+  const body = T.pushBody(where, quote);
   return {
     v: 1,
     kind: "restock",
     title: title.slice(0, 120),
     body: body.slice(0, 200),
     // The store's page where its country's pages are live; elsewhere the account page (never a 404).
-    url: COUNTRIES_WITH_PAGES.has(first.store.country ?? "us") ? `${storePath(first.store)}?from=push` : "/account?from=push",
+    // In the reader's language where the store's country has that version (a Tokyo store for a Japanese reader: /ja-jp/…).
+    url: COUNTRIES_WITH_PAGES.has(first.store.country ?? "us") ? localizePath(`${storePath(first.store)}?from=push`, lang) : "/account?from=push",
     tag: restockTag(watchId, first.store.storeNumber, first.item.partNumber),
     at: now.toISOString(),
     data: { buyUrl: appleBuyUrl(first.item, first.store.country), storeNumber: first.store.storeNumber, partNumber: first.item.partNumber },
@@ -70,13 +91,14 @@ export function restockPayload(lines: AlertLine | AlertLine[], watchId: string, 
 }
 
 /** "iPhone (Home Screen app)", "Android phone", "computer (Chrome)". */
-export function deviceLabel(d: { platform: string; standalone: boolean; userAgent?: string | null }): string {
+export function deviceLabel(d: { platform: string; standalone: boolean; userAgent?: string | null }, lang: Lang = "en"): string {
+  const D = notifyText(lang).device;
   const ua = d.userAgent ?? "";
   const browser = /Edg\//i.test(ua) ? "Edge" : /Firefox|FxiOS/i.test(ua) ? "Firefox" : /CriOS|Chrome\//i.test(ua) ? "Chrome" : /Safari\//i.test(ua) ? "Safari" : "";
-  if (d.platform === "ios") return d.standalone ? "iPhone (Home Screen app)" : "iPhone (Safari)";
-  if (d.platform === "android") return d.standalone ? "Android (installed app)" : `Android${browser ? ` (${browser})` : ""}`;
-  if (d.platform === "desktop") return `computer${browser ? ` (${browser})` : ""}`;
-  return "this device";
+  if (d.platform === "ios") return d.standalone ? D.iphoneApp : D.iphoneSafari;
+  if (d.platform === "android") return d.standalone ? D.androidApp : D.android(browser);
+  if (d.platform === "desktop") return D.computer(browser);
+  return D.other;
 }
 
 /** Clock time the user can compare with the moment they pressed the button. */
@@ -87,14 +109,15 @@ export function formatSentAt(now: Date): string {
   return `${hh}:${mm}:${ss} UTC`;
 }
 
-export function testPayload(opts: { device?: string; now?: Date } = {}): PushPayload {
+export function testPayload(opts: { device?: string; now?: Date; lang?: Lang } = {}): PushPayload {
   const now = opts.now ?? new Date();
-  const device = opts.device ?? "this device";
+  const T = notifyText(opts.lang ?? "en");
+  const device = opts.device ?? T.device.other;
   return {
     v: 1,
     kind: "test",
-    title: "PickupChecker notifications are on",
-    body: `Test sent ${formatSentAt(now)} to your ${device}. Restock alerts arrive the same way, within seconds.`.slice(0, 200),
+    title: T.testTitle,
+    body: T.testBody(formatSentAt(now), device).slice(0, 200),
     url: "/account?from=push",
     tag: "test",
     at: now.toISOString(),

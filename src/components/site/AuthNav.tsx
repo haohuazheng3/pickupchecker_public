@@ -3,7 +3,8 @@ import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
-import { countryFromPrefix } from "@/lib/apple/countries";
+import { localeFromSegment, isAppPath } from "@/lib/i18n/locales";
+import { useAppLocale, useT } from "@/components/i18n/LangProvider";
 import { signedInFromCookie } from "@/lib/signInRoute";
 
 const noSubscribe = () => () => {};
@@ -16,13 +17,16 @@ const noSubscribe = () => () => {};
  */
 export function AuthNav() {
   const { isLoaded, isSignedIn } = useAuth();
+  const d = useT().chrome.auth;
+  const app = useAppLocale();
   const pathname = usePathname() ?? "/";
   const guess = useSyncExternalStore(noSubscribe, () => signedInFromCookie(document.cookie), () => null);
   const signedIn = isLoaded ? Boolean(isSignedIn) : guess;
-  if (signedIn === null) return <span className="btn btn-ghost btn-sm invisible" aria-hidden>My alerts</span>;
-  if (signedIn) return <Link href="/account" className="btn btn-ghost btn-sm">My alerts</Link>;
+  if (signedIn === null) return <span className="btn btn-ghost btn-sm invisible" aria-hidden>{d.myAlerts}</span>;
+  if (signedIn) return <Link href="/account" className="btn btn-ghost btn-sm">{d.myAlerts}</Link>;
+  // Sign in on this country's home in this page's language (/jp, /ja-jp); app pages: the person's language's home.
   const seg = pathname.split("/")[1];
-  const home = countryFromPrefix(seg) ? `/${seg}` : "/";
+  const home = localeFromSegment(seg) ? `/${seg}` : isAppPath(pathname) && app ? `/${app.id}` : "/";
   // A plain link: no prefetch of the home page from every page a signed-out visitor opens.
-  return <a href={`${home}?signin=1`} className="btn btn-ghost btn-sm">Sign in</a>;
+  return <a href={`${home}?signin=1`} className="btn btn-ghost btn-sm">{d.signIn}</a>;
 }

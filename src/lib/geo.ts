@@ -9,6 +9,14 @@ import { STORES, distanceMiles, stateCodeOf, type Store } from "@/lib/apple/cata
 /** The fields ranking and search read: a whole Store, or the slim copy another country's page sends the browser. */
 export type GeoStore = Pick<Store, "storeNumber" | "name" | "city" | "state" | "lat" | "lng"> & Partial<Pick<Store, "slug" | "country" | "region" | "regionCode" | "stateCode" | "street" | "postalCode">>;
 import { norm } from "@/lib/text";
+import type { Lang } from "@/lib/i18n/locales";
+import { LANG_TAG, num, secs, unit as amount } from "@/lib/i18n/format";
+import { appleStoreLabel, cityLabel, regionLabel, storeLabel } from "@/lib/i18n/places";
+
+/** norm, keeping the letters of every script ("銀座", "서울", "münchen" → "munchen"): searches in another language. */
+function normAny(s: string): string {
+  return s.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
 
 export type AnchorKind = "here" | "zip" | "place" | "store" | "state";
 export interface Anchor {
@@ -112,38 +120,50 @@ export function zipAnchor(raw: string): Anchor | null {
 /**
  * A typed place: ZIP, store name, city, or state (name or code). The matched stores lead the list. With
  * another country's `stores` there are no ZIPs: a typed postcode matches nothing rather than a US state.
+ * In another language (`lang`) a place also answers to Apple's name for it there ("銀座", "München"), any script,
+ * and the anchor's label is that name.
  */
-export function searchAnchor(query: string, stores?: GeoStore[]): Anchor | null {
+export function searchAnchor(query: string, stores?: GeoStore[], lang: Lang = "en"): Anchor | null {
   const raw = query.trim();
   const us = !stores;
   if (us && /^\d{3,5}(\D|$)/.test(raw)) return zipAnchor(raw.match(/^\d{3,5}/)![0]); // "78701", "787", "78701-1234"
-  let needle = norm(raw).replace(/^apple( store)?(\s+|$)/, ""); // people type "Apple Fifth Avenue"
+  const en = lang === "en";
+  const key = en ? norm : normAny;
+  let needle = key(raw).replace(/^apple( store)?(\s+|$)/, ""); // people type "Apple Fifth Avenue"
   if (!needle) return null;
   const all: GeoStore[] = stores ?? STORES;
   const codeOf = (s: GeoStore) => stateCodeOf(s as Store).toLowerCase();
+  const cc = (s: GeoStore) => s.country ?? "us";
+  // Every name a store, its city and its region answer to: English, and in another language Apple's name there too.
+  const names = (s: GeoStore) => (en ? [norm(s.name)] : [key(s.name), key(storeLabel(s, lang))]);
+  const cities = (s: GeoStore) => (en ? [norm(s.city)] : [key(s.city), key(cityLabel(cc(s), s.city, lang))]);
+  const regions = (s: GeoStore) => (en ? [norm(s.state)] : [key(s.state), key(regionLabel(cc(s), s.state, lang))]);
   // "New York, NY" / "Austin TX": a trailing state code narrows the search to that state.
   let pool: GeoStore[] = all;
   const m = needle.match(/^(.+?)\s+([a-z]{2})$/);
   if (m && all.some((s) => codeOf(s) === m[2])) { pool = all.filter((s) => codeOf(s) === m[2]); needle = m[1]; }
   const n = needle;
-  const one = (hits: GeoStore[]): Anchor => ({ lat: hits[0].lat, lng: hits[0].lng, label: `Apple ${hits[0].name}`, kind: "store" });
-  const many = (hits: GeoStore[], kind: AnchorKind): Anchor => ({ ...centroid(hits)!, label: kind === "state" ? hits[0].state : kind === "place" && hits.every((s) => s.city === hits[0].city) ? (us ? `${hits[0].city}, ${stateCodeOf(hits[0] as Store)}` : hits[0].city) : raw, kind, first: new Set(hits.map((s) => s.storeNumber)) });
+  const one = (hits: GeoStore[]): Anchor => ({ lat: hits[0].lat, lng: hits[0].lng, label: en ? `Apple ${hits[0].name}` : appleStoreLabel(hits[0], lang), kind: "store" });
+  const cityOf = (s: GeoStore) => (us ? `${s.city}, ${stateCodeOf(s as Store)}` : en ? s.city : cityLabel(cc(s), s.city, lang));
+  const many = (hits: GeoStore[], kind: AnchorKind): Anchor => ({ ...centroid(hits)!, label: kind === "state" ? (en ? hits[0].state : regionLabel(cc(hits[0]), hits[0].state, lang)) : kind === "place" && hits.every((s) => s.city === hits[0].city) ? cityOf(hits[0]) : raw, kind, first: new Set(hits.map((s) => s.storeNumber)) });
   // Exact matches win: a store name, a city, a state name or code.
-  const exactStore = pool.filter((s) => norm(s.name) === n);
+  const exactStore = pool.filter((s) => names(s).includes(n));
   if (exactStore.length === 1) return one(exactStore);
-  const exactCity = pool.filter((s) => norm(s.city) === n);
+  const exactCity = pool.filter((s) => cities(s).includes(n));
   if (exactCity.length) return many(exactCity, "place");
-  const exactState = pool.filter((s) => norm(s.state) === n || codeOf(s) === n);
+  const exactState = pool.filter((s) => regions(s).includes(n) || codeOf(s) === n);
   if (exactState.length) return many(exactState, "state");
   // Then prefixes, longest-first by specificity: a city, a state name, a single store.
-  const byCity = pool.filter((s) => norm(s.city).startsWith(n));
+  const byCity = pool.filter((s) => cities(s).some((x) => x.startsWith(n)));
   if (byCity.length) return many(byCity, "place");
-  const byState = n.length >= 4 ? pool.filter((s) => norm(s.state).startsWith(n)) : [];
+  const byState = n.length >= 4 ? pool.filter((s) => regions(s).some((x) => x.startsWith(n))) : [];
   if (byState.length) return many(byState, "state");
-  const byStore = n.length >= 3 ? pool.filter((s) => norm(s.name).startsWith(n)) : [];
+  // CJK names are short ("銀座"): two characters already say which store.
+  const minStore = en || /^[\x20-ɏ]*$/.test(n) ? 3 : 2;
+  const byStore = n.length >= minStore ? pool.filter((s) => names(s).some((x) => x.startsWith(n))) : [];
   if (byStore.length === 1) return one(byStore);
   if (byStore.length > 1) return many(byStore, "place");
-  const loose = n.length >= 3 ? pool.filter((s) => `${norm(s.name)} ${norm(s.city)} ${norm(s.state)} ${codeOf(s)} ${norm(s.street ?? "")}`.includes(n)) : [];
+  const loose = n.length >= minStore ? pool.filter((s) => `${names(s).join(" ")} ${cities(s).join(" ")} ${regions(s).join(" ")} ${codeOf(s)} ${key(s.street ?? "")}`.includes(n)) : [];
   if (loose.length === 0) return null;
   return loose.length === 1 ? one(loose) : many(loose, "place");
 }
@@ -173,8 +193,18 @@ export function zipAt(zip: string, pt: { lat: number; lng: number }): Anchor {
   return { lat: pt.lat, lng: pt.lng, label: `ZIP ${zip}`, kind: "zip" };
 }
 
-export function formatDrive(miles: number): string {
+/**
+ * "25 min", "1 h 05"; another language in its own units ("25分", "1 Std. 5 Min."), same rounding. At the
+ * store itself (driveMinutes 0) English says "here"; other languages get "0 min" and callers say it in words.
+ */
+export function formatDrive(miles: number, lang: Lang = "en"): string {
   const m = driveMinutes(miles);
+  if (lang !== "en") {
+    if (m < 60) return amount(lang, m, "m");
+    const h = Math.floor(m / 60);
+    const r = Math.round((m % 60) / 5) * 5;
+    return secs(lang, (h * 60 + r) * 60);
+  }
   if (m === 0) return "here";
   if (m < 60) return `${m} min`;
   const h = Math.floor(m / 60);
@@ -189,8 +219,15 @@ export function formatMiles(miles: number): string {
   return r < 10 ? `${r.toFixed(1)} mi` : `${Math.round(r)} mi`;
 }
 
-/** By road (estimated), in the country's unit: formatMiles, or kilometres where the country signs them. */
-export function formatRoad(miles: number, unit: "mi" | "km" = "mi"): string {
+/**
+ * By road (estimated), in the country's unit: formatMiles, or kilometres where the country signs them.
+ * Every language but English reads kilometres, with its own decimal mark ("3,2 km").
+ */
+export function formatRoad(miles: number, unit: "mi" | "km" = "mi", lang: Lang = "en"): string {
+  if (lang !== "en") {
+    const k = roadMiles(miles) * 1.609344;
+    return `${k < 10 ? new Intl.NumberFormat(LANG_TAG[lang], { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(k) : num(lang, Math.round(k))} km`;
+  }
   if (unit === "mi") return formatMiles(miles);
   const r = roadMiles(miles) * 1.609344;
   return r < 10 ? `${r.toFixed(1)} km` : `${Math.round(r)} km`;

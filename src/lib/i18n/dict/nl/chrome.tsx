@@ -1,0 +1,43 @@
+import type { ReactNode } from "react";
+import type { Dict } from "../en";
+
+/** Dutch strings: chrome — footer, 404 page. */
+export const chrome: Dict["chrome"] = {
+  footer: {
+    blurb: "Voorraadalerts voor iPhones om op te halen in alle 269 Apple Stores in de VS: elke winkel elke 15 seconden gecontroleerd, de winkels van je alerts elke 5.",
+    blurbIn: (allStores: string) => `Voorraadalerts voor iPhones om op te halen in ${allStores}: elke winkel elke 15 seconden gecontroleerd, de winkels van je alerts elke 5.`,
+    trademark: "Niet verbonden aan of goedgekeurd door Apple Inc. Apple, iPhone en Apple Store zijn handelsmerken van Apple Inc.",
+    product: "Product",
+    duoStock: "iPhone Duo-voorraad",
+    proStock: "iPhone 18 Pro-voorraad",
+    proMaxStock: "iPhone 18 Pro Max-voorraad",
+    restockLog: "Voorraadlogboek",
+    liveMap: "Live kaart",
+    storesByState: "Winkels per staat",
+    pricing: "Prijzen",
+    company: "Bedrijf",
+    howItWorks: "Zo werkt het",
+    getApp: "Installeer de app",
+    about: "Over ons",
+    contact: "Contact",
+    allStates: "Alle staten en steden →",
+    storesIn: "Apple Stores",
+    allStores: "Alle winkels →",
+    legal: "Juridisch",
+    privacy: "Privacy",
+    terms: "Voorwaarden",
+    refunds: "Restitutie",
+    englishOnly: "In het Engels",
+    questions: "Vragen over de iPhone Duo",
+    restockTimes: "Wanneer is de iPhone Duo weer op voorraad?",
+    countries: "Landen",
+    status: "Status",
+  },
+  notFound: {
+    title: "Hier staat niets",
+    body: (stores: ReactNode, map: ReactNode) => <>Die pagina bestaat niet. Probeer {stores} of de {map}.</>,
+    stores: "de winkels per staat",
+    map: "live kaart",
+    home: "Terug naar home",
+  },
+};

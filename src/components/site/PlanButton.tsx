@@ -4,6 +4,7 @@
  * subscriber's own plan is labelled; another plan opens the same review-and-confirm the dashboard uses
  * (today's charge or credit, the new monthly price) right under the button — nothing changes before Confirm.
  */
+import { useApiError } from "@/components/i18n/useApiError";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
@@ -11,8 +12,15 @@ import { PLANS, comparePlans, isPaidPlan, type PaidPlanKey, type PlanKey } from 
 import { fetchMe, forgetMe } from "@/lib/me";
 import { track } from "@/lib/track";
 import { ChangeConfirm } from "@/components/alerts/PlanPanel";
+import { useLocale, useT } from "@/components/i18n/LangProvider";
+import { fill } from "@/lib/i18n/format";
+import { signInHome } from "@/lib/i18n/locales";
 
 export function PlanButton({ plan, label, primary }: { plan: PaidPlanKey; label: string; primary?: boolean }) {
+  const t = useT().alerts;
+  const tErr = useApiError();
+  // /pricing follows the person's language: signing in happens on that language's home ("/ja-jp?signin=1").
+  const loc = useLocale();
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -32,19 +40,19 @@ export function PlanButton({ plan, label, primary }: { plan: PaidPlanKey; label:
     setBusy(true); setErr(null);
     try {
       const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan }) });
-      if (res.status === 401) { router.push(`/?signin=1&next=${encodeURIComponent("/pricing")}`); return; }
+      if (res.status === 401) { router.push(`${signInHome(loc.native ? loc : undefined)}?signin=1&next=${encodeURIComponent("/pricing")}`); return; }
       const j = (await res.json()) as { url?: string; changed?: boolean; error?: string };
-      if (!res.ok || !j.url) throw new Error(j.error ?? "Checkout unavailable");
+      if (!res.ok || !j.url) throw new Error((j.error ? tErr(j.error) : undefined) ?? t.editor.checkoutUnavailable);
       track(j.changed ? "plan_changed" : "checkout_started", { plan });
       forgetMe();
       window.location.assign(j.url);
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); setBusy(false); }
   };
   if (current === plan || done) {
-    return <a href="/account#plan" className="btn btn-ghost mt-6 w-full">{done ? `✓ You're on ${PLANS[plan].name} · manage` : "Your plan · manage"}</a>;
+    return <a href="/account#plan" className="btn btn-ghost mt-6 w-full">{done ? fill(t.button.onPlan, { plan: PLANS[plan].name }) : t.button.yourPlan}</a>;
   }
   const up = subscribed && comparePlans(plan, current!) > 0;
-  const text = subscribed ? `${up ? "Upgrade" : "Switch"} to ${PLANS[plan].name}` : label;
+  const text = subscribed ? fill(up ? t.plan.upgradeTo : t.plan.switchTo, { plan: PLANS[plan].name }) : label;
   return (
     <>
       <button type="button" className={`btn mt-6 w-full ${(subscribed ? up : primary) ? "btn-primary" : "btn-ghost"}`} disabled={busy} aria-expanded={subscribed ? reviewing : undefined}

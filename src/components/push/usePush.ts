@@ -9,15 +9,19 @@
  *  - server does not know this endpoint, or disabled it after a 410 → re-POSTed
  *  - last POST more than a day ago → re-POSTed so last_seen_at stays fresh
  */
+import { useApiError } from "@/components/i18n/useApiError";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import {
   clearSyncRecord, currentSubscription, detectPlatform, fetchVapidKey, forgetSubscription, inAppBrowser, installPrompt, isStandalone,
   permissionState, pushSupported, reconcileSubscription, repairSubscription, requestPermission, resolveConflict, subscribePush,
-  syncSubscription, unsubscribePush,
+  syncSubscription, unsubscribePush, SW_UNAVAILABLE,
 } from "@/lib/push/client";
 import type { Platform } from "@/lib/push/platform";
 import { track } from "@/lib/track";
+import { useLang, useT } from "@/components/i18n/LangProvider";
+import { LANG_TAG, fill, justNow, list, plural } from "@/lib/i18n/format";
+import type { Lang } from "@/lib/i18n/locales";
 
 export type PushStatus =
   | "checking"
@@ -53,21 +57,33 @@ interface TestResponse {
   error?: string;
 }
 
-function describeTest(j: TestResponse): string {
-  const ok = (j.devices ?? []).filter((d) => d.ok).map((d) => d.device);
-  const bad = (j.devices ?? []).filter((d) => !d.ok);
-  const when = j.sentAt ? new Date(j.sentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "just now";
+type T = ReturnType<typeof useT>["account"]["push"];
+
+function describeTest(j: TestResponse, d: T["test"], lang: Lang): string {
+  const ok = (j.devices ?? []).filter((x) => x.ok).map((x) => x.device);
+  const bad = (j.devices ?? []).filter((x) => !x.ok);
+  // English: the reader's own clock format, as always; another language: its own.
+  const when = j.sentAt ? new Date(j.sentAt).toLocaleTimeString(lang === "en" ? [] : LANG_TAG[lang], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : justNow(lang);
   if (!j.sent) {
-    if (bad.some((d) => d.disabled)) return "The push service says this device's subscription is gone. Turn notifications off and on again on that device.";
-    return `No device received the test${bad[0]?.error ? ` (${bad[0].error})` : ""}. Turn notifications off and on again.`;
+    if (bad.some((x) => x.disabled)) return d.gone;
+    return fill(d.none, { error: bad[0]?.error ? fill(d.noneError, { error: bad[0].error }) : "" });
   }
-  const where = ok.length === 1 ? `your ${ok[0]}` : `${ok.length} devices (${ok.join(", ")})`;
-  const tail = bad.length ? ` ${bad.length} device${bad.length === 1 ? "" : "s"} failed.` : "";
-  return `Test sent at ${when} to ${where} — it should pop up within a few seconds; the banner names the device and the time.${tail}`;
+  const where = ok.length === 1 ? fill(d.one, { device: ok[0] }) : fill(d.many, { n: ok.length, list: lang === "en" ? ok.join(", ") : list(lang, ok, ok.length) });
+  const failed = bad.length ? ` ${fill(plural(lang, bad.length, d.failed), { n: bad.length })}` : "";
+  return fill(d.sent, { when, where, failed });
+}
+
+/** An error to show: ours are already in the reader's language; the push client's own one is translated here. */
+function message(e: unknown, d: T): string {
+  const m = e instanceof Error ? e.message : String(e);
+  return m === SW_UNAVAILABLE ? d.errors.noServiceWorker : m;
 }
 
 export function usePush(vapidPublicKey: string): PushState {
+  const tErr = useApiError();
   const { isLoaded, isSignedIn } = useAuth();
+  const d = useT().account.push;
+  const lang = useLang();
   const [status, setStatus] = useState<PushStatus>("checking");
   const [platform, setPlatform] = useState<Platform>("unknown");
   const [standalone, setStandalone] = useState(false);
@@ -105,9 +121,9 @@ export function usePush(vapidPublicKey: string): PushState {
       outcome = fixed?.result.ok ? "synced" : "error";
     }
     if (outcome === "needs-signin") return setStatus("needs-signin");
-    if (outcome === "error") { setError("Could not save this device — try again"); return setStatus("ready"); }
+    if (outcome === "error") { setError(d.errors.notSaved); return setStatus("ready"); }
     setStatus("on");
-  }, [isLoaded, isSignedIn, vapidPublicKey]);
+  }, [isLoaded, isSignedIn, vapidPublicKey, d]);
 
   useEffect(() => {
     // Deferred so hydration finishes first; evaluate() only touches state asynchronously anyway.
@@ -131,10 +147,10 @@ export function usePush(vapidPublicKey: string): PushState {
     const permission = pushSupported() ? requestPermission() : Promise.resolve<NotificationPermission>("denied");
     try {
       const key = vapidPublicKey || (await fetchVapidKey());
-      if (!key) throw new Error("Notifications are not configured yet");
+      if (!key) throw new Error(d.errors.notConfigured);
       const perm = await permission;
       if (perm === "denied") { setStatus("denied"); return; }
-      if (perm !== "granted") throw new Error("Allow notifications to continue");
+      if (perm !== "granted") throw new Error(d.errors.allow);
       let sub = await subscribePush(key);
       let r = await syncSubscription(sub);
       if (r.status === 409) {
@@ -143,16 +159,16 @@ export function usePush(vapidPublicKey: string): PushState {
         if (fixed) { sub = fixed.sub; r = fixed.result; }
       }
       if (r.status === 401) { setStatus("needs-signin"); return; }
-      if (!r.ok) throw new Error("Could not save this device");
+      if (!r.ok) throw new Error(d.errors.notSavedPlain);
       track("push_enabled", { platform: detectPlatform(), standalone: isStandalone() });
       setStatus("on");
-      setNotice("Notifications are on for this device. Send a test to see one land.");
+      setNotice(d.onNotice);
     } catch (e) {
       const name = (e as { name?: string }).name;
       if (name === "NotAllowedError" || permissionState() === "denied") setStatus("denied");
-      else setError(e instanceof Error ? e.message : String(e));
+      else setError(message(e, d));
     } finally { setBusy(false); }
-  }, [vapidPublicKey]);
+  }, [vapidPublicKey, d]);
 
   const turnOff = useCallback(async () => {
     setBusy(true); setError(null); setNotice(null);
@@ -162,21 +178,21 @@ export function usePush(vapidPublicKey: string): PushState {
       clearSyncRecord();
       track("push_disabled");
       setStatus("ready");
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { setError(message(e, d)); }
     finally { setBusy(false); }
-  }, []);
+  }, [d]);
 
   const sendTest = useCallback(async () => {
     setBusy(true); setError(null); setNotice(null);
     try {
       const res = await fetch("/api/push/test", { method: "POST" });
       const j = (await res.json().catch(() => ({}))) as TestResponse;
-      if (!res.ok) throw new Error(j.error ?? "Could not send a test");
-      setNotice(describeTest(j));
+      if (!res.ok) throw new Error((j.error ? tErr(j.error) : undefined) ?? d.errors.noTest);
+      setNotice(describeTest(j, d.test, lang));
       if (!j.sent) void evaluate();
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { setError(message(e, d)); }
     finally { setBusy(false); }
-  }, [evaluate]);
+  }, [evaluate, d, lang, tErr]);
 
   const install = useCallback(async () => {
     const p = installPrompt();

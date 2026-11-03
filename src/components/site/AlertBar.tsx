@@ -9,7 +9,8 @@ import { useEffect, useState } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { usePathname } from "next/navigation";
 import { MODELS } from "@/lib/apple/catalog-us";
-import { countryFromPrefix } from "@/lib/apple/countries";
+import { localeFromSegment } from "@/lib/i18n/locales";
+import { useT } from "@/components/i18n/LangProvider";
 import { productBySlug, resolvePlace } from "@/lib/seo/products";
 
 /**
@@ -17,7 +18,9 @@ import { productBySlug, resolvePlace } from "@/lib/seo/products";
  * colour of a product page, a store page's store (by slug, which that page's alert panel resolves).
  */
 export function alertHref(pathname: string): string {
-  const cc = countryFromPrefix(pathname.split("/")[1])?.cc;
+  // A country tree in English (/uk/…) or one of its languages (/ja-jp/…): its own home's alert setup.
+  const seg = pathname.split("/")[1];
+  const cc = localeFromSegment(seg) ? seg : undefined;
   if (cc) {
     const rest = pathname.slice(cc.length + 1) || "/";
     const parts = rest.split("/").filter(Boolean);
@@ -63,6 +66,7 @@ function usAlertHref(pathname: string): string {
 }
 
 export function AlertBar() {
+  const d = useT().chrome.alertBar;
   const pathname = usePathname() ?? "/";
   const [announced, setAnnounced] = useState(0);
   const [wizardVisible, setWizardVisible] = useState(pathname === "/"); // the home page owns the wizard: no flash before the observer settles
@@ -91,7 +95,7 @@ export function AlertBar() {
     <div className={`pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),1rem)] transition-[transform,opacity] duration-200 ${wizardVisible ? "translate-y-4 opacity-0" : ""}`} aria-hidden={wizardVisible}>
       <Link href={alertHref(pathname)} className={`btn btn-hero ${wizardVisible ? "pointer-events-none" : "pointer-events-auto"}`} tabIndex={wizardVisible ? -1 : undefined}>
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" /></svg>
-        Alert me
+        {d.cta}
       </Link>
     </div>
   );

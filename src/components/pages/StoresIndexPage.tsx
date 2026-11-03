@@ -30,6 +30,8 @@ import { hubFaq } from "@/lib/seo/placeCopy";
 import { storesIndexTitle } from "@/lib/seo/countryCopy";
 import { treeOf } from "@/lib/seo/tree";
 import { hreflangFor } from "./shared";
+import { englishLocale, pathInLocale, type Locale } from "@/lib/i18n/locales";
+import { dict } from "@/lib/i18n/dict";
 
 /**
  * Bound keywords (DataForSEO, seo.md §10): "list of apple stores" 210/mo, KD 0 (title and H1); "how many
@@ -59,22 +61,15 @@ export const loadIndex = cache(async (cc: Country["cc"]) => {
   return { stockNow, pstats, stats, stock, duo, max, reports, sell };
 });
 
-/** " by province and city", " by city" or nothing (Singapore: one city). */
-function byWhat(c: Country): string {
-  const regions = statesWithStores(c.cc).length;
-  const cities = citiesWithStores(c.cc).length;
-  if (c.regionNoun && regions > 1) return ` by ${c.regionNoun} and city`;
-  return cities > 1 ? " by city" : "";
-}
-
-export async function storesIndexMetadata(c: Country): Promise<Metadata> {
+export async function storesIndexMetadata(c: Country, loc: Locale = englishLocale(c.cc)): Promise<Metadata> {
   const d = await loadIndex(c.cc);
-  const title = hubTitle(c);
+  const D = dict(loc.lang);
+  const title = c.cc === "us" ? hubTitle(c) : D.place.storesIndexTitle(c.cc);
   const n = storesOf(c.cc).length;
   const description = c.cc === "us"
     ? `The list of all ${n} Apple Stores in the US by state and city, with live iPhone Duo, 18 Pro and Pro Max pickup stock: ${d.stockNow.duo} have the Duo now.`.slice(0, 160)
-    : `All ${n} Apple Stores ${c.inName}${byWhat(c)}, with live iPhone Duo, 18 Pro and Pro Max pickup stock: ${d.stockNow.duo} have the Duo now, ${d.stockNow["18-pro-max"]} the Pro Max.`.slice(0, 160);
-  const url = `${prefixOf(c.cc)}/stores`;
+    : D.views.storesIndex.metaDescription(c, n, statesWithStores(c.cc).length, citiesWithStores(c.cc).length, d.stockNow.duo, d.stockNow["18-pro-max"]).slice(0, 160);
+  const url = loc.native ? pathInLocale(`${prefixOf(c.cc)}/stores`, loc) : `${prefixOf(c.cc)}/stores`;
   return { title, description, alternates: { canonical: url, languages: hreflangFor("stores") }, openGraph: { type: "website", siteName: "PickupChecker", title, description, url } };
 }
 

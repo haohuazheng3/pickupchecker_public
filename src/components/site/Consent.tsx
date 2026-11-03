@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { CHOICE_DAYS, CONSENT_COOKIE, REGION_COOKIE, analyticsAllowed, choiceFrom, regionFrom, type Choice, type Region } from "@/lib/consent";
 import { holdAnalytics, releaseAnalytics } from "@/lib/track";
+import { useT } from "@/components/i18n/LangProvider";
 
 const SITE_HOST = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://pickupchecker.com").hostname;
 const SNIPPET_ID = "fw-snippet";
@@ -71,6 +72,7 @@ function lookupRegion(): Promise<Region> {
 }
 
 export function Consent() {
+  const d = useT().chrome.consent;
   const [asking, setAsking] = useState(false);
 
   useEffect(() => {
@@ -96,20 +98,19 @@ export function Consent() {
   return (
     <div
       role="region"
-      aria-label="Analytics choice"
+      aria-label={d.region}
       className="fixed inset-x-3 z-[60] sm:inset-x-auto sm:right-5 sm:w-[380px]"
       style={{ bottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
     >
       <div className="rounded-[var(--radius-2)] border p-5" style={{ background: "var(--pane-solid)", borderColor: "var(--line-2)", boxShadow: "var(--shadow)" }}>
-        <p className="font-semibold text-ink">Can we count your visit?</p>
+        <p className="font-semibold text-ink">{d.title}</p>
         <p className="mt-1.5 text-sm leading-relaxed text-ink-2">
-          We&apos;d like to use FlowGlance, our only analytics, to see which pages help people find a phone. It records pages, clicks and
-          form interactions, linked to your email when you&apos;re signed in. Nothing loads unless you accept.{" "}
-          <Link href="/privacy#analytics" className="underline underline-offset-2 hover:text-ink">Details</Link>
+          {d.body}{" "}
+          <Link href="/privacy#analytics" className="underline underline-offset-2 hover:text-ink">{d.details}</Link>
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <button type="button" className="btn btn-ink btn-sm" onClick={() => setAnalyticsChoice("granted")}>Accept</button>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAnalyticsChoice("declined")}>Decline</button>
+          <button type="button" className="btn btn-ink btn-sm" onClick={() => setAnalyticsChoice("granted")}>{d.accept}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAnalyticsChoice("declined")}>{d.decline}</button>
         </div>
       </div>
     </div>
@@ -118,6 +119,7 @@ export function Consent() {
 
 /** Footer control: "Do not track me" while analytics may run, "Analytics off · Turn on" after opting out. */
 export function TrackingChoice() {
+  const d = useT().chrome.consent;
   const [choice, setChoice] = useState<Choice | null>(null);
   useEffect(() => {
     const sync = () => setChoice(currentChoice() ?? (hasGpc() ? "declined" : null));
@@ -128,10 +130,10 @@ export function TrackingChoice() {
   if (choice === "declined") {
     return (
       <span>
-        Analytics off ·{" "}
-        <button type="button" className="underline underline-offset-2 hover:text-ink" onClick={() => setAnalyticsChoice("granted")}>Turn on</button>
+        {d.off}{" "}
+        <button type="button" className="underline underline-offset-2 hover:text-ink" onClick={() => setAnalyticsChoice("granted")}>{d.turnOn}</button>
       </span>
     );
   }
-  return <button type="button" className="text-left hover:text-ink" onClick={() => setAnalyticsChoice("declined")}>Do not track me</button>;
+  return <button type="button" className="text-left hover:text-ink" onClick={() => setAnalyticsChoice("declined")}>{d.dontTrack}</button>;
 }

@@ -3,6 +3,8 @@ import { ensureUser } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { enabledSubscriptionsForUser, sendPushToRows, pushConfigured } from "@/lib/push/server";
 import { deviceLabel, testPayload } from "@/lib/push/payload";
+import { userById } from "@/lib/auth";
+import { langOfUser } from "@/lib/i18n/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,10 +22,11 @@ export async function POST() {
   const rows = await enabledSubscriptionsForUser(u.id);
   if (rows.length === 0) return NextResponse.json({ error: "no device has notifications on" }, { status: 400 });
   const now = new Date();
+  const lang = langOfUser((await userById(u.id))?.locale);
   const results = await Promise.all(
     rows.map(async (row) => {
-      const device = deviceLabel(row);
-      const r = await sendPushToRows([row], testPayload({ device, now }), { ttlSec: 60, source: "web" });
+      const device = deviceLabel(row, lang);
+      const r = await sendPushToRows([row], testPayload({ device, now, lang }), { ttlSec: 60, source: "web" });
       return { device, ok: r.sent === 1, disabled: r.disabled === 1, error: r.errors[0] ?? null };
     }),
   );

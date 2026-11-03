@@ -6,6 +6,24 @@
  */
 import { STORES, MODELS, DEFAULT_MODEL, STORAGE_ORDER, catalogFor, modelByKey, stateCodeOf, distanceMiles, storePath, storesOf, type Store, type ModelKey, type CatalogItem, appleName } from "../apple/catalog";
 import { COUNTRIES, prefixOf, type CountryCode } from "../apple/countries";
+import { localizePath, type Lang } from "../i18n/locales";
+import { dict } from "../i18n/dict";
+import { num, plural as pluralIn, unit, secs, hour as hourIn, weekdays, list as listIn, distance as distanceIn, price as priceIn, fitTitleW, type Forms } from "../i18n/format";
+import { addressLabel, appleStoreLabel, cityLabel, colorLabel, countryLabel } from "../i18n/places";
+
+/* ------------------------------------------------------------------ language helpers (docs/i18n.md §7) */
+
+/** A number as these sentences print it: English raw ("1234", as always), other languages grouped. */
+const N = (lang: Lang, n: number): string => (lang === "en" ? String(n) : num(lang, n));
+/** A count with its noun from plural forms ("#" = the number): English exactly as `plural()` prints it. */
+export function countIn(lang: Lang, n: number, forms: Forms): string {
+  if (lang === "en") return (n === 1 ? forms.one ?? forms.other : forms.other).replace(/#/g, String(n));
+  return pluralIn(lang, n, forms);
+}
+/** Short weekday name for Mon=0 … Sun=6. */
+const shortDay = (lang: Lang, i: number): string => (lang === "en" ? DAY_SHORT[i] : weekdays(lang, "short")[(i + 1) % 7]);
+/** "Apple The Summit" / "Apple 銀座". */
+const storeName = (s: Pick<Store, "name"> & Partial<Pick<Store, "storeNumber">>, lang: Lang): string => (lang === "en" || !s.storeNumber ? appleName(s) : appleStoreLabel({ storeNumber: s.storeNumber, name: s.name }, lang));
 
 /* ------------------------------------------------------------------ opening hours */
 
@@ -28,27 +46,28 @@ export function normalizeHours(hours: Store["hours"] | undefined): DayHours[] {
   return DAY_NAMES.map((day, i) => ({ day, short: DAY_SHORT[i], opens: byDay.get(day)?.opens ?? null, closes: byDay.get(day)?.closes ?? null }));
 }
 
-export function hoursText(d: Pick<DayHours, "opens" | "closes">): string {
-  return d.opens && d.closes ? `${d.opens}–${d.closes}` : "Closed";
+export function hoursText(d: Pick<DayHours, "opens" | "closes">, lang: Lang = "en"): string {
+  return d.opens && d.closes ? `${d.opens}–${d.closes}` : dict(lang).content.hours.closed;
 }
 
 /** Consecutive days with identical hours collapse: [{ label: "Mon–Sat", hours: "10:00–21:00" }, { label: "Sun", hours: "11:00–18:00" }]. */
-export function hoursGroups(week: DayHours[]): { label: string; hours: string; days: number[] }[] {
+export function hoursGroups(week: DayHours[], lang: Lang = "en"): { label: string; hours: string; days: number[] }[] {
   const out: { label: string; hours: string; days: number[] }[] = [];
   week.forEach((d, i) => {
-    const h = hoursText(d);
+    const h = hoursText(d, lang);
     const last = out[out.length - 1];
     if (last && last.hours === h && last.days[last.days.length - 1] === i - 1) last.days.push(i);
     else out.push({ label: "", hours: h, days: [i] });
   });
-  for (const g of out) g.label = g.days.length === 1 ? DAY_SHORT[g.days[0]] : `${DAY_SHORT[g.days[0]]}–${DAY_SHORT[g.days[g.days.length - 1]]}`;
+  for (const g of out) g.label = g.days.length === 1 ? shortDay(lang, g.days[0]) : `${shortDay(lang, g.days[0])}–${shortDay(lang, g.days[g.days.length - 1])}`;
   return out;
 }
 
 /** "Mon–Sat 10:00–21:00 · Sun 11:00–18:00" */
-export function compressHours(week: DayHours[]): string {
-  const groups = hoursGroups(week);
-  if (groups.length === 1 && groups[0].days.length === 7) return groups[0].hours === "Closed" ? "Closed" : `Every day ${groups[0].hours}`;
+export function compressHours(week: DayHours[], lang: Lang = "en"): string {
+  const d = dict(lang).content.hours;
+  const groups = hoursGroups(week, lang);
+  if (groups.length === 1 && groups[0].days.length === 7) return groups[0].hours === d.closed ? d.closed : d.everyDay(groups[0].hours);
   return groups.map((g) => `${g.label} ${g.hours}`).join(" · ");
 }
 
@@ -78,27 +97,29 @@ function toMinutes(hhmm: string): number {
 export type OpenStatus = "open" | "before" | "after" | "closed";
 
 /** Today's hours and an "Open now / Opens at / Closed today" label, in the store's own zone. */
-export function todayLabel(week: DayHours[], tz: string, now = new Date()): { dayIndex: number; today: DayHours; status: OpenStatus; label: string } {
+export function todayLabel(week: DayHours[], tz: string, now = new Date(), lang: Lang = "en"): { dayIndex: number; today: DayHours; status: OpenStatus; label: string } {
+  const t = dict(lang).content.hours;
   const { dayIndex, minutes } = zoneClock(now, tz);
   const today = week[dayIndex];
   const nextOpen = () => {
     for (let k = 1; k <= 7; k++) {
-      const d = week[(dayIndex + k) % 7];
-      if (d.opens) return `${k === 1 ? "tomorrow" : d.short} at ${d.opens}`;
+      const i = (dayIndex + k) % 7;
+      const d = week[i];
+      if (d.opens) return t.dayAt(k === 1 ? t.tomorrow : shortDay(lang, i), d.opens);
     }
     return null;
   };
   if (!today.opens || !today.closes) {
     const n = nextOpen();
-    return { dayIndex, today, status: "closed", label: n ? `Closed today · opens ${n}` : "Closed today" };
+    return { dayIndex, today, status: "closed", label: n ? t.closedTodayOpens(n) : t.closedToday };
   }
-  if (minutes < toMinutes(today.opens)) return { dayIndex, today, status: "before", label: `Opens at ${today.opens}` };
-  if (minutes < toMinutes(today.closes)) return { dayIndex, today, status: "open", label: `Open now · closes ${today.closes}` };
+  if (minutes < toMinutes(today.opens)) return { dayIndex, today, status: "before", label: t.opensAt(today.opens) };
+  if (minutes < toMinutes(today.closes)) return { dayIndex, today, status: "open", label: t.openNow(today.closes) };
   const n = nextOpen();
-  return { dayIndex, today, status: "after", label: n ? `Closed now · opens ${n}` : "Closed now" };
+  return { dayIndex, today, status: "after", label: n ? t.closedNowOpens(n) : t.closedNow };
 }
 
-/** schema.org openingHoursSpecification (closed days omitted). */
+/** schema.org openingHoursSpecification (closed days omitted; schema.org day names, never translated). */
 export function openingHoursSpec(week: DayHours[]) {
   return hoursGroups(week)
     .filter((g) => g.hours !== "Closed")
@@ -138,13 +159,18 @@ export function telHrefFor(phone: string | undefined, cc: CountryCode = "us"): s
 const POSTCODE_FIRST = new Set<CountryCode>(["de", "fr", "it", "es", "ch", "nl", "se", "at", "be"]);
 
 /** One line: "1 Main St, Austin, TX 78701" in the US; "235 Regent Street, London W1B 2EL, UK" / "Kurfürstendamm 26, 10719 Berlin, Germany" elsewhere. */
-export function fullAddress(store: Store): string {
+export function fullAddress(store: Store, lang: Lang = "en"): string {
   const cc = store.country ?? "us";
+  // Japan, Korea, Taiwan, Hong Kong in their own language: Apple's own address line (large to small, 〒 first in Japan).
+  const own = lang === "en" ? undefined : addressLabel(store, lang);
+  if (own) return own;
   if (cc === "us") return `${(store.street ?? "").trim()}, ${store.city}, ${stateCodeOf(store)} ${store.postalCode ?? ""}`.replace(/\s+/g, " ").trim();
   const c = COUNTRIES[cc];
   const pc = (store.postalCode ?? "").trim();
-  const town = pc ? (POSTCODE_FIRST.has(cc) ? `${pc} ${store.city}` : `${store.city} ${pc}`) : store.city;
-  const tail = store.city === c.name || store.city === c.short ? "" : `, ${c.short}`;
+  // Other languages: the city and the country in the reader's words ("10719 Berlin, Deutschland", "東京 …, 日本").
+  const city = cityLabel(cc, store.city, lang);
+  const town = pc ? (POSTCODE_FIRST.has(cc) ? `${pc} ${city}` : `${city} ${pc}`) : city;
+  const tail = store.city === c.name || store.city === c.short ? "" : `, ${lang === "en" ? c.short : countryLabel(cc, lang)}`;
   return `${(store.street ?? "").trim()}, ${town}${tail}`.replace(/\s+/g, " ").trim();
 }
 
@@ -198,7 +224,8 @@ export function plural(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-export function fmtDuration(ms: number): string {
+export function fmtDuration(ms: number, lang: Lang = "en"): string {
+  if (lang !== "en") return durationIn(lang, ms);
   const s = Math.round(ms / 1000);
   if (s < 60) return "under a minute";
   const m = Math.floor(s / 60);
@@ -209,20 +236,36 @@ export function fmtDuration(ms: number): string {
   return h % 24 ? `${d} d ${h % 24} h` : `${d} d`;
 }
 
+/** fmtDuration in another language: the same rounding, the language's units ("2 Std. 15 Min.", "2時間15分"). */
+function durationIn(lang: Lang, ms: number): string {
+  const d = dict(lang).content.duration;
+  const s = Math.round(ms / 1000);
+  if (s < 60) return d.underAMinute;
+  const m = Math.floor(s / 60);
+  if (m < 60) return unit(lang, m, "m");
+  const h = Math.floor(m / 60);
+  // secs() writes whole hours and minutes as "2 h 15 min" in the language (its own joiner).
+  if (h < 24) return secs(lang, m * 60);
+  const days = Math.floor(h / 24);
+  return h % 24 ? d.pair(unit(lang, days, "d"), unit(lang, h % 24, "h")) : unit(lang, days, "d");
+}
+
+/** US dollars, as the US pages print them ("$1,999"); other countries: `price()` from i18n/format. */
 export function fmtPrice(n: number): string {
   return `$${n.toLocaleString("en-US")}`;
 }
 
 /** "a, b and c" — beyond `max` items: "a, b, c and 4 more". */
-export function listWords(items: string[], max = 6): string {
+export function listWords(items: string[], max = 6, lang: Lang = "en"): string {
+  if (lang !== "en") return listIn(lang, items, max, (n) => dict(lang).content.listMore(num(lang, n)));
   if (items.length === 0) return "";
   if (items.length === 1) return items[0];
   if (items.length <= max) return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
   return `${items.slice(0, max).join(", ")} and ${items.length - max} more`;
 }
 
-export function configName(item: CatalogItem): string {
-  return `${item.model} ${item.storage} ${item.color}`;
+export function configName(item: CatalogItem, lang: Lang = "en"): string {
+  return `${item.model} ${item.storage} ${colorLabel(item.color, lang)}`;
 }
 
 export function sortConfigs<T extends { storage: string; color: string }>(items: T[]): T[] {
@@ -275,8 +318,9 @@ export function narrative(i: NarrativeInput): string {
   return s.join(" ");
 }
 
-/** "3 PM" for an hour-of-day bucket. */
-export function fmtHour(h: number): string {
+/** "3 PM" for an hour-of-day bucket ("15時", "15 Uhr" in other languages). */
+export function fmtHour(h: number, lang: Lang = "en"): string {
+  if (lang !== "en") return hourIn(lang, h);
   return `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? "AM" : "PM"}`;
 }
 
@@ -285,28 +329,27 @@ export function fmtHour(h: number): string {
  * The usual hour from 5 restocks on 3 different days; the busiest weekday only once they span 14 days (null before).
  * Ten restocks in one burst are one day's event, and a week of data names whatever day it started on.
  */
-export function peakOf(stats: { byHour: number[]; byWeekday: number[]; total: number; dates?: number; spanDays?: number }): { hour: string; day: string | null; total: number } | null {
+export function peakOf(stats: { byHour: number[]; byWeekday: number[]; total: number; dates?: number; spanDays?: number }, lang: Lang = "en"): { hour: string; day: string | null; total: number } | null {
   if (stats.total < 5 || (stats.dates ?? Infinity) < 3) return null;
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const days = lang === "en" ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] : weekdays(lang);
   const h = stats.byHour.indexOf(Math.max(...stats.byHour));
   const d = stats.byWeekday.indexOf(Math.max(...stats.byWeekday));
-  return { hour: fmtHour(Math.max(0, h)), day: (stats.spanDays ?? Infinity) >= 14 ? days[Math.max(0, d)] : null, total: stats.total };
+  return { hour: fmtHour(Math.max(0, h), lang), day: (stats.spanDays ?? Infinity) >= 14 ? days[Math.max(0, d)] : null, total: stats.total };
 }
 
 /* ------------------------------------------------------------------ explainer & FAQ */
 
 export interface FaqItem { q: string; a: string }
 
+/** English; `alertRule(lang)` for a page's language (the dictionary's content.alertRule). */
 export const ALERT_RULE = "One alert = one store, one model, one storage size, one color; a push (or email) goes out within seconds of apple.com flipping to available.";
+export function alertRule(lang: Lang = "en"): string {
+  return lang === "en" ? ALERT_RULE : dict(lang).content.alertRule;
+}
 
 /** "In-store pickup at Apple {place}": three short, place-interpolated paragraphs. */
-export function explainer(kind: "state" | "city" | "store" | "model", place: string): string[] {
-  const at = kind === "store" ? place : kind === "model" ? "every US Apple Store" : `Apple Stores in ${place}`;
-  return [
-    `Pickup stock is sold on apple.com: pick a configuration and a store at checkout, pay online, collect in store, often the same day. It is separate from shelf stock and from carrier stores.`,
-    `PickupChecker checks every tracked configuration at ${at} every 15 seconds, and every 5 when an alert points at it; a change counts only after a second confirming check, so a glitch never becomes a false restock or sell-out.`,
-    `Every confirmed change is logged; that log feeds the restock chart and history on this page.`,
-  ];
+export function explainer(kind: "state" | "city" | "store" | "model", place: string, lang: Lang = "en"): string[] {
+  return dict(lang).content.explainer(kind, place);
 }
 
 export interface FaqContext {
@@ -324,56 +367,74 @@ export interface FaqContext {
   todayText?: string;
   /** Model pages: price range and option lists. */
   prices?: { low: number; high: number; storages: string[]; colors: string[] };
+  /** Questions to leave out, by key (callers used to filter on the English question text). */
+  omit?: FaqKey[];
 }
+
+/** One question per key: model pages stock · price · restock · lasts · reserve; store pages stock · hours · restock · lasts · nearest; places stock · count · restock · lasts · nearest. */
+export type FaqKey = "stock" | "price" | "restock" | "lasts" | "reserve" | "hours" | "count" | "nearest";
 
 /** "Austin, TX (12 mi)" in the US; "Toronto (19 km)" elsewhere (the page already names the country). */
-export function nearLine(x: StoreWithDistance): string {
+export function nearLine(x: StoreWithDistance, lang: Lang = "en"): string {
   const cc = x.country ?? "us";
-  if (cc === "us") return `${x.city}, ${stateCodeOf(x)} (${Math.round(x.distance)} mi)`;
-  return `${x.city} (${distText(x.distance, cc)})`;
+  if (lang === "en") {
+    if (cc === "us") return `${x.city}, ${stateCodeOf(x)} (${Math.round(x.distance)} mi)`;
+    return `${x.city} (${distText(x.distance, cc)})`;
+  }
+  return dict(lang).content.nearLine(cc === "us" ? `${x.city}, ${stateCodeOf(x)}` : cityLabel(cc, x.city, lang), distText(x.distance, cc, lang));
 }
 
-/** Straight-line distance in the country's unit: "12 mi" (US, UK) or "19 km". */
-export function distText(miles: number, cc: CountryCode = "us"): string {
+/** Straight-line distance in the country's unit: "12 mi" (US, UK) or "19 km"; other languages always km ("19 km"). */
+export function distText(miles: number, cc: CountryCode = "us", lang: Lang = "en"): string {
+  if (lang !== "en") return distanceIn(lang, cc, miles);
   return COUNTRIES[cc].unit === "mi" ? `${Math.round(miles)} mi` : `${Math.round(miles * 1.609344)} km`;
 }
 
 /** Up to 5 data-driven questions per page type; every answer is one sentence. */
-export function faq(c: FaqContext): FaqItem[] {
+export function faq(c: FaqContext, lang: Lang = "en"): FaqItem[] {
+  const d = dict(lang).content.faq;
   const duo = modelByKey(DEFAULT_MODEL)!;
-  const n = c.stats.days;
-  const out: FaqItem[] = [];
-  const prep = c.kind === "store" ? "at" : c.kind === "model" ? "for the" : "in";
-  const restockA = `${c.stats.month === 0 ? `No restock logged ${prep} ${c.place} in the last ${n} days` : `${plural(c.stats.month, "restock")} ${prep} ${c.place} in the last ${n} days, ${c.stats.week} this week`}${c.peak ? `, most of them around ${c.peak.hour} local time${c.peak.day ? ` and most often on ${c.peak.day}s` : ""}` : ""}; Apple publishes no schedule.`;
-  const lastsA = c.stats.medianMs == null ? `Too few restock-to-sell-out pairs ${prep} ${c.place} yet to measure.` : `Over the last ${n} days a restocked configuration stayed available about ${fmtDuration(c.stats.medianMs)} (median) before selling out again.`;
-  const nearestA = (list: StoreWithDistance[]) => `${listWords(list.slice(0, 3).map((x) => `${appleName(x)} in ${nearLine(x)}`))}.`;
+  const n = N(lang, c.stats.days);
+  const out: (FaqItem & { key: FaqKey })[] = [];
+  const push = (key: FaqKey, q: string, a: string) => out.push({ key, q, a });
+  const where = d.where(c.kind, c.place);
+  const restockA = d.restockA({ count: c.stats.month === 0 ? null : countIn(lang, c.stats.month, d.nRestocks), where, days: n, week: N(lang, c.stats.week), peak: c.peak ? { hour: c.peak.hour, day: c.peak.day } : null });
+  const lastsA = c.stats.medianMs == null ? d.lastsNone(where) : d.lasts(n, fmtDuration(c.stats.medianMs, lang));
+  const nearestA = (list: StoreWithDistance[]) => d.nearestA(listWords(list.slice(0, 3).map((x) => d.storeIn(storeName(x, lang), nearLine(x, lang))), 6, lang));
+  const done = () => out.filter((q) => !c.omit?.includes(q.key)).map(({ q, a }) => ({ q, a }));
   if (c.kind === "model") {
     const now = c.stockNow[MODELS.find((m) => m.name === c.place)?.key ?? "duo"] ?? 0;
-    out.push({ q: `Which Apple Stores have the ${c.place} in stock right now?`, a: now === 0 ? `None at the last check; the list on this page updates as soon as a US Apple Store lists the ${c.place} for pickup.` : `${plural(now, "US Apple Store")} at the last check, each named on this page with the configurations it has.` });
-    if (c.prices) out.push({ q: `How much does the ${c.place} cost?`, a: `From ${fmtPrice(c.prices.low)} to ${fmtPrice(c.prices.high)} unlocked depending on storage (${c.prices.storages.join(", ")}), in ${listWords(c.prices.colors)}.` });
-    out.push({ q: `How often does the ${c.place} restock?`, a: restockA });
-    out.push({ q: `How long does ${c.place} stock last once it appears?`, a: lastsA });
-    out.push({ q: `Can I reserve the ${c.place} for pickup?`, a: `No; once a store lists a configuration you buy it on apple.com with in-store pickup selected, and it is then held for your time slot.` });
-    return out;
+    push("stock", d.modelStockQ(c.place), now === 0 ? d.modelStockNone(c.place) : d.modelStockSome(countIn(lang, now, d.nUsStores)));
+    if (c.prices) {
+      const money = (v: number) => (lang === "en" ? fmtPrice(v) : priceIn(lang, COUNTRIES.us, v));
+      push("price", d.priceQ(c.place), d.priceA(money(c.prices.low), money(c.prices.high), c.prices.storages.join(", "), listWords(c.prices.colors.map((x) => colorLabel(x, lang)), 6, lang)));
+    }
+    push("restock", d.modelRestockQ(c.place), restockA);
+    push("lasts", d.modelLastsQ(c.place), lastsA);
+    push("reserve", d.reserveQ(c.place), d.reserveA);
+    return done();
   }
   if (c.kind === "store") {
     const s = c.stores[0];
     const others = c.stockNow["18-pro"] + c.stockNow["18-pro-max"];
-    out.push({ q: `Does ${c.place} have the ${duo.name} in stock?`, a: c.stockNow.duo > 0 ? `Yes, ${plural(c.stockNow.duo, "configuration")} at the last check; the table on this page shows which storage and color.` : `Not at the last check${others > 0 ? `, though it lists ${c.stockNow["18-pro"]} iPhone 18 Pro and ${c.stockNow["18-pro-max"]} 18 Pro Max configurations` : ", and no 18 Pro or 18 Pro Max configuration either"}.` });
-    out.push({ q: `What are ${c.place}'s hours?`, a: `${c.hours ?? "Hours are listed on this page"}${c.todayText ? `; today ${c.todayText}` : ""}; ${fullAddress(s)}${s.phone ? `, ${s.phone}` : ""}.` });
-    out.push({ q: `How often does ${c.place} restock the iPhone?`, a: restockA });
-    out.push({ q: `How long does stock last at ${c.place}?`, a: lastsA });
-    if (c.nearest?.length) out.push({ q: `What is the nearest other Apple Store to ${c.place}?`, a: nearestA(c.nearest) });
-    return out;
+    push("stock", d.storeStockQ(c.place, duo.name), c.stockNow.duo > 0 ? d.storeStockYes(countIn(lang, c.stockNow.duo, d.nConfigs)) : d.storeStockNo(others > 0 ? { pro: N(lang, c.stockNow["18-pro"]), proMax: N(lang, c.stockNow["18-pro-max"]) } : null));
+    push("hours", d.hoursQ(c.place), d.hoursA({ hours: c.hours ?? null, today: c.todayText ?? null, address: fullAddress(s, lang), phone: s.phone ?? null }));
+    push("restock", d.storeRestockQ(c.place), restockA);
+    push("lasts", d.storeLastsQ(c.place), lastsA);
+    if (c.nearest?.length) push("nearest", d.storeNearestQ(c.place), nearestA(c.nearest));
+    return done();
   }
   const label = c.place;
   const duoNow = c.duoStores ?? [];
-  out.push({ q: `Which Apple Stores in ${label} have the ${duo.name} in stock right now?`, a: duoNow.length === 0 ? `None at the last check; this page updates the moment a store in ${label} lists the ${duo.name} for pickup.` : `${plural(duoNow.length, "store")} at the last check: ${listWords(duoNow.map((x) => `${appleName(x)}`))}.` });
-  out.push({ q: `How many Apple Stores are there in ${label}?`, a: `${plural(c.stores.length, "Apple Store")}${c.stores.length > 1 ? `, including ${listWords(c.stores.slice(0, 3).map((x) => `${appleName(x)}${c.kind === "state" ? ` in ${x.city}` : ""}`), 3)}` : `: Apple ${c.stores[0]?.name ?? ""}`}.` });
-  out.push({ q: `How often do ${label} Apple Stores restock the iPhone?`, a: restockA });
-  out.push({ q: `How long does stock last in ${label}?`, a: lastsA });
-  if (c.nearest?.length) out.push({ q: `What is the closest Apple Store outside ${label}?`, a: nearestA(c.nearest) });
-  return out;
+  push("stock", d.placeStockQ(label, duo.name), duoNow.length === 0 ? d.placeStockNone(label, duo.name) : d.placeStockSome(countIn(lang, duoNow.length, d.nStores), listWords(duoNow.map((x) => storeName(x, lang)), 6, lang)));
+  const count = countIn(lang, c.stores.length, d.nAppleStores);
+  push("count", d.countQ(label), c.stores.length > 1
+    ? d.countMany(count, listWords(c.stores.slice(0, 3).map((x) => (c.kind === "state" ? d.storeIn(storeName(x, lang), cityLabel(x.country ?? "us", x.city, lang)) : storeName(x, lang))), 3, lang))
+    : d.countOne(count, lang === "en" || !c.stores[0] ? `Apple ${c.stores[0]?.name ?? ""}` : storeName(c.stores[0], lang)));
+  push("restock", d.placeRestockQ(label), restockA);
+  push("lasts", d.placeLastsQ(label), lastsA);
+  if (c.nearest?.length) push("nearest", d.placeNearestQ(label), nearestA(c.nearest));
+  return done();
 }
 
 /* ------------------------------------------------------------------ JSON-LD */
@@ -384,14 +445,15 @@ export function faqJsonLd(items: FaqItem[]) {
   return { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: items.map((i) => ({ "@type": "Question", name: i.q, acceptedAnswer: { "@type": "Answer", text: i.a } })) };
 }
 
-export function itemListJsonLd(name: string, stores: Store[]) {
-  return { "@context": "https://schema.org", "@type": "ItemList", name, numberOfItems: stores.length, itemListElement: stores.map((s, i) => ({ "@type": "ListItem", position: i + 1, name: `${appleName(s)}`, url: `${BASE}${storePath(s)}` })) };
+/** `lang`: store names in the language and store URLs in its version of the country's pages. */
+export function itemListJsonLd(name: string, stores: Store[], lang: Lang = "en") {
+  return { "@context": "https://schema.org", "@type": "ItemList", name, numberOfItems: stores.length, itemListElement: stores.map((s, i) => ({ "@type": "ListItem", position: i + 1, name: `${storeName(s, lang)}`, url: `${BASE}${localizePath(storePath(s), lang)}` })) };
 }
 
-export function storeJsonLd(s: Store, week: DayHours[]) {
+export function storeJsonLd(s: Store, week: DayHours[], lang: Lang = "en") {
   return {
-    "@context": "https://schema.org", "@type": "Store", name: `${appleName(s)}`, url: `${BASE}${storePath(s)}`, sameAs: s.url, brand: { "@type": "Brand", name: "Apple" },
-    address: { "@type": "PostalAddress", streetAddress: (s.street ?? "").trim(), addressLocality: s.city, addressRegion: s.state, postalCode: s.postalCode, addressCountry: s.iso ?? "US" },
+    "@context": "https://schema.org", "@type": "Store", name: `${storeName(s, lang)}`, url: `${BASE}${localizePath(storePath(s), lang)}`, sameAs: s.url, brand: { "@type": "Brand", name: "Apple" },
+    address: { "@type": "PostalAddress", streetAddress: (s.street ?? "").trim(), addressLocality: cityLabel(s.country ?? "us", s.city, lang), addressRegion: s.state, postalCode: s.postalCode, addressCountry: s.iso ?? "US" },
     geo: { "@type": "GeoCoordinates", latitude: s.lat, longitude: s.lng }, telephone: s.phone, image: s.image,
     hasMap: directionsUrl(s), openingHoursSpecification: openingHoursSpec(week),
   };
@@ -416,22 +478,15 @@ export function fitTitle(variants: string[], max = 60): string {
   return last.length <= max ? last : `${last.slice(0, max - 1).trimEnd()}…`;
 }
 
-export function stateTitle(name: string, duoNow: number, stores: number): string {
-  return fitTitle([
-    `Apple Stores in ${name}: ${duoNow} of ${stores} have the iPhone Duo now`,
-    `Apple Stores in ${name} – iPhone Duo pickup stock, live`,
-    `Apple Stores in ${name} – iPhone Duo stock`,
-    `${name} Apple Stores – iPhone stock`,
-  ]);
+/** fitTitle in English (characters), width-aware (CJK counts double) in other languages. */
+const fitIn = (lang: Lang, variants: string[], max = 60): string => (lang === "en" ? fitTitle(variants, max) : fitTitleW(variants, max));
+
+export function stateTitle(name: string, duoNow: number, stores: number, lang: Lang = "en"): string {
+  return fitIn(lang, dict(lang).content.titles.state(name, N(lang, duoNow), N(lang, stores)));
 }
 
-export function cityTitle(city: string, code: string, duoNow: number, stores: number): string {
-  return fitTitle([
-    `Apple Stores in ${city}, ${code}: ${duoNow} of ${stores} have the iPhone Duo`,
-    `Apple Stores in ${city}, ${code} – iPhone Duo pickup stock`,
-    `Apple Stores in ${city}, ${code} – iPhone Duo stock`,
-    `${city} Apple Stores – iPhone stock`,
-  ]);
+export function cityTitle(city: string, code: string, duoNow: number, stores: number, lang: Lang = "en"): string {
+  return fitIn(lang, dict(lang).content.titles.city(city, code, N(lang, duoNow), N(lang, stores)));
 }
 
 /**
@@ -439,24 +494,12 @@ export function cityTitle(city: string, code: string, duoNow: number, stores: nu
  * added in parentheses when this store is the only one in its city or state, so "apple store {city}" or
  * "apple store {state}" finds it too.
  */
-export function storeTitle(s: Pick<Store, "name" | "city">, _code?: string, _duoConfigs?: number, region?: string): string {
-  const name = appleName(s);
-  const r = region && !s.name.toLowerCase().includes(region.toLowerCase()) ? ` (${region})` : "";
-  return fitTitle([
-    `${name}${r}: iPhone Stock Today, Pickup & Hours`,
-    `${name}${r}: iPhone Stock Today & Hours`,
-    `${name}${r}: iPhone Stock & Hours`,
-    `${name}: iPhone Stock Today, Pickup & Hours`,
-    `${name}: iPhone Stock & Hours`,
-    `${name}: iPhone Stock`,
-    `${name} – stock`,
-  ]);
+export function storeTitle(s: Pick<Store, "name" | "city"> & Partial<Pick<Store, "storeNumber">>, _code?: string, _duoConfigs?: number, region?: string, lang: Lang = "en"): string {
+  const name = storeName(s, lang);
+  const shown = region && !s.name.toLowerCase().includes(region.toLowerCase()) && (lang === "en" || !name.toLowerCase().includes(region.toLowerCase())) ? region : null;
+  return fitIn(lang, dict(lang).content.titles.store(name, shown));
 }
 
-export function modelTitle(name: string, storesNow: number): string {
-  return fitTitle([
-    `${name} pickup stock: ${storesNow} Apple Stores have it right now`,
-    `${name} pickup stock: ${storesNow} Apple Stores have it now`,
-    `${name} in-store pickup stock, live`,
-  ]);
+export function modelTitle(name: string, storesNow: number, lang: Lang = "en"): string {
+  return fitIn(lang, dict(lang).content.titles.model(name, N(lang, storesNow)));
 }

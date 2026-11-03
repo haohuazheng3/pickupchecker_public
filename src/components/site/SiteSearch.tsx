@@ -13,10 +13,14 @@ import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { useRouter } from "next/navigation";
 import { searchIndex, type SearchEntry, type SearchKind } from "@/lib/search";
 import { track } from "@/lib/track";
+import { usePathname } from "next/navigation";
+import { useAppLocale, useLocale, useT } from "@/components/i18n/LangProvider";
+import { treePrefix } from "./HeaderNav";
+import { fill as fillIn } from "@/lib/i18n/format";
 
-const KIND_LABEL: Record<SearchKind, string> = { store: "Store", city: "City", state: "State", model: "Model", page: "Page", country: "Country" };
 const EXAMPLES = ["Texas", "Houston", "Fifth Avenue", "10001", "Duo"];
-const SHORTCUTS: [string, string][] = [["/stock/iphone-duo", "iPhone Duo stock"], ["/restocks", "Restock log"], ["/map", "Live map"], ["/stores", "All 269 stores"]];
+/** Native versions: examples in the country's own names. */
+const NATIVE_EXAMPLES: Record<string, string[]> = { jp: ["東京", "銀座", "大阪", "Duo"], kr: ["서울", "가로수길", "명동", "Duo"], tw: ["台北", "信義", "Duo"], hk: ["銅鑼灣", "廣東道", "ifc", "Duo"], de: ["München", "Berlin", "Kurfürstendamm", "Duo"], at: ["Wien", "Kärntner Straße", "Duo"], ch: ["Zürich", "Genève", "Basel", "Duo"], fr: ["Paris", "Lyon", "Champs-Élysées", "Duo"], be: ["Bruxelles", "Duo"], ca: ["Montréal", "Québec", "Toronto", "Duo"], it: ["Milano", "Roma", "Via del Corso", "Duo"], es: ["Madrid", "Barcelona", "Puerta del Sol", "Duo"], nl: ["Amsterdam", "Den Haag", "Duo"], se: ["Stockholm", "Malmö", "Täby", "Duo"] };
 
 const SearchIcon = ({ className = "h-4 w-4" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={`${className} shrink-0`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
@@ -24,6 +28,14 @@ const SearchIcon = ({ className = "h-4 w-4" }: { className?: string }) => (
 
 export function SiteSearch() {
   const router = useRouter();
+  const d = useT().chrome.search;
+  const loc = useLocale();
+  const app = useAppLocale();
+  const pathname = usePathname() ?? "/";
+  const p = treePrefix(pathname, app?.id ?? null);
+  const KIND_LABEL: Record<SearchKind, string> = d.kinds;
+  const examples = loc.native ? NATIVE_EXAMPLES[loc.cc] ?? EXAMPLES : EXAMPLES;
+  const shortcuts: [string, string][] = p ? [[`${p}/stock/iphone-duo`, d.shortcuts.duo], [`${p}/restocks`, d.shortcuts.log], [`${p}/map`, d.shortcuts.map], [`${p}/stores`, d.shortcuts.storesHere]] : [["/stock/iphone-duo", d.shortcuts.duo], ["/restocks", d.shortcuts.log], ["/map", d.shortcuts.map], ["/stores", d.shortcuts.stores]];
   const ref = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
@@ -76,40 +88,40 @@ export function SiteSearch() {
 
   return (
     <>
-      <button type="button" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-2 bg-ink/4 text-ink transition hover:bg-ink/10 active:scale-95" aria-label="Search states, cities and stores" title="Search (⌘K)" onClick={show}><SearchIcon /></button>
-      <dialog ref={ref} className="search-dialog" aria-label="Search" onClose={onClose} onClick={(e) => { if (e.target === e.currentTarget) hide(); }}>
+      <button type="button" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-2 bg-ink/4 text-ink transition hover:bg-ink/10 active:scale-95" aria-label={d.open} title="Search (⌘K)" onClick={show}><SearchIcon /></button>
+      <dialog ref={ref} className="search-dialog" aria-label={d.label} onClose={onClose} onClick={(e) => { if (e.target === e.currentTarget) hide(); }}>
         <div className="flex items-center gap-2 border-b border-line px-3 py-3 sm:px-4">
           {/* Ink on the label: the global `input { color: inherit }` is unlayered and beats a text-* utility on the input. */}
           <label className="search-field flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-2xl border border-line-2 bg-ink/4 px-3.5 text-ink">
             <span className="text-ink-3"><SearchIcon className="h-[18px] w-[18px]" /></span>
-            <input ref={inputRef} className="search-input h-full min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-ink-3" placeholder="State, city, store, ZIP or model" value={q}
+            <input ref={inputRef} className="search-input h-full min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-ink-3" placeholder={d.placeholder} value={q}
               onChange={(e) => { setQ(e.target.value); setActive(0); }} onKeyDown={onKeyDown} inputMode="search" enterKeyHint="go"
-              autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} role="combobox" aria-expanded={results.length > 0} aria-autocomplete="list" aria-controls="site-search-results" aria-label="Search" />
-            {q && <button type="button" className="-mr-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg text-ink-3 hover:bg-ink/8 hover:text-ink" aria-label="Clear" onClick={() => fill("")}>×</button>}
+              autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} role="combobox" aria-expanded={results.length > 0} aria-autocomplete="list" aria-controls="site-search-results" aria-label={d.label} />
+            {q && <button type="button" className="-mr-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg text-ink-3 hover:bg-ink/8 hover:text-ink" aria-label={d.clear} onClick={() => fill("")}>×</button>}
           </label>
-          <button type="button" className="shrink-0 px-1.5 text-[15px] font-medium text-accent sm:hidden" onClick={hide}>Cancel</button>
+          <button type="button" className="shrink-0 px-1.5 text-[15px] font-medium text-accent sm:hidden" onClick={hide}>{d.cancel}</button>
           <kbd className="hidden shrink-0 rounded-md border border-line-2 px-1.5 py-0.5 text-[10px] text-ink-3 sm:block">esc</kbd>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {query === "" ? (
             <div className="px-4 py-4">
-              <div className="text-xs font-semibold uppercase tracking-wide text-ink-3">Try</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-ink-3">{d.try}</div>
               <div className="mt-2 flex flex-wrap gap-2">
-                {EXAMPLES.map((x) => <button key={x} type="button" className="chip px-3 py-1.5 text-sm" onClick={() => fill(x)}>{x}</button>)}
+                {examples.map((x) => <button key={x} type="button" className="chip px-3 py-1.5 text-sm" onClick={() => fill(x)}>{x}</button>)}
               </div>
-              <div className="mt-5 text-xs font-semibold uppercase tracking-wide text-ink-3">Go to</div>
+              <div className="mt-5 text-xs font-semibold uppercase tracking-wide text-ink-3">{d.goTo}</div>
               <ul className="mt-1">
-                {SHORTCUTS.map(([h, l]) => (
+                {shortcuts.map(([h, l]) => (
                   <li key={h}><Link href={h} onClick={hide} className="-mx-2 flex items-center justify-between rounded-xl px-2 py-3 text-[15px] text-ink hover:bg-ink/5">{l}<span aria-hidden className="text-ink-3">›</span></Link></li>
                 ))}
               </ul>
             </div>
           ) : !index ? (
-            <p className="px-4 py-4 text-sm text-ink-3">Loading…</p>
+            <p className="px-4 py-4 text-sm text-ink-3">{d.loading}</p>
           ) : results.length === 0 ? (
-            <p className="px-4 py-4 text-sm text-ink-3">Nothing matches &ldquo;{query}&rdquo;. Try a state, a city, a store name or a ZIP code.</p>
+            <p className="px-4 py-4 text-sm text-ink-3">{fillIn(d.none, { q: query })}</p>
           ) : (
-            <ul id="site-search-results" role="listbox" aria-label="Results" className="py-2">
+            <ul id="site-search-results" role="listbox" aria-label={d.results} className="py-2">
               {results.map((r, i) => (
                 <li key={`${r.k}:${r.h}:${r.l}`} role="option" aria-selected={i === active}>
                   <Link href={r.h} onClick={() => go(r)} onMouseEnter={() => setActive(i)} className={`flex items-center gap-3 px-4 py-3 ${i === active ? "bg-ink/6" : ""}`}>

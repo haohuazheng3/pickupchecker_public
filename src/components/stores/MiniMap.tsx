@@ -5,8 +5,12 @@ import { PendingLink as Link } from "@/components/ui/PendingLink";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAP_INK, MAP_WORKER_URL, mapStyleFor } from "@/lib/map";
 import { currentTheme, onThemeChange } from "@/lib/theme";
+import { useT } from "@/components/i18n/LangProvider";
+import { fill } from "@/lib/i18n/format";
 
+/** `label` the store's name in the page's language (the page builds it). */
 export function MiniMap({ lat, lng, label, href }: { lat: number; lng: number; label: string; href: string }) {
+  const d = useT().modules.minimap;
   const el = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -41,9 +45,9 @@ export function MiniMap({ lat, lng, label, href }: { lat: number; lng: number; l
     return () => { cancelled = true; offTheme(); map?.remove(); };
   }, [visible, lat, lng]);
   return (
-    <Link href={href} className="pane-hover relative block h-56 overflow-hidden rounded-[20px] border border-line bg-bg-2" aria-label={`Open ${label} on the live map`}>
+    <Link href={href} className="pane-hover relative block h-56 overflow-hidden rounded-[20px] border border-line bg-bg-2" aria-label={fill(d.aria, { label })}>
       <div ref={el} className="h-full w-full" />
-      <span className="absolute bottom-3 left-3 rounded-full border border-line-2 bg-pane px-3 py-1 text-xs backdrop-blur">Open on the live map →</span>
+      <span className="absolute bottom-3 left-3 rounded-full border border-line-2 bg-pane px-3 py-1 text-xs backdrop-blur">{d.cta}</span>
     </Link>
   );
 }

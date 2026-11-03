@@ -1,8 +1,14 @@
 /**
  * Decorative phone-screen illustrations for the install guide. Hand-drawn in HTML + inline SVG so
  * they stay crisp, theme with the site and weigh nothing. All are aria-hidden: the step text
- * carries the instruction.
+ * carries the instruction. Their labels imitate the OS's own UI: the reader's language comes in as `t` (the install
+ * guide's dictionary), English by default.
  */
+import { install } from "@/lib/i18n/cdict/en/install";
+
+type MockText = typeof install.mocks;
+const EN = install.mocks;
+
 export function Screen({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div aria-hidden className={`mock ${className}`}>
@@ -89,7 +95,7 @@ export function SafariUrlMock() {
   );
 }
 
-export function SafariShareMock() {
+export function SafariShareMock({ t = EN }: { t?: MockText }) {
   return (
     <Screen>
       <div className="mock-fill">
@@ -97,20 +103,21 @@ export function SafariShareMock() {
       </div>
       <div className="mock-bar">
         <div className="mock-url"><Lock className="h-3.5 w-3.5 text-ink-3" /><span>pickupchecker.com</span></div>
-        <div className="mock-toolbar"><Chevron dir="l" className="h-5 w-5" /><Chevron dir="r" className="h-5 w-5 opacity-40" /><Hl label="Share"><ShareIcon className="h-5 w-5 text-accent" /></Hl><Book className="h-5 w-5" /><Tabs className="h-5 w-5" /></div>
+        <div className="mock-toolbar"><Chevron dir="l" className="h-5 w-5" /><Chevron dir="r" className="h-5 w-5 opacity-40" /><Hl label={t.share}><ShareIcon className="h-5 w-5 text-accent" /></Hl><Book className="h-5 w-5" /><Tabs className="h-5 w-5" /></div>
       </div>
     </Screen>
   );
 }
 
-export function ShareSheetMock() {
+export function ShareSheetMock({ t = EN }: { t?: MockText }) {
+  const l = t.shareSheet;
   const rows: [React.ReactNode, string, boolean?][] = [
-    [<svg key="c" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg>, "Copy"],
-    [<svg key="r" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9" /><path d="M8 12h8M12 8v8" /></svg>, "Add to Reading List"],
-    [<Book key="b" className="h-4 w-4" />, "Add Bookmark"],
-    [<svg key="f" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z" /></svg>, "Add to Favorites"],
-    [<PlusSquare key="h" className="h-4 w-4" />, "Add to Home Screen", true],
-    [<svg key="m" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 20l4-1 10-10-3-3L5 16z" /></svg>, "Markup"],
+    [<svg key="c" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg>, l.copy],
+    [<svg key="r" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9" /><path d="M8 12h8M12 8v8" /></svg>, l.readingList],
+    [<Book key="b" className="h-4 w-4" />, l.bookmark],
+    [<svg key="f" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z" /></svg>, l.favorites],
+    [<PlusSquare key="h" className="h-4 w-4" />, l.addToHome, true],
+    [<svg key="m" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 20l4-1 10-10-3-3L5 16z" /></svg>, l.markup],
   ];
   return (
     <Screen>
@@ -129,13 +136,14 @@ export function ShareSheetMock() {
   );
 }
 
-export function AddDialogMock() {
+export function AddDialogMock({ t = EN }: { t?: MockText }) {
+  const l = t.addDialog;
   return (
     <Screen>
       <div className="mock-sheet mock-sheet-tall">
-        <div className="mock-dialog-bar"><span className="text-accent-2">Cancel</span><span className="font-semibold">Add to Home Screen</span><Hl label="Add" below><span className="font-semibold text-accent">Add</span></Hl></div>
+        <div className="mock-dialog-bar"><span className="text-accent-2">{l.cancel}</span><span className="font-semibold">{l.title}</span><Hl label={l.add} below><span className="font-semibold text-accent">{l.add}</span></Hl></div>
         <div className="mock-add-row"><AppIcon size={40} /><div className="min-w-0 flex-1"><div className="mock-field">PickupChecker</div><div className="truncate text-[10px] text-ink-3">https://pickupchecker.com/account</div></div></div>
-        <p className="px-3 pt-2 text-[10px] leading-snug text-ink-3">An icon will be added to your Home Screen so you can quickly access this website.</p>
+        <p className="px-3 pt-2 text-[10px] leading-snug text-ink-3">{l.note}</p>
       </div>
     </Screen>
   );
@@ -154,16 +162,17 @@ export function HomeScreenMock() {
   );
 }
 
-export function IosPermissionMock() {
+export function IosPermissionMock({ t = EN }: { t?: MockText }) {
+  const l = t.iosAlert;
   return (
     <Screen>
       <div className="mock-fill mock-dim">
         <div className="mock-skel w-3/4" /><div className="mock-skel w-1/2" /><div className="mock-skel w-2/3" />
       </div>
       <div className="mock-alert">
-        <div className="mock-alert-title">&ldquo;PickupChecker&rdquo; Would Like to Send You Notifications</div>
-        <div className="mock-alert-text">Notifications may include alerts, sounds and icon badges. These can be configured in Settings.</div>
-        <div className="mock-alert-buttons"><span>Don&rsquo;t Allow</span><Hl label="Allow" below><span className="font-semibold text-accent">Allow</span></Hl></div>
+        <div className="mock-alert-title">{l.title}</div>
+        <div className="mock-alert-text">{l.text}</div>
+        <div className="mock-alert-buttons"><span>{l.dontAllow}</span><Hl label={l.allow} below><span className="font-semibold text-accent">{l.allow}</span></Hl></div>
       </div>
     </Screen>
   );
@@ -171,23 +180,24 @@ export function IosPermissionMock() {
 
 /* ---------------------------------------------------------------- Android */
 
-export function ChromeMenuMock() {
+export function ChromeMenuMock({ t = EN }: { t?: MockText }) {
   return (
     <Screen>
-      <div className="mock-chrome-bar"><div className="mock-url mock-url-top"><Lock className="h-3.5 w-3.5 text-ink-3" /><span>pickupchecker.com</span></div><Hl label="Menu" below><Dots className="h-5 w-5 text-accent" /></Hl></div>
+      <div className="mock-chrome-bar"><div className="mock-url mock-url-top"><Lock className="h-3.5 w-3.5 text-ink-3" /><span>pickupchecker.com</span></div><Hl label={t.chromeMenuLabel} below><Dots className="h-5 w-5 text-accent" /></Hl></div>
       <div className="mock-fill"><div className="mock-skel w-3/4" /><div className="mock-skel w-1/2" /><div className="mock-skel w-2/3" /></div>
     </Screen>
   );
 }
 
-export function ChromeInstallMock() {
-  const rows = ["New tab", "History", "Downloads", "Bookmarks", "Share…", "Add to Home screen", "Desktop site"];
+export function ChromeInstallMock({ t = EN }: { t?: MockText }) {
+  const { before, add, after } = t.chromeMenu;
+  const rows = [...before, add, ...after];
   return (
     <Screen>
       <div className="mock-menu">
         {rows.map((r) => (
-          <div key={r} className={r.startsWith("Add") ? "mock-row mock-row-hl" : "mock-row"}>
-            <span>{r}</span>{r.startsWith("Add") && <Hl><PlusSquare className="h-4 w-4 text-accent" /></Hl>}
+          <div key={r} className={r === add ? "mock-row mock-row-hl" : "mock-row"}>
+            <span>{r}</span>{r === add && <Hl><PlusSquare className="h-4 w-4 text-accent" /></Hl>}
           </div>
         ))}
       </div>
@@ -195,13 +205,14 @@ export function ChromeInstallMock() {
   );
 }
 
-export function AndroidPermissionMock() {
+export function AndroidPermissionMock({ t = EN }: { t?: MockText }) {
+  const l = t.androidAlert;
   return (
     <Screen>
       <div className="mock-fill mock-dim"><div className="mock-skel w-3/4" /><div className="mock-skel w-1/2" /><div className="mock-skel w-2/3" /></div>
       <div className="mock-alert mock-alert-android">
-        <div className="mock-alert-title text-left">Allow PickupChecker to send you notifications?</div>
-        <div className="mock-alert-buttons mock-alert-buttons-android"><span>Don&rsquo;t allow</span><Hl label="Allow" below><span className="font-semibold text-accent">Allow</span></Hl></div>
+        <div className="mock-alert-title text-left">{l.title}</div>
+        <div className="mock-alert-buttons mock-alert-buttons-android"><span>{l.dontAllow}</span><Hl label={l.allow} below><span className="font-semibold text-accent">{l.allow}</span></Hl></div>
       </div>
     </Screen>
   );
@@ -209,27 +220,29 @@ export function AndroidPermissionMock() {
 
 /* ---------------------------------------------------------------- Desktop */
 
-export function DesktopPermissionMock() {
+export function DesktopPermissionMock({ t = EN }: { t?: MockText }) {
+  const l = t.desktopAlert;
   return (
     <Screen className="mock-wide">
       <div className="mock-chrome-bar"><div className="mock-url mock-url-top"><Lock className="h-3.5 w-3.5 text-ink-3" /><span>pickupchecker.com/account</span></div><Monitor className="h-4 w-4 text-ink-3" /></div>
       <div className="mock-popover">
-        <div className="text-[11px] font-semibold">pickupchecker.com wants to</div>
-        <div className="mt-1 flex items-center gap-1.5 text-[11px] text-ink-2"><svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 17V11a6 6 0 1 1 12 0v6l1 2H5zM10 21h4" /></svg> Show notifications</div>
-        <div className="mt-2 flex justify-end gap-2 text-[11px]"><span className="mock-btn">Block</span><Hl label="Allow" below><span className="mock-btn mock-btn-primary">Allow</span></Hl></div>
+        <div className="text-[11px] font-semibold">{l.wantsTo}</div>
+        <div className="mt-1 flex items-center gap-1.5 text-[11px] text-ink-2"><svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 17V11a6 6 0 1 1 12 0v6l1 2H5zM10 21h4" /></svg> {l.show}</div>
+        <div className="mt-2 flex justify-end gap-2 text-[11px]"><span className="mock-btn">{l.block}</span><Hl label={l.allow} below><span className="mock-btn mock-btn-primary">{l.allow}</span></Hl></div>
       </div>
       <div className="mock-fill"><div className="mock-skel w-3/4" /><div className="mock-skel w-1/2" /></div>
     </Screen>
   );
 }
 
-export function DesktopInstallMock() {
+export function DesktopInstallMock({ t = EN }: { t?: MockText }) {
+  const l = t.desktopInstall;
   return (
     <Screen className="mock-wide">
-      <div className="mock-chrome-bar"><div className="mock-url mock-url-top"><Lock className="h-3.5 w-3.5 text-ink-3" /><span>pickupchecker.com</span></div><Hl label="Install" below><Monitor className="h-4 w-4 text-accent" /></Hl></div>
+      <div className="mock-chrome-bar"><div className="mock-url mock-url-top"><Lock className="h-3.5 w-3.5 text-ink-3" /><span>pickupchecker.com</span></div><Hl label={l.callout} below><Monitor className="h-4 w-4 text-accent" /></Hl></div>
       <div className="mock-popover mock-popover-right">
-        <div className="flex items-center gap-2"><AppIcon size={26} /><div><div className="text-[11px] font-semibold">Install PickupChecker</div><div className="text-[10px] text-ink-3">Opens in its own window</div></div></div>
-        <div className="mt-2 flex justify-end gap-2 text-[11px]"><span className="mock-btn">Cancel</span><span className="mock-btn mock-btn-primary">Install</span></div>
+        <div className="flex items-center gap-2"><AppIcon size={26} /><div><div className="text-[11px] font-semibold">{l.title}</div><div className="text-[10px] text-ink-3">{l.text}</div></div></div>
+        <div className="mt-2 flex justify-end gap-2 text-[11px]"><span className="mock-btn">{l.cancel}</span><span className="mock-btn mock-btn-primary">{l.install}</span></div>
       </div>
       <div className="mock-fill"><div className="mock-skel w-3/4" /><div className="mock-skel w-1/2" /></div>
     </Screen>
@@ -239,18 +252,19 @@ export function DesktopInstallMock() {
 /* ---------------------------------------------------------------- hero */
 
 /** A lock-screen notification, as the alert actually looks on a phone. */
-export function LockScreenMock() {
+export function LockScreenMock({ t = EN }: { t?: MockText }) {
+  const l = t.lockScreen;
   return (
     <div aria-hidden className="mock-phone">
       <div className="mock-phone-screen">
         <div className="mock-notch" />
-        <div className="mock-clock"><div className="text-[13px] font-medium text-ink-2">Thursday, October 29</div><div className="display mt-1 text-[64px] leading-none">9:41</div></div>
+        <div className="mock-clock"><div className="text-[13px] font-medium text-ink-2">{l.date}</div><div className="display mt-1 text-[64px] leading-none">9:41</div></div>
         <div className="mock-notif">
           <AppIcon size={36} />
           <div className="min-w-0 flex-1">
-            <div className="flex items-baseline justify-between gap-2"><span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">PickupChecker</span><span className="text-[11px] text-ink-3">now</span></div>
-            <div className="mt-0.5 text-[14px] font-semibold leading-snug">In stock: iPhone 18 Pro 256GB Black</div>
-            <div className="text-[13px] leading-snug text-ink-2">Apple Fifth Avenue · New York, NY — Available Today. Tap to reserve on apple.com.</div>
+            <div className="flex items-baseline justify-between gap-2"><span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">PickupChecker</span><span className="text-[11px] text-ink-3">{l.now}</span></div>
+            <div className="mt-0.5 text-[14px] font-semibold leading-snug">{l.title}</div>
+            <div className="text-[13px] leading-snug text-ink-2">{l.body}</div>
           </div>
         </div>
         <div className="mock-notif mock-notif-faded">

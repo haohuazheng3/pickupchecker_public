@@ -1,5 +1,6 @@
 import { MODELS, STORES, citySlug, citiesWithStores, stateSlug, statesWithStores, storePath, statePath, hasStatePage, storesOf, placeTarget } from "@/lib/apple/catalog";
 import { countryFromPrefix, type CountryCode } from "@/lib/apple/countries";
+import { nativeLocale, pathInLocale } from "@/lib/i18n/locales";
 import { productBySlug, productFor, productPath, resolvePlace } from "./products";
 import { treeOf } from "./tree";
 /** The old blog had one thin post; its topic lives on the 18 Pro stock page. Everything else under /blog goes home. */
@@ -44,7 +45,14 @@ function knownPaths() {
 export function publicRouteCheck(pathname: string, search = ""): { notFound: true } | { redirect: string } | null {
   const parts = pathname.split("/").filter(Boolean);
   // Any other unknown first segment would land on the /[cc] route and render its 404 late: answer it here.
-  if (parts[0] && !/^[a-z]{2}$/.test(parts[0]) && !TOP_LEVEL.has(parts[0]) && !parts[parts.length - 1].includes(".")) return { notFound: true };
+  if (parts[0] && !/^[a-z]{2}(-[a-z]{2})?$/.test(parts[0]) && !TOP_LEVEL.has(parts[0]) && !parts[parts.length - 1].includes(".")) return { notFound: true };
+  // A native version of a country's tree (/ja-jp/…, docs/i18n.md §6): the same rules as its English tree, redirects kept in the version.
+  if (parts[0] && /^[a-z]{2}-[a-z]{2}$/.test(parts[0])) {
+    const loc = nativeLocale(parts[0]);
+    if (!loc) return { notFound: true };
+    const r = countryRouteCheck(loc.cc, parts.slice(1), search);
+    return r && "redirect" in r ? { redirect: pathInLocale(r.redirect, loc) } : r;
+  }
   // Two letters first: another country's tree (/ca, /uk/stores/…). No top-level route of the site has two letters.
   if (parts[0] && /^[a-z]{2}$/.test(parts[0])) {
     if (parts[0] === "us") return { redirect: `/${parts.slice(1).join("/")}${search}` }; // the US has no prefix

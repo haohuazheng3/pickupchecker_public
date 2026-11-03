@@ -7,10 +7,12 @@
 import { MODELS, catalogFor, citiesWithStores, statesWithStores, storesOf, appleName, modelByKey, type ModelKey, type Store } from "../apple/catalog";
 import { COUNTRIES, formatPrice, theName, type Country, type CountryCode } from "../apple/countries";
 import type { PlaceStats, StoreStockSummary } from "../stock/queries";
-import { CA_PROVINCE_TAX, CA_TAX_SOURCE, TAX_SOURCES, beforeTax, includedRate, taxName, withProvinceTax } from "@/content/country-tax";
-import { fitTitle, fmtDuration, listWords, plural, alertHref, type FaqItem } from "./enrich";
+import { CA_PROVINCE_TAX, CA_TAX_SOURCE, TAX_SOURCES, beforeTax, includedRate, pickupHelp, taxName, withProvinceTax } from "@/content/country-tax";
+import { fitTitle, fmtDuration, listWords, plural, alertHref, storeTitle as enStoreTitle, type FaqItem } from "./enrich";
 import type { Block } from "../content/types";
 import type { KeywordSection } from "@/components/content/KeywordSections";
+import type { Faq } from "../content/types";
+import { hourLabel } from "../content/siteFacts";
 
 /** Other countries' stores have been checked since this day (the US since October 29). */
 export const INTL_TRACKING_SINCE = "2026-11-02";
@@ -196,7 +198,7 @@ export function whenIn(cc: CountryCode, iso: string | Date): string {
   return new Intl.DateTimeFormat("en-US", { timeZone: COUNTRIES[cc].timeZone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(new Date(iso));
 }
 
-function scarcest(i: IntlPlaceInput, model: ModelKey, k = 2): { label: string; stores: number }[] {
+export function scarcest(i: IntlPlaceInput, model: ModelKey, k = 2): { label: string; stores: number }[] {
   const items = catalogFor(model, i.cc);
   const counts = new Map<string, number>(items.map((c) => [c.partNumber, 0]));
   for (const s of i.stores) for (const p of i.stock.get(s.storeNumber)?.perModel[model].parts ?? []) if (counts.has(p)) counts.set(p, (counts.get(p) ?? 0) + 1);
@@ -204,13 +206,13 @@ function scarcest(i: IntlPlaceInput, model: ModelKey, k = 2): { label: string; s
   return [...counts.entries()].map(([p, n]) => ({ label: `${by.get(p)!.storage} ${by.get(p)!.color}`, stores: n })).sort((a, b) => a.stores - b.stores).slice(0, k);
 }
 
-function pairsPct(i: IntlPlaceInput, model: ModelKey): number {
+export function pairsPct(i: IntlPlaceInput, model: ModelKey): number {
   const total = i.stores.length * catalogFor(model, i.cc).length;
   const avail = i.stores.reduce((a, s) => a + (i.stock.get(s.storeNumber)?.perModel[model].available ?? 0), 0);
   return Math.round((100 * avail) / Math.max(1, total));
 }
 
-const duoStoresNow = (i: IntlPlaceInput) => i.stores.filter((s) => (i.stock.get(s.storeNumber)?.perModel.duo.available ?? 0) > 0);
+export const duoStoresNow = (i: IntlPlaceInput) => i.stores.filter((s) => (i.stock.get(s.storeNumber)?.perModel.duo.available ?? 0) > 0);
 
 /** The Duo section's one-sentence answer: which stores list one right now. */
 function duoLead(i: IntlPlaceInput): string {
@@ -342,4 +344,120 @@ export function modelDescription(cc: CountryCode, model: ModelKey, inStock: numb
 export function modelRows(cc: CountryCode, storesNow: Record<ModelKey, number>, restocks: Record<ModelKey, number>): string[][] {
   const prefix = cc === "us" ? "" : `/${cc}`;
   return MODELS.map((m) => [`[${m.name}](${prefix}/stock/${m.slug})`, String(catalogFor(m.key, cc).length), String(storesNow[m.key] ?? 0), String(restocks[m.key] ?? 0)]);
+}
+
+/* ------------------------------------------------------------------ country home (moved from HomePage) */
+
+export function homeDescription(cc: CountryCode): string {
+  const c = COUNTRIES[cc];
+  const n = storesOf(cc).length;
+  return `Check iPhone Duo, 18 Pro and 18 Pro Max pickup stock at ${allStoresPhrase(cc)}, live every 15 seconds. ${n === 1 ? "Prices" : "Restock times, prices"} in ${c.currency}; a push when your store restocks.`;
+}
+
+export function homeIntro(cc: CountryCode): string {
+  const c = COUNTRIES[cc];
+  const n = storesOf(cc).length;
+  return `Right now the iPhone Duo is in stock for pickup at **{{duo.storesNow}} of ${n}** Apple Store${n === 1 ? "" : "s"} ${c.inName}, the iPhone 18 Pro at **{{pro.storesNow}}** and the iPhone 18 Pro Max at **{{pm.storesNow}}**.`;
+}
+
+export interface HomeCopyInput {
+  cc: CountryCode;
+  /** Stores with each model now / restocks logged (the table). */
+  storesNow: Record<ModelKey, number>;
+  restocks: Record<ModelKey, number>;
+  /** Paths the copy links to (English form). */
+  restocksPath: string;
+  index: { path: string; indexable: boolean } | null;
+}
+
+/** The country home's three keyword sections (the price one from priceSection). */
+export function homeSections(i: HomeCopyInput): KeywordSection[] {
+  const cc = i.cc;
+  const c = COUNTRIES[cc];
+  const n = storesOf(cc).length;
+  const stores = storesOf(cc);
+  const unit = c.unit === "mi" ? "miles" : "kilometres";
+  return [
+    {
+      id: "iphone-stock",
+      h2: `iPhone stock ${c.inName}: Duo, 18 Pro and Pro Max by store`,
+      lead: `PickupChecker reads apple.com's in-store pickup availability for every configuration at ${allStoresPhrase(cc)} every 15 seconds, by store${n > 1 ? `, by ${c.regionNoun ?? "city"}` : ""} and by configuration.`,
+      blocks: [
+        { t: "table", head: ["Model", "Configurations", "Stores with stock now", "Restocks logged"], rows: modelRows(cc, i.storesNow, i.restocks), caption: `What the check covers ${c.inName}, as of {{asOf}}` },
+        { t: "ul", items: [
+          `**Coverage:** ${spreadPhrase(cc)} · prices and part numbers are Apple's ${c.adjective} ones`,
+          "**Every store every 15 seconds**, the stores your alerts point at every 5",
+          "**Two checks to count:** one glitchy apple.com answer never shows as a fake restock or sell-out",
+          `**Every confirmed change** goes into the [restock log](${i.restocksPath}), which feeds the restock charts on ${i.index?.indexable ? `[the store pages](${i.index.path})` : "the store page"}`,
+        ] },
+        { t: "img", id: "phone-notification" },
+      ],
+    },
+    priceSection(cc, theName(c)),
+    {
+      id: "alerts",
+      h2: `Apple Store stock checker ${c.inName} with restock alerts`,
+      lead: `Checking is free; the paid part is not having to check. Pick the Apple Store${n === 1 ? "" : "s"} you can reach and the exact phone, and your phone gets a push seconds after ${n === 1 ? "the store" : "any of those stores"} lists it for in-store pickup.`,
+      blocks: [
+        { t: "ol", items: [
+          "Tap **Alert me** and choose the iPhone, storage and color.",
+          n === 1 ? `Tick the store: ${stores[0].name} in ${stores[0].city}.` : `Tick the stores you can get to; the nearest are listed first, with ${unit} by road and drive time.`,
+          "On an iPhone, add PickupChecker to your Home Screen and allow notifications ([how to install](/install)).",
+          "When the push arrives, open apple.com from it and check out with in-store pickup at that store.",
+        ] },
+        { t: "table", head: ["Plan", "Price (USD)", "Alerts"], rows: [["Plus", "$5 / month", "10"], ["Pro", "$10 / month", "20"], ["Max", "$20 / month", "50"]], caption: "One alert = one store × one exact configuration · browsing is free ([pricing](/pricing))" },
+        { t: "note", text: "**Our take:** the Duo is worth alerts at every store you can reach; for the 18 Pro and Pro Max, look at the live numbers first." },
+        { t: "img", id: "apple-store-pickup-counter" },
+      ],
+    },
+  ];
+}
+
+export interface RestockTimesBrief {
+  /** Confirmed Duo restocks since tracking began, stores with one, stores in the country. */
+  n: number; stores: number; storesTotal: number;
+  /** The usual local hour, once the pattern threshold is met (5 restocks on 3 days), else null. */
+  peakHour: number | null;
+  /** Path of the country's restock-times page (English form). */
+  path: string;
+}
+
+/** The country home's FAQ (live tokens filled by RichFaq). */
+export function homeFaq(cc: CountryCode, rt: RestockTimesBrief): Faq[] {
+  const c = COUNTRIES[cc];
+  const n = storesOf(cc).length;
+  const p = cc === "us" ? "" : `/${cc}`;
+  const when = rt.n === 0
+    ? `None confirmed yet since tracking began on November 2. [When does Apple restock the iPhone Duo ${c.inName}?](${rt.path}) counts each one by local hour and day as they come.`
+    : rt.peakHour != null
+      ? `Most land around **${hourLabel(rt.peakHour)} local time**: ${rt.n.toLocaleString("en-US")} confirmed restocks at ${rt.stores} of ${rt.storesTotal} stores since November 2. [Hour by hour and day by day](${rt.path}).`
+      : `${rt.n.toLocaleString("en-US")} confirmed restocks at ${rt.stores} of ${rt.storesTotal} stores since November 2, on too few days to name a usual hour yet. [Hour by hour and day by day](${rt.path}).`;
+  return [
+    { q: `Which Apple Stores ${c.inName} have the iPhone Duo right now?`, a: `{{duo.storesNow}} of ${n} at the last check ({{asOf}}). [iPhone Duo stock ${c.inName}](${p}/stock/iphone-duo) names each store and configuration, updated every 15 seconds.` },
+    { q: `When does Apple restock the iPhone Duo ${c.inName}?`, a: when },
+    { q: "How fast are the alerts?", a: `The stores your alerts point at are checked every 5 seconds, every Apple Store ${c.inName} every 15. A first "available" is checked again within a second so an Apple glitch never becomes an alert, and the push reaches your phone about 3 seconds after that.` },
+    { q: "What does it cost?", a: "Live stock, the map and the restock log are free. Alerts are Plus $5/month for 10, Pro $10 for 20 and Max $20 for 50, billed in US dollars; cancel anytime ([pricing](/pricing))." },
+    taxFaqIntl(cc, theName(c)),
+    { q: "Can you reserve the phone for me?", a: `No. We tell you the instant a store lists it; you buy on apple.com with in-store pickup, and Apple holds it for you ([Apple's pickup help](${pickupHelp(cc).url})).` },
+  ];
+}
+
+/** Small labels of the country home. */
+export const homeLabels = {
+  appName: (cc: CountryCode) => `PickupChecker iPhone stock checker ${COUNTRIES[cc].short}`,
+  offer: "Live stock, map and restock log are free; alerts from $5/month",
+  itemList: (cc: CountryCode) => `Apple Stores ${COUNTRIES[cc].inName}`,
+  restockTimesChip: "When it restocks",
+  /** The chip to the store index on a country with regions: "Stores by province". */
+  storesByRegion: (cc: CountryCode) => `Stores by ${noun(COUNTRIES[cc])}`,
+  browse: (cc: CountryCode) => `Browse stock ${COUNTRIES[cc].inName}`,
+  selloutH2: (cc: CountryCode) => `How fast do iPhone restocks sell out ${COUNTRIES[cc].inName}?`,
+  selloutLabel: (cc: CountryCode) => `at Apple Stores ${COUNTRIES[cc].inName}`,
+  last24Label: (cc: CountryCode) => COUNTRIES[cc].inName,
+  newsroom: "Apple Newsroom: iPhone Duo arrives at Apple Store locations worldwide (Oct 23, 2026)",
+};
+
+/** A store page's <title> and H1 ("Apple Ginza: iPhone Stock Today, Pickup & Hours"); `region`: the city or state in parentheses when the store is its only one. */
+export function storeTitleIntl(s: Store, region?: string): string {
+  return enStoreTitle(s, undefined, undefined, region);
 }

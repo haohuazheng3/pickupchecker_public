@@ -1,9 +1,12 @@
 import { Skeleton } from "@/components/ui/Skeleton";
+import { requestLocale } from "@/lib/i18n/server";
+import { dict } from "@/lib/i18n/dict";
 
 /** Account: eyebrow + title with the two buttons, plan card, notifications card, alerts list, recent alerts. */
-export default function AccountLoading() {
+export default async function AccountLoading() {
+  const d = dict((await requestLocale()).lang).account;
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-8" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto max-w-5xl px-4 pt-8" aria-busy="true" aria-label={d.loading}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0 flex-1">
           <Skeleton className="h-3 w-56 max-w-full" />

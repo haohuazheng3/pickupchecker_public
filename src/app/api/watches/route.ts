@@ -10,6 +10,7 @@ import { userPlan } from "@/lib/billing";
 import { coveredWatchIds, SAVE_CAP } from "@/lib/plans";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { deviceSummary } from "@/lib/devices";
+import { cookieLang } from "@/lib/i18n/server";
 import { alertSetOf, reconcile } from "@/lib/alertSet";
 
 export const runtime = "nodejs";
@@ -76,7 +77,7 @@ export function unsoldAt(phones: Phone[], storeNumbers: string[]): string | null
 export async function GET() {
   const u = await ensureUser();
   if (!u) return NextResponse.json({ error: "sign in first" }, { status: 401 });
-  const [rows, { plan, sub }, devices] = await Promise.all([db().select().from(schema.watches).where(eq(schema.watches.userId, u.id)), userPlan(u.id), deviceSummary(u.id)]);
+  const [rows, { plan, sub }, devices] = await Promise.all([db().select().from(schema.watches).where(eq(schema.watches.userId, u.id)), userPlan(u.id), deviceSummary(u.id, await cookieLang())]);
   const covered = coveredWatchIds(rows, plan.limit);
   return NextResponse.json({
     watches: rows.map((w) => ({ ...w, config: ruleConfig(w), covered: covered.has(w.id) })),
@@ -119,7 +120,7 @@ export async function POST(req: Request) {
   const combos = wanted.flatMap((n) => phones.map((p) => ({ ...p, storeNumber: n })));
   if (combos.length > SAVE_CAP) return NextResponse.json({ error: `that is ${combos.length} alerts — at most ${SAVE_CAP} per account` }, { status: 400 });
 
-  const [existing, { plan, sub }, devices] = await Promise.all([db().select(ROW).from(schema.watches).where(eq(schema.watches.userId, u.id)) as Promise<Row[]>, userPlan(u.id), deviceSummary(u.id)]);
+  const [existing, { plan, sub }, devices] = await Promise.all([db().select(ROW).from(schema.watches).where(eq(schema.watches.userId, u.id)) as Promise<Row[]>, userPlan(u.id), deviceSummary(u.id, await cookieLang())]);
   const fresh = combos.filter((c) => !findRule(existing, c, c.storeNumber));
   const retiring = dropped.flatMap((n) => phones.map((p) => findRule(existing, p, n)?.id)).filter((id): id is string => Boolean(id));
   const activeNow = existing.filter((w) => w.active).length - retiring.length;

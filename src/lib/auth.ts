@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "./db";
 import { env } from "./env";
 import { ADMIN_COOKIE, verifyAdminToken } from "./admin/session";
+import { LANG_COOKIE, nativeLocale } from "./i18n/locales";
 
 export interface SessionUser {
   id: string;
@@ -20,13 +21,18 @@ export async function sessionUser(): Promise<SessionUser | null> {
   return { id: userId, email: email.toLowerCase() };
 }
 
-/** Signed-in user, mirrored into `users` (idempotent). */
+/**
+ * Signed-in user, mirrored into `users` (idempotent). A new account takes the language it signed up in (the
+ * `pc_lang` cookie a native page set) for its pushes and emails; an existing account's language changes only
+ * when the person picks one (POST /api/me/locale), never because they browsed a page in another language.
+ */
 export async function ensureUser(): Promise<SessionUser | null> {
   const u = await sessionUser();
   if (!u) return null;
+  const locale = nativeLocale((await cookies()).get(LANG_COOKIE)?.value)?.id ?? null;
   await db()
     .insert(schema.users)
-    .values({ id: u.id, email: u.email, lastSeenAt: new Date() })
+    .values({ id: u.id, email: u.email, lastSeenAt: new Date(), locale })
     .onConflictDoUpdate({ target: schema.users.id, set: { email: u.email, lastSeenAt: new Date() } });
   return u;
 }

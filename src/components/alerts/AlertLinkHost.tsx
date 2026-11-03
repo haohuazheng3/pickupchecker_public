@@ -5,11 +5,11 @@
  * pre-fill; anywhere else it is an ordinary link to that home page.
  */
 import { useEffect } from "react";
-import { countryFromPrefix } from "@/lib/apple/countries";
+import { localeFromSegment } from "@/lib/i18n/locales";
 import { openSection } from "./Section";
 
-/** "/" or a country's home ("/uk"). */
-const isHome = (path: string) => path === "/" || Boolean(countryFromPrefix(path.match(/^\/([a-z]{2})\/?$/)?.[1]));
+/** "/" or a country's home: its English one ("/uk", "/jp") or one in its own language ("/ja-jp", which PendingLink makes of "/jp" on a Japanese page). */
+const isHome = (path: string) => path === "/" || Boolean(localeFromSegment(path.match(/^\/([a-z]{2}(?:-[a-z]{2})?)\/?$/)?.[1]));
 
 export function AlertLinkHost() {
   useEffect(() => {

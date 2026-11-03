@@ -5,6 +5,7 @@ import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { Inline } from "./Inline";
 import { Figure } from "./Figure";
 import { LiveWidget } from "./LiveWidget";
+import { t } from "@/lib/i18n/server";
 
 /** One content block (paragraph, list, table, photo, live widget, note, button), rendered inside .prose-site. */
 export function BlockView({ b, facts, model }: { b: Block; facts: Facts; model?: ModelKey }) {
@@ -24,7 +25,7 @@ export function BlockView({ b, facts, model }: { b: Block; facts: Facts; model?:
           <thead><tr>{b.head.map((h, k) => <th key={k} scope="col" className="border-b border-line-2 py-2 pr-3 text-left font-semibold text-ink"><Inline text={h} facts={facts} /></th>)}</tr></thead>
           <tbody>{b.rows.map((r, k) => <tr key={k} className="border-b border-line">{r.map((c, j) => j === 0 ? <th key={j} scope="row" className="py-2 pr-3 text-left font-medium text-ink"><Inline text={c} facts={facts} /></th> : <td key={j} className="py-2 pr-3 align-top"><Inline text={c} facts={facts} /></td>)}</tr>)}</tbody>
         </table>
-        {b.source && <p className="mt-1.5 text-xs text-ink-3">Source: <Inline text={b.source} facts={facts} /></p>}
+        {b.source && <p className="mt-1.5 text-xs text-ink-3">{t().content.source(<Inline text={b.source} facts={facts} />)}</p>}
       </div>
     );
   }

@@ -9,6 +9,8 @@
  * STOCK_CHANGED and FreshOnReturn re-renders the page: people in the Home Screen app kept tapping "Duo stock"
  * to refresh a list that had gone stale under them (FlowGlance, 2026-11-02).
  */
+import { useLang } from "@/components/i18n/LangProvider";
+import { agoFine, never as neverIn } from "@/lib/i18n/format";
 import { useEffect, useState } from "react";
 import { formatAgo } from "./LiveAgo";
 import { liveKey } from "@/lib/liveScope";
@@ -75,7 +77,8 @@ function onVisible() {
   if (!document.hidden) void poll();
 }
 
-export function LiveChecked({ iso, model, stores, country, className = "", never = "never" }: { iso: Date | string | null | undefined; model?: ModelKey | null; stores?: string[] | null; country?: CountryCode | null; className?: string; never?: string }) {
+export function LiveChecked({ iso, model, stores, country, className = "", never }: { iso: Date | string | null | undefined; model?: ModelKey | null; stores?: string[] | null; country?: CountryCode | null; className?: string; never?: string }) {
+  const lang = useLang();
   const initial = iso instanceof Date ? iso.toISOString() : iso ?? null;
   const key = liveKey({ model, stores, country });
   // The polled value only ever moves forward; the rendered one is the later of it and the server's.
@@ -90,6 +93,6 @@ export function LiveChecked({ iso, model, stores, country, className = "", never
     return subscribe(key, (next) => setPolled((cur) => (!cur || new Date(next) > new Date(cur) ? next : cur)));
   }, [key]);
   const checked = polled && (!initial || new Date(polled) > new Date(initial)) ? polled : initial;
-  if (!checked) return <span className={className}>{never}</span>;
-  return <span className={`tabular-nums ${className}`} suppressHydrationWarning>{formatAgo(checked, now)}</span>;
+  if (!checked) return <span className={className}>{never ?? neverIn(lang)}</span>;
+  return <span className={`tabular-nums ${className}`} suppressHydrationWarning>{lang === "en" ? formatAgo(checked, now) : agoFine(lang, checked, now)}</span>;
 }

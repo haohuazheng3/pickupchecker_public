@@ -3,6 +3,7 @@ import { MODELS, STORES, statesWithStores, citiesWithStores, storePath, cityPath
 import { INTL_CODES, prefixOf, type CountryCode } from "@/lib/apple/countries";
 import { latestEventPerStore } from "@/lib/stock/queries";
 import { PRODUCTS, US, productPath, isIndexedProductPage } from "@/lib/seo/products";
+import { NATIVE_LOCALES, pathInLocale } from "@/lib/i18n/locales";
 
 /** Regenerated hourly: lastModified of a store/city/state page is its latest real availability event when one is known. */
 export const revalidate = 3600;
@@ -65,5 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // <place>", and one indexed page per place keeps the site free of near-duplicates.
   const products: MetadataRoute.Sitemap = PRODUCTS.filter((p) => (p.kind === "storage" || p.kind === "color") && isIndexedProductPage(p, US)).map((p) => ({ url: `${base}${productPath(p, US)}`, lastModified: now, changeFrequency: "hourly" as const, priority: 0.5 }));
   const countries = INTL_CODES.flatMap((cc) => countryEntries(cc, base, now, latestOf));
-  return [...statics, ...questions, ...models, ...states, ...cities, ...stores, ...products, ...countries];
+  // Each country's pages in its own languages (docs/i18n.md §6): the same set under /{lang}-{cc}.
+  const natives = NATIVE_LOCALES.flatMap((loc) => countryEntries(loc.cc as Exclude<CountryCode, "us">, base, now, latestOf).map((e) => ({ ...e, url: `${base}${pathInLocale(e.url.slice(base.length), loc)}` })));
+  return [...statics, ...questions, ...models, ...states, ...cities, ...stores, ...products, ...countries, ...natives];
 }

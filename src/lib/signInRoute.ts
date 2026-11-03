@@ -8,7 +8,8 @@ export function afterSignInPath({ next, home, paid }: { next?: string | null; ho
   const toAccount = !safe || safe === "/account" || safe.startsWith("/account?") || safe.startsWith("/account#");
   if (!toAccount) return safe;
   if (paid) return safe ?? "/account";
-  return `${/^\/[a-z]{2}$/.test(home) ? home : "/"}#notify`;
+  // A country's home in English (/jp) or one of its languages (/ja-jp).
+  return `${/^\/[a-z]{2}(-[a-z]{2})?$/.test(home) ? home : "/"}#notify`;
 }
 
 /** Clerk's `__client_uat` cookie (readable by scripts): 0 when signed out, a timestamp when signed in. */

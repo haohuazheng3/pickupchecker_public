@@ -2,9 +2,11 @@
  * The site's "show, don't write" primitives: a big number with a label, a keyword line with a tick or a cross,
  * an instead-of/do swap, a read-only chip row, and a folded "how this is measured" note. Every module that
  * used to open with a paragraph now opens with these; the sentence, where a page still needs one for an answer
- * engine to quote, stays to one line. Server-safe (no hooks) so dashboard, SEO pages and the guide share them.
+ * engine to quote, stays to one line. Server components (no hooks) so dashboard, SEO pages and the guide share them;
+ * Measured's default title reads the page's language (i18n/server), so import Viz from server components only.
  */
 import type { ReactNode } from "react";
+import { t } from "@/lib/i18n/server";
 
 /* ----------------------------------------------------------------------------------------------- icons */
 
@@ -103,12 +105,12 @@ export function StepStrip({ steps, className = "" }: { steps: { title: ReactNode
 /* ---------------------------------------------------------------------------------------------- notes */
 
 /** The honest footnote, folded: one line to open, the method inside. Open by default for print and crawlers' text. */
-export function Measured({ title = "How this is measured", children, className = "" }: { title?: ReactNode; children: ReactNode; className?: string }) {
+export function Measured({ title, children, className = "" }: { title?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <details className={`group mt-3 text-xs text-ink-3 ${className}`}>
       <summary className="inline-flex cursor-pointer list-none items-center gap-1 font-medium underline-offset-2 hover:text-ink [&::-webkit-details-marker]:hidden">
         <svg viewBox="0 0 16 16" className="h-3 w-3 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 4l4 4-4 4" /></svg>
-        {title}
+        {title === undefined ? t().content.measured : title}
       </summary>
       <div className="mt-2 max-w-3xl leading-relaxed">{children}</div>
     </details>

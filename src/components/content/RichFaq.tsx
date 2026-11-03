@@ -2,15 +2,16 @@ import type { Faq, Source } from "@/lib/content/types";
 import type { Facts } from "@/lib/content/facts";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Inline, plainText } from "./Inline";
+import { t } from "@/lib/i18n/server";
 
 /** FAQ with inline links and live tokens; FAQPage JSON-LD carries the plain-text answers. Open by default so readers and crawlers see the answers. */
-export function RichFaq({ items, facts, title = "FAQ", id = "faq" }: { items: Faq[]; facts: Facts; title?: string; id?: string }) {
+export function RichFaq({ items, facts, title, id = "faq" }: { items: Faq[]; facts: Facts; title?: string; id?: string }) {
   if (items.length === 0) return null;
   const ld = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: items.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: plainText(f.a, facts) } })) };
   return (
     <section id={id} className="scroll-mt-24" aria-labelledby={`${id}-h`}>
       <JsonLd data={ld} />
-      <h2 id={`${id}-h`} className="text-2xl font-semibold">{title}</h2>
+      <h2 id={`${id}-h`} className="text-2xl font-semibold">{title ?? t().content.faqTitle}</h2>
       <div className="mt-2 divide-y divide-line">
         {items.map((f) => (
           <details key={f.q} className="group py-3" open>
@@ -24,12 +25,13 @@ export function RichFaq({ items, facts, title = "FAQ", id = "faq" }: { items: Fa
 }
 
 /** "Sources" list: our own tracker first (with the as-of time), then the outside sources. */
-export function SourceList({ sources, facts, where = "all 269 US Apple Stores", since = "{{trackingSince}}" }: { sources: Source[]; facts: Facts; where?: string; since?: string }) {
+export function SourceList({ sources, facts, where, since = "{{trackingSince}}" }: { sources: Source[]; facts: Facts; where?: string; since?: string }) {
+  const d = t().content;
   return (
     <section className="text-sm" aria-labelledby="src-h">
-      <h2 id="src-h" className="text-lg font-semibold">Sources</h2>
+      <h2 id="src-h" className="text-lg font-semibold">{d.sources}</h2>
       <ol className="mt-2 list-decimal space-y-1 pl-5 text-ink-2">
-        <li>PickupChecker live tracker: every iPhone Duo, 18 Pro and 18 Pro Max configuration at {where}, checked every 15 seconds (every 5 for stores with alerts) since <Inline text={since} facts={facts} />; numbers on this page as of <Inline text="{{asOf}}" facts={facts} />.</li>
+        <li>{d.trackerSource(where ?? d.allUsStores, <Inline text={since} facts={facts} />, <Inline text="{{asOf}}" facts={facts} />)}</li>
         {sources.map((s) => <li key={s.url}><a href={s.url} target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-ink">{s.label}</a></li>)}
       </ol>
     </section>

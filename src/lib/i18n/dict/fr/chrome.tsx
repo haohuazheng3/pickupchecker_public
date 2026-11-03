@@ -1,0 +1,42 @@
+/** Chaînes françaises : chrome — pied de page, page 404. */
+import type { Dict } from "../en";
+
+export const chrome: Dict["chrome"] = {
+  footer: {
+    blurb: "Alertes de retour en stock iPhone pour le retrait en magasin dans les 269 Apple Store des États-Unis : chaque magasin vérifié toutes les 15 secondes, ceux de vos alertes toutes les 5.",
+    blurbIn: (allStores: string) => `Alertes de retour en stock iPhone pour le retrait en magasin dans ${allStores} : chaque magasin vérifié toutes les 15 secondes, ceux de vos alertes toutes les 5.`,
+    trademark: "Site indépendant, ni affilié ni approuvé par Apple Inc. Apple, iPhone et Apple Store sont des marques d’Apple Inc.",
+    product: "Produit",
+    duoStock: "Stock iPhone Duo",
+    proStock: "Stock iPhone 18 Pro",
+    proMaxStock: "Stock iPhone 18 Pro Max",
+    restockLog: "Journal des retours en stock",
+    liveMap: "Carte en direct",
+    storesByState: "Magasins par État",
+    pricing: "Tarifs",
+    company: "PickupChecker",
+    howItWorks: "Comment ça marche",
+    getApp: "Installer l’app",
+    about: "À propos",
+    contact: "Contact",
+    allStates: "Tous les États et villes →",
+    storesIn: "Apple Store",
+    allStores: "Tous les magasins →",
+    legal: "Mentions légales",
+    privacy: "Confidentialité",
+    terms: "Conditions",
+    refunds: "Remboursements",
+    englishOnly: "En anglais",
+    questions: "Questions sur l’iPhone Duo",
+    restockTimes: "Quand Apple réapprovisionne-t-il l’iPhone Duo ?",
+    countries: "Pays",
+    status: "État du service",
+  },
+  notFound: {
+    title: "Rien ici",
+    body: (stores, map) => <>Cette page n’existe pas. Essayez les {stores} ou la {map}.</>,
+    stores: "magasins par région",
+    map: "carte en direct",
+    home: "Retour à l’accueil",
+  },
+};

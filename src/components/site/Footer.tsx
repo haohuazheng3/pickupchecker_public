@@ -3,8 +3,14 @@ import { Logo } from "./Logo";
 import { topStates } from "@/lib/seo/links";
 import { TrackingChoice } from "./Consent";
 import { switchCountries } from "./countries";
+import type { Locale } from "@/lib/i18n/locales";
+import { dict } from "@/lib/i18n/dict";
+import { cityPages, regionPages, storeRefs } from "@/lib/seo/countryLinks";
+import { cityLabel, regionLabel, storeLabel } from "@/lib/i18n/places";
 
-export function Footer() {
+/** English pages keep the US-wide footer; a native version gets its own country's links in its language. */
+export function Footer({ loc }: { loc: Locale }) {
+  if (loc.native) return <NativeFooter loc={loc} />;
   return (
     <footer className="mx-auto mt-24 w-full max-w-6xl px-4 pb-10">
       <div className="pane px-6 py-8 sm:px-8">
@@ -76,6 +82,79 @@ export function Footer() {
         <div className="hairline mt-6 flex flex-wrap items-center justify-between gap-3 pt-5 text-xs text-ink-3">
           <span>© {new Date().getFullYear()} PickupChecker</span>
           <Link href="/api/health" className="hover:text-ink">Status</Link>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function NativeFooter({ loc }: { loc: Locale }) {
+  const D = dict(loc.lang);
+  const F = D.chrome.footer;
+  const cc = loc.cc;
+  const p = `/${cc}`;
+  const places = [
+    ...regionPages(cc).map((r) => ({ href: r.href, label: regionLabel(cc, r.name, loc.lang) })),
+    ...cityPages(cc).map((c) => ({ href: c.href, label: cityLabel(cc, c.name, loc.lang) })),
+  ];
+  const list = (places.length ? places : storeRefs(cc).map((x) => ({ href: x.href, label: storeLabel(x.store, loc.lang) }))).slice(0, 8);
+  const names = switchCountries();
+  return (
+    <footer className="mx-auto mt-24 w-full max-w-6xl px-4 pb-10" lang={loc.tag}>
+      <div className="pane px-6 py-8 sm:px-8">
+        <div className="grid gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+          <div>
+            <Logo />
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-3">{F.blurbIn(D.place.allStoresPhrase(cc))}</p>
+            <p className="mt-3 text-xs text-ink-3">{F.trademark}</p>
+          </div>
+          <div className="text-sm">
+            <div className="eyebrow mb-3">{F.product}</div>
+            <ul className="space-y-2 text-ink-2">
+              <li><Link href={`${p}/stock/iphone-duo`} className="hover:text-ink">{F.duoStock}</Link></li>
+              <li><Link href={`${p}/stock/iphone-18-pro`} className="hover:text-ink">{F.proStock}</Link></li>
+              <li><Link href={`${p}/stock/iphone-18-pro-max`} className="hover:text-ink">{F.proMaxStock}</Link></li>
+              <li><Link href={`${p}/restocks`} className="hover:text-ink">{F.restockLog}</Link></li>
+              <li><Link href={`${p}/map`} className="hover:text-ink">{F.liveMap}</Link></li>
+              <li><Link href={`${p}/iphone-duo-restock-times`} className="hover:text-ink">{F.restockTimes}</Link></li>
+              <li><Link href="/pricing" className="hover:text-ink">{F.pricing}</Link></li>
+            </ul>
+          </div>
+          <div className="text-sm">
+            <div className="eyebrow mb-3">{F.company}</div>
+            <ul className="space-y-2 text-ink-2">
+              <li className="not-in-app"><Link href="/install" className="hover:text-ink">{F.getApp}</Link></li>
+              <li><Link href="/how-it-works" className="hover:text-ink">{F.howItWorks}</Link> <span className="text-xs text-ink-3">· {F.englishOnly}</span></li>
+              <li><Link href="/about" className="hover:text-ink">{F.about}</Link></li>
+              <li><Link href="/contact" className="hover:text-ink">{F.contact}</Link></li>
+            </ul>
+          </div>
+          <div className="text-sm">
+            <div className="eyebrow mb-3">{F.storesIn}</div>
+            <ul className="space-y-2 text-ink-2">
+              {list.map((x) => <li key={x.href}><Link href={x.href} className="hover:text-ink">{x.label}</Link></li>)}
+              <li><Link href={`${p}/stores`} className="hover:text-ink">{F.allStores}</Link></li>
+            </ul>
+          </div>
+          <div className="text-sm">
+            <div className="eyebrow mb-3">{F.legal} <span className="normal-case tracking-normal text-ink-3">· {F.englishOnly}</span></div>
+            <ul className="space-y-2 text-ink-2">
+              <li><Link href="/privacy" className="hover:text-ink">{F.privacy}</Link></li>
+              <li><Link href="/terms" className="hover:text-ink">{F.terms}</Link></li>
+              <li><Link href="/refunds" className="hover:text-ink">{F.refunds}</Link></li>
+              <li><TrackingChoice /></li>
+            </ul>
+          </div>
+        </div>
+        <div className="hairline mt-6 pt-5 text-sm">
+          <div className="eyebrow mb-3">{F.countries}</div>
+          <ul className="flex flex-wrap gap-x-4 gap-y-2 text-ink-2">
+            {names.map((c) => <li key={c.cc}><Link href={c.cc === "us" ? "/" : `/${c.cc}`} className="hover:text-ink">{c.names?.[loc.lang] ?? c.name}</Link></li>)}
+          </ul>
+        </div>
+        <div className="hairline mt-6 flex flex-wrap items-center justify-between gap-3 pt-5 text-xs text-ink-3">
+          <span>© {new Date().getFullYear()} PickupChecker</span>
+          <Link href="/api/health" className="hover:text-ink">{F.status}</Link>
         </div>
       </div>
     </footer>

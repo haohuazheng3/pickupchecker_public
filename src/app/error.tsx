@@ -7,10 +7,15 @@
  * checker, not the website.
  */
 import { useEffect, useRef, useState } from "react";
+import { useLang, useLocale, useT } from "@/components/i18n/LangProvider";
+import { fill, plural } from "@/lib/i18n/format";
 
 const BACKOFF_S = [4, 8, 15, 30];
 
 export default function RouteError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
+  const d = useT().chrome.error;
+  const lang = useLang();
+  const loc = useLocale();
   const [tries, setTries] = useState(0);
   const [left, setLeft] = useState(BACKOFF_S[0]);
   const retryRef = useRef(retry);
@@ -32,14 +37,14 @@ export default function RouteError({ error, retry }: { error: Error & { digest?:
   return (
     <div className="mx-auto max-w-xl px-4 py-16">
       <div className="pane p-6 sm:p-8" role="alert" aria-live="polite">
-        <h1 className="display text-2xl">This page didn&apos;t load</h1>
-        <p className="mt-2 text-ink-2">Something went wrong on our side. Your alerts are not affected: stores are still being checked and pushes still go out. This page tries again by itself.</p>
-        <p className="mt-4 text-sm text-ink-3 tabular-nums">{tries > 0 ? `Tried ${tries} time${tries === 1 ? "" : "s"}. ` : ""}Next try in {left} s.</p>
+        <h1 className="display text-2xl">{d.title}</h1>
+        <p className="mt-2 text-ink-2">{d.body}</p>
+        <p className="mt-4 text-sm text-ink-3 tabular-nums">{tries > 0 ? plural(lang, tries, d.tried) : ""}{fill(d.next, { s: left })}</p>
         <div className="mt-5 flex flex-wrap gap-2">
-          <button type="button" className="btn btn-primary" onClick={() => { setTries((n) => n + 1); retry(); }}>Try again now</button>
-          <a href="/" className="btn btn-ghost">Home</a>
+          <button type="button" className="btn btn-primary" onClick={() => { setTries((n) => n + 1); retry(); }}>{d.retry}</button>
+          <a href={loc.native ? `/${loc.id}` : "/"} className="btn btn-ghost">{d.home}</a>
         </div>
-        {error.digest && <p className="mt-4 text-xs text-ink-3">Reference {error.digest}</p>}
+        {error.digest && <p className="mt-4 text-xs text-ink-3">{fill(d.reference, { id: error.digest })}</p>}
       </div>
     </div>
   );

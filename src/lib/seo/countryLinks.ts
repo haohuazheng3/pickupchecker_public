@@ -5,6 +5,8 @@
  */
 import { citiesWithStores, cityPath, distanceMiles, statePath, statesWithStores, storesOf, storePath, placeTarget, type Store } from "../apple/catalog";
 import { COUNTRIES, type CountryCode } from "../apple/countries";
+import type { Lang } from "../i18n/locales";
+import { dict } from "../i18n/dict";
 
 export interface RegionRef { name: string; code: string; slug: string; href: string; count: number; cities: number; lat: number; lng: number }
 export interface CityRef { name: string; slug: string; state: string; stateSlug: string; href: string; count: number; lat: number; lng: number }
@@ -79,9 +81,14 @@ export function storeRefs(cc: CountryCode): { store: Store; href: string }[] {
   return [...storesOf(cc)].sort((a, b) => a.city.localeCompare(b.city) || a.name.localeCompare(b.name)).map((s) => ({ store: s, href: storePath(s) }));
 }
 
-/** "province" → "Province", "provinces" for headings. */
-export function regionWord(cc: CountryCode, plural = false, cap = false): string {
+/** "province" → "Province", "provinces" for headings; other languages from the dictionary ("Präfektur", "県"). */
+export function regionWord(cc: CountryCode, plural = false, cap = false, lang: Lang = "en"): string {
   const c = COUNTRIES[cc];
-  const w = (plural ? c.regionNounPlural : c.regionNoun) ?? (plural ? "areas" : "area");
+  let w: string;
+  if (lang === "en") w = (plural ? c.regionNounPlural : c.regionNoun) ?? (plural ? "areas" : "area");
+  else {
+    const forms = dict(lang).content.regionNouns[c.regionNoun ?? "area"] ?? dict(lang).content.regionNouns.area;
+    w = plural ? forms.other : forms.one ?? forms.other;
+  }
   return cap ? w[0].toUpperCase() + w.slice(1) : w;
 }

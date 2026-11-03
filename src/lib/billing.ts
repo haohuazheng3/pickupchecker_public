@@ -3,7 +3,9 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "./db";
 import { stripe } from "./stripe";
 import { env } from "./env";
-import { SPEED_LINE, PLANS, comparePlans, planFromPrice, priceIdFor, effectivePlan, type PaidPlanKey } from "./plans";
+import { notifyText } from "./i18n/notify";
+import type { Lang } from "./i18n/locales";
+import { SPEED, PLANS, comparePlans, planFromPrice, priceIdFor, effectivePlan, type PaidPlanKey } from "./plans";
 
 /** Upsert a subscription row from a Stripe subscription object (idempotent). */
 export async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
@@ -61,23 +63,26 @@ export async function userPlan(userId: string) {
  * until cancelled — there is deliberately no one-off month. Link is offered next to cards via the
  * payment method configuration named in STRIPE_PMC_ID.
  */
-export async function createCheckout(userId: string, email: string, plan: PaidPlanKey, watchId?: string | null): Promise<string> {
+/** Stripe's own locales for ours (Checkout, the billing portal). English: Stripe picks from the browser, as before. */
+const STRIPE_LOCALE: Partial<Record<Lang, string>> = { ja: "ja", ko: "ko", "zh-TW": "zh-TW", "zh-HK": "zh-HK", de: "de", "de-CH": "de", fr: "fr", "fr-CA": "fr-CA", it: "it", es: "es", nl: "nl", sv: "sv" };
+
+export async function createCheckout(userId: string, email: string, plan: PaidPlanKey, watchId?: string | null, lang: Lang = "en"): Promise<string> {
   const existing = await db().select().from(schema.users).where(eq(schema.users.id, userId)).limit(1);
   const customerId = existing[0]?.stripeCustomerId ?? undefined;
   try {
-    return await checkoutSession(userId, email, plan, watchId ?? null, customerId);
+    return await checkoutSession(userId, email, plan, watchId ?? null, customerId, lang);
   } catch (e) {
     // A customer id we stored no longer exists on Stripe (deleted, or test data): forget it and start fresh.
     const err = e as { code?: string; param?: string };
     if (customerId && err?.code === "resource_missing" && err?.param === "customer") {
       await db().update(schema.users).set({ stripeCustomerId: null }).where(eq(schema.users.id, userId));
-      return checkoutSession(userId, email, plan, watchId ?? null, undefined);
+      return checkoutSession(userId, email, plan, watchId ?? null, undefined, lang);
     }
     throw e;
   }
 }
 
-async function checkoutSession(userId: string, email: string, plan: PaidPlanKey, watchId: string | null, customerId: string | undefined): Promise<string> {
+async function checkoutSession(userId: string, email: string, plan: PaidPlanKey, watchId: string | null, customerId: string | undefined, lang: Lang = "en"): Promise<string> {
   const s = stripe();
   const site = env.siteUrl();
   const meta = { userId, plan, watchId: watchId ?? "", app: "pickupchecker" };
@@ -89,6 +94,7 @@ async function checkoutSession(userId: string, email: string, plan: PaidPlanKey,
     line_items: [{ price: priceIdFor(plan), quantity: 1 }],
     customer: customerId,
     customer_email: customerId ? undefined : email,
+    ...(STRIPE_LOCALE[lang] ? { locale: STRIPE_LOCALE[lang] } : {}),
     client_reference_id: userId,
     allow_promotion_codes: true,
     billing_address_collection: "auto",
@@ -97,7 +103,7 @@ async function checkoutSession(userId: string, email: string, plan: PaidPlanKey,
     metadata: meta,
     subscription_data: { metadata: meta },
     custom_text: {
-      submit: { message: `${PLANS[plan].name}: ${PLANS[plan].limit} alerts. ${SPEED_LINE} Monthly, cancel anytime.` },
+      submit: { message: notifyText(lang).checkoutSubmit(PLANS[plan].name, PLANS[plan].limit, SPEED.fastSec, SPEED.checkSec, SPEED.alertSec) },
     },
     // Per-session branding: the Stripe account is shared with sibling products, so the brand is set here.
     branding_settings: { display_name: "PickupChecker", background_color: "#f6f7f5", button_color: "#0a7f49", border_style: "rounded" },
@@ -260,12 +266,13 @@ async function portalConfiguration(): Promise<string> {
   return (portalConfig = created.id);
 }
 
-export async function portalUrl(customerId: string, flow?: { subscriptionId: string; returnTo: string }): Promise<string> {
+export async function portalUrl(customerId: string, flow?: { subscriptionId: string; returnTo: string }, lang: Lang = "en"): Promise<string> {
   const site = env.siteUrl();
   const session = await stripe().billingPortal.sessions.create({
     customer: customerId,
     configuration: await portalConfiguration(),
     return_url: `${site}/account`,
+    ...(STRIPE_LOCALE[lang] ? { locale: STRIPE_LOCALE[lang] } : {}),
     ...(flow ? { flow_data: { type: "subscription_update", subscription_update: { subscription: flow.subscriptionId }, after_completion: { type: "redirect", redirect: { return_url: `${site}${flow.returnTo}` } } } } : {}),
   } as Stripe.BillingPortal.SessionCreateParams);
   return session.url;

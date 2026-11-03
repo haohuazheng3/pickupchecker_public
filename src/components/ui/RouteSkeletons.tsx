@@ -6,6 +6,12 @@
  * Now the first load streams the page itself and only in-app navigations show these.
  */
 import { BoardSkeleton, ClockSkeleton, FeedSkeleton, PageHeadSkeleton, Skeleton, SkeletonCard, StoreCardSkeleton } from "./Skeleton";
+import { useT } from "@/components/i18n/LangProvider";
+
+/** The skeletons render inside NavSkeleton (a client component): the label in the page's language. */
+function useLoading(): string {
+  return useT().content.skeleton.loading;
+}
 
 export type SkeletonKind = "home" | "hub" | "state" | "city" | "store" | "product" | "map" | "restocks" | "install";
 
@@ -36,7 +42,7 @@ export function RouteSkeleton({ kind }: { kind: SkeletonKind }) {
 /** Home: eyebrow, h1, intro, then the two panes (stacked on phones). */
 function HomeSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl px-4" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto max-w-6xl px-4" aria-busy="true" aria-label={useLoading()}>
       <section className="pt-6 sm:pt-10">
         <Skeleton className="h-3 w-72 max-w-full" />
         <Skeleton className="mt-4 h-9 w-11/12 max-w-3xl sm:h-12" />
@@ -64,7 +70,7 @@ function HomeSkeleton() {
 /** Stores hub: head, model cards, then the grid of states. */
 function HubSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto max-w-6xl px-4 pt-8" aria-busy="true" aria-label={useLoading()}>
       <PageHeadSkeleton lines={2} actions={3} />
       <div className="mt-6 grid gap-3 md:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} chips={0} lines={1} />)}
@@ -79,7 +85,7 @@ function HubSkeleton() {
 /** State page: breadcrumb, head with city chips and two buttons, store cards grouped by city, clock + feed. */
 function StateSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto max-w-6xl px-4 pt-8" aria-busy="true" aria-label={useLoading()}>
       <PageHeadSkeleton crumbs chips={4} actions={2} />
       {[2, 1].map((n, g) => (
         <section key={g} className="mt-6">
@@ -100,7 +106,7 @@ function StateSkeleton() {
 /** City page: breadcrumb, head with two buttons, the store cards, clock + feed. */
 function CitySkeleton() {
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto max-w-6xl px-4 pt-8" aria-busy="true" aria-label={useLoading()}>
       <PageHeadSkeleton crumbs actions={2} />
       <section className="mt-6 grid gap-3 md:grid-cols-2">
         {Array.from({ length: 2 }).map((_, i) => <StoreCardSkeleton key={i} />)}
@@ -116,7 +122,7 @@ function CitySkeleton() {
 /** Store page: breadcrumb, head, three per-model cards, then clock + history beside the map/hours/nearby column. */
 function StoreSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto max-w-6xl px-4 pt-8" aria-busy="true" aria-label={useLoading()}>
       <PageHeadSkeleton crumbs lines={2} actions={2} />
       <section className="mt-6">
         <Skeleton className="h-6 w-52" />
@@ -150,7 +156,7 @@ function StoreSkeleton() {
 /** Product page: model tabs, h1, intro, filter chips, then the board pane beside the alerts/recent column. */
 function ProductSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto max-w-6xl px-4 pt-8" aria-busy="true" aria-label={useLoading()}>
       <nav className="mb-4 flex flex-wrap gap-2" aria-hidden>
         {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-9 w-32 rounded-full" />)}
       </nav>
@@ -186,7 +192,7 @@ function ProductSkeleton() {
 /** Map page: head and status line, the model/filter chips, then the map canvas at its real height. */
 function MapSkeleton() {
   return (
-    <div className="mx-auto max-w-[1400px] px-4 pt-8" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto max-w-[1400px] px-4 pt-8" aria-busy="true" aria-label={useLoading()}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0 flex-1">
           <Skeleton className="h-9 w-72 max-w-full sm:h-12" />
@@ -213,7 +219,7 @@ function MapSkeleton() {
 /** Restock log: title, count line, the filter chips, then the feed pane. */
 function RestocksSkeleton() {
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-8" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto max-w-4xl px-4 pt-8" aria-busy="true" aria-label={useLoading()}>
       <Skeleton className="h-9 w-56 sm:h-12" />
       <Skeleton className="mt-3 h-4 w-11/12 max-w-2xl" />
       <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -231,7 +237,7 @@ function RestocksSkeleton() {
 /** Install guide: the hero text beside the lock-screen mock, then the steps. */
 function InstallSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8 sm:pt-12" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto max-w-6xl px-4 pt-8 sm:pt-12" aria-busy="true" aria-label={useLoading()}>
       <section className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <Skeleton className="mb-4 h-3 w-64 max-w-full" />

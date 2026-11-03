@@ -1,0 +1,43 @@
+import type { ReactNode } from "react";
+import type { Dict } from "../en";
+
+/** 한국어 문구: chrome — 푸터, 404 페이지. */
+export const chrome: Dict["chrome"] = {
+  footer: {
+    blurb: "미국 Apple Store 269곳 전체의 iPhone 매장 픽업 재입고 알림: 모든 매장을 15초마다, 알림을 건 매장은 5초마다 확인해요.",
+    blurbIn: (allStores: string) => `${allStores}의 iPhone 매장 픽업 재입고 알림: 모든 매장을 15초마다, 알림을 건 매장은 5초마다 확인해요.`,
+    trademark: "Apple Inc.와 제휴하거나 Apple Inc.의 보증을 받은 서비스가 아닙니다. Apple, iPhone, Apple Store는 Apple Inc.의 상표입니다.",
+    product: "서비스",
+    duoStock: "iPhone Duo 재고",
+    proStock: "iPhone 18 Pro 재고",
+    proMaxStock: "iPhone 18 Pro Max 재고",
+    restockLog: "재입고 기록",
+    liveMap: "실시간 지도",
+    storesByState: "주별 매장",
+    pricing: "요금제",
+    company: "회사",
+    howItWorks: "작동 방식",
+    getApp: "앱 설치",
+    about: "소개",
+    contact: "문의",
+    allStates: "전체 주·도시 →",
+    storesIn: "Apple Store",
+    allStores: "전체 매장 →",
+    legal: "약관 및 정책",
+    privacy: "개인정보 처리방침",
+    terms: "이용약관",
+    refunds: "환불",
+    englishOnly: "영문",
+    questions: "iPhone Duo 궁금증",
+    restockTimes: "iPhone Duo는 언제 재입고되나요?",
+    countries: "국가",
+    status: "상태",
+  },
+  notFound: {
+    title: "페이지가 없어요",
+    body: (stores: ReactNode, map: ReactNode) => <>찾는 페이지가 없어요. {stores}이나 {map}에서 찾아보세요.</>,
+    stores: "지역별 매장",
+    map: "실시간 지도",
+    home: "홈으로",
+  },
+};

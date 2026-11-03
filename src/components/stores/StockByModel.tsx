@@ -3,6 +3,8 @@ import { MODELS, PART_INDEX, STORAGE_ORDER, COLOR_META, STORE_INDEX, modelKeyFor
 import { productFor, productPath, storePlace } from "@/lib/seo/products";
 import { alertHref } from "@/lib/seo/enrich";
 import type { StoreStockSummary } from "@/lib/stock/queries";
+import { t, pageLocale } from "@/lib/i18n/server";
+import { configLabel } from "@/lib/i18n/places";
 import { Dot } from "@/components/stock/StatusBits";
 import { LiveChecked } from "@/components/site/LiveChecked";
 
@@ -12,6 +14,8 @@ import { LiveChecked } from "@/components/site/LiveChecked";
  * data says that rather than "not checked yet".
  */
 export function StockByModel({ summary, storeNumber, lookupOff = false }: { summary: StoreStockSummary | undefined; storeNumber: string; lookupOff?: boolean }) {
+  const d = t().modules.stockByModel;
+  const lang = pageLocale().lang;
   const store = STORE_INDEX.get(storeNumber);
   const here = store ? storePlace(store) : undefined;
   return (
@@ -23,16 +27,16 @@ export function StockByModel({ summary, storeNumber, lookupOff = false }: { summ
         return (
           <div key={m.key} className={`pane-2 flex flex-col p-4 ${n ? "border-accent/40" : ""}`}>
             <div className="flex items-center justify-between gap-2">{here ? <Link href={productPath(productFor(m.key), here)} className="font-semibold hover:underline">{m.name} ›</Link> : <span className="font-semibold">{m.name}</span>}<Dot state={n ? "ok" : s ? "idle" : "warn"} live={n > 0} /></div>
-            <div className={`mt-1 text-sm ${n ? "text-accent" : "text-ink-3"}`}>{s ? (n ? `${n} of ${s.total} configurations available now` : `none of ${s.total} configurations right now`) : lookupOff ? "Apple isn't offering pickup lookups here right now" : "not checked yet"}</div>
+            <div className={`mt-1 text-sm ${n ? "text-accent" : "text-ink-3"}`}>{s ? (n ? d.availableNow(n, s.total) : d.noneNow(s.total)) : lookupOff ? d.lookupOff : d.notChecked}</div>
             {items.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {items.slice(0, 8).map((i) => { const chip = <><span className="h-2 w-2 rounded-full border border-ink/15" style={{ background: COLOR_META[i.color]?.hex ?? "#888" }} />{i.storage} {i.color}</>; return here ? <Link key={i.partNumber} href={productPath(productFor(modelKeyFor(i.model), i.storage, i.color), here)} className="inline-flex items-center gap-1.5 rounded-full bg-ink/6 px-2 py-0.5 text-xs text-ink-2 hover:bg-ink/10">{chip}</Link> : <span key={i.partNumber} className="inline-flex items-center gap-1.5 rounded-full bg-ink/6 px-2 py-0.5 text-xs text-ink-2">{chip}</span>; })}
-                {items.length > 8 && <span className="text-xs text-ink-3">+{items.length - 8}</span>}
+                {items.slice(0, 8).map((i) => { const chip = <><span className="h-2 w-2 rounded-full border border-ink/15" style={{ background: COLOR_META[i.color]?.hex ?? "#888" }} />{configLabel(i, lang)}</>; return here ? <Link key={i.partNumber} href={productPath(productFor(modelKeyFor(i.model), i.storage, i.color), here)} className="inline-flex items-center gap-1.5 rounded-full bg-ink/6 px-2 py-0.5 text-xs text-ink-2 hover:bg-ink/10">{chip}</Link> : <span key={i.partNumber} className="inline-flex items-center gap-1.5 rounded-full bg-ink/6 px-2 py-0.5 text-xs text-ink-2">{chip}</span>; })}
+                {items.length > 8 && <span className="text-xs text-ink-3">{d.more(items.length - 8)}</span>}
               </div>
             )}
             <div className="mt-auto flex items-center justify-between pt-3 text-xs text-ink-3">
-              <span>checked <LiveChecked iso={summary?.lastCheckedAt ?? null} model={m.key} stores={[storeNumber]} /></span>
-              <Link href={store && store.country !== "us" ? alertHref({ model: m.key, store: storeNumber, country: store.country }) : `/?model=${m.key}&store=${storeNumber}#notify`} className="font-medium text-ink hover:underline">Alert me →</Link>
+              <span>{d.checked(<LiveChecked iso={summary?.lastCheckedAt ?? null} model={m.key} stores={[storeNumber]} />)}</span>
+              <Link href={store && store.country !== "us" ? alertHref({ model: m.key, store: storeNumber, country: store.country }) : `/?model=${m.key}&store=${storeNumber}#notify`} className="font-medium text-ink hover:underline">{d.alert}</Link>
             </div>
           </div>
         );

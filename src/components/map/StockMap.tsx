@@ -14,6 +14,11 @@ import { LiveAgo } from "@/components/site/LiveAgo";
 import { MAP_INK, MAP_WORKER_URL as WORKER_URL, mapStyleFor } from "@/lib/map";
 import { currentTheme, onThemeChange, type Theme } from "@/lib/theme";
 import { rememberHere } from "@/lib/lastPlace";
+import { useLang, useT } from "@/components/i18n/LangProvider";
+import { Rich } from "@/components/i18n/Rich";
+import { fill, num, plural } from "@/lib/i18n/format";
+import { cityLabel, colorLabel, countryLabel, regionLabel, storeLabel } from "@/lib/i18n/places";
+import type { CountryCode } from "@/lib/apple/countries";
 
 export interface MapStore { n: string; name: string; city: string; state: string; code: string; path: string; cityHref: string; stateHref: string; lat: number; lng: number }
 function dotColor(t: Theme) { const ink = MAP_INK[t]; return ["match", ["get", "state"], "ok", ink.ok, "unknown", ink.unknown, ink.none] as unknown as string; }
@@ -48,13 +53,30 @@ function boundsOf(pts: { lat: number; lng: number }[], pad = 0.5): Bounds | null
 }
 
 export function StockMap({ stores, initial, focus, country }: { stores: MapStore[]; initial: MapSnapshot; focus: MapFocus; country?: MapCountry }) {
+  const d = useT().map;
+  const lang = useLang();
+  // Names in the page's language: English keeps the data's own; another language reads Apple's names in it.
+  const en = lang === "en";
+  const cc = (country?.cc ?? "us") as CountryCode;
+  const L = useMemo(() => ({
+    store: (s: { n: string; name: string }) => (en ? s.name : storeLabel({ storeNumber: s.n, name: s.name }, lang)),
+    /** "Apple Fifth Avenue" / "Apple 銀座". */
+    apple: (s: { n: string; name: string }) => { const n = en ? s.name : storeLabel({ storeNumber: s.n, name: s.name }, lang); return en || !/^apple\b/i.test(n) ? `Apple ${n}` : n; },
+    city: (c: string) => cityLabel(cc, c, lang),
+    region: (r: string) => regionLabel(cc, r, lang),
+    /** A region's code; where a country has none it is the region's (English) name, so it reads in the language too. */
+    code: (code: string, region: string) => (en || code !== region ? code : regionLabel(cc, region, lang)),
+    color: (c: string) => colorLabel(c, lang),
+    n: (x: number) => (en ? String(x) : num(lang, x)),
+    in: country ? (en ? country.inName : fill(d.inCountry, { country: countryLabel(cc, lang) })) : "",
+  }), [en, lang, cc, country, d]);
   const decode = useCallback((part: string): Decoded | null => {
     if (country) { const x = country.parts[part]; return x ? { ...x, partNumber: part } : null; }
     const item = PART_INDEX.get(part);
     return item ? { model: modelKeyFor(item.model), storage: item.storage, color: item.color, partNumber: part } : null;
   }, [country]);
   // A country's own extent replaces the US region buttons.
-  const regions = useMemo<Record<string, Bounds>>(() => (country ? { [`All of ${country.name}`]: boundsOf(stores, 0.6) ?? REGIONS["Lower 48"] } : REGIONS), [country, stores]);
+  const regions = useMemo<Record<string, Bounds>>(() => (country ? { [fill(d.allOf, { country: en ? country.name : countryLabel(cc, lang) })]: boundsOf(stores, 0.6) ?? REGIONS["Lower 48"] } : Object.fromEntries(Object.entries(REGIONS).map(([k, b]) => [d.regions[k] ?? k, b]))), [country, stores, d, en, cc, lang]);
   const [snap, setSnap] = useState<MapSnapshot>(initial);
   const [filter, setFilter] = useState<Filter>({ model: focus.model, storage: "", color: "" });
   const [selected, setSelected] = useState<string | null>(focus.store ?? null);
@@ -119,9 +141,9 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
     features: views.map((v) => ({
       type: "Feature" as const,
       geometry: { type: "Point" as const, coordinates: [v.lng, v.lat] },
-      properties: { n: v.n, name: v.name, city: v.city, code: v.code, count: v.parts.length, state: v.parts.length ? "ok" : v.checked ? "idle" : "unknown" },
+      properties: { n: v.n, name: L.store(v), apple: L.apple(v), city: L.city(v.city), code: L.code(v.code, v.state), count: v.parts.length, state: v.parts.length ? "ok" : v.checked ? "idle" : "unknown" },
     })),
-  }), [views]);
+  }), [views, L]);
 
   // ---- map lifecycle
   useEffect(() => {
@@ -130,7 +152,7 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
     if (!el) return;
     (async () => {
       let lib: typeof maplibregl;
-      try { lib = await import("maplibre-gl"); } catch { setMapError("The map library could not be loaded."); return; }
+      try { lib = await import("maplibre-gl"); } catch { setMapError(d.errors.library); return; }
       if (cancelled) return;
       libRef.current = lib;
       lib.setWorkerUrl(WORKER_URL);
@@ -145,13 +167,13 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
       } catch {
         // MapLibre throws synchronously when the browser has no WebGL2 (old GPUs, some locked-down Chromes);
         // show the fallback note instead of an unhandled rejection — the store list below works without it.
-        setMapError("This browser can't draw the map (WebGL2 is off or unsupported)");
+        setMapError(d.errors.webgl);
         return;
       }
       mapRef.current = map;
       if (process.env.NODE_ENV !== "production") (window as unknown as { __pcMap?: maplibregl.Map }).__pcMap = map;
       map.addControl(new lib.NavigationControl({ showCompass: false }), "top-left");
-      map.on("error", (e: maplibregl.ErrorEvent) => { if (!map.isStyleLoaded()) setMapError(`Map tiles unavailable (${e.error?.message ?? "network"})`); });
+      map.on("error", (e: maplibregl.ErrorEvent) => { if (!map.isStyleLoaded()) setMapError(fill(d.errors.tiles, { reason: e.error?.message ?? d.errors.network })); });
       // Theme toggle: swap the basemap but keep our sources/layers, then recolour them.
       const KEEP_SOURCES = ["stores", "me"], KEEP_LAYERS = ["halo", "dots", "labels", "me-halo", "me"];
       const offTheme = onThemeChange((t: Theme) => {
@@ -182,8 +204,8 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
           map.getCanvas().style.cursor = "pointer";
           const f = e.features?.[0];
           if (!f || f.geometry.type !== "Point") return;
-          const p = f.properties as { name: string; city: string; code: string; count: number };
-          popup.setLngLat(f.geometry.coordinates as [number, number]).setHTML(`<b>Apple ${esc(p.name)}</b><span>${esc(p.city)}, ${esc(p.code)} · ${p.count ? `${p.count} in stock` : "none"}</span>`).addTo(map);
+          const p = f.properties as { apple: string; city: string; code: string; count: number };
+          popup.setLngLat(f.geometry.coordinates as [number, number]).setHTML(`<b>${esc(p.apple)}</b><span>${esc(p.city)}, ${esc(p.code)} · ${p.count ? fill(d.popupCount, { n: L.n(p.count) }) : d.popupNone}</span>`).addTo(map);
         });
         map.on("mouseleave", "dots", () => { map.getCanvas().style.cursor = ""; popup.remove(); });
         map.on("click", "dots", (e: maplibregl.MapLayerMouseEvent) => { const f = e.features?.[0]; if (f) setSelected(String((f.properties as { n: string }).n)); });
@@ -242,32 +264,35 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
   const own = country ? Object.values(country.parts).filter((x) => x.model === filter.model) : [];
   const storages = filter.model === "all" ? [] : country ? STORAGE_ORDER.filter((s) => own.some((x) => x.storage === s)) : storagesFor(filter.model);
   const colors = filter.model === "all" ? [] : country ? [...new Set(own.map((x) => x.color))] : colorsFor(filter.model);
-  const regionNoun = country ? (country.regionNoun ?? "area") : "state";
+  // What the stores are grouped by: English keeps the country data's words; another language its own.
+  const noun = country ? (en ? { one: country.regionNoun ?? "area", other: country.regionNounPlural ?? "areas" } : d.nouns[country.regionNoun ?? "area"] ?? d.nouns.area) : { one: d.usNoun, other: d.usNouns };
+  const regionNoun = noun.one;
+  const model = modelMeta ? modelMeta.short : "iPhone";
   void tick;
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 pt-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="display text-3xl sm:text-5xl">Pickup stock map</h1>
-          <p className="mt-2 max-w-2xl text-ink-2">{country ? `${stores.length === 1 ? "The Apple Store" : `All ${stores.length} Apple Stores`} ${country.inName}` : `All ${stores.length} US Apple Stores`}, live. Bigger dot = more {modelMeta ? modelMeta.short : "iPhone"} configurations in stock.</p>
+          <h1 className="display text-3xl sm:text-5xl">{d.title}</h1>
+          <p className="mt-2 max-w-2xl text-ink-2">{country ? fill(stores.length === 1 ? d.leadOne : d.leadAll, { n: L.n(stores.length), in: L.in }) : fill(d.leadUs, { n: L.n(stores.length) })}{fill(d.leadTail, { model })}</p>
         </div>
-        <div className="inline-flex items-center gap-2 text-sm text-ink-3"><span className={`dot ${stats.newest ? "dot-ok dot-live" : "dot-warn"}`} /> {stats.newest ? <>Updated <LiveAgo iso={stats.newest} /></> : "Waiting for the first sweep"}</div>
+        <div className="inline-flex items-center gap-2 text-sm text-ink-3"><span className={`dot ${stats.newest ? "dot-ok dot-live" : "dot-warn"}`} /> {stats.newest ? <Rich text={d.updated} vars={{ ago: <LiveAgo iso={stats.newest} /> }} /> : d.waiting}</div>
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
         {MODELS.map((m) => <button key={m.key} type="button" className="chip" aria-pressed={filter.model === m.key} onClick={() => setFilter({ model: m.key, storage: "", color: "" })}>{m.name}</button>)}
-        <button type="button" className="chip" aria-pressed={filter.model === "all"} onClick={() => setFilter({ model: "all", storage: "", color: "" })}>All models</button>
+        <button type="button" className="chip" aria-pressed={filter.model === "all"} onClick={() => setFilter({ model: "all", storage: "", color: "" })}>{d.allModels}</button>
         {modelMeta && (
           <>
             <span className="mx-1 text-ink-3">·</span>
-            <select className="input py-2.5" style={{ width: "auto" }} value={filter.storage} onChange={(e) => setFilter((f) => ({ ...f, storage: e.target.value }))} aria-label="Storage">
-              <option value="">Any storage</option>
+            <select className="input py-2.5" style={{ width: "auto" }} value={filter.storage} onChange={(e) => setFilter((f) => ({ ...f, storage: e.target.value }))} aria-label={d.storage}>
+              <option value="">{d.anyStorage}</option>
               {storages.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
-            <select className="input py-2.5" style={{ width: "auto" }} value={filter.color} onChange={(e) => setFilter((f) => ({ ...f, color: e.target.value }))} aria-label="Color">
-              <option value="">Any color</option>
-              {colors.map((c) => <option key={c} value={c}>{c}</option>)}
+            <select className="input py-2.5" style={{ width: "auto" }} value={filter.color} onChange={(e) => setFilter((f) => ({ ...f, color: e.target.value }))} aria-label={d.color}>
+              <option value="">{d.anyColor}</option>
+              {colors.map((c) => <option key={c} value={c}>{L.color(c)}</option>)}
             </select>
           </>
         )}
@@ -276,25 +301,25 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="pane relative h-[62vh] min-h-[460px] overflow-hidden">
           {/* explicit size, not inset-0: maplibre's own CSS sets position: relative on the container */}
-          <div ref={mapEl} className="h-full w-full" aria-label={country ? `Map of Apple Stores ${country.inName}` : "Map of US Apple Stores"} role="application" />
-          {!ready && !mapError && <div className="absolute inset-0 flex items-center justify-center bg-bg-2 text-sm text-ink-3"><span className="spinner mr-2" /> Loading map…</div>}
-          {mapError && <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-ink-2">{mapError}. The store list still works.</div>}
+          <div ref={mapEl} className="h-full w-full" aria-label={country ? fill(d.mapLabel, { in: L.in }) : d.mapLabelUs} role="application" />
+          {!ready && !mapError && <div className="absolute inset-0 flex items-center justify-center bg-bg-2 text-sm text-ink-3"><span className="spinner mr-2" /> {d.loading}</div>}
+          {mapError && <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-ink-2">{fill(d.errors.tail, { error: mapError })}</div>}
           <div className="absolute right-3 top-3 flex flex-wrap justify-end gap-1.5">
-            <button type="button" className="rounded-full border border-accent/50 bg-pane px-2.5 py-1 text-[11px] font-medium text-accent backdrop-blur hover:bg-ink/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={nearMe} disabled={locating}>{locating ? "Locating…" : "📍 Near me"}</button>
+            <button type="button" className="rounded-full border border-accent/50 bg-pane px-2.5 py-1 text-[11px] font-medium text-accent backdrop-blur hover:bg-ink/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={nearMe} disabled={locating}>{locating ? d.locating : d.nearMe}</button>
             {Object.entries(regions).map(([name, b]) => <button key={name} type="button" className="rounded-full border border-line-2 bg-pane px-2.5 py-1 text-[11px] font-medium backdrop-blur hover:bg-ink/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={() => flyTo(b)}>{name}</button>)}
           </div>
           <div className="absolute bottom-7 left-3 flex flex-wrap gap-x-4 gap-y-1 rounded-2xl border border-line bg-pane px-3 py-2 text-xs text-ink-2 backdrop-blur">
-            <span className="inline-flex items-center gap-1.5"><span className="dot dot-ok" /> in stock</span>
-            <span className="inline-flex items-center gap-1.5"><span className="dot" /> none</span>
-            <span className="inline-flex items-center gap-1.5"><span className="dot dot-warn" /> not checked yet</span>
+            <span className="inline-flex items-center gap-1.5"><span className="dot dot-ok" /> {d.legend.inStock}</span>
+            <span className="inline-flex items-center gap-1.5"><span className="dot" /> {d.legend.none}</span>
+            <span className="inline-flex items-center gap-1.5"><span className="dot dot-warn" /> {d.legend.unchecked}</span>
           </div>
         </div>
 
         <aside className="space-y-4">
           <div className="pane p-5">
-            <div className="eyebrow">Right now</div>
-            <div className="mt-2 flex items-baseline gap-2"><span className="display text-5xl">{stats.withStock}</span><span className="text-ink-3">of {stores.length} stores</span></div>
-            <p className="mt-1 text-sm text-ink-2">{stats.configs} {modelMeta ? modelMeta.short : "iPhone"} configuration{stats.configs === 1 ? "" : "s"} in stock{filter.storage ? ` · ${filter.storage}` : ""}{filter.color ? ` · ${filter.color}` : ""}.</p>
+            <div className="eyebrow">{d.rightNow}</div>
+            <div className="mt-2 flex items-baseline gap-2"><span className="display text-5xl">{stats.withStock}</span><span className="text-ink-3">{fill(d.ofStores, { n: L.n(stores.length) })}</span></div>
+            <p className="mt-1 text-sm text-ink-2">{fill(plural(lang, stats.configs, d.configs), { n: L.n(stats.configs), model })}{filter.storage ? ` · ${filter.storage}` : ""}{filter.color ? ` · ${L.color(filter.color)}` : ""}.</p>
             {stats.states.length > 0 && stats.withStock > 0 && (
               <ol className="mt-4 space-y-1.5">
                 {stats.states.filter((s) => s.withStock > 0).slice(0, 8).map((s) => (
@@ -308,7 +333,7 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
                 ))}
               </ol>
             )}
-            {stats.withStock === 0 && <p className="mt-3 text-sm text-ink-3">{stats.checked ? "No store lists this configuration right now." : "First sweep in progress."}</p>}
+            {stats.withStock === 0 && <p className="mt-3 text-sm text-ink-3">{stats.checked ? d.noneListed : d.firstSweep}</p>}
           </div>
 
           <div className="pane p-5">
@@ -316,26 +341,26 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
               <>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="eyebrow">Selected store</div>
-                    <h2 className="mt-1 text-xl font-semibold">Apple {sel.name}</h2>
-                    <div className="text-sm text-ink-3">{sel.city}, {sel.state} · checked <LiveAgo iso={sel.checked} /></div>
+                    <div className="eyebrow">{d.selected}</div>
+                    <h2 className="mt-1 text-xl font-semibold">{L.apple(sel)}</h2>
+                    <div className="text-sm text-ink-3"><Rich text={d.checked} vars={{ city: L.city(sel.city), region: L.region(sel.state), ago: <LiveAgo iso={sel.checked} /> }} /></div>
                   </div>
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSelected(null)} aria-label="Close">✕</button>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSelected(null)} aria-label={d.close}>✕</button>
                 </div>
-                <SelectedParts parts={sel.parts} decode={decode} />
+                <SelectedParts parts={sel.parts} decode={decode} empty={d.nothingMatching} color={L.color} />
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Link href={sel.path} className="btn btn-primary btn-sm">Open store page →</Link>
-                  <Link href={`${country ? `/${country.cc}` : "/"}?model=${modelMeta?.key ?? "duo"}&store=${sel.n}#notify`} className="btn btn-ghost btn-sm">Alert me here</Link>
+                  <Link href={sel.path} className="btn btn-primary btn-sm">{d.openStore}</Link>
+                  <Link href={`${country ? `/${country.cc}` : "/"}?model=${modelMeta?.key ?? "duo"}&store=${sel.n}#notify`} className="btn btn-ghost btn-sm">{d.alertHere}</Link>
                 </div>
-                <p className="mt-2 text-xs text-ink-3"><Link href={sel.cityHref} className="underline hover:text-ink">{sel.city}</Link> · <Link href={sel.stateHref} className="underline hover:text-ink">{sel.state}</Link></p>
+                <p className="mt-2 text-xs text-ink-3"><Link href={sel.cityHref} className="underline hover:text-ink">{L.city(sel.city)}</Link> · <Link href={sel.stateHref} className="underline hover:text-ink">{L.region(sel.state)}</Link></p>
               </>
             ) : (
               <>
-                <div className="eyebrow">Stores with stock</div>
-                {stats.withStock === 0 ? <p className="mt-2 text-sm text-ink-3">Tap a dot for details.</p> : (
+                <div className="eyebrow">{d.withStock}</div>
+                {stats.withStock === 0 ? <p className="mt-2 text-sm text-ink-3">{d.tapDot}</p> : (
                   <ul className="mt-2 max-h-72 divide-y divide-line overflow-auto text-sm">
                     {views.filter((v) => v.parts.length).sort((a, b) => b.parts.length - a.parts.length || a.state.localeCompare(b.state)).slice(0, 60).map((v) => (
-                      <li key={v.n}><button type="button" className="flex w-full items-center justify-between gap-2 py-2 text-left hover:text-accent" onClick={() => focusStore(v.n)}><span><span className="font-medium">{v.name}</span> <span className="text-ink-3">· {v.city}, {v.code}</span></span><span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs text-accent">{v.parts.length}</span></button></li>
+                      <li key={v.n}><button type="button" className="flex w-full items-center justify-between gap-2 py-2 text-left hover:text-accent" onClick={() => focusStore(v.n)}><span><span className="font-medium">{L.store(v)}</span> <span className="text-ink-3">· {L.city(v.city)}, {L.code(v.code, v.state)}</span></span><span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs text-accent">{v.parts.length}</span></button></li>
                     ))}
                   </ul>
                 )}
@@ -347,16 +372,16 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
 
       <section className="pane mt-8 p-5 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="text-xl font-semibold">By {regionNoun}</h2>
-          <p className="text-sm text-ink-3">{stats.states.filter((s) => s.withStock).length} of {stats.states.length} {country ? (country.regionNounPlural ?? "areas") : "states and territories"} have {modelMeta ? modelMeta.short : "iPhone"} stock.</p>
+          <h2 className="text-xl font-semibold">{fill(d.byRegion, { noun: regionNoun })}</h2>
+          <p className="text-sm text-ink-3">{fill(d.regionsHave, { n: L.n(stats.states.filter((s) => s.withStock).length), total: L.n(stats.states.length), nouns: noun.other, model })}</p>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-ink-3"><tr><th className="py-2 pr-3 font-medium">{country ? regionNoun[0].toUpperCase() + regionNoun.slice(1) : "State"}</th><th className="py-2 pr-3 font-medium">Stores</th><th className="py-2 pr-3 font-medium">With stock</th><th className="py-2 pr-3 font-medium">Configurations</th><th className="py-2 font-medium">Share</th></tr></thead>
+            <thead className="text-left text-xs uppercase tracking-wide text-ink-3"><tr><th className="py-2 pr-3 font-medium">{country ? regionNoun[0].toUpperCase() + regionNoun.slice(1) : d.usHeader}</th><th className="py-2 pr-3 font-medium">{d.table.stores}</th><th className="py-2 pr-3 font-medium">{d.table.withStock}</th><th className="py-2 pr-3 font-medium">{d.table.configs}</th><th className="py-2 font-medium">{d.table.share}</th></tr></thead>
             <tbody className="divide-y divide-line">
               {stats.states.map((s) => (
                 <tr key={s.code} className="cursor-pointer hover:bg-ink/5" onClick={() => focusState(s.code)}>
-                  <td className="py-2 pr-3"><span className="font-mono text-xs text-ink-3">{s.code}</span> {s.name} <Link href={stores.find((x) => x.code === s.code)?.stateHref ?? (country ? `/${country.cc}` : "/stores")} className="ml-1 text-xs text-ink-3 underline hover:text-ink" onClick={(e) => e.stopPropagation()}>page</Link></td>
+                  <td className="py-2 pr-3"><span className="font-mono text-xs text-ink-3">{L.code(s.code, s.name)}</span> {L.region(s.name)} <Link href={stores.find((x) => x.code === s.code)?.stateHref ?? (country ? `/${country.cc}` : "/stores")} className="ml-1 text-xs text-ink-3 underline hover:text-ink" onClick={(e) => e.stopPropagation()}>{d.table.page}</Link></td>
                   <td className="py-2 pr-3 text-ink-2">{s.stores}</td>
                   <td className={`py-2 pr-3 ${s.withStock ? "text-accent" : "text-ink-3"}`}>{s.withStock}</td>
                   <td className="py-2 pr-3 text-ink-2">{s.configs}</td>
@@ -371,9 +396,9 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
   );
 }
 
-function SelectedParts({ parts, decode }: { parts: string[]; decode: (part: string) => Decoded | null }) {
+function SelectedParts({ parts, decode, empty, color }: { parts: string[]; decode: (part: string) => Decoded | null; empty: string; color: (c: string) => string }) {
   const items = parts.map((p) => decode(p)).filter((x): x is Decoded => Boolean(x));
-  if (items.length === 0) return <p className="mt-3 text-sm text-ink-3">Nothing matching your filter right now.</p>;
+  if (items.length === 0) return <p className="mt-3 text-sm text-ink-3">{empty}</p>;
   const groups = MODELS.map((m) => ({ m, items: items.filter((i) => i.model === m.key).sort((a, b) => STORAGE_ORDER.indexOf(a.storage) - STORAGE_ORDER.indexOf(b.storage) || a.color.localeCompare(b.color)) })).filter((g) => g.items.length);
   return (
     <div className="mt-3 space-y-3">
@@ -381,7 +406,7 @@ function SelectedParts({ parts, decode }: { parts: string[]; decode: (part: stri
         <div key={g.m.key}>
           <div className="text-xs font-semibold uppercase tracking-wide text-ink-3">{g.m.name} · {g.items.length}</div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {g.items.map((i) => <span key={i.partNumber} className="inline-flex items-center gap-1.5 rounded-full bg-ink/6 px-2 py-0.5 text-xs text-ink-2"><span className="h-2.5 w-2.5 rounded-full border border-ink/15" style={{ background: COLOR_META[i.color]?.hex ?? "#888" }} />{i.storage} {i.color}</span>)}
+            {g.items.map((i) => <span key={i.partNumber} className="inline-flex items-center gap-1.5 rounded-full bg-ink/6 px-2 py-0.5 text-xs text-ink-2"><span className="h-2.5 w-2.5 rounded-full border border-ink/15" style={{ background: COLOR_META[i.color]?.hex ?? "#888" }} />{i.storage} {color(i.color)}</span>)}
           </div>
         </div>
       ))}

@@ -12,6 +12,13 @@ import { PwaBoot } from "@/components/pwa/PwaBoot";
 import { NavSkeleton } from "@/components/ui/NavSkeleton";
 import { FreshOnReturn } from "@/components/site/FreshOnReturn";
 import { siteLd } from "@/lib/seo/siteLd";
+import { headers } from "next/headers";
+import { LangProvider } from "@/components/i18n/LangProvider";
+import { LangSuggest } from "@/components/i18n/LangSuggest";
+import { Suspense } from "react";
+import { requestLocale } from "@/lib/i18n/server";
+import { APP_LOCALE_HEADER, nativeLocale } from "@/lib/i18n/locales";
+import { CDICTS } from "@/lib/i18n/cdict/all";
 
 // "optional": the page renders in the web font only if it is there within ~100 ms (cached after the first
 // visit); otherwise it keeps the metric-matched fallback for that view instead of swapping mid-read. Pages now
@@ -44,9 +51,12 @@ export const metadata: Metadata = {
 // THEME_BOOT and the toggle switch it with the theme.
 export const viewport: Viewport = { themeColor: THEME_COLORS.light, width: "device-width", initialScale: 1, viewportFit: "cover" };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // The page's language (proxy: native tree, or the person's for app pages); crossing languages is a full load, so this holds for the whole visit.
+  const loc = await requestLocale();
+  const app = nativeLocale((await headers()).get(APP_LOCALE_HEADER)) ?? null;
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang={loc.native ? loc.tag : "en"} className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         {/* Runs as the parser reaches it — before any paint — so a dark reader never sees a light flash. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
@@ -54,6 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteLd) }} />
       </head>
       <body className="flex min-h-full flex-col">
+        <LangProvider loc={loc} app={app} d={loc.lang === "en" ? null : CDICTS[loc.lang]}>
         <ClerkProvider
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
           appearance={{ variables: { colorPrimary: "#0a7f49" } }}
@@ -61,15 +72,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           signUpUrl="/?signin=1"
         >
           <div className="void-bg" aria-hidden="true" />
-          <Header />
+          <Header loc={loc} />
+          <Suspense fallback={null}><LangSuggest /></Suspense>
           <main className="flex-1 pb-24 sm:pb-28"><NavSkeleton>{children}</NavSkeleton></main>
-          <Footer />
+          <Footer loc={loc} />
           <AlertBar />
           <AlertLinkHost />
           <FreshOnReturn />
         </ClerkProvider>
         <Consent />
         <PwaBoot />
+        </LangProvider>
       </body>
     </html>
   );

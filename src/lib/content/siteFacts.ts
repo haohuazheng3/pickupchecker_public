@@ -8,6 +8,9 @@ import { sql } from "drizzle-orm";
 import { db, hasDatabase } from "../db";
 import { ALL_STORES, PART_INDEX, countryOfStore, modelKeyFor, storePath, storeTimeZone, type Store } from "../apple/catalog";
 import { recordError, errorMessage } from "../errors";
+import type { Lang } from "../i18n/locales";
+import { dict } from "../i18n/dict";
+import { hour as hourIn, num, plural, stamp, weekdays } from "../i18n/format";
 
 /** Tracking of the 269 US stores began on this day; the 18 other countries on the second date. */
 export const TRACKING_SINCE_US = "2026-10-29";
@@ -150,23 +153,37 @@ export async function siteFacts(): Promise<SiteFacts> {
 
 /* ---------------- wording shared by llms.txt, llms-full.txt and /how-it-works ---------------- */
 
+/** English weekday names, Sunday first; `weekdayName(i, lang)` for a page's language. */
 export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+export function weekdayName(i: number, lang: Lang = "en"): string {
+  return lang === "en" ? WEEKDAYS[i] : weekdays(lang)[i];
+}
 
-export function hourLabel(h: number): string {
+/** "8 AM", "noon", "midnight" ("8時", "8 Uhr" in other languages). */
+export function hourLabel(h: number, lang: Lang = "en"): string {
+  if (lang !== "en") return hourIn(lang, h, true);
   return h === 0 ? "midnight" : h === 12 ? "noon" : h < 12 ? `${h} AM` : `${h - 12} PM`;
 }
 
+/** A number in these sentences: English raw, as always; other languages grouped. */
+const N = (n: number, lang: Lang) => (lang === "en" ? String(n) : num(lang, n));
+/** Plural forms with English exactly as before ("1 confirmed restock", "2 days"). */
+const count = (n: number, forms: { one?: string; other: string }, lang: Lang) => (lang === "en" ? (n === 1 ? forms.one ?? forms.other : forms.other).replace(/#/g, String(n)) : plural(lang, n, forms));
+
 /** "Usually restocks around 8 AM local time[, busiest on Friday]; 30 confirmed restocks in the last 30 days; typically listed ~5 min…" */
-export function patternSentence(p: StorePattern | undefined): string {
-  if (!p) return `No confirmed restock in the last ${PATTERN_DAYS} days.`;
-  const count = `${p.restocks} confirmed restock${p.restocks === 1 ? "" : "s"} in the last ${PATTERN_DAYS} days`;
-  const stay = p.medianStayMin != null ? `; typically listed ~${p.medianStayMin} min before selling out` : "";
-  if (p.peakHour == null) return `${count}${p.days > 0 && p.days < PATTERN_MIN_DAYS ? ` on ${p.days} day${p.days === 1 ? "" : "s"}` : ""} — too few to call a pattern yet${stay}.`;
-  return `Usually restocks around ${hourLabel(p.peakHour)} local time${p.peakWeekday != null ? `, busiest on ${WEEKDAYS[p.peakWeekday]}` : ""}; ${count}${stay}.`;
+export function patternSentence(p: StorePattern | undefined, lang: Lang = "en"): string {
+  const d = dict(lang).content.pattern;
+  const days = N(PATTERN_DAYS, lang);
+  if (!p) return d.none(days);
+  const restocks = d.countIn(count(p.restocks, d.nConfirmed, lang), days);
+  const stay = p.medianStayMin != null ? d.stay(N(p.medianStayMin, lang)) : "";
+  if (p.peakHour == null) return d.tooFew(restocks, p.days > 0 && p.days < PATTERN_MIN_DAYS ? count(p.days, d.nDays, lang) : null, stay);
+  return d.usual(hourLabel(p.peakHour, lang), p.peakWeekday != null ? weekdayName(p.peakWeekday, lang) : null, restocks, stay);
 }
 
-/** "Nov 2, 2:31 PM" in the store's own zone. */
-export function localStamp(iso: string, store: Pick<Store, "storeNumber" | "country" | "timeZone" | "state">): string {
+/** "Nov 2, 2:31 PM" in the store's own zone ("2. Nov., 14:31" in German). */
+export function localStamp(iso: string, store: Pick<Store, "storeNumber" | "country" | "timeZone" | "state">, lang: Lang = "en"): string {
+  if (lang !== "en") return stamp(lang, iso, storeTimeZone(store as Store));
   return new Intl.DateTimeFormat("en-US", { timeZone: storeTimeZone(store as Store), month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
 }
 

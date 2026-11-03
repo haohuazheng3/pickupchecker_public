@@ -426,3 +426,12 @@ html.dialog-open { overflow: hidden; }
 .search-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 @media (prefers-reduced-motion: reduce) { .search-dialog[open] { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .alert-dialog[open] { animation: none; } }
+
+/* Native-language versions (docs/i18n.md §6). Korean breaks lines between words, not inside them; Chinese and
+   Japanese follow strict line-breaking (no small kana or closing punctuation at a line start); any of them may
+   break a long run without spaces rather than push a tile or table wider than a phone. */
+:lang(ko) { word-break: keep-all; overflow-wrap: anywhere; }
+:lang(ja), :lang(zh) { line-break: strict; overflow-wrap: anywhere; }
+/* Translated labels run longer than English (German ~30 %): on a native version a button or chip may wrap rather
+   than run off a phone screen. English pages (html lang="en") keep their one-line buttons exactly as before. */
+html:not([lang="en"]) .btn, html:not([lang="en"]) .chip { white-space: normal; max-width: 100%; line-height: 1.25; text-align: center; }

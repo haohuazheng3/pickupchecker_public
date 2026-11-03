@@ -5,6 +5,8 @@
  * on mount (suppressHydrationWarning covers the second that passes in between).
  */
 import { useEffect, useState } from "react";
+import { useLang } from "@/components/i18n/LangProvider";
+import { agoFine, never as neverIn } from "@/lib/i18n/format";
 
 export function formatAgo(d: Date | string | null | undefined, now: number): string {
   if (!d) return "never";
@@ -17,13 +19,14 @@ export function formatAgo(d: Date | string | null | undefined, now: number): str
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-export function LiveAgo({ iso, className = "", never = "never" }: { iso: Date | string | null | undefined; className?: string; never?: string }) {
+export function LiveAgo({ iso, className = "", never }: { iso: Date | string | null | undefined; className?: string; never?: string }) {
+  const lang = useLang();
   const value = iso instanceof Date ? iso.toISOString() : iso ?? null;
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
-  if (!value) return <span className={className}>{never}</span>;
-  return <span className={`tabular-nums ${className}`} suppressHydrationWarning>{formatAgo(value, now)}</span>;
+  if (!value) return <span className={className}>{never ?? neverIn(lang)}</span>;
+  return <span className={`tabular-nums ${className}`} suppressHydrationWarning>{lang === "en" ? formatAgo(value, now) : agoFine(lang, value, now)}</span>;
 }

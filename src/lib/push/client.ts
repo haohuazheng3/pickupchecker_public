@@ -109,9 +109,12 @@ function needsRenewal(sub: PushSubscription, vapidPublicKey: string): boolean {
 /** Endpoint of the subscription subscribePush just replaced; consumed by the next syncSubscription. */
 let replacedEndpoint: string | null = null;
 
+/** The message subscribePush throws without a service worker (usePush shows it in the reader's language). */
+export const SW_UNAVAILABLE = "Service worker unavailable";
+
 export async function subscribePush(vapidPublicKey: string, opts: { fresh?: boolean } = {}): Promise<PushSubscription> {
   const reg = await registerSw();
-  if (!reg) throw new Error("Service worker unavailable");
+  if (!reg) throw new Error(SW_UNAVAILABLE);
   const existing = await reg.pushManager.getSubscription();
   if (existing) {
     if (!opts.fresh && !needsRenewal(existing, vapidPublicKey)) return existing;

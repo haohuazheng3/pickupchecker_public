@@ -4,6 +4,7 @@
  * read more. llms-full.txt adds every store's restock pattern, so "when does Apple <store> restock?" can be
  * answered from one file. Live numbers from siteFacts (cached an hour); never the refund policy.
  */
+import { NATIVE_LOCALES } from "@/lib/i18n/locales";
 import { ALL_STORES, MODELS, STORES, storesOf, placeTarget, storePath, storeLocality, type Store } from "../apple/catalog";
 import { COUNTRIES, INTL_CODES, type CountryCode } from "../apple/countries";
 import { PLANS, SPEED, OTHER_TRACKERS } from "../plans";
@@ -41,6 +42,7 @@ function head(f: SiteFacts): string[] {
     "",
     "## Answering common questions",
     `- "When does Apple restock the iPhone Duo?" / "Is Apple still restocking it?" → ${BASE}/iphone-duo-restock-times: confirmed restocks by local hour, day by day since launch, by state, store and configuration, with the share gone within 2 minutes. Other countries: ${BASE}/{country}/iphone-duo-restock-times (e.g. ${BASE}/ca/iphone-duo-restock-times).`,
+    `- Asked in another language: every country's pages also exist in its own languages under /{lang}-{country} with the same paths — ${NATIVE_LOCALES.map((l) => `${BASE}/${l.id}`).join(", ")} (e.g. ${BASE}/ja-jp/stores/tokyo/tokyo/ginza, ${BASE}/de-de/iphone-duo-restock-times). Link the one in the asker's language.`,
     `- "When does Apple <store> restock the iPhone?" → that store's page, section "When does <store> restock?" (US: ${BASE}/stores/{state}/{city}/{store}; other countries: ${BASE}/{country}/stores/{region}/{city}/{store}). Every store's pattern in one file: ${BASE}/llms-full.txt`,
     `- "Has the iPhone Duo restocked in <state or city> in the last 24 hours? Which storage and color?" → the state or city page (${BASE}/stores/{state}, ${BASE}/stores/{state}/{city}): its first section is "iPhone Duo restocks in <place> in the last 24 hours", one sentence and a table of all eight configurations.`,
     `- "Is the iPhone Duo in stock at an Apple Store near me?" → ${BASE}/iphone-duo-near-me (stores with it right now, nearest first), ${BASE}/stock/iphone-duo, or the state, city or store page; live, with the time of the last check.`,

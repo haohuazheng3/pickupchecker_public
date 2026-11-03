@@ -8,6 +8,9 @@ import { comparePlans, isPaidPlan } from "@/lib/plans";
 import { db, schema } from "@/lib/db";
 import { recordError, errorMessage } from "@/lib/errors";
 import { logOps } from "@/lib/ops";
+import { cookies } from "next/headers";
+import { LANG_COOKIE, nativeLocale } from "@/lib/i18n/locales";
+import { langOfUser } from "@/lib/i18n/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,7 +49,9 @@ export async function POST(req: Request) {
       await logOps("web", "info", `plan changed ${current.plan.key} → ${plan}`, { userId: u.id });
       return NextResponse.json({ changed: true, plan });
     }
-    const url = await createCheckout(u.id, u.email, plan, watchId ?? null);
+    // Stripe's page in the language the person is using now (cookie), else their account's.
+    const lang = nativeLocale((await cookies()).get(LANG_COOKIE)?.value)?.lang ?? langOfUser((await userById(u.id))?.locale);
+    const url = await createCheckout(u.id, u.email, plan, watchId ?? null, lang);
     return NextResponse.json({ url });
   } catch (e) {
     await recordError("web", `checkout failed: ${errorMessage(e)}`, { userId: u.id, plan });

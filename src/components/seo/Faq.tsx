@@ -1,13 +1,14 @@
 import { faqJsonLd, type FaqItem } from "@/lib/seo/enrich";
+import { t } from "@/lib/i18n/server";
 import { JsonLd } from "./JsonLd";
 
 /** Questions as native details/summary (no JS) plus FAQPage structured data. */
-export function Faq({ items, title = "FAQ" }: { items: FaqItem[]; title?: string }) {
+export function Faq({ items, title }: { items: FaqItem[]; title?: string }) {
   if (items.length === 0) return null;
   return (
     <section className="pane p-5 sm:p-6" aria-labelledby="faq">
       <JsonLd data={faqJsonLd(items)} />
-      <h2 id="faq" className="text-xl font-semibold">{title}</h2>
+      <h2 id="faq" className="text-xl font-semibold">{title ?? t().content.faqTitle}</h2>
       <div className="mt-2 divide-y divide-line">
         {items.map((f) => (
           <details key={f.q} className="group py-3">
