@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildFastTasks, targetsFromRules, type RuleRow, type SubRow } from "@/lib/stock/fastlane";
+import { buildFastTasks, targetsForDuties, targetsFromRules, type RuleRow, type SubRow } from "@/lib/stock/fastlane";
 import { partNumbersFor } from "@/lib/apple/catalog";
 
 const t0 = new Date("2026-11-01T00:00:00Z");
@@ -48,5 +48,16 @@ describe("buildFastTasks", () => {
   it("one request per store, split at 20 parts", () => {
     const tasks = buildFastTasks(new Map([["R085", Array.from({ length: 25 }, (_, i) => `P${i}`)], ["R216", ["P0"]]]));
     expect(tasks.map((t) => [t.storeNumber, t.parts.length])).toEqual([["R085", 20], ["R085", 5], ["R216", 1]]);
+  });
+});
+
+describe("targetsForDuties — each host asks the stores of the countries it polls", () => {
+  // R083 SouthPark (US), R207 Carrefour Laval (CA): the standby polls Canada, so its writes for R207 stay in one process.
+  const t = new Map([["R083", ["MK1E4LL/A"]], ["R207", ["MK244VC/A"]]]);
+  it("splits US and the other countries by duty", () => {
+    expect([...targetsForDuties(t, { us: true, intl: false }).keys()]).toEqual(["R083"]);
+    expect([...targetsForDuties(t, { us: false, intl: true }).keys()]).toEqual(["R207"]);
+    expect([...targetsForDuties(t, { us: true, intl: true }).keys()]).toEqual(["R083", "R207"]);
+    expect(targetsForDuties(t, { us: false, intl: false }).size).toBe(0);
   });
 });

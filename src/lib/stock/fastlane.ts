@@ -50,6 +50,16 @@ export function targetsFromRules(rules: RuleRow[], subs: SubRow[]): Map<string, 
   return new Map([...out].sort(([a], [b]) => a.localeCompare(b)).map(([s, parts]) => [s, [...parts].sort()]));
 }
 
+/**
+ * Pure: the targets this host asks — the stores of the countries it polls (US with the US sweep, every other country
+ * with the round of the other countries). Every write for a store then comes from one process, where withStoreLocks
+ * keeps them in order: a Canadian store asked by the primary while the standby polled Canada deadlocked in Postgres
+ * (2026-11-03), and two hosts deciding on the same pending sighting could each record it.
+ */
+export function targetsForDuties(targets: Map<string, string[]>, duty: { us: boolean; intl: boolean }): Map<string, string[]> {
+  return new Map([...targets].filter(([store]) => (countryOfStore(store) === "us" ? duty.us : duty.intl)));
+}
+
 export async function loadFastTargets(): Promise<Map<string, string[]>> {
   const d = db();
   const rules = await d

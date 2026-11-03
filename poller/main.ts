@@ -4,7 +4,8 @@
  *  • every CADENCE_SEC (15) a sweep: 42 anchors × 2 part batches = 84 requests, CONCURRENCY at once (14)
  *  • the fast lane (stock/fastlane.ts): every FAST_CADENCE_SEC (5) each store a paid alert points at is
  *    asked on its own (`store=R###`, ~7 KB); a first "available" anywhere is re-asked within a second
- *    (instant confirm) so an alert follows a sighting in ~1–2 s. Runs only in full mode (IPv6 egress).
+ *    (instant confirm) so an alert follows a sighting in ~1–2 s. Runs only in full mode (IPv6 egress), on each host
+ *    for the countries it polls (US stores with the US sweep, the others with the other countries' round).
  *  • egress "ipv6": each request binds a fresh random address inside IPV6_PREFIX (/64 or /56) that
  *    was routed to this host (AnyIP) — Apple counts per /128, so the per-IP budget never bites
  *  • a failed request is retried once at the end of the sweep from a fresh address (sweep.ts). An anchor request
@@ -50,7 +51,7 @@ import { Agent, fetch as undiciFetch } from "undici";
 import { buildIntlTasks, buildTasks, nextCountryBackoff, parsePollCountries, readState, runSweep, singleIdentityEgress, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
 import { NOT_OFFERED_KEY, nextNotOffered, notOfferedDue, persistNotOffered, restoreNotOffered, type NotOfferedState } from "../src/lib/stock/notOffered";
 import { fallbackOrder } from "../src/lib/stock/fallback";
-import { loadFastTargets, runFastRound } from "../src/lib/stock/fastlane";
+import { loadFastTargets, runFastRound, targetsForDuties } from "../src/lib/stock/fastlane";
 import { expireStale } from "../src/lib/stock/ingest";
 import { recordError, errorMessage } from "../src/lib/errors";
 import { prefixFromInterfaces, randomAddressIn } from "./ipv6";
@@ -239,12 +240,12 @@ async function fastLoop(egress: Egress, active: () => boolean) {
     try {
       fastStats.paused = !active() || Date.now() < backoffUntil;
       if (!fastStats.paused) {
-        if (Date.now() - targetsAt > 60_000) {
-          targets = await loadFastTargets(); targetsAt = Date.now();
-          fastStats.stores = targets.size; fastStats.pairs = [...targets.values()].reduce((a, p) => a + p.length, 0); fastStats.targetsAt = new Date(targetsAt).toISOString();
-        }
-        if (targets.size > 0) {
-          const r = await runFastRound({ egress, targets, concurrency: FAST_CONCURRENCY, timeoutMs: FAST_TIMEOUT_MS });
+        if (Date.now() - targetsAt > 60_000) { targets = await loadFastTargets(); targetsAt = Date.now(); fastStats.targetsAt = new Date(targetsAt).toISOString(); }
+        // Only the stores of the countries this host polls, decided every round (duties move on a takeover).
+        const mine = targetsForDuties(targets, duty);
+        fastStats.stores = mine.size; fastStats.pairs = [...mine.values()].reduce((a, p) => a + p.length, 0);
+        if (mine.size > 0) {
+          const r = await runFastRound({ egress, targets: mine, concurrency: FAST_CONCURRENCY, timeoutMs: FAST_TIMEOUT_MS });
           fastStats.rounds++; fastStats.requests += r.requests; fastStats.failures += r.failures; fastStats.throttled += r.throttled; fastStats.timeouts += r.timeouts;
           fastStats.transitions += r.transitions; fastStats.confirmed += r.confirmed; fastStats.refuted += r.refuted;
           fastStats.lastAt = new Date().toISOString(); fastStats.lastDurationMs = r.durationMs;
@@ -464,7 +465,7 @@ async function clusterLoop(intlConfigured: boolean) {
       if (writable) {
         await writeState(`alive:${HOST}`, {
           host: HOST, at: new Date().toISOString(), role: ROLE, duties: label, why: duty.why, epoch: cluster?.epoch ?? null, commit: COMMIT,
-          intl: duty.intl ? intlStats : null, fast: duty.us ? fastStats : null, sys: hostVitals(), db: st ? { using: st.using, writable: st.writable } : null, replica: replicaInfo,
+          intl: duty.intl ? intlStats : null, fast: duty.us || duty.intl ? fastStats : null, sys: hostVitals(), db: st ? { using: st.using, writable: st.writable } : null, replica: replicaInfo,
         });
       }
     } catch (e) {
@@ -496,7 +497,7 @@ async function main() {
   // Duties first: a standby must not poll the US for even one round before it knows it is not the primary.
   void clusterLoop(intlOn);
   for (let i = 0; i < 30 && duty.why === "starting"; i++) await new Promise((r) => setTimeout(r, 500));
-  if (ipv6 && FAST_CADENCE_SEC > 0) void fastLoop(ipv6, () => mode === "full" && duty.us);
+  if (ipv6 && FAST_CADENCE_SEC > 0) void fastLoop(ipv6, () => mode === "full" && (duty.us || duty.intl));
   const startIntl = () => { if (intlOn && ipv6) void intlLoop(ipv6, () => mode === "full" && duty.intl, intlGeneration); };
   startIntl();
   for (const sig of ["SIGTERM", "SIGINT"] as const) {
