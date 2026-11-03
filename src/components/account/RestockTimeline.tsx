@@ -92,10 +92,10 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, m
         <h2 id="restock-timeline" className="text-xl font-semibold">Restock timeline</h2>
         <span className="rounded-full border border-line-2 px-2.5 py-0.5 text-[11px] font-medium text-ink-2">Past restocks · not a forecast</span>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-ink-2">
-        Restock times at {yours} over the last {days} days, {zone} time, earliest first; a longer bar means more often.
-        {mixed && <> {anyMine ? "Yours are few so far, so" : "None at yours yet, so"} other stores on {zone} time fill in.</>} A record of the past, not a forecast: use it as a guide.
-      </p>
+      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-ink-3">
+        <span>{yours.replace(/^your/, "Your")} · last {days} days</span><span>{zone} time, earliest first</span><span>longer bar = more often</span>
+        {mixed && <span>{anyMine ? "yours are few, so other stores on this zone fill in" : "none at yours yet: other stores on this zone fill in"}</span>}
+      </div>
       {(mixed || reported) && (
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-ink-3">
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-accent/70" />{yours.replace(/^your/, "Your")}</span>

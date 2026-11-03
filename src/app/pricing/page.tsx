@@ -4,6 +4,7 @@ import { OTHER_TRACKERS, PAID_PLANS, PLANS, SPEED, SPEED_PERKS } from "@/lib/pla
 import { siteFacts } from "@/lib/content/siteFacts";
 import { medianBand } from "@/lib/stock/sellouts";
 import { PlanButton } from "@/components/site/PlanButton";
+import { Chips, Points, Stat, StatGrid } from "@/components/ui/Viz";
 
 export const metadata: Metadata = { title: "Pricing — 10 alerts $5, 20 for $10, 50 for $20", description: `iPhone pickup-stock alerts at every US Apple Store: your stores checked every ${SPEED.fastSec} seconds, a push about ${SPEED.alertSec} seconds after a restock. Plus $5/month for 10 alerts, Pro $10 for 20, Max $20 for 50. Cancel anytime.`, alternates: { canonical: "/pricing" } };
 
@@ -16,17 +17,23 @@ export default async function Pricing() {
   return (
     <div className="mx-auto max-w-5xl px-4 pt-10">
       <h1 className="display text-3xl sm:text-5xl">Pricing</h1>
-      <p className="mt-3 text-lg text-ink-2">One alert = one store × one exact iPhone. All 269 US Apple Stores. Browsing is free.</p>
+      <p className="mt-3 text-lg text-ink-2"><b className="text-ink">One alert = one store × one exact iPhone.</b> Browsing is free.</p>
+      <Chips className="mt-3" items={["All 269 US Apple Stores", "Cancel anytime", "Card or Link"]} />
 
-      <div className="pane mt-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-6">
-        <div className="flex-1">
+      <div className="pane mt-6 grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div>
           <div className="font-semibold">The fastest published check interval of any iPhone stock tracker</div>
-          <p className="mt-1 text-sm text-ink-2">Your stores every {SPEED.fastSec} seconds, where other trackers publish {OTHER_TRACKERS}. A typical iPhone Duo restock sells out in {ds ? medianBand(ds.medianSec) : "about a minute"} and some in 20–30 seconds, which is why every plan gets the same speed.</p>
+          <Points className="mt-3" items={[
+            { text: <>Your stores every <b className="text-ink">{SPEED.fastSec} seconds</b> · other trackers publish {OTHER_TRACKERS}</> },
+            { text: <>A typical iPhone Duo restock sells out in <b className="text-ink">{ds ? medianBand(ds.medianSec) : "about a minute"}</b>, some in 20–30 seconds</>, no: true },
+            { text: <>Every plan gets the same speed</>, step: true },
+          ]} />
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:gap-8">
-          <div><div className="display text-4xl text-accent">{SPEED.fastSec} s</div><div className="text-xs text-ink-3">your stores re-checked</div></div>
-          <div><div className="display text-4xl text-accent">~{SPEED.alertSec} s</div><div className="text-xs text-ink-3">confirmed restock to your phone</div></div>
-        </div>
+        <StatGrid cols={3} className="lg:min-w-[26rem]">
+          <Stat value={`${SPEED.fastSec}`} unit="s" label="your stores re-checked" tone="accent" />
+          <Stat value={`~${SPEED.alertSec}`} unit="s" label="confirmed restock to your phone" tone="accent" />
+          <Stat value={ds ? `${ds.medianSec}` : "~60"} unit="s" label="typical Duo listing, listed to gone" tone="warn" />
+        </StatGrid>
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-3">
@@ -47,7 +54,10 @@ export default async function Pricing() {
           );
         })}
       </div>
-      <p className="mt-6 text-sm text-ink-3">Stripe billing, card or Link. Plan changes are prorated. Not for you? <Link href="/refunds" className="underline">Full refund within 7 days</Link> if no restock alert has reached you yet.</p>
+      <Points className="mt-6" items={[
+        { text: <>Stripe billing · card or Link · plan changes prorated</> },
+        { text: <>Not for you? <Link href="/refunds" className="underline">Full refund within 7 days</Link> if no restock alert has reached you yet</> },
+      ]} />
     </div>
   );
 }

@@ -65,9 +65,14 @@ describe("SellOutTimes renders data that went through the data cache", () => {
     };
     const cached = JSON.parse(JSON.stringify(data));
     const html = renderToStaticMarkup(SellOutTimes({ data: cached, label: "here", showStore: true }));
-    expect(html).toContain("sold out in 45–60 s");
+    expect(html).toContain("45–60 s");
     expect(html).toContain("still listed");
     expect(html).toContain("Nov 2, 8:48 AM");
-    expect(html).toContain("about 50–70 seconds: half were gone within 70 seconds, 34% within 30 seconds, and the fastest was gone within 25 seconds");
+    // The one quotable line, then the tiles: half gone within 70 s, 34% within 30 s, fastest 25 s.
+    expect(html).toContain("A typical iPhone Duo restock here sold out in about 50–70 seconds.");
+    expect(html).toContain(">70</span>");
+    expect(html).toContain(">34%</span>");
+    expect(html).toContain(">25</span>");
+    expect(html).toContain("fastest · 3 sold-out restocks, 30 d");
   });
 });

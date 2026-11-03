@@ -164,7 +164,12 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
       h2: `${storeWord} hours, address and pickup`,
       lead: `${place} is at ${fullAddress(s)}${s.phone ? `, ${s.phone}` : ""}. Today's hours: ${hoursText(today.today)}; the full week: ${compressHours(week)}.`,
       blocks: [
-        { t: "p" as const, text: `To collect an online order here, wait for Apple's pickup notification, then bring the order number, a government photo ID and the QR code or Wallet pass ([Apple's pickup rules](${help.url})). Screenshots of the code are not accepted, and a designated contact can collect for you if you named one at checkout.` },
+        { t: "ul" as const, items: [
+          `**Wait for Apple's pickup notification**, then come in ([Apple's pickup rules](${help.url}))`,
+          `**Bring:** order number · government photo ID · the QR code or Wallet pass`,
+          `**Not accepted:** a screenshot of the code`,
+          `**Someone else collecting?** Only a contact you named at checkout`,
+        ] },
         { t: "p" as const, text: `[Directions to ${place}](${directionsUrl(s)})${s.url ? ` · [Apple's page for this store](${s.url})` : ""}` },
         { t: "img" as const, id: photo2 },
       ],
@@ -195,7 +200,8 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="display text-3xl sm:text-5xl">{title}</h1>
-          <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2">{place}{street ? ` at ${street}` : ""} lists <b className="text-ink">{d.stockNow.duo} of {d.configs.duo}</b> iPhone Duo, <b className="text-ink">{d.stockNow["18-pro"]} of {d.configs["18-pro"]}</b> iPhone 18 Pro and <b className="text-ink">{d.stockNow["18-pro-max"]} of {d.configs["18-pro-max"]}</b> iPhone 18 Pro Max configurations for pickup right now.{peak ? <> Restocks here usually land around <b className="text-ink">{peak.hour}</b> local time ({peak.total} in the last 30 days).</> : null} {today.label}. {taxLine}</p>
+          <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2">{place}{street ? ` at ${street}` : ""} lists <b className="text-ink">{d.stockNow.duo} of {d.configs.duo}</b> iPhone Duo, <b className="text-ink">{d.stockNow["18-pro"]} of {d.configs["18-pro"]}</b> iPhone 18 Pro and <b className="text-ink">{d.stockNow["18-pro-max"]} of {d.configs["18-pro-max"]}</b> iPhone 18 Pro Max configurations for pickup right now.{peak ? <> Restocks here usually land around <b className="text-ink">{peak.hour}</b> local time.</> : null}</p>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-3">{peak && <span>{peak.total} restocks · last 30 days</span>}<span>{today.label}</span>{taxLine && <span>{taxLine}</span>}</div>
           <div className="mt-3"><StoreInfo store={s} showMapLink={false} /></div>
           {d.lookupOff && <p className="mt-2 text-sm font-medium text-warn">Apple isn&apos;t offering in-store pickup lookups at this store right now. We ask again every 30 minutes and show its stock as soon as Apple answers.</p>}
           <p className="mt-2 text-sm text-ink-3">Checked <LiveChecked iso={d.summary?.lastCheckedAt ?? null} stores={[s.storeNumber]} /> · {CHECK_NOTE}</p>

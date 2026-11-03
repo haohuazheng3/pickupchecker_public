@@ -8,11 +8,11 @@
  * are any, are drawn as their own dashed series (stacked over ours, legend + footnote) and never counted.
  */
 import { MODELS, STORE_INDEX, partNumbersFor, storeTimeZone, storesOf } from "@/lib/apple/catalog";
-import { placeStats, restockPattern, restockReportStats, restockSlots } from "@/lib/stock/queries";
+import { restockPattern, restockReportStats, restockSlots } from "@/lib/stock/queries";
 import { sellouts } from "@/lib/stock/sellouts";
 import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { buildTimeline, hourLabel, hourSpan, majorityZone, minuteIn, nextWindow, topHours, zoneName } from "@/lib/restockTimes";
-import { fmtDuration } from "@/lib/seo/enrich";
+import { Stat, StatGrid } from "@/components/ui/Viz";
 import { RestockTimeline, type TimelineRow } from "./RestockTimeline";
 import { REPORT_MARK, ReportLegendItem, ReportsNote } from "@/components/restocks/ReportsNote";
 
@@ -44,7 +44,7 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
   const zoneStores = countries.flatMap((cc) => storesOf(cc)).filter((s) => storeTimeZone(s) === tz).map((s) => s.storeNumber);
   const others = zoneStores.filter((n) => !own.includes(n));
 
-  const [mine, mineSlots, stay, rep, sell] = await Promise.all([restockPattern(own, parts, [], tz), restockSlots(own, parts, tz), placeStats({ storeNumbers: own, parts, tz }), restockReportStats(own, tz, 30, undefined, parts), sellouts({ storeNumbers: own, parts })]);
+  const [mine, mineSlots, rep, sell] = await Promise.all([restockPattern(own, parts, [], tz), restockSlots(own, parts, tz), restockReportStats(own, tz, 30, undefined, parts), sellouts({ storeNumbers: own, parts })]);
   const thin = mine.total < THIN && others.length > 0;
   const [area, areaSlots] = thin ? await Promise.all([restockPattern(zoneStores, parts, [], tz), restockSlots(others, parts, tz)]) : [null, []];
 
@@ -64,7 +64,7 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
   const maxArea = Math.max(1, ...(area?.byHour ?? [0])), maxAreaDay = Math.max(1, ...(area?.byWeekday ?? [0]));
   const topMine = patterned ? topHours(mine.byHour, 3) : [];
   // Named in clock order (the chart already shows which is busiest).
-  const hours = (list: number[]) => [...list].sort((a, b) => a - b).map((h, i, all) => <span key={h}>{i > 0 && (i === all.length - 1 ? " and " : ", ")}<b className="text-ink">{hourSpan(h)}</b></span>);
+  const hours = (list: number[]) => [...list].sort((a, b) => a - b).map((h) => hourLabel(h)).join(", ");
 
   // The timeline: the user's own times, plus the zone's when theirs are few (marked, never merged).
   const ownLine = buildTimeline(mineSlots, 12);
@@ -85,17 +85,20 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
           <h2 id="restock-times" className="text-xl font-semibold">When your stores restock</h2>
           <span className="text-xs text-ink-3">{what} · {plural(own.length, "store")} · last {mine.days} days · {zone} time</span>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-ink-2">
+        {/* The numbers that used to be a sentence: busiest hour, next window, how long one lasts, how many. */}
+        <StatGrid cols={4} className="mt-3">
           {patterned
-            ? <>At {yours}, most land at {hours(topMine)} {zone} time.</>
-            : <>{mine.total === 0 ? `No restocks at ${yours} yet` : `${plural(mine.total, "restock")} at ${yours} so far`}, too few to call a pattern.{area && area.total >= PATTERN && <> Across all {zoneStores.length} stores on {zone} time, most land at {hours(top)}.</>}</>}
-          {next && <> Next: <b className="text-ink">{hourLabel(next.hour)}</b>{next.inHours === 0 ? ", this hour" : `, in ${next.inHours} h`}.</>}
-          {stay.medianMs != null && stay.medianSamples >= 5 && <> One usually lasts <b className="text-ink">{fmtDuration(stay.medianMs)}</b> before it sells out.</>}
-        </p>
+            ? <Stat size="sm" value={hourLabel(topMine[0])} label={<>busiest hour at {yours}{topMine.length > 1 && <> · then {hours([...topMine].slice(1))}</>}</>} tone="accent" />
+            : area && area.total >= PATTERN && <Stat size="sm" value={hourLabel(top[0])} label={<>busiest across all {zoneStores.length} stores on {zone} time</>} tone="muted" />}
+          {next && <Stat size="sm" value={hourLabel(next.hour)} label={<>next window · {next.inHours === 0 ? "this hour" : `in ${next.inHours} h`}</>} />}
+          {sell.summary.medianSec != null && sell.summary.n >= 3 && <Stat value={sell.summary.medianSec < 120 ? sell.summary.medianSec : Math.round(sell.summary.medianSec / 60)} unit={sell.summary.medianSec < 120 ? "s" : "min"} label="typical listing before it sells out" tone="warn" />}
+          <Stat value={mine.total} label={mine.total === 0 ? <>no restocks at {yours} yet · last {mine.days} days</> : <>restocks at {yours} · last {mine.days} days{!patterned && " · too few for a pattern"}</>} tone={mine.total === 0 ? "muted" : "plain"} />
+        </StatGrid>
 
+        <div className="mt-5 text-xs text-ink-3">By hour{patterned && <> · busiest in green</>}</div>
         {/* By hour. Yours: bars (busiest three in the accent) once there is a pattern, dots before that; the
             zone's shape in grey underneath while yours are few. A dot under the current hour. */}
-        <div className="mt-4 flex h-32 items-end gap-[2px] sm:gap-[3px]" role="img" aria-label={`Restocks by hour at ${yours}, ${zone} time: ${mine.byHour.map((n, h) => `${hourLabel(h)} ${n}${repHour[h] ? ` (+${repHour[h]} reported by other trackers)` : ""}`).join(", ")}`}>
+        <div className="mt-2 flex h-32 items-end gap-[2px] sm:gap-[3px]" role="img" aria-label={`Restocks by hour at ${yours}, ${zone} time: ${mine.byHour.map((n, h) => `${hourLabel(h)} ${n}${repHour[h] ? ` (+${repHour[h]} reported by other trackers)` : ""}`).join(", ")}`}>
           {mine.byHour.map((n, h) => {
             const bg = area ? (area.byHour[h] / maxArea) * 96 : 0;
             const r = repHour[h];

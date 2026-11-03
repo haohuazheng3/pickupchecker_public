@@ -1,10 +1,16 @@
+/**
+ * /which-iphone-duo-restocks-most: the eight configurations ranked by confirmed restocks, shown as tiles, tables and
+ * keyword lines. Each H2 is a question with one answer-first sentence; the numbers are live from the restock log.
+ */
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { BlockView } from "@/components/content/Blocks";
 import { Inline } from "@/components/content/Inline";
+import { Figure } from "@/components/content/Figure";
 import { RichFaq, SourceList } from "@/components/content/RichFaq";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { getFacts } from "@/lib/content/facts";
+import { getFacts, type Facts } from "@/lib/content/facts";
 import type { Block, Faq, Source } from "@/lib/content/types";
 import { PART_INDEX, STORES, appleName, catalogFor, storeByNumber, storePath } from "@/lib/apple/catalog";
 import { COUNTRIES, type CountryCode } from "@/lib/apple/countries";
@@ -12,6 +18,7 @@ import { PLANS, SPEED } from "@/lib/plans";
 import { TRACKING_SINCE_INTL, TRACKING_SINCE_US, localStamp } from "@/lib/content/siteFacts";
 import { duoRestockTimes, type RestockTimes } from "@/lib/content/restockTimes";
 import { fmtPrice, listWords, plural } from "@/lib/seo/enrich";
+import { Measured, Points, Stat, StatGrid, StepStrip } from "@/components/ui/Viz";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +63,25 @@ function topAbroad(t: RestockTimes): { name: string; storage: string; restocks: 
   return p && i ? { name: `${i.storage} ${i.color}`, storage: i.storage, restocks: p.restocks } : null;
 }
 
+/** A question, its one-sentence answer, then the UI. */
+function Section({ id, h2, lead, facts, children }: { id: string; h2: string; lead: string; facts: Facts; children: ReactNode }) {
+  return (
+    <section id={id} className="pane scroll-mt-24 p-5 sm:p-7">
+      <h2 className="display text-2xl sm:text-3xl">{h2}</h2>
+      <p className="mt-3 text-base text-ink-2 sm:text-lg"><Inline text={lead} facts={facts} /></p>
+      {children}
+    </section>
+  );
+}
+/** Where to go next: a row of chip links. */
+function LinkRow({ links, className = "mt-4" }: { links: { label: string; href: string }[]; className?: string }) {
+  return (
+    <div className={`flex flex-wrap gap-2 ${className}`}>
+      {links.map((l) => l.href.startsWith("http") ? <a key={l.href} href={l.href} target="_blank" rel="noopener" className="chip chip-sm">{l.label}</a> : <Link key={l.href} href={l.href} className="chip chip-sm">{l.label}</Link>)}
+    </div>
+  );
+}
+
 export default async function WhichDuoRestocksMost() {
   const [t, facts, ...abroad] = await Promise.all([duoRestockTimes("us"), getFacts(), ...ABROAD.map((cc) => duoRestockTimes(cc))]);
   const duo = facts.models.duo;
@@ -97,82 +123,36 @@ export default async function WhichDuoRestocksMost() {
   const abroadWithData = abroadRows.filter((r) => r.top);
   const sameStorage = abroadWithData.filter((r) => leadStorage && r.top!.storage === leadStorage.storage);
   const todayLine = t.today ? `${plural(t.today.restocks, "restock")} at ${plural(t.today.stores, "store")}` : "no count yet";
+  const ratio = most && fewest && have && fewest.share > 0 ? Math.max(1, Math.round(most.share / fewest.share)) : null;
+  const oneIn = big && big.share > 0 ? Math.max(1, Math.round(1 / big.share)) : null;
 
-  const lead = have && most && fewest
-    ? `${most.name} (${fmtPrice(most.price)}): ${n(most.restocks)} of the ${n(t.n)} iPhone Duo restocks PickupChecker has confirmed at US Apple Stores since ${since}, ${pct(most.share)} of them. ${fewest.name} has the fewest, ${n(fewest.restocks)} (${pct(fewest.share)}). Right now ${nowText(most.now)} of ${STORES.length} stores list the ${most.name} for pickup and ${nowText(fewest.now)} list the ${fewest.name}.`
-    : `The configuration with the most confirmed restocks, the one with the fewest and how many stores list each right now. PickupChecker checks every configuration at all ${STORES.length} US Apple Stores every ${SPEED.checkSec} seconds; the ranking below fills in as restocks are confirmed.`;
+  const rankTable: Block = { t: "table", head: ["Configuration", "Price", `Restocks since ${since}`, "Share", "Last restock", "Stores with it now"], rows: rows.map((r) => [r.name, fmtPrice(r.price), n(r.restocks), pct(r.share), lastLine(r.lastAt, r.lastStore), `{{duo.cfg:${r.name}}}`]), caption: `All eight iPhone Duo configurations at the ${STORES.length} US Apple Stores, most restocks first`, source: `PickupChecker restock log; prices from [apple.com](${APPLE_DUO}), before sales tax` };
+  const storageTable: Block = { t: "table", head: ["Storage", "Price (either color)", "Restocks", "Share", "Stores with it now"], rows: storageRows.map((r) => [r.storage, fmtPrice(r.price), n(r.restocks), pct(r.share), nowText(r.now)]), caption: "By storage size", source: "PickupChecker restock log" };
+  const colorTable: Block = { t: "table", head: ["Color", "Restocks", "Share", "Stores with it now"], rows: colorRows.map((r) => [r.color, n(r.restocks), pct(r.share), `{{duo.color:${r.color}}}`]), caption: "By color", source: "PickupChecker restock log" };
+  const abroadTable: Block = { t: "table", head: ["Country", "Most-restocked configuration", "Its restocks", "All Duo restocks", "Stores with a restock"], rows: abroadRows.map((r) => [`[${r.name}](/${r.cc}/iphone-duo-restock-times)`, r.top ? r.top.name : r.t.unknown ? "—" : "none confirmed yet", r.top ? n(r.top.restocks) : "—", n(r.t.n), `${n(r.t.stores)} of ${r.t.storesTotal}`]), caption: `Since ${intlSince}, each country's own Apple Stores and part numbers`, source: "PickupChecker restock log" };
 
-  const mostBlocks: Block[] = [
-    { t: "table", head: ["Configuration", "Price", `Restocks since ${since}`, "Share", "Last restock", "Stores with it now"], rows: rows.map((r) => [r.name, fmtPrice(r.price), n(r.restocks), pct(r.share), lastLine(r.lastAt, r.lastStore), `{{duo.cfg:${r.name}}}`]), caption: `All eight iPhone Duo configurations at the ${STORES.length} US Apple Stores, most restocks first`, source: `PickupChecker restock log; prices from [apple.com](${APPLE_DUO}), before sales tax` },
-    { t: "p", text: `The iPhone Duo is Apple's first [foldable smartphone](${WIKI_FOLDABLE}), sold in ${storages.length} storage sizes and ${colors.length} colors, ${listWords(colors)}: eight configurations, each with its own pickup availability at each store. "Stores with it now" is live, the number of US stores listing that configuration for pickup at this moment, and it is usually small, because ${t.sellout ? `half of all Duo restocks were gone within ${n(t.sellout.medianSec)} seconds of appearing` : "most listings are gone within minutes"}.` },
-    { t: "img", id: "foldable-hands" },
-  ];
-
-  const storageBlocks: Block[] = [
-    { t: "table", head: ["Storage", "Price (either color)", "Restocks", "Share", "Stores with it now"], rows: storageRows.map((r) => [r.storage, fmtPrice(r.price), n(r.restocks), pct(r.share), nowText(r.now)]), caption: "By storage size", source: "PickupChecker restock log" },
-    { t: "table", head: ["Color", "Restocks", "Share", "Stores with it now"], rows: colorRows.map((r) => [r.color, n(r.restocks), pct(r.share), `{{duo.color:${r.color}}}`]), caption: "By color", source: "PickupChecker restock log" },
-    { t: "p", text: have
-      ? `The honest reading: ${storageWins ? `storage is the lever. The gap between the most- and least-restocked size is ${points(storageGap)} of all restocks; between the two colors it is ${points(colorGap)}. Pick your storage for the odds and take whichever color comes` : `color is the lever this week. The gap between the two colors is ${points(colorGap)} of all restocks; between the most- and least-restocked size it is ${points(storageGap)}. Take ${colorSorted[0]?.color ?? "the leading color"} in the size you want`}. A configuration that restocks twice as often is one you will see twice as many pushes for.`
-      : "The honest reading comes from the gaps: whichever of storage or color shows the wider spread between its best and worst option is the lever that changes your odds. The gaps fill in as restocks are confirmed." },
-    { t: "img", id: "two-phones-sky" },
-  ];
+  const mostLead = have && most
+    ? `**${most.name}**, with **${n(most.restocks)}** confirmed US restocks since ${since}${rows[1] ? `; ${rows[1].name} is second with ${n(rows[1].restocks)}` : ""}.`
+    : "The ranking below is computed from every confirmed restock at every US Apple Store and fills in as they happen.";
   const storageLead = have && storageSorted.length >= 2 && colorSorted.length >= 2
-    ? `${storageWins ? "Storage" : "Color"} matters more. ${storageSorted[0].storage} has ${pct(storageSorted[0].share)} of all confirmed US restocks and ${storageSorted[storageSorted.length - 1].storage} ${pct(storageSorted[storageSorted.length - 1].share)}; ${colorSorted[0].color} has ${pct(colorSorted[0].share)} and ${colorSorted[1].color} ${pct(colorSorted[1].share)}.`
-    : "Whichever shows the wider gap between its most- and least-restocked option; the sums by storage and by color below are computed from the same confirmed restocks.";
-
-  const bigBlocks: Block[] = [
-    { t: "ul", items: [
-      `**Restocks since ${since}:** ${big ? `${n(big.restocks)} (${pct(big.share)} of all Duo restocks)` : "none confirmed yet"}${bigRows.length === 2 ? `, ${bigRows.map((r) => `${r.item.color} ${n(r.restocks)}`).join(" and ")}` : ""}.`,
-      `**Last ${biggest} restock:** ${bigLast ? `${bigLast.name} at ${lastLine(bigLast.lastAt, bigLast.lastStore)}` : "none confirmed yet"}.`,
-      `**Stores listing a ${biggest} right now:** {{duo.storage:${biggest}}} of ${STORES.length}.`,
-      `**Price:** ${fmtPrice(items[items.length - 1].price)} in either color, ${fmtPrice(items[items.length - 1].price - items[0].price)} more than the ${storages[0]}.`,
-    ] },
-    { t: "p", text: `Our view: if you want the ${biggest}, set its alerts and also set the next size down. ${big && big.share > 0 ? `A ${pct(big.share)} share means roughly one Duo restock in ${Math.max(1, Math.round(1 / big.share))} is a ${biggest}` : `The ${biggest} is the thinnest slice of the mix`}; at a single store that can be days between chances. Live ${biggest} stock is on [the iPhone Duo stock page](/stock/iphone-duo), and the stores with one listed are on [iPhone Duo near me](/iphone-duo-near-me).` },
-  ];
+    ? `**${storageWins ? "Storage" : "Color"} matters more**: ${storageSorted[0].storage} has **${pct(storageSorted[0].share)}** of confirmed US restocks and ${storageSorted[storageSorted.length - 1].storage} ${pct(storageSorted[storageSorted.length - 1].share)}; ${colorSorted[0].color} has **${pct(colorSorted[0].share)}** and ${colorSorted[1].color} ${pct(colorSorted[1].share)}.`
+    : "Whichever shows the wider gap between its most- and least-restocked option; the sums by storage and by color below come from the same confirmed restocks.";
   const bigLead = have && big
-    ? `Yes, but rarely: ${n(big.restocks)} confirmed ${biggest} restocks since ${since}, ${pct(big.share)} of all iPhone Duo restocks, and {{duo.storage:${biggest}}} US stores listing one right now.`
-    : `Occasionally. The ${biggest} is the thinnest slice of the mix; its live count fills in as restocks are confirmed.`;
-
-  const watchBlocks: Block[] = [
-    { t: "ol", items: [
-      `**Lead with the storage that restocks most${leadStorage && have ? ` (${leadStorage.storage})` : ""}.** It is where the pushes come from.`,
-      "**Add the next size you would actually keep.** Not the one you would return; a reservation you cancel is a slot someone else lost.",
-      "**Take both colors unless one is unbearable.** Color changes the odds less than storage does, and a case hides most of it.",
-      `**Set them at two or three stores.** One alert is one store × one configuration, so three stores × three configurations is ${plural(9, "alert")}, inside Plus's ${PLANS.plus.limit} ([pricing](/pricing)).`,
-    ] },
-    { t: "p", text: `This is the whole reason the ranking exists: a configuration with ${most && have ? pct(most.share) : "the largest share"} of restocks will page you ${most && fewest && have && fewest.share > 0 ? `about ${Math.max(1, Math.round(most.share / fewest.share))}× as often as one at ${pct(fewest.share)}` : "far more often than the rarest one"}. Set the alerts on [the alert setup](/#notify); the stores you choose are then checked every ${SPEED.fastSec} seconds, and the push arrives about ${SPEED.alertSec} seconds after a restock is confirmed. How the alerts behave: [iPhone Duo stock alerts](/iphone-duo-stock-alerts).` },
-    { t: "img", id: "phone-on-box" },
-    { t: "cta", label: "Set up alerts for these configurations", href: "/#notify", sub: `Plus: $${PLANS.plus.priceUsd}/month for ${PLANS.plus.limit} alerts.` },
-  ];
-
-  const abroadBlocks: Block[] = [
-    { t: "table", head: ["Country", "Most-restocked configuration", "Its restocks", "All Duo restocks", "Stores with a restock"], rows: abroadRows.map((r) => [`[${r.name}](/${r.cc}/iphone-duo-restock-times)`, r.top ? r.top.name : r.t.unknown ? "—" : "none confirmed yet", r.top ? n(r.top.restocks) : "—", n(r.t.n), `${n(r.t.stores)} of ${r.t.storesTotal}`]), caption: `Since ${intlSince}, each country's own Apple Stores and part numbers`, source: "PickupChecker restock log" },
-    { t: "note", text: `Thin data: tracking outside the US began on ${intlSince}, so these are a few days of restocks, not a pattern. We call a country's favourite configuration a pattern only once it has enough restocks over enough days, the same rule as our hour-of-day patterns.`, tone: "warn" },
-    ...(abroadWithData.length && leadStorage ? [{ t: "p", text: sameStorage.length === abroadWithData.length
-      ? `So far the ranking is not a US quirk: ${listWords(abroadWithData.map((r) => r.name))} ${abroadWithData.length === 1 ? "leads" : "all lead"} with the same storage size as the US, the ${leadStorage.storage}. Each country's page has its own hour-of-day and day-by-day tables.`
-      : `The mix already differs: ${listWords(abroadWithData.filter((r) => r.top!.storage !== leadStorage.storage).map((r) => `${r.name} (${r.top!.storage})`))} ${abroadWithData.length - sameStorage.length === 1 ? "leads" : "lead"} with a different storage size from the US's ${leadStorage.storage}. Each country's page has its own hour-of-day and day-by-day tables.` } as Block] : []),
-  ];
+    ? `Yes, but rarely: **${n(big.restocks)}** confirmed ${biggest} restocks since ${since}, **${pct(big.share)}** of all iPhone Duo restocks, and {{duo.storage:${biggest}}} US stores listing one right now.`
+    : `Occasionally: the ${biggest} is the thinnest slice of the mix, and its live count fills in as restocks are confirmed.`;
+  const watchLead = `Two or three you would actually keep, led by the storage that restocks most${leadStorage && have ? ` (**${leadStorage.storage}**, ${pct(leadStorage.share)} of restocks)` : ""}, at two or three stores: one alert is one store × one configuration, so the odds multiply.`;
   const abroadLead = abroadWithData.length
-    ? `Early days, but so far ${abroadWithData.map((r) => `${r.name} leads with ${r.top!.name} (${plural(r.top!.restocks, "restock")})`).join(", ")}, all since ${intlSince}.`
+    ? `Early days, but so far ${abroadWithData.map((r) => `**${r.name}** leads with ${r.top!.name} (${plural(r.top!.restocks, "restock")})`).join(", ")}, all since ${intlSince}.`
     : `Too early to say: tracking outside the US began on ${intlSince}, and the table below fills in with each country's first confirmed restocks.`;
+  const countLead = `A restock is logged when **two checks** of apple.com, about a second apart, both list the configuration for pickup at that store; the first sighting of a store × configuration is excluded, and the count runs from ${longDate(TRACKING_SINCE_US)}.`;
 
-  const countBlocks: Block[] = [
-    { t: "ul", items: [
-      "**Two checks must agree.** A configuration counts as restocked only when apple.com lists it for pickup at that store on two checks in a row, about a second apart; a one-answer glitch is thrown away.",
-      "**The first sighting is excluded.** The first time we ever see a store × configuration listed is not a restock; it is the start of its history.",
-      `**Every US Apple Store, every configuration, since ${longDate(TRACKING_SINCE_US)}.** All ${STORES.length} stores every ${SPEED.checkSec} seconds, the stores with alerts every ${SPEED.fastSec}; other countries since ${intlSince}.`,
-      "**Only our own observations.** Where a page shows restocks reported by other trackers, they are a separate, labelled series and never counted here.",
-    ] },
-    { t: "p", text: `The shares are of confirmed restocks, not of units: Apple shows pickup availability per store and configuration, never quantities ([Apple: Delivery and Pickup](${PICKUP})), so a restock of one phone and a restock of ten count the same. The check cycle is on [how PickupChecker works](/how-it-works); every restock behind these counts is in [the restock log](/restocks).` },
-  ];
-
-  const sections: { id: string; nav: string; h2: string; lead: string; blocks: Block[] }[] = [
-    { id: "most", nav: "The ranking", h2: "Which iPhone Duo restocks most often?", lead: have && most ? `${most.name}, with ${n(most.restocks)} confirmed US restocks since ${since}${rows[1] ? `; ${rows[1].name} is second with ${n(rows[1].restocks)}` : ""}. The full table, with the last restock and the live store count for each configuration:` : "The ranking below is computed from every confirmed restock at every US Apple Store and fills in as they happen.", blocks: mostBlocks },
-    { id: "storage-or-color", nav: "Storage vs color", h2: "Storage or color: which matters more?", lead: storageLead, blocks: storageBlocks },
-    { id: "2tb", nav: `The ${biggest}`, h2: `Is the ${biggest} iPhone Duo ever in stock?`, lead: bigLead, blocks: bigBlocks },
-    { id: "watch", nav: "What to watch", h2: "Which configuration should I watch?", lead: `Two or three you would actually keep, led by the storage that restocks most${leadStorage && have ? ` (${leadStorage.storage}, ${pct(leadStorage.share)} of restocks)` : ""}, at two or three stores. One alert is one store × one configuration, so the odds multiply.`, blocks: watchBlocks },
-    { id: "countries", nav: "Other countries", h2: "Does the mix differ in other countries?", lead: abroadLead, blocks: abroadBlocks },
-    { id: "counting", nav: "How we count", h2: "How does PickupChecker count a restock?", lead: `A restock is logged when two checks of apple.com, about a second apart, both list the configuration for pickup at that store; the very first sighting of a store × configuration is excluded, and the count runs from ${longDate(TRACKING_SINCE_US)}.`, blocks: countBlocks },
+  const nav = [
+    { id: "most", label: "The ranking" },
+    { id: "storage-or-color", label: "Storage vs color" },
+    { id: "2tb", label: `The ${biggest}` },
+    { id: "watch", label: "What to watch" },
+    { id: "countries", label: "Other countries" },
+    { id: "counting", label: "How we count" },
   ];
 
   const c0 = colors[0], c1 = colors[1] ?? colors[0];
@@ -180,13 +160,13 @@ export default async function WhichDuoRestocksMost() {
   const priceGap = fmtPrice((items.find((i) => i.storage === s1)?.price ?? 0) - items[0].price);
   const faq: Faq[] = [
     { q: `Is ${c1} or ${c0} easier to get?`, a: have && colorSorted.length === 2
-      ? `${colorSorted[0].color}, slightly: ${n(colorSorted[0].restocks)} confirmed US restocks (${pct(colorSorted[0].share)}) to ${colorSorted[1].color}'s ${n(colorSorted[1].restocks)} (${pct(colorSorted[1].share)}) since ${since}. Right now {{duo.color:${colorSorted[0].color}}} stores list a ${colorSorted[0].color} and {{duo.color:${colorSorted[1].color}}} a ${colorSorted[1].color}. The gap is small enough that we would take either.`
-      : `Neither by much, in our experience; the color table above shows the live gap. Right now {{duo.color:${c0}}} stores list a ${c0} and {{duo.color:${c1}}} a ${c1}.` },
+      ? `${colorSorted[0].color}, slightly: ${n(colorSorted[0].restocks)} confirmed US restocks (${pct(colorSorted[0].share)}) to ${colorSorted[1].color}'s ${n(colorSorted[1].restocks)} (${pct(colorSorted[1].share)}) since ${since}, and right now {{duo.color:${colorSorted[0].color}}} stores list a ${colorSorted[0].color} and {{duo.color:${colorSorted[1].color}}} a ${colorSorted[1].color}. The gap is small enough that we would take either.`
+      : `Neither by much, in our experience; right now {{duo.color:${c0}}} stores list a ${c0} and {{duo.color:${c1}}} a ${c1}.` },
     { q: `Does the ${s0} restock less than the ${s1}?`, a: have && storageRows.length >= 2
       ? `${storageRows[0].restocks < storageRows[1].restocks ? "Yes" : storageRows[0].restocks > storageRows[1].restocks ? "No, the other way round" : "They are level"}: ${n(storageRows[0].restocks)} confirmed ${s0} restocks (${pct(storageRows[0].share)}) to ${n(storageRows[1].restocks)} for the ${s1} (${pct(storageRows[1].share)}) since ${since}. The ${s1} costs ${priceGap} more.`
       : `The storage table above answers this live; the ${s1} costs ${priceGap} more than the ${s0}.` },
-    { q: `Why does Apple seem to restock the ${leadStorage?.storage ?? s1} most?`, a: "We do not know, and we would distrust anyone who says they do. Apple does not publish its allocation by configuration; PickupChecker only counts what apple.com shows for pickup, store by store. The share on this page is an observation about restocks, not a statement about how many units Apple built." },
-    { q: "Can I set an alert for several configurations at once?", a: `Yes. On [the alert setup](/#notify) you tick the configurations and the stores, and each store × configuration becomes one alert; Plus covers ${PLANS.plus.limit} of them for $${PLANS.plus.priceUsd} a month, Pro ${PLANS.pro.limit}, Max ${PLANS.max.limit}. Every alert's store is checked every ${SPEED.fastSec} seconds.` },
+    { q: `Why does Apple seem to restock the ${leadStorage?.storage ?? s1} most?`, a: "We do not know, and we would distrust anyone who says they do: Apple does not publish its allocation by configuration, and PickupChecker only counts what apple.com shows for pickup, store by store. The share on this page is an observation about restocks, not a statement about how many units Apple built." },
+    { q: "Can I set an alert for several configurations at once?", a: `Yes: on [the alert setup](/#notify) you tick the configurations and the stores, each store × configuration becomes one alert, and every alert's store is checked every ${SPEED.fastSec} seconds. Plus covers ${PLANS.plus.limit} of them for $${PLANS.plus.priceUsd} a month, Pro ${PLANS.pro.limit}, Max ${PLANS.max.limit}.` },
     { q: "Where do I see today's restocks?", a: `On [the restock log](/restocks), which lists every confirmed restock and sell-out with store, configuration and time; today so far: ${todayLine}. PickupChecker is independent and not affiliated with Apple.` },
   ];
   const sources: Source[] = [
@@ -212,27 +192,136 @@ export default async function WhichDuoRestocksMost() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 pt-10">
+    <div className="mx-auto max-w-5xl px-4 pt-8 sm:pt-12">
       <JsonLd data={ld} />
-      <h1 className="display text-3xl sm:text-5xl">Which iPhone Duo configuration is easiest to get?</h1>
-      <p className="mt-4 text-lg text-ink-2">{lead}</p>
-      <nav aria-label="On this page" className="mt-6 flex flex-wrap gap-2 text-sm">
-        {sections.map((s) => <a key={s.id} href={`#${s.id}`} className="chip px-3 py-1.5 text-xs">{s.nav}</a>)}
+
+      {/* hero */}
+      <section className="grid items-start gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+        <div>
+          <div className="eyebrow mb-4">iPhone Duo · all eight configurations</div>
+          <h1 className="display text-4xl sm:text-6xl">Which iPhone Duo configuration is easiest to get?</h1>
+          <p className="mt-5 max-w-xl text-lg text-ink-2">
+            {have && most && fewest
+              ? <><b className="text-ink">{most.name}</b> ({fmtPrice(most.price)}): <b className="text-ink">{pct(most.share)}</b> of the {n(t.n)} iPhone Duo restocks confirmed at US Apple Stores since {since}; {fewest.name} has the fewest at {pct(fewest.share)}.</>
+              : <>The configuration with the most confirmed restocks, the one with the fewest and how many stores list each right now; PickupChecker checks every configuration at all {STORES.length} US Apple Stores every {SPEED.checkSec} seconds.</>}
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link href="/#notify" className="btn btn-primary btn-lg">Set up alerts</Link>
+            <Link href="/stock/iphone-duo" className="btn btn-ghost btn-lg">Live Duo stock</Link>
+          </div>
+        </div>
+        <StatGrid cols={2}>
+          <Stat value={most ? n(most.restocks) : "—"} label={most ? <>{most.name} · most restocks since {since}</> : "most-restocked configuration"} tone="accent" />
+          <Stat value={fewest ? n(fewest.restocks) : "—"} label={fewest ? <>{fewest.name} · fewest restocks</> : "least-restocked configuration"} tone="muted" />
+          <Stat value={most ? nowText(most.now) : "—"} label={most ? <>of {STORES.length} US stores list the {most.name} now</> : "stores listing it now"} live={!!most && most.now != null} />
+          <Stat value={fewest ? nowText(fewest.now) : "—"} label={fewest ? <>list the {fewest.name} now</> : "stores listing it now"} tone="muted" />
+        </StatGrid>
+      </section>
+
+      <nav aria-label="On this page" className="mt-8 flex flex-wrap gap-2 text-sm">
+        {nav.map((s) => <a key={s.id} href={`#${s.id}`} className="chip px-3 py-1.5 text-xs">{s.label}</a>)}
       </nav>
-      <div className="pane prose-site mt-8 p-6 sm:p-8">
-        {sections.map((s) => (
-          <section key={s.id} id={s.id} className="scroll-mt-24">
-            <h2>{s.h2}</h2>
-            <p><b><Inline text={s.lead} facts={facts} /></b></p>
-            {s.blocks.map((b, i) => <BlockView key={i} b={b} facts={facts} />)}
-          </section>
-        ))}
-        <p className="mt-6 text-sm text-ink-3">
-          Related: <Link href="/how-to-get-an-iphone-duo">how to get an iPhone Duo when it is sold out</Link> · <Link href="/iphone-duo-restock-times">when Apple restocks the iPhone Duo</Link> · <Link href="/iphone-duo-sell-out-times">how fast it sells out</Link>.
-        </p>
+
+      <div className="mt-6 grid gap-5">
+        {/* ranking */}
+        <Section id="most" h2="Which iPhone Duo restocks most often?" lead={mostLead} facts={facts}>
+          <BlockView b={rankTable} facts={facts} />
+          <Points items={[
+            { text: <Inline text={`Apple's first [foldable smartphone](${WIKI_FOLDABLE}) · ${storages.length} storage sizes × ${colors.length} colors (${listWords(colors)}) = **eight configurations**`} facts={facts} /> },
+            { text: <>Each configuration has its own pickup availability at each store</> },
+            { text: t.sellout ? <>&quot;Stores with it now&quot; is live and usually small: half of all Duo restocks were gone within <b className="text-ink">{n(t.sellout.medianSec)} seconds</b></> : <>&quot;Stores with it now&quot; is live and usually small: most listings are gone within minutes</>, no: true },
+          ]} />
+          <Figure id="foldable-hands" />
+        </Section>
+
+        {/* storage vs color */}
+        <Section id="storage-or-color" h2="Storage or color: which matters more?" lead={storageLead} facts={facts}>
+          <StatGrid cols={2} className="mt-5">
+            <Stat value={have ? points(storageGap) : "—"} label="gap between the most- and least-restocked storage size, share of all restocks" tone={storageWins ? "accent" : "plain"} />
+            <Stat value={have ? points(colorGap) : "—"} label="gap between the two colors" tone={storageWins ? "plain" : "accent"} />
+          </StatGrid>
+          <BlockView b={storageTable} facts={facts} />
+          <BlockView b={colorTable} facts={facts} />
+          <Points items={have ? [
+            { text: storageWins ? <><b className="text-ink">Storage is the lever</b>: pick your storage for the odds, take whichever color comes</> : <><b className="text-ink">Color is the lever this week</b>: take {colorSorted[0]?.color ?? "the leading color"} in the size you want</> },
+            { text: <>A configuration that restocks twice as often is one you see <b className="text-ink">twice as many pushes</b> for</>, step: true },
+          ] : [
+            { text: <>Whichever of storage or color shows the wider spread is the lever that changes your odds</> },
+            { text: <>The gaps fill in as restocks are confirmed</>, step: true },
+          ]} />
+          <Figure id="two-phones-sky" />
+        </Section>
+
+        {/* the biggest size */}
+        <Section id="2tb" h2={`Is the ${biggest} iPhone Duo ever in stock?`} lead={bigLead} facts={facts}>
+          <StatGrid cols={4} className="mt-5">
+            <Stat value={big ? n(big.restocks) : "—"} label={<>{biggest} restocks since {since}{big && have ? <> · {pct(big.share)} of all Duo restocks</> : null}</>} tone="accent" />
+            <Stat value={<Inline text={`{{duo.storage:${biggest}}}`} facts={facts} />} label={<>of {STORES.length} US stores list a {biggest} right now</>} live />
+            {bigRows.length === 2
+              ? <Stat value={<>{n(bigRows[0].restocks)}<span className="text-base text-ink-3"> / </span>{n(bigRows[1].restocks)}</>} label={<>{bigRows[0].item.color} / {bigRows[1].item.color}</>} tone="muted" />
+              : <Stat value="—" label="split by color" tone="muted" />}
+            <Stat value={fmtPrice(items[items.length - 1].price)} label={<>either color · {fmtPrice(items[items.length - 1].price - items[0].price)} more than the {storages[0]}</>} />
+          </StatGrid>
+          <Points className="mt-5" items={[
+            { text: <Inline text={`**Last ${biggest} restock:** ${bigLast ? `${bigLast.name} at ${lastLine(bigLast.lastAt, bigLast.lastStore)}` : "none confirmed yet"}`} facts={facts} /> },
+            { text: <>Set the {biggest} alerts <b className="text-ink">and the next size down</b></> },
+            { text: oneIn ? <>A {pct(big!.share)} share ≈ one Duo restock in <b className="text-ink">{oneIn}</b> is a {biggest}; at a single store that can be days between chances</> : <>The {biggest} is the thinnest slice of the mix; at a single store that can be days between chances</>, no: true },
+          ]} />
+          <LinkRow links={[{ label: `Live ${biggest} stock`, href: "/stock/iphone-duo" }, { label: "Stores with one listed near you", href: "/iphone-duo-near-me" }]} />
+        </Section>
+
+        {/* what to watch */}
+        <Section id="watch" h2="Which configuration should I watch?" lead={watchLead} facts={facts}>
+          <StepStrip className="mt-5" steps={[
+            { title: <>Lead with {leadStorage && have ? leadStorage.storage : "the storage that restocks most"}</>, hint: "it is where the pushes come from" },
+            { title: "Add the next size you would keep", hint: "not one you would return; a cancelled reservation is a slot someone else lost" },
+            { title: "Take both colors", hint: "color changes the odds less than storage, and a case hides most of it" },
+            { title: "Two or three stores", hint: <Inline text={`3 stores × 3 configurations = ${plural(9, "alert")}, inside Plus's ${PLANS.plus.limit} ([pricing](/pricing))`} facts={facts} /> },
+          ]} />
+          <StatGrid cols={3} className="mt-6">
+            <Stat value={ratio ? `${ratio}×` : "—"} label={ratio && most && fewest ? <>as many pushes for {most.name} ({pct(most.share)}) as for {fewest.name} ({pct(fewest.share)})</> : "pushes for the most- vs least-restocked configuration"} tone="accent" />
+            <Stat value={`${SPEED.fastSec}`} unit="s" label="between checks at the stores your alerts point at" />
+            <Stat value={`~${SPEED.alertSec}`} unit="s" label="confirmed restock to the push on your phone" />
+          </StatGrid>
+          <LinkRow links={[{ label: "Set the alerts", href: "/#notify" }, { label: "How the alerts behave", href: "/iphone-duo-stock-alerts" }]} />
+          <Figure id="phone-on-box" />
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/#notify" className="btn btn-primary">Set up alerts for these configurations</Link>
+            <span className="text-sm text-ink-3">Plus: ${PLANS.plus.priceUsd}/month for {PLANS.plus.limit} alerts.</span>
+          </div>
+        </Section>
+
+        {/* other countries */}
+        <Section id="countries" h2="Does the mix differ in other countries?" lead={abroadLead} facts={facts}>
+          <BlockView b={abroadTable} facts={facts} />
+          {abroadWithData.length > 0 && leadStorage && (
+            <Points items={[
+              sameStorage.length === abroadWithData.length
+                ? { text: <>Not a US quirk so far: <b className="text-ink">{listWords(abroadWithData.map((r) => r.name))}</b> {abroadWithData.length === 1 ? "leads" : "all lead"} with the same storage size, the {leadStorage.storage}</> }
+                : { text: <>The mix already differs: <b className="text-ink">{listWords(abroadWithData.filter((r) => r.top!.storage !== leadStorage.storage).map((r) => `${r.name} (${r.top!.storage})`))}</b> {abroadWithData.length - sameStorage.length === 1 ? "leads" : "lead"} with a different size from the US&apos;s {leadStorage.storage}</> },
+              { text: <>Each country&apos;s page has its own hour-of-day and day-by-day tables</>, step: true },
+            ]} />
+          )}
+          <Measured title="Thin data">
+            Tracking outside the US began on {intlSince}, so these are a few days of restocks, not a pattern. We call a country&apos;s favourite configuration a pattern only once it has enough restocks over enough days, the same rule as our hour-of-day patterns.
+          </Measured>
+        </Section>
+
+        {/* how we count */}
+        <Section id="counting" h2="How does PickupChecker count a restock?" lead={countLead} facts={facts}>
+          <Points className="mt-5" size="base" items={[
+            { text: <><b className="text-ink">Two checks must agree</b> · about a second apart · a one-answer glitch is thrown away</> },
+            { text: <><b className="text-ink">The first sighting is excluded</b> · it is the start of a store × configuration&apos;s history, not a restock</> },
+            { text: <><b className="text-ink">All {STORES.length} US stores every {SPEED.checkSec} seconds</b> · stores with alerts every {SPEED.fastSec} · since {longDate(TRACKING_SINCE_US)}, other countries since {intlSince}</> },
+            { text: <><b className="text-ink">Only our own observations</b> · other trackers&apos; reports are a separate, labelled series, never counted here</> },
+            { text: <Inline text={`Shares are of restocks, not of units: Apple shows availability, never quantities ([Apple: Delivery and Pickup](${PICKUP})), so one phone and ten count the same`} facts={facts} />, no: true },
+          ]} />
+          <LinkRow links={[{ label: "The check cycle: how PickupChecker works", href: "/how-it-works" }, { label: "Every restock behind these counts", href: "/restocks" }, { label: "How to get an iPhone Duo when it is sold out", href: "/how-to-get-an-iphone-duo" }, { label: "When Apple restocks the iPhone Duo", href: "/iphone-duo-restock-times" }, { label: "How fast it sells out", href: "/iphone-duo-sell-out-times" }]} />
+        </Section>
       </div>
-      <div className="mt-10"><RichFaq items={faq} facts={facts} title="Questions" /></div>
-      <div className="mt-8"><SourceList sources={sources} facts={facts} where={`all ${STORES.length} US Apple Stores`} /></div>
+
+      <div className="mx-auto mt-10 max-w-3xl"><RichFaq items={faq} facts={facts} title="Questions" /></div>
+      <div className="mx-auto mt-8 max-w-3xl"><SourceList sources={sources} facts={facts} where={`all ${STORES.length} US Apple Stores`} /></div>
     </div>
   );
 }

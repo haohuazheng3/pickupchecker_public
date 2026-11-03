@@ -81,8 +81,8 @@ export function NearMeFinder({ data }: { data: NearMeData }) {
       : loc === "denied" ? "Location is off for this site. Type a ZIP instead."
         : loc === "unavailable" ? "This browser has no location service. Type a ZIP instead."
           : withStock.length > 0
-            ? `No location yet: these are the Apple Stores listing the iPhone Duo right now (${data.asOf}). Tap Use my location or type a ZIP to sort all ${STORES.length} US stores by distance from you.`
-            : `Tap Use my location or type a ZIP to sort all ${STORES.length} US Apple Stores by distance from you. None lists the iPhone Duo at this moment (${data.asOf}); the nearest ones are still the ones to watch.`;
+            ? `Listing the iPhone Duo right now (${data.asOf}) · Use my location or a ZIP sorts all ${STORES.length} US stores by distance from you`
+            : `None lists the iPhone Duo right now (${data.asOf}) · Use my location or a ZIP sorts all ${STORES.length} US stores by distance; the nearest are the ones to watch`;
 
   return (
     <div className="pane p-4 sm:p-5" data-tool="near-me">
@@ -115,7 +115,7 @@ export function NearMeFinder({ data }: { data: NearMeData }) {
         </ul>
       )}
       <p className="mt-3 text-xs leading-relaxed text-ink-3">
-        Stock as of {data.asOf}; every store is checked every 15 seconds, stores with alerts every 5. Ranking happens in your browser: your location never leaves this device, and a typed ZIP only selects a small file of ZIP centers by its first three digits.
+        Stock as of {data.asOf} · every store checked every 15 s, alert stores every 5 s · ranked in your browser; your location never leaves this device, and a ZIP only selects a small file of ZIP centers by its first three digits
       </p>
     </div>
   );

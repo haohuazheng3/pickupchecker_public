@@ -1,9 +1,9 @@
 /**
  * "iPhone Duo restocks in {place} in the last 24 hours": the first thing a state, city, country or store page says
- * after its title, as one sentence and an eight-row table (storage × colour), so a reader — or an answer engine
- * asked "has the Duo restocked anywhere in Michigan in the last 24 hours? 512GB, Night Sky or Star White" — gets the
- * answer without reading a chart. Server-rendered; times in the store's own zone. Zero rows stay in the table: a
- * configuration with no restock is an answer too.
+ * after its title — one quotable sentence, three big numbers, and an eight-row table (storage × colour), so a
+ * reader or an answer engine asked "has the Duo restocked anywhere in Michigan in the last 24 hours? 512GB, Night
+ * Sky or Star White" gets the answer without reading a chart. Server-rendered; times in the store's own zone. Zero
+ * rows stay in the table: a configuration with no restock is an answer too. The counting rule sits folded below.
  */
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { appleName, catalogFor, storeByNumber, storePath, storeTimeZone, type Store } from "@/lib/apple/catalog";
@@ -12,6 +12,7 @@ import { localStamp } from "@/lib/content/siteFacts";
 import type { RecentByConfig } from "@/lib/stock/recent";
 import type { StoreStockSummary } from "@/lib/stock/queries";
 import { Swatch } from "@/components/stores/ConfigTable";
+import { Measured, Stat, StatGrid } from "@/components/ui/Viz";
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -39,36 +40,46 @@ export function Last24Hours({ data, label, stores, country = "us", stock, lastBe
     ? new Intl.DateTimeFormat("en-US", { timeZone: COUNTRIES[country].timeZone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(new Date(data.at))
     : `${localStamp(data.at, stores[0])} local time`;
   const nameOf = (n: string) => { const s = storeByNumber(n); return s ? appleName(s) : "an Apple Store"; };
+  const storeLink = (n: string) => <Link href={storePath(storeByNumber(n) ?? stores[0])} className="underline-offset-2 hover:underline">{nameOf(n)}</Link>;
   const stampAt = (iso: string, n: string) => localStamp(iso, storeByNumber(n) ?? stores[0]);
+  const timeAt = (iso: string, n: string) => new Intl.DateTimeFormat("en-US", { timeZone: storeTimeZone(storeByNumber(n) ?? stores[0]), hour: "numeric", minute: "2-digit" }).format(new Date(iso));
   const cfg = (p: string) => { const i = items.find((x) => x.partNumber === p); return i ? `${i.storage} ${i.color}` : p; };
   const withRestock = items.filter((i) => (byPart.get(i.partNumber)?.restocks ?? 0) > 0);
   const inStock = (partNumber: string) => (stock ? stores.filter((s) => stock.get(s.storeNumber)?.perModel.duo.parts.includes(partNumber)).length : null);
+  const latest = data.latest;
 
+  // The one sentence: the count, the place, the latest. Everything else is a tile or a row.
   let lead: React.ReactNode;
-  if (data.unknown) {
-    lead = <>The last-24-hours count could not be read just now; the live stock and the restock log on this page are unaffected.</>;
-  } else if (data.restocks === 0) {
-    const before = lastBefore ? <> The last one before that was <b className="text-ink">{cfg(lastBefore.partNumber)}</b> at {one ? "this store" : <Link href={storePath(storeByNumber(lastBefore.storeNumber) ?? stores[0])} className="underline-offset-2 hover:underline">{nameOf(lastBefore.storeNumber)}</Link>} on {stampAt(lastBefore.at, lastBefore.storeNumber)} local time.</> : null;
-    lead = <><b className="text-ink">No iPhone Duo restock {label} in the last 24 hours</b> (as of {asOf}).{before} Restocks land in bursts, most of them in the morning: the table below fills in from the first one.</>;
-  } else {
-    const latest = data.latest!;
-    lead = (
-      <>
-        In the last 24 hours the iPhone Duo restocked <b className="text-ink">{plural(data.restocks, "time")} {one ? label : `at ${data.stores} of the ${plural(stores.length, "Apple Store")} ${label}`}</b>
-        {one ? "" : ""}. The latest: <b className="text-ink">{cfg(latest.partNumber)}</b>{one ? "" : <> at <Link href={storePath(storeByNumber(latest.storeNumber) ?? stores[0])} className="underline-offset-2 hover:underline">{nameOf(latest.storeNumber)}</Link></>}, {stampAt(latest.at, latest.storeNumber)} local time.
-        {withRestock.length < items.length && <> {withRestock.length === 1 ? "Only one configuration" : `${withRestock.length} of the ${items.length} configurations`} came back; {items.length - withRestock.length === 1 ? "the other did not" : `the other ${items.length - withRestock.length} did not`}.</>}
-      </>
-    );
-  }
+  if (data.unknown) lead = <>The last-24-hours count could not be read just now; the live stock and the restock log on this page are unaffected.</>;
+  else if (data.restocks === 0) lead = <><b className="text-ink">No iPhone Duo restock {label} in the last 24 hours</b> (as of {asOf}).</>;
+  else lead = <>In the last 24 hours the iPhone Duo restocked <b className="text-ink">{plural(data.restocks, "time")} {one ? label : `at ${data.stores} of the ${plural(stores.length, "Apple Store")} ${label}`}</b>; the latest: <b className="text-ink">{cfg(latest!.partNumber)}</b>{!one && <> at {storeLink(latest!.storeNumber)}</>}, {stampAt(latest!.at, latest!.storeNumber)} local time.</>;
 
   return (
     <section id={id} className="pane p-5" aria-labelledby={`${id}-h`}>
-      <h2 id={`${id}-h`} className="text-xl font-semibold">iPhone Duo restocks {label} in the last 24 hours</h2>
-      <p className="mt-2 text-sm leading-relaxed text-ink-2">{lead}</p>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 id={`${id}-h`} className="text-xl font-semibold">iPhone Duo restocks {label} in the last 24 hours</h2>
+        <span className="text-xs text-ink-3">as of {asOf}</span>
+      </div>
+      <p className="mt-2 text-sm font-medium text-ink">{lead}</p>
+
+      {!data.unknown && (
+        <StatGrid cols={3} className="mt-3">
+          <Stat value={data.restocks} label="confirmed restocks · 24 h" tone={data.restocks > 0 ? "accent" : "muted"} />
+          {one
+            ? <Stat value={`${withRestock.length}/${items.length}`} label="configurations that came back" tone={withRestock.length ? "plain" : "muted"} />
+            : <Stat value={`${data.stores}/${stores.length}`} label={`stores with a restock${withRestock.length ? ` · ${withRestock.length} of ${items.length} configurations` : ""}`} tone={data.stores ? "plain" : "muted"} />}
+          {latest
+            ? <Stat size="sm" value={timeAt(latest.at, latest.storeNumber)} label={<>latest · {cfg(latest.partNumber)}{!one && <> · {nameOf(latest.storeNumber)}</>}</>} />
+            : lastBefore
+              ? <Stat size="sm" value={timeAt(lastBefore.at, lastBefore.storeNumber)} label={<>last before that · {cfg(lastBefore.partNumber)}{!one && <> · {nameOf(lastBefore.storeNumber)}</>} · {stampAt(lastBefore.at, lastBefore.storeNumber).split(",")[0]}</>} tone="muted" />
+              : <Stat value="–" label="no earlier restock on record" tone="muted" />}
+        </StatGrid>
+      )}
+
       {!data.unknown && (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[32rem] border-collapse text-sm">
-            <caption className="mb-2 text-left text-xs text-ink-3">Confirmed restocks of each iPhone Duo configuration {label}, last 24 hours, as of {asOf}</caption>
+            <caption className="sr-only">Confirmed restocks of each iPhone Duo configuration {label}, last 24 hours, as of {asOf}</caption>
             <thead>
               <tr className="border-b border-line-2 text-left text-ink">
                 <th scope="col" className="py-2 pr-3 font-semibold">Configuration</th>
@@ -82,13 +93,14 @@ export function Last24Hours({ data, label, stores, country = "us", stock, lastBe
               {items.map((i) => {
                 const r = byPart.get(i.partNumber);
                 const now = inStock(i.partNumber);
+                const quiet = !r;
                 return (
-                  <tr key={i.partNumber} className="border-b border-line">
-                    <th scope="row" className="py-2 pr-3 text-left font-medium text-ink"><span className="inline-flex items-center gap-2"><Swatch color={i.color} />{i.storage} {i.color}</span></th>
-                    <td className="py-2 pr-3 tabular-nums">{r?.restocks ?? 0}</td>
+                  <tr key={i.partNumber} className={`border-b border-line ${quiet ? "text-ink-3" : ""}`}>
+                    <th scope="row" className={`py-2 pr-3 text-left font-medium ${quiet ? "text-ink-2" : "text-ink"}`}><span className="inline-flex items-center gap-2"><Swatch color={i.color} />{i.storage} {i.color}</span></th>
+                    <td className={`py-2 pr-3 tabular-nums ${r ? "font-semibold text-ink" : ""}`}>{r?.restocks ?? 0}</td>
                     {!one && <td className="py-2 pr-3 tabular-nums">{r ? `${r.stores} of ${stores.length}` : "–"}</td>}
-                    <td className="py-2 pr-3">{r ? <>{stampAt(r.lastAt, r.lastStore)}{!one && <>{" · "}<Link href={storePath(storeByNumber(r.lastStore) ?? stores[0])} className="underline-offset-2 hover:underline">{nameOf(r.lastStore)}</Link></>}</> : <span className="text-ink-3">none in 24 h</span>}</td>
-                    {stock && <td className="py-2 pr-3 tabular-nums">{now == null ? "–" : one ? (now ? "yes" : "no") : `${now} of ${stores.length}`}</td>}
+                    <td className="py-2 pr-3">{r ? <>{stampAt(r.lastAt, r.lastStore)}{!one && <>{" · "}{storeLink(r.lastStore)}</>}</> : "none in 24 h"}</td>
+                    {stock && <td className="py-2 pr-3 tabular-nums">{now == null ? "–" : one ? (now ? <span className="font-semibold text-accent">yes</span> : "no") : now ? <span className="font-semibold text-accent">{now} of {stores.length}</span> : `0 of ${stores.length}`}</td>}
                   </tr>
                 );
               })}
@@ -96,10 +108,13 @@ export function Last24Hours({ data, label, stores, country = "us", stock, lastBe
           </table>
         </div>
       )}
-      <p className="mt-3 text-xs leading-relaxed text-ink-3">
-        Counted from PickupChecker&apos;s own checks of apple.com in-store pickup (every store every 15 seconds, the stores with alerts every 5). A restock is logged only when two checks agree, and the first time a store is ever seen is not counted. Other trackers&apos; reports are never mixed in.
-        {alert && <> <Link href={alert} className="font-medium text-ink underline-offset-2 hover:underline">Alert me{one ? "" : ` ${label}`}</Link> to hear about the next one within seconds.</>}
-      </p>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <Measured title="How restocks are counted" className="!mt-0">
+          PickupChecker&apos;s own checks of apple.com in-store pickup: every store every 15 seconds, the stores with alerts every 5. A restock is logged only when two checks agree; the first time a store is ever seen is not counted; other trackers&apos; reports are never mixed in.
+        </Measured>
+        {alert && <Link href={alert} className="btn btn-ghost btn-sm">Alert me{one ? "" : ` ${label}`} → next one within seconds</Link>}
+      </div>
     </section>
   );
 }

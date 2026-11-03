@@ -181,15 +181,20 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
   const index = placeTarget(cc);
   const p = prefixOf(cc);
   const unit = c.unit === "mi" ? "miles" : "kilometres";
-  const intro = `Right now the iPhone Duo is in stock for pickup at **{{duo.storesNow}} of ${n}** Apple Store${n === 1 ? "" : "s"} ${c.inName}, the iPhone 18 Pro at **{{pro.storesNow}}** and the iPhone 18 Pro Max at **{{pm.storesNow}}**. Every store is re-checked every 15 seconds, and the stores your alerts point at every 5. Browse for free, or pick your stores and exact phone and get a push the moment one lists it.`;
+  const intro = `Right now the iPhone Duo is in stock for pickup at **{{duo.storesNow}} of ${n}** Apple Store${n === 1 ? "" : "s"} ${c.inName}, the iPhone 18 Pro at **{{pro.storesNow}}** and the iPhone 18 Pro Max at **{{pm.storesNow}}**.`;
   const sections: KeywordSection[] = [
     {
       id: "iphone-stock",
       h2: `iPhone stock ${c.inName}: Duo, 18 Pro and Pro Max by store`,
-      lead: `This checker reads apple.com's in-store pickup availability for every configuration at ${allStoresPhrase(cc)} (${spreadPhrase(cc)}), every 15 seconds, and shows the answer by store${n > 1 ? `, by ${c.regionNoun ?? "city"}` : ""} and by configuration. Prices and part numbers are Apple's ${c.adjective} ones.`,
+      lead: `PickupChecker reads apple.com's in-store pickup availability for every configuration at ${allStoresPhrase(cc)} every 15 seconds, by store${n > 1 ? `, by ${c.regionNoun ?? "city"}` : ""} and by configuration.`,
       blocks: [
         { t: "table", head: ["Model", "Configurations", "Stores with stock now", "Restocks logged"], rows: modelRows(cc, { duo: facts.models.duo.storesNow, "18-pro": facts.models["18-pro"].storesNow, "18-pro-max": facts.models["18-pro-max"].storesNow }, { duo: facts.models.duo.restocks, "18-pro": facts.models["18-pro"].restocks, "18-pro-max": facts.models["18-pro-max"].restocks }), caption: `What the check covers ${c.inName}, as of {{asOf}}` },
-        { t: "p", text: `A change only counts after a second check confirms it, so one glitchy response from apple.com never shows up as a fake restock or a fake sell-out. Every confirmed change goes into the [restock log](${restocksPath(cc)}), which is where the restock-time charts on ${index?.indexable ? `[the store pages](${index.path})` : "the store page"} come from.` },
+        { t: "ul", items: [
+          `**Coverage:** ${spreadPhrase(cc)} · prices and part numbers are Apple's ${c.adjective} ones`,
+          "**Every store every 15 seconds**, the stores your alerts point at every 5",
+          "**Two checks to count:** one glitchy apple.com answer never shows as a fake restock or sell-out",
+          `**Every confirmed change** goes into the [restock log](${restocksPath(cc)}), which feeds the restock charts on ${index?.indexable ? `[the store pages](${index.path})` : "the store page"}`,
+        ] },
         { t: "img", id: "phone-notification" },
       ],
     },
@@ -205,7 +210,8 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
           "On an iPhone, add PickupChecker to your Home Screen and allow notifications ([how to install](/install)).",
           "When the push arrives, open apple.com from it and check out with in-store pickup at that store.",
         ] },
-        { t: "p", text: `One alert is one store and one exact configuration. Plans are billed in US dollars: Plus $5 a month for 10 alerts, Pro $10 for 20 and Max $20 for 50 ([pricing](/pricing)). Our honest view: the Duo is worth alerts at every store you can reach; for the 18 Pro and Pro Max, look at the live numbers first.` },
+        { t: "table", head: ["Plan", "Price (USD)", "Alerts"], rows: [["Plus", "$5 / month", "10"], ["Pro", "$10 / month", "20"], ["Max", "$20 / month", "50"]], caption: "One alert = one store × one exact configuration · browsing is free ([pricing](/pricing))" },
+        { t: "note", text: "**Our take:** the Duo is worth alerts at every store you can reach; for the 18 Pro and Pro Max, look at the live numbers first." },
         { t: "img", id: "apple-store-pickup-counter" },
       ],
     },

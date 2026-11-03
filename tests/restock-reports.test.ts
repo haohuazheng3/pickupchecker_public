@@ -176,7 +176,9 @@ describe("account: When your stores restock, with reports", () => {
     expect(out).toContain("Reported by other trackers (Apple Pickup Live, DuoReady), Oct 26 – Nov 1");
     expect(out).toContain("Hollow dots: iPhone Duo restocks published by");
     expect(out).toContain("Reported · Fifth Avenue");
-    expect(out).toContain("2 restocks at your store so far"); // ours only
+    // Ours only, as the count tile: the value, then its label.
+    expect(out).toContain(">2</span>");
+    expect(out).toContain("restocks at your store · last 30 days · too few for a pattern");
     fake.reports = null;
     const plain = html((await RestockTimes({ watches }))!);
     expect(plain).not.toMatch(/Reported|nofollow|data-series/);

@@ -79,17 +79,11 @@ export function placeDescription(i: PlaceCopyInput): string {
   ], 155);
 }
 
-function taxSentence(state: string): string {
-  const t = SALES_TAX[state];
-  if (!t) return "";
-  if (t.combined === 0) return `${state} has no sales tax, so a 256GB iPhone Duo costs $1,999 out the door.`;
-  return `With ${state}'s average ${t.combined}% sales tax, a 256GB iPhone Duo comes to about ${money(withTax(1999, state)!.total)}.`;
-}
-
+/** One sentence: how many stores, and how many list each model right now (the tax has its own section). */
 export function placeIntro(i: PlaceCopyInput): string {
   const n = i.stores.length;
-  const cities = i.kind === "state" && i.cities && i.cities > 1 ? ` in ${plural(i.cities, "city", "cities")}` : "";
-  return `${placeName(i)} has **${n} Apple Stores**${cities}. Right now **${i.stockNow.duo} of them** list an iPhone Duo for pickup, **${i.stockNow["18-pro-max"]}** the iPhone 18 Pro Max and **${i.stockNow["18-pro"]}** the iPhone 18 Pro. ${taxSentence(i.state)}`;
+  const cities = i.kind === "state" && i.cities && i.cities > 1 ? ` across ${plural(i.cities, "city", "cities")}` : "";
+  return `**${plural(n, "Apple Store")}** in ${placeName(i)}${cities}: **${i.stockNow.duo}** list an iPhone Duo for pickup now, **${i.stockNow["18-pro-max"]}** the 18 Pro Max, **${i.stockNow["18-pro"]}** the 18 Pro.`;
 }
 
 /** Configurations of a model that the fewest stores here have right now (ties broken by catalog order). */
@@ -105,18 +99,34 @@ function pairsPct(i: PlaceCopyInput, model: ModelKey): number {
   return Math.round((100 * avail) / Math.max(1, total));
 }
 
+const duoStoresNow = (i: PlaceCopyInput) => i.stores.filter((s) => (i.stock.get(s.storeNumber)?.perModel.duo.available ?? 0) > 0);
+
+/** The Duo section's one-sentence answer: which stores list one right now. */
 function duoLead(i: PlaceCopyInput): string {
   const n = i.stores.length;
-  const have = i.stores.filter((s) => (i.stock.get(s.storeNumber)?.perModel.duo.available ?? 0) > 0);
+  const have = duoStoresNow(i);
+  const st = i.duo;
+  if (have.length > 0) return `**${have.length} of ${n} stores** list an iPhone Duo right now: ${listWords(have.map((s) => appleName(s)), 4)}.`;
+  if (st.month > 0) return `**None of the ${n} stores** lists an iPhone Duo right now, but they have restocked it **${plural(st.month, "time")}** ${sinceWhen()}.`;
+  return `**None of the ${n} stores** lists an iPhone Duo right now, and none has logged a Duo restock ${sinceWhen()}.`;
+}
+
+/** The Duo section's key points: the restock record, the last one, how long a listing lasted, and the alert. */
+function duoPoints(i: PlaceCopyInput, w: string, alert: string): Block[] {
+  const n = i.stores.length;
+  const have = duoStoresNow(i);
   const st = i.duo;
   const last = st.lastRestock ? i.stores.find((s) => s.storeNumber === st.lastRestock!.storeNumber) : undefined;
-  const lastBit = st.lastRestock && last ? `, most recently on ${ET.format(new Date(st.lastRestock.at))} ET at ${appleName(last)}` : "";
-  const stay = st.medianMs != null ? ` A restocked Duo stayed listed about ${fmtDuration(st.medianMs)} at the median.` : "";
-  if (have.length > 0) {
-    return `${have.length} of ${n} stores list an iPhone Duo right now: ${listWords(have.map((s) => appleName(s)), 4)}. Stores here have logged ${plural(st.month, "Duo restock")} ${sinceWhen()}${lastBit}.${stay}`;
-  }
-  if (st.month > 0) return `None of the ${n} stores lists an iPhone Duo right now, but they have restocked it ${plural(st.month, "time")} ${sinceWhen()}${lastBit}.${stay}`;
-  return `None of the ${n} stores lists an iPhone Duo right now, and none has logged a Duo restock ${sinceWhen()}. That can change in a minute: Duo restocks land in bursts across the country.`;
+  const items: string[] = [];
+  if (have.length > 0 && st.month > 0) items.push(`**Logged ${sinceWhen()}:** ${plural(st.month, "Duo restock")} at stores here`);
+  if (st.lastRestock && last) items.push(`**Last restock:** ${ET.format(new Date(st.lastRestock.at))} ET at ${appleName(last)}`);
+  if (st.medianMs != null) items.push(`**Typical listing:** a restocked Duo stayed listed about ${fmtDuration(st.medianMs)} (median)`);
+  items.push(`**Fastest route:** [set an iPhone Duo alert in ${w}](${alert}) at the ${n <= 3 ? (n === 2 ? "two" : "three") : `${Math.min(n, 5)} closest`} stores you can reach`);
+  items.push("**One alert** = one store × one exact configuration; the push arrives seconds after a store lists it");
+  const blocks: Block[] = [];
+  if (have.length === 0 && st.month === 0) blocks.push({ t: "note", text: "**That can change in a minute:** Duo restocks land in bursts across the country." });
+  blocks.push({ t: "ul", items });
+  return blocks;
 }
 
 export function placeSections(i: PlaceCopyInput): KeywordSection[] {
@@ -130,17 +140,18 @@ export function placeSections(i: PlaceCopyInput): KeywordSection[] {
       id: "iphone-duo",
       h2: `iPhone Duo in ${w}: which stores have it now`,
       lead: duoLead(i),
-      blocks: [
-        { t: "p", text: `The fastest way to get one here is an alert at the ${n <= 3 ? (n === 2 ? "two" : "three") : `${Math.min(n, 5)} closest`} stores you can reach: [set an iPhone Duo alert in ${w}](${alert}). Each store × exact configuration is one alert, and the push arrives seconds after a store lists it.` },
-      ],
+      blocks: duoPoints(i, w, alert),
     },
     {
       id: "iphone-18-pro-max",
       h2: `iPhone 18 Pro Max in ${w}: stock by store`,
-      lead: `${i.stockNow["18-pro-max"]} of ${n} stores list at least one iPhone 18 Pro Max configuration, and ${pairsPct(i, "18-pro-max")}% of the ${n * 16} store × configuration pairs here are in stock.${scarce.length ? ` The scarcest right now: ${listWords(scarce.map((x) => `${x.label} (${x.stores} of ${n} stores)`))}.` : ""}`,
-      blocks: [
-        { t: "p", text: `The iPhone 18 Pro is at ${i.stockNow["18-pro"]} of ${n} stores, with ${pairsPct(i, "18-pro")}% of pairs in stock. ${sinceWhen().replace(/^./, (c) => c.toUpperCase())}, stores here have logged ${plural(i.max.month, "18 Pro Max restock")}${i.max.medianMs != null ? `, and a restocked Pro Max stayed listed about ${fmtDuration(i.max.medianMs)}` : ""}. The table above shows every store and model at a glance.` },
-      ],
+      lead: `**${i.stockNow["18-pro-max"]} of ${n} stores** list an iPhone 18 Pro Max, with **${pairsPct(i, "18-pro-max")}%** of the ${n * 16} store × configuration pairs here in stock.`,
+      blocks: [{ t: "ul", items: [
+        ...(scarce.length ? [`**Scarcest right now:** ${listWords(scarce.map((x) => `${x.label} (${x.stores} of ${n} stores)`))}`] : []),
+        `**iPhone 18 Pro:** at ${i.stockNow["18-pro"]} of ${n} stores, ${pairsPct(i, "18-pro")}% of pairs in stock`,
+        `**Logged ${sinceWhen()}:** ${i.max.month ? plural(i.max.month, "18 Pro Max restock") : "no 18 Pro Max restock yet"}`,
+        ...(i.max.medianMs != null ? [`**Typical listing:** a restocked Pro Max stayed listed about ${fmtDuration(i.max.medianMs)} (median)`] : []),
+      ] }],
     },
   ];
   if (t) {
@@ -153,13 +164,25 @@ export function placeSections(i: PlaceCopyInput): KeywordSection[] {
       caption: `${i.state} price with the state's average combined sales tax (${t.combined}%)`,
       source: "[Tax Foundation, rates as of January 1, 2026](https://taxfoundation.org/data/all/state/sales-tax-rates/); prices from apple.com",
     };
+    const blocks: Block[] = [];
+    if (t.combined === 0) {
+      if (nb) blocks.push({ t: "note", text: `**Next door:** in ${nb.name} the same phone comes to about ${money(withTax(1999, nb.name)!.total)}, which is why people cross the state line to buy here.` });
+    } else {
+      blocks.push({ t: "ul", items: [
+        `**State sales tax:** ${t.state}%`,
+        `**Local taxes, on average:** ${t.avgLocal}%`,
+        "**Charged where you pick up:** the store's rate, not your home address",
+        ...(i.kind === "city" ? [`**Inside ${w}:** rates can run above the state average`] : []),
+      ] });
+    }
+    blocks.push(table);
     sections.push({
       id: "price-with-tax",
       h2: `iPhone Duo price in ${w} with sales tax`,
       lead: t.combined === 0
-        ? `${i.state} has no state or local sales tax, so you pay the apple.com price and nothing more: $1,999 for a 256GB iPhone Duo.${nb ? ` In ${nb.name} the same phone comes to about ${money(withTax(1999, nb.name)!.total)}, which is why people cross the state line to buy here.` : ""}`
-        : `${i.state} charges ${t.state}% state sales tax and local taxes average ${t.avgLocal}%, so most buyers pay about ${t.combined}%: a 256GB iPhone Duo comes to about ${money(withTax(1999, i.state)!.total)}. For in-store pickup, tax is charged where the store is.${i.kind === "city" ? ` Rates inside ${w} can be higher than the state average.` : ""}`,
-      blocks: [table],
+        ? `**${i.state} has no sales tax**: a 256GB iPhone Duo costs exactly the apple.com price, **$1,999**, at pickup.`
+        : `At ${i.state}'s average **${t.combined}%** combined sales tax, a 256GB iPhone Duo comes to about **${money(withTax(1999, i.state)!.total)}** at pickup.`,
+      blocks,
     });
   }
   return sections;
@@ -191,6 +214,6 @@ export function hubFaq(): { count: Faq; taxFree: Faq } {
   const taxed = withTax(cheapest.price, highest.name)!;
   return {
     count: { q: "How many Apple Stores are there in the US?", a: `${STORES.length}, in ${cities.length} cities across ${states.length - 1} states and Washington, D.C. ${top[0].name} has the most (${top[0].count}), then ${top[1].name} (${top[1].count}) and ${top[2].name} (${top[2].count}).` },
-    taxFree: { q: "Which states with an Apple Store charge no sales tax?", a: `${listWords(free)}. There an iPhone Duo ${cheapest.storage} costs its ${fmtPrice(cheapest.price)} list price at pickup; in ${highest.name}, the highest average combined rate of any Apple Store state (${taxed.rate}%), the same phone comes to about ${fmtPrice(taxed.total)}.` },
+    taxFree: { q: "Which states with an Apple Store charge no sales tax?", a: `${listWords(free)}. There an iPhone Duo ${cheapest.storage} costs its ${fmtPrice(cheapest.price)} list price at pickup; in ${highest.name} (${taxed.rate}%, the highest average rate of any Apple Store state) it comes to about ${fmtPrice(taxed.total)}.` },
   };
 }
