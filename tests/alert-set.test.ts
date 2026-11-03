@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alertSetOf, reconcile, togglePhone, toggleStore } from "@/lib/alertSet";
+import { alertSetOf, reconcile, sameRules, togglePhone, toggleStore } from "@/lib/alertSet";
 
 const rule = (id: string, model: string, storage: string, color: string, store: string, active = true, at = id) => ({ id, active, createdAt: `2026-10-30T00:00:0${at}Z`, model, storages: [storage], colors: [color], storeNumbers: [store] });
 const A = { model: "duo", storage: "256GB", color: "Night Sky" }, B = { model: "duo", storage: "512GB", color: "Star White" };
@@ -24,5 +24,14 @@ describe("alert set", () => {
     expect(togglePhone([A, B], A)).toEqual([B]);
     expect(toggleStore(["R1", "R2"], "R1")).toEqual(["R2"]);
     expect(toggleStore(["R1"], "R3")).toEqual(["R1", "R3"]);
+  });
+
+  it("a phone with no store yet makes no rule, so the server's empty answer agrees with it", () => {
+    // The first tick of an empty account: kept on screen, not undone by the save's echo (2026-11-03).
+    expect(sameRules({ phones: [A], stores: [] }, { phones: [], stores: [] })).toBe(true);
+    expect(sameRules({ phones: [], stores: ["R083"] }, { phones: [], stores: [] })).toBe(true);
+    expect(sameRules({ phones: [A, B], stores: ["R083"] }, { phones: [B, A], stores: ["R083"] })).toBe(true);
+    expect(sameRules({ phones: [A], stores: ["R083"] }, { phones: [], stores: [] })).toBe(false);
+    expect(sameRules({ phones: [A, B], stores: ["R083"] }, { phones: [A], stores: ["R083"] })).toBe(false);
   });
 });

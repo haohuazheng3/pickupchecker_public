@@ -5,7 +5,7 @@
  * so the server always ends on the last state. A failed save puts the screen back to what the server has.
  */
 import { useCallback, useRef, useState } from "react";
-import { phoneKey, type AlertSet } from "@/lib/alertSet";
+import { phoneKey, sameRules, type AlertSet } from "@/lib/alertSet";
 import { announceAlertsChanged } from "@/lib/alertEvents";
 import { forgetMe } from "@/lib/me";
 import type { PlanKey } from "@/lib/plans";
@@ -38,7 +38,11 @@ export function useAlertSet(initial: AlertSet, initialPlan: PlanInfo | null) {
           const res = await fetch("/api/watches", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(next) });
           const j = (await res.json().catch(() => ({}))) as { set?: AlertSet; plan?: PlanInfo; error?: string };
           if (!res.ok || !j.set) throw new Error(j.error ?? `Couldn't save (${res.status})`);
-          const saved = j.set;
+          // The server answers with the set its rules make, which drops a phone with no store yet (and a store with
+          // no phone). When the rules agree, what was sent stays: otherwise the first tick of an account with no
+          // alert was undone before a second tick could pair with it, and the account never got one (a paying
+          // member tapped for 45 minutes on 2026-11-03).
+          const saved = sameRules(next, j.set) ? next : j.set;
           confirmed.current = saved;
           if (j.plan) setPlan(j.plan);
           if (!queued.current) {

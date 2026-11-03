@@ -62,10 +62,14 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
     if (!r?.ok) return;
     const j = (await r.json()) as { watches: Parameters<typeof alertSetOf>[0]; plan: PlanInfo; devices?: { active: number; label: string | null } };
     if (signingIn.current) return; // a sign-in here is saving the picks; its result wins
-    live.reset(alertSetOf(j.watches), j.plan);
+    const have = alertSetOf(j.watches);
+    live.reset(have, j.plan);
+    // An account with nothing chosen yet starts from this page's picks (its pre-fill, the nearest stores) instead
+    // of an empty screen; an account with alerts keeps exactly what it has.
+    if (!have.phones.length && !have.stores.length && (draft.phones.length || draft.stores.length)) live.apply(draft);
     if (j.devices) setDevices(j.devices);
     setLoaded(true);
-  }, [live]);
+  }, [live, draft]);
   useEffect(() => {
     if (account || !isLoaded || !isSignedIn || loaded || signingIn.current || signInOnly) return;
     const t = window.setTimeout(() => void loadAccount(), 0);
@@ -113,10 +117,14 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
   }, [max, count, plan, mode, live]);
   const onPhone = (p: Phone) => change({ ...set, phones: togglePhone(set.phones, p) });
   const onStore = (n: string) => change({ ...set, stores: toggleStore(set.stores, n) });
+  const applyLive = live.apply;
+  const liveSet = live.set;
   const pretick = useCallback((nearest: string[]) => {
-    if (mode !== "draft") return;
-    setDraft((d) => (d.stores.length ? d : { ...d, stores: nearest.slice(0, Math.max(1, Math.floor(MOST / Math.max(1, d.phones.length)))) }));
-  }, [mode]);
+    const take = (phones: number) => nearest.slice(0, Math.max(1, Math.floor(MOST / Math.max(1, phones))));
+    if (mode === "draft") { setDraft((d) => (d.stores.length ? d : { ...d, stores: take(d.phones.length) })); return; }
+    // An account with no alert yet gets the same head start; no rule exists until a phone is ticked too.
+    if (!liveSet.phones.length && !liveSet.stores.length) applyLive({ phones: [], stores: take(0) });
+  }, [mode, applyLive, liveSet]);
 
   // Signed out → in: what was picked here joins whatever the account already has, in one save.
   const afterSignIn = useCallback(async () => {
@@ -175,7 +183,8 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
           <div className="text-sm text-ink-3">
             {mode === "draft"
               ? count === 0 ? "Pick at least one phone and one store." : fit ? `Fits ${PLANS[fit].name}: ${PLANS[fit].limit} alerts for $${PLANS[fit].priceUsd}/month.` : `More than any plan holds (${MOST}).`
-              : plan?.key === "free" ? (count ? "Saved, but off until you choose a plan." : "Choose a plan to turn alerts on.")
+              : count === 0 ? (set.phones.length ? "Now tick a store: each phone is watched at each store you tick." : set.stores.length ? "Now tick a phone: it is watched at each store you ticked." : "Tick a phone and a store: each phone is watched at each store.")
+              : plan?.key === "free" ? "Saved, but off until you choose a plan."
               : `${onCount} of ${plan?.limit ?? 0} on with ${PLANS[plan?.key ?? "plus"].name}${count > (plan?.limit ?? 0) ? ` · ${count - (plan?.limit ?? 0)} off` : ""}`}
           </div>
         </div>
@@ -194,7 +203,7 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
         <PhoneMatrix catalog={catalog} selected={set.phones} onToggle={onPhone} initialModel={startModel ?? MODELS[0].key} disabled={mode === "account" && !loaded} />
       </Section>
       <Section id={inner ? "alert-stores" : "stores"} inner={inner} title="Stores" badge={<Count n={set.stores.length} />} summary={storesText(set.stores, names)} defaultOpen>
-        <StoreChooser selected={set.stores} onToggle={onStore} onPretick={mode === "draft" && !start.store ? pretick : undefined} room={storeRoom} preferState={start.state} preferCity={start.city}
+        <StoreChooser selected={set.stores} onToggle={onStore} onPretick={!start.store && (mode === "draft" || (set.phones.length === 0 && set.stores.length === 0)) ? pretick : undefined} room={storeRoom} preferState={start.state} preferCity={start.city}
           pool={catalog.stores} country={catalog.country} known={known} switchable={variant === "page"} />
       </Section>
 

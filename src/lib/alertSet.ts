@@ -43,3 +43,13 @@ export function togglePhone(list: Phone[], p: Phone): Phone[] {
 export function toggleStore(list: string[], n: string): string[] {
   return list.includes(n) ? list.filter((x) => x !== n) : [...list, n];
 }
+
+/**
+ * Whether two sets make the same rules. The server stores rules only, so a phone with no store ticked yet (or a
+ * store with no phone) makes none and does not come back from a save; the screen keeps it as long as this holds.
+ */
+export function sameRules(a: AlertSet, b: AlertSet): boolean {
+  const rules = (s: AlertSet) => new Set(s.stores.flatMap((n) => s.phones.map((p) => comboKey(p, n))));
+  const x = rules(a), y = rules(b);
+  return x.size === y.size && [...x].every((k) => y.has(k));
+}
