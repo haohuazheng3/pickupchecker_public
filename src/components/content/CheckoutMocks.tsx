@@ -80,7 +80,7 @@ export function AlertBannerMock() {
         <div className="mock-row"><span className="flex items-center gap-2"><Radio on /> Delivers Mon, Jan 25</span></div>
         <div className="mock-row"><span className="flex items-center gap-2"><Radio /> Pickup – In-Store</span></div>
       </div>
-      <div className="absolute left-3 right-3 top-3 flex items-start gap-2 rounded-2xl border border-line-2 bg-[var(--pane-solid)] p-2.5 shadow-[0_20px_40px_-20px_rgba(0,0,0,.45)]">
+      <div className="absolute start-3 end-3 top-3 flex items-start gap-2 rounded-2xl border border-line-2 bg-[var(--pane-solid)] p-2.5 shadow-[0_20px_40px_-20px_rgba(0,0,0,.45)]">
         <AppIcon size={30} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2"><span className="text-[9px] font-semibold uppercase tracking-wide text-ink-2">PickupChecker</span><span className="text-[9px] text-ink-3">now</span></div>
@@ -88,7 +88,7 @@ export function AlertBannerMock() {
           <div className="text-[10px] leading-snug text-ink-2">Apple Somerset · Troy, MI — Available Today.</div>
         </div>
       </div>
-      <div className="absolute bottom-2 left-0 right-0 text-center text-[9px] text-ink-3">read the store name · stay in the app</div>
+      <div className="absolute bottom-2 start-0 end-0 text-center text-[9px] text-ink-3">read the store name · stay in the app</div>
     </Screen>
   );
 }

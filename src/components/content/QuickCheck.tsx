@@ -9,7 +9,7 @@ import { recallHere, rememberHere } from "@/lib/lastPlace";
 import { productBySlug, productFor, productPath, storePlace } from "@/lib/seo/products";
 import { useLang, useT } from "@/components/i18n/LangProvider";
 import { Md } from "@/components/i18n/Md";
-import { distance, fill, num, secs, unit } from "@/lib/i18n/format";
+import { distance, fill, num, secs, unit, bidi } from "@/lib/i18n/format";
 import type { Lang } from "@/lib/i18n/locales";
 
 /** "≈4.2 mi · 12 min" in English (as always); other languages km and their units. */
@@ -92,7 +92,7 @@ export function QuickCheck({ data, initialModel }: { data: QuickCheckData; initi
       {data.models.length > 1 && (
         <div className="seg mb-3" role="tablist" aria-label={d.model}>
           {data.models.map((m) => (
-            <button key={m.key} type="button" role="tab" aria-selected={m.key === model} onClick={() => setModel(m.key)}>{m.short}</button>
+            <button key={m.key} type="button" role="tab" aria-selected={m.key === model} onClick={() => setModel(m.key)}>{bidi(m.short, lang)}</button>
           ))}
         </div>
       )}
@@ -103,7 +103,7 @@ export function QuickCheck({ data, initialModel }: { data: QuickCheckData; initi
       </div>
       {loc === "denied" && <p className="mt-2 text-xs text-ink-3">{d.locationOff}</p>}
       <p className="mt-3 text-sm text-ink-2" aria-live="polite">
-        <span className={`dot ${storesNow > 0 ? "dot-ok" : "dot-bad"} mr-1.5 align-middle`} />
+        <span className={`dot ${storesNow > 0 ? "dot-ok" : "dot-bad"} me-1.5 align-middle`} />
         <Md text={fill(d.storesNow, { n: n(storesNow), total: n(STORES.length), what })} b="text-ink" tag="strong" />
         {anchor ? fill(d.nearestTo, { place: anchor.label }) : null}
       </p>

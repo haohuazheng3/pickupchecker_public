@@ -16,7 +16,7 @@ import { currentTheme, onThemeChange, type Theme } from "@/lib/theme";
 import { rememberHere } from "@/lib/lastPlace";
 import { useLang, useT } from "@/components/i18n/LangProvider";
 import { Rich } from "@/components/i18n/Rich";
-import { fill, num, plural } from "@/lib/i18n/format";
+import { fill, num, plural, bidi } from "@/lib/i18n/format";
 import { cityLabel, colorLabel, countryLabel, regionLabel, storeLabel } from "@/lib/i18n/places";
 import type { CountryCode } from "@/lib/apple/countries";
 
@@ -267,7 +267,7 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
   // What the stores are grouped by: English keeps the country data's words; another language its own.
   const noun = country ? (en ? { one: country.regionNoun ?? "area", other: country.regionNounPlural ?? "areas" } : d.nouns[country.regionNoun ?? "area"] ?? d.nouns.area) : { one: d.usNoun, other: d.usNouns };
   const regionNoun = noun.one;
-  const model = modelMeta ? modelMeta.short : "iPhone";
+  const model = modelMeta ? bidi(modelMeta.short, lang) : "iPhone";
   void tick;
 
   return (
@@ -302,13 +302,13 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
         <div className="pane relative h-[62vh] min-h-[460px] overflow-hidden">
           {/* explicit size, not inset-0: maplibre's own CSS sets position: relative on the container */}
           <div ref={mapEl} className="h-full w-full" aria-label={country ? fill(d.mapLabel, { in: L.in }) : d.mapLabelUs} role="application" />
-          {!ready && !mapError && <div className="absolute inset-0 flex items-center justify-center bg-bg-2 text-sm text-ink-3"><span className="spinner mr-2" /> {d.loading}</div>}
+          {!ready && !mapError && <div className="absolute inset-0 flex items-center justify-center bg-bg-2 text-sm text-ink-3"><span className="spinner me-2" /> {d.loading}</div>}
           {mapError && <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-ink-2">{fill(d.errors.tail, { error: mapError })}</div>}
-          <div className="absolute right-3 top-3 flex flex-wrap justify-end gap-1.5">
+          <div className="absolute end-3 top-3 flex flex-wrap justify-end gap-1.5">
             <button type="button" className="rounded-full border border-accent/50 bg-pane px-2.5 py-1 text-[11px] font-medium text-accent backdrop-blur hover:bg-ink/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={nearMe} disabled={locating}>{locating ? d.locating : d.nearMe}</button>
             {Object.entries(regions).map(([name, b]) => <button key={name} type="button" className="rounded-full border border-line-2 bg-pane px-2.5 py-1 text-[11px] font-medium backdrop-blur hover:bg-ink/10 sm:px-3 sm:py-1.5 sm:text-xs" onClick={() => flyTo(b)}>{name}</button>)}
           </div>
-          <div className="absolute bottom-7 left-3 flex flex-wrap gap-x-4 gap-y-1 rounded-2xl border border-line bg-pane px-3 py-2 text-xs text-ink-2 backdrop-blur">
+          <div className="absolute bottom-7 start-3 flex flex-wrap gap-x-4 gap-y-1 rounded-2xl border border-line bg-pane px-3 py-2 text-xs text-ink-2 backdrop-blur">
             <span className="inline-flex items-center gap-1.5"><span className="dot dot-ok" /> {d.legend.inStock}</span>
             <span className="inline-flex items-center gap-1.5"><span className="dot" /> {d.legend.none}</span>
             <span className="inline-flex items-center gap-1.5"><span className="dot dot-warn" /> {d.legend.unchecked}</span>
@@ -324,7 +324,7 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
               <ol className="mt-4 space-y-1.5">
                 {stats.states.filter((s) => s.withStock > 0).slice(0, 8).map((s) => (
                   <li key={s.code}>
-                    <button type="button" className="group grid w-full grid-cols-[2.2rem_1fr_auto] items-center gap-2 text-left text-sm" onClick={() => focusState(s.code)}>
+                    <button type="button" className="group grid w-full grid-cols-[2.2rem_1fr_auto] items-center gap-2 text-start text-sm" onClick={() => focusState(s.code)}>
                       <span className="font-mono text-xs text-ink-3">{s.code}</span>
                       <span className="h-2 overflow-hidden rounded-full bg-ink/6"><span className="block h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.max(6, (s.withStock / stats.states[0].withStock) * 100)}%` }} /></span>
                       <span className="text-ink-2 group-hover:text-ink">{s.withStock}/{s.stores}</span>
@@ -360,7 +360,7 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
                 {stats.withStock === 0 ? <p className="mt-2 text-sm text-ink-3">{d.tapDot}</p> : (
                   <ul className="mt-2 max-h-72 divide-y divide-line overflow-auto text-sm">
                     {views.filter((v) => v.parts.length).sort((a, b) => b.parts.length - a.parts.length || a.state.localeCompare(b.state)).slice(0, 60).map((v) => (
-                      <li key={v.n}><button type="button" className="flex w-full items-center justify-between gap-2 py-2 text-left hover:text-accent" onClick={() => focusStore(v.n)}><span><span className="font-medium">{L.store(v)}</span> <span className="text-ink-3">· {L.city(v.city)}, {L.code(v.code, v.state)}</span></span><span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs text-accent">{v.parts.length}</span></button></li>
+                      <li key={v.n}><button type="button" className="flex w-full items-center justify-between gap-2 py-2 text-start hover:text-accent" onClick={() => focusStore(v.n)}><span><span className="font-medium">{L.store(v)}</span> <span className="text-ink-3">· {L.city(v.city)}, {L.code(v.code, v.state)}</span></span><span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs text-accent">{v.parts.length}</span></button></li>
                     ))}
                   </ul>
                 )}
@@ -377,14 +377,14 @@ export function StockMap({ stores, initial, focus, country }: { stores: MapStore
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-ink-3"><tr><th className="py-2 pr-3 font-medium">{country ? regionNoun[0].toUpperCase() + regionNoun.slice(1) : d.usHeader}</th><th className="py-2 pr-3 font-medium">{d.table.stores}</th><th className="py-2 pr-3 font-medium">{d.table.withStock}</th><th className="py-2 pr-3 font-medium">{d.table.configs}</th><th className="py-2 font-medium">{d.table.share}</th></tr></thead>
+            <thead className="text-start text-xs uppercase tracking-wide text-ink-3"><tr><th className="py-2 pe-3 font-medium">{country ? regionNoun[0].toUpperCase() + regionNoun.slice(1) : d.usHeader}</th><th className="py-2 pe-3 font-medium">{d.table.stores}</th><th className="py-2 pe-3 font-medium">{d.table.withStock}</th><th className="py-2 pe-3 font-medium">{d.table.configs}</th><th className="py-2 font-medium">{d.table.share}</th></tr></thead>
             <tbody className="divide-y divide-line">
               {stats.states.map((s) => (
                 <tr key={s.code} className="cursor-pointer hover:bg-ink/5" onClick={() => focusState(s.code)}>
-                  <td className="py-2 pr-3"><span className="font-mono text-xs text-ink-3">{L.code(s.code, s.name)}</span> {L.region(s.name)} <Link href={stores.find((x) => x.code === s.code)?.stateHref ?? (country ? `/${country.cc}` : "/stores")} className="ml-1 text-xs text-ink-3 underline hover:text-ink" onClick={(e) => e.stopPropagation()}>{d.table.page}</Link></td>
-                  <td className="py-2 pr-3 text-ink-2">{s.stores}</td>
-                  <td className={`py-2 pr-3 ${s.withStock ? "text-accent" : "text-ink-3"}`}>{s.withStock}</td>
-                  <td className="py-2 pr-3 text-ink-2">{s.configs}</td>
+                  <td className="py-2 pe-3"><span className="font-mono text-xs text-ink-3">{L.code(s.code, s.name)}</span> {L.region(s.name)} <Link href={stores.find((x) => x.code === s.code)?.stateHref ?? (country ? `/${country.cc}` : "/stores")} className="ms-1 text-xs text-ink-3 underline hover:text-ink" onClick={(e) => e.stopPropagation()}>{d.table.page}</Link></td>
+                  <td className="py-2 pe-3 text-ink-2">{s.stores}</td>
+                  <td className={`py-2 pe-3 ${s.withStock ? "text-accent" : "text-ink-3"}`}>{s.withStock}</td>
+                  <td className="py-2 pe-3 text-ink-2">{s.configs}</td>
                   <td className="py-2"><span className="block h-1.5 w-32 overflow-hidden rounded-full bg-ink/6"><span className="block h-full bg-accent" style={{ width: `${(s.withStock / s.stores) * 100}%` }} /></span></td>
                 </tr>
               ))}

@@ -82,12 +82,12 @@ export function Last24Hours({ data, label, stores, country = "us", stock, lastBe
           <table className="w-full min-w-[32rem] border-collapse text-sm">
             <caption className="sr-only">{d.caption(label, asOf)}</caption>
             <thead>
-              <tr className="border-b border-line-2 text-left text-ink">
-                <th scope="col" className="py-2 pr-3 font-semibold">{d.thConfig}</th>
-                <th scope="col" className="py-2 pr-3 font-semibold">{d.thRestocks}</th>
-                {!one && <th scope="col" className="py-2 pr-3 font-semibold">{d.thStores}</th>}
-                <th scope="col" className="py-2 pr-3 font-semibold">{d.thLast}</th>
-                {stock && <th scope="col" className="py-2 pr-3 font-semibold">{d.thNow}</th>}
+              <tr className="border-b border-line-2 text-start text-ink">
+                <th scope="col" className="py-2 pe-3 font-semibold">{d.thConfig}</th>
+                <th scope="col" className="py-2 pe-3 font-semibold">{d.thRestocks}</th>
+                {!one && <th scope="col" className="py-2 pe-3 font-semibold">{d.thStores}</th>}
+                <th scope="col" className="py-2 pe-3 font-semibold">{d.thLast}</th>
+                {stock && <th scope="col" className="py-2 pe-3 font-semibold">{d.thNow}</th>}
               </tr>
             </thead>
             <tbody>
@@ -97,11 +97,11 @@ export function Last24Hours({ data, label, stores, country = "us", stock, lastBe
                 const quiet = !r;
                 return (
                   <tr key={i.partNumber} className={`border-b border-line ${quiet ? "text-ink-3" : ""}`}>
-                    <th scope="row" className={`py-2 pr-3 text-left font-medium ${quiet ? "text-ink-2" : "text-ink"}`}><span className="inline-flex items-center gap-2"><Swatch color={i.color} />{configLabel(i, lang)}</span></th>
-                    <td className={`py-2 pr-3 tabular-nums ${r ? "font-semibold text-ink" : ""}`}>{r?.restocks ?? 0}</td>
-                    {!one && <td className="py-2 pr-3 tabular-nums">{r ? d.ofStores(r.stores, stores.length) : "–"}</td>}
-                    <td className="py-2 pr-3">{r ? <>{stampAt(r.lastAt, r.lastStore)}{!one && <>{" · "}{storeLink(r.lastStore)}</>}</> : d.noneIn24}</td>
-                    {stock && <td className="py-2 pr-3 tabular-nums">{now == null ? "–" : one ? (now ? <span className="font-semibold text-accent">{d.yes}</span> : d.no) : now ? <span className="font-semibold text-accent">{d.ofStores(now, stores.length)}</span> : d.ofStores(0, stores.length)}</td>}
+                    <th scope="row" className={`py-2 pe-3 text-start font-medium ${quiet ? "text-ink-2" : "text-ink"}`}><span className="inline-flex items-center gap-2"><Swatch color={i.color} />{configLabel(i, lang)}</span></th>
+                    <td className={`py-2 pe-3 tabular-nums ${r ? "font-semibold text-ink" : ""}`}>{r?.restocks ?? 0}</td>
+                    {!one && <td className="py-2 pe-3 tabular-nums">{r ? d.ofStores(r.stores, stores.length) : "–"}</td>}
+                    <td className="py-2 pe-3">{r ? <>{stampAt(r.lastAt, r.lastStore)}{!one && <>{" · "}{storeLink(r.lastStore)}</>}</> : d.noneIn24}</td>
+                    {stock && <td className="py-2 pe-3 tabular-nums">{now == null ? "–" : one ? (now ? <span className="font-semibold text-accent">{d.yes}</span> : d.no) : now ? <span className="font-semibold text-accent">{d.ofStores(now, stores.length)}</span> : d.ofStores(0, stores.length)}</td>}
                   </tr>
                 );
               })}

@@ -52,7 +52,7 @@ function taxSentence(cc: CountryCode, region?: string): string {
   }
   const r = includedRate(c);
   if (r == null) return `Un iPhone Duo da 256GB costa ${eur(c, duo)} e, senza imposte sulle vendite a Hong Kong, è esattamente quanto paghi al ritiro.`;
-  return `Un iPhone Duo da 256GB costa ${eur(c, duo)} ${inPaese(cc)}, ${taxIt(c)} al ${pct(IT, r)} inclusa: il prezzo di apple.com è quello che paghi al ritiro.`;
+  return `Un iPhone Duo da 256GB costa ${eur(c, duo)} ${inPaese(cc)}, ${taxIt(c)} al ${pct(IT, r)} inclusa: il prezzo apple.com è quello del ritiro.`;
 }
 
 const PRICE_ROWS: [ModelKey, string][] = [["duo", "256GB"], ["duo", "1TB"], ["18-pro-max", "256GB"], ["18-pro-max", "1TB"], ["18-pro", "256GB"]];

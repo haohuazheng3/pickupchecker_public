@@ -12,6 +12,7 @@ import { cIt } from "./it";
 import { cEs } from "./es";
 import { cNl } from "./nl";
 import { cSv } from "./sv";
+import { cAr } from "./ar";
 
 export const CDICTS: Record<Lang, CDict> = {
   en: cen,
@@ -25,6 +26,7 @@ export const CDICTS: Record<Lang, CDict> = {
   es: cEs,
   nl: cNl,
   sv: cSv,
+  ar: cAr,
   "de-CH": swiss(cDe),
   "fr-CA": cFr,
 };

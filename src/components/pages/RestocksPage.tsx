@@ -7,7 +7,7 @@ import { restockFeed, restockCounts } from "@/lib/stock/queries";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { BrowseModels, BrowseStates } from "@/components/seo/Browse";
 import { BrowseCountryModels, BrowseCountryPopular, BrowseCountryRegions } from "@/components/seo/CountryBrowse";
-import { RelatedBlock } from "@/components/seo/Related";
+import { LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ORG_ID } from "@/lib/seo/siteLd";
 import { englishLocale, pathInLocale, type Locale } from "@/lib/i18n/locales";
@@ -77,7 +77,7 @@ export async function RestocksPage({ country: c, searchParams: sp }: { country: 
         <Link href={base({ kind: undefined, page: undefined })} className="chip px-3 py-1.5 text-xs" data-on={kind === "restock"}>{V.restocks}</Link>
         <Link href={base({ kind: "all", page: undefined })} className="chip px-3 py-1.5 text-xs" data-on={kind === "all"}>{V.withSoldOut}</Link>
         {states.length > 1 && (
-          <form action={self} method="get" className="ml-auto flex items-center gap-1">
+          <form action={self} method="get" className="ms-auto flex items-center gap-1">
             <input type="hidden" name="model" value={model ?? "all"} />{kind === "all" && <input type="hidden" name="kind" value="all" />}
             <select name="state" defaultValue={state ? states.find((s) => s.name === state)?.slug : ""} className="input w-auto py-1.5 text-xs" aria-label={us ? "State" : V.regionLabel(c)}>
               <option value="">{us ? "All states" : V.allRegions(c)}</option>
@@ -101,6 +101,7 @@ export async function RestocksPage({ country: c, searchParams: sp }: { country: 
       <RelatedBlock title={V.byPlace}>
         {us ? <BrowseStates current={state} title="By state" /> : states.length > 1 ? <BrowseCountryRegions country={c} current={state} title={V.byRegion(c)} /> : <BrowseCountryPopular country={c} />}
         {us ? <BrowseModels current={model} /> : <BrowseCountryModels country={c} current={model} />}
+        {loc.native && <LinkRow title={D.common.more} links={[{ href: `${prefixOf(cc)}/iphone-duo-restock-times`, label: t().place.home.restockTimesChip }]} />}
       </RelatedBlock>
     </div>
   );

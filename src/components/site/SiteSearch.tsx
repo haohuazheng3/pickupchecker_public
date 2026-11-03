@@ -97,7 +97,7 @@ export function SiteSearch() {
             <input ref={inputRef} className="search-input h-full min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-ink-3" placeholder={d.placeholder} value={q}
               onChange={(e) => { setQ(e.target.value); setActive(0); }} onKeyDown={onKeyDown} inputMode="search" enterKeyHint="go"
               autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} role="combobox" aria-expanded={results.length > 0} aria-autocomplete="list" aria-controls="site-search-results" aria-label={d.label} />
-            {q && <button type="button" className="-mr-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg text-ink-3 hover:bg-ink/8 hover:text-ink" aria-label={d.clear} onClick={() => fill("")}>×</button>}
+            {q && <button type="button" className="-me-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg text-ink-3 hover:bg-ink/8 hover:text-ink" aria-label={d.clear} onClick={() => fill("")}>×</button>}
           </label>
           <button type="button" className="shrink-0 px-1.5 text-[15px] font-medium text-accent sm:hidden" onClick={hide}>{d.cancel}</button>
           <kbd className="hidden shrink-0 rounded-md border border-line-2 px-1.5 py-0.5 text-[10px] text-ink-3 sm:block">esc</kbd>

@@ -101,10 +101,10 @@ export async function StoresIndexPage({ country: c }: { country: Country }) {
         <p className="mt-2 leading-relaxed text-ink-2">{hub.count.a}</p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
-            <caption className="mb-2 text-left text-xs text-ink-3">The ten states with the most Apple Stores (Apple retail store list, as tracked here)</caption>
-            <thead><tr className="text-left text-ink-3"><th className="py-1.5 pr-4 font-medium">State</th><th className="py-1.5 pr-4 font-medium">Apple Stores</th><th className="py-1.5 font-medium">Cities</th></tr></thead>
+            <caption className="mb-2 text-start text-xs text-ink-3">The ten states with the most Apple Stores (Apple retail store list, as tracked here)</caption>
+            <thead><tr className="text-start text-ink-3"><th className="py-1.5 pe-4 font-medium">State</th><th className="py-1.5 pe-4 font-medium">Apple Stores</th><th className="py-1.5 font-medium">Cities</th></tr></thead>
             <tbody className="divide-y divide-line">
-              {top.map((s) => <tr key={s.slug}><td className="py-1.5 pr-4"><Link href={statePath(s.name)} className="hover:underline">{s.name}</Link></td><td className="py-1.5 pr-4 tabular-nums">{s.count}</td><td className="py-1.5 tabular-nums">{cities.filter((x) => x.state === s.name).length}</td></tr>)}
+              {top.map((s) => <tr key={s.slug}><td className="py-1.5 pe-4"><Link href={statePath(s.name)} className="hover:underline">{s.name}</Link></td><td className="py-1.5 pe-4 tabular-nums">{s.count}</td><td className="py-1.5 tabular-nums">{cities.filter((x) => x.state === s.name).length}</td></tr>)}
             </tbody>
           </table>
         </div>

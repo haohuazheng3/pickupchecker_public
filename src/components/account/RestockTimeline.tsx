@@ -37,7 +37,7 @@ const ROW = 32;
 const gapPx = (min: number) => Math.round(Math.min(40, 4 + min * 0.1));
 /** Columns: time · rail · stores · how often. The rail's centre, for overlays. */
 const COLS = "grid-cols-[4.5rem_1.25rem_minmax(0,1fr)_auto] gap-x-2.5";
-const RAIL_X = "left-[5.75rem]";
+const RAIL_X = "start-[5.75rem]";
 
 export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Yours = yours.replace(/^your/, "Your"), mixed, reported }: Props) {
   const d = useT().account.timeline;
@@ -61,7 +61,7 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Y
   const items: React.ReactNode[] = [];
   const nowLine = (pad: number) => (
     <li key="now" aria-current="time" aria-label={`${fill(d.nowLabel, { time: hm(now) })}${at.next != null ? fill(d.nowNext, { soon }) : ""}`} className={`relative grid items-center ${COLS}`} style={{ paddingTop: pad }}>
-      <span className="text-right text-sm font-bold tabular-nums text-accent">{hm(now)}</span>
+      <span className="text-end text-sm font-bold tabular-nums text-accent">{hm(now)}</span>
       <span className="relative z-10 flex h-8 items-center justify-center"><span className="dot dot-ok dot-live" /></span>
       <span className="col-span-2 flex min-w-0 items-center gap-2">
         <span className="h-[2px] flex-1 rounded-full bg-accent/40" />
@@ -88,19 +88,19 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Y
           : `${fill(plural(lang, r.drops, r.mine ? d.rowMine : d.rowArea), { time: hm(r.min), n: r.drops, where: r.where, zone })}${isNext ? (at.tomorrow ? d.rowNextTomorrow : d.rowNext) : ""}`}>
         {isNext && !at.tomorrow && (
           <>
-            <span aria-hidden className={`absolute top-0 ${RAIL_X} -translate-x-1/2 border-l-2 border-dashed border-accent/70`} style={{ height: pad + ROW / 2 }} />
-            <span aria-hidden className="absolute left-[7rem] text-xs font-semibold text-accent" style={{ top: Math.max(0, pad / 2 - 8) }}>{soon}</span>
+            <span aria-hidden className={`absolute top-0 ${RAIL_X} -translate-x-1/2 border-s-2 border-dashed border-accent/70`} style={{ height: pad + ROW / 2 }} />
+            <span aria-hidden className="absolute start-[7rem] text-xs font-semibold text-accent" style={{ top: Math.max(0, pad / 2 - 8) }}>{soon}</span>
           </>
         )}
-        <span className={`text-right text-sm tabular-nums ${isNext ? "font-semibold text-accent" : dim || !r.mine ? "text-ink-3" : "font-medium text-ink"}`}>{hm(r.min)}</span>
+        <span className={`text-end text-sm tabular-nums ${isNext ? "font-semibold text-accent" : dim || !r.mine ? "text-ink-3" : "font-medium text-ink"}`}>{hm(r.min)}</span>
         <span className="relative z-10 flex h-8 items-center justify-center">{node}</span>
         <span className={`min-w-0 truncate text-sm ${dim || !r.mine ? "text-ink-3" : "text-ink-2"}`} title={r.whereAll}>
           {r.reported && d.reportedPrefix}{r.where}
-          {isNext && at.tomorrow && <span className="ml-2 rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent">{d.tomorrow}</span>}
+          {isNext && at.tomorrow && <span className="ms-2 rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent">{d.tomorrow}</span>}
         </span>
         <span className="flex items-center gap-1.5" title={fill(plural(lang, r.drops, r.reported ? d.oftenReported : d.often), { n: r.drops, days })}>
           <span className="flex w-10 justify-end sm:w-28"><span className={`h-1.5 rounded-full ${dim || !r.mine ? "bg-ink/12" : "bg-accent/45"}`} style={{ width: `${Math.max(14, Math.round((100 * r.drops) / max))}%` }} /></span>
-          <span className="w-7 text-right text-xs tabular-nums text-ink-3">{r.drops}×</span>
+          <span className="w-7 text-end text-xs tabular-nums text-ink-3">{r.drops}×</span>
         </span>
       </li>,
     );
@@ -132,7 +132,7 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Y
             <span aria-hidden className={`absolute top-4 bottom-4 ${RAIL_X} w-px -translate-x-1/2 bg-line-2`} />
             {items}
           </ol>
-          {at.tomorrow && at.next != null && <p className="mt-3 pl-[7rem] text-xs font-semibold text-accent">{fill(d.nextTomorrow, { time: hm(rows[at.next].min), soon })}</p>}
+          {at.tomorrow && at.next != null && <p className="mt-3 ps-[7rem] text-xs font-semibold text-accent">{fill(d.nextTomorrow, { time: hm(rows[at.next].min), soon })}</p>}
           {hidden > 0 && <p className="mt-3 text-xs text-ink-3">{fill(plural(lang, hidden, d.hidden), { n: hidden })}</p>}
           {reported && <ReportsNote reports={reported} mark={d.reportMark} />}
         </>

@@ -10,8 +10,8 @@
 import { COUNTRIES, type CountryCode } from "@/lib/apple/countries";
 
 /** Dictionary languages. de-CH and fr-CA are regional forms of de and fr. */
-export type Lang = "en" | "ja" | "ko" | "zh-TW" | "zh-HK" | "de" | "de-CH" | "fr" | "fr-CA" | "it" | "es" | "nl" | "sv";
-export const LANGS: readonly Lang[] = ["en", "ja", "ko", "zh-TW", "zh-HK", "de", "de-CH", "fr", "fr-CA", "it", "es", "nl", "sv"];
+export type Lang = "en" | "ja" | "ko" | "zh-TW" | "zh-HK" | "de" | "de-CH" | "fr" | "fr-CA" | "it" | "es" | "nl" | "sv" | "ar";
+export const LANGS: readonly Lang[] = ["en", "ja", "ko", "zh-TW", "zh-HK", "de", "de-CH", "fr", "fr-CA", "it", "es", "nl", "sv", "ar"];
 
 export interface Locale {
   /** URL segment: "ja-jp" for a native version, the country code ("jp") for its English one, "" for the US. */
@@ -43,6 +43,7 @@ export const NATIVE_LOCALES: readonly Locale[] = [
   N("es-es", "es", "es", "es-ES"),
   N("nl-nl", "nl", "nl", "nl-NL"),
   N("sv-se", "sv", "se", "sv-SE"),
+  N("ar-ae", "ar", "ae", "ar-AE"),
 ];
 const BY_ID = new Map(NATIVE_LOCALES.map((l) => [l.id, l]));
 
@@ -90,7 +91,7 @@ export function localeFor(cc: CountryCode, lang: Lang): Locale {
 /** Names of the languages in themselves, for the switch. */
 export const LANG_NAMES: Record<Lang, string> = {
   en: "English", ja: "日本語", ko: "한국어", "zh-TW": "繁體中文（台灣）", "zh-HK": "繁體中文（香港）", de: "Deutsch", "de-CH": "Deutsch (Schweiz)",
-  fr: "Français", "fr-CA": "Français (Canada)", it: "Italiano", es: "Español", nl: "Nederlands", sv: "Svenska",
+  fr: "Français", "fr-CA": "Français (Canada)", it: "Italiano", es: "Español", nl: "Nederlands", sv: "Svenska", ar: "العربية",
 };
 /** Short label for a version in a list of one country's versions ("English", "日本語", "Deutsch", "Français"). */
 export function versionLabel(loc: Locale): string {

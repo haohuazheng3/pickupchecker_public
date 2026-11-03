@@ -30,7 +30,7 @@ export function SourceList({ sources, facts, where, since = "{{trackingSince}}" 
   return (
     <section className="text-sm" aria-labelledby="src-h">
       <h2 id="src-h" className="text-lg font-semibold">{d.sources}</h2>
-      <ol className="mt-2 list-decimal space-y-1 pl-5 text-ink-2">
+      <ol className="mt-2 list-decimal space-y-1 ps-5 text-ink-2">
         <li>{d.trackerSource(where ?? d.allUsStores, <Inline text={since} facts={facts} />, <Inline text="{{asOf}}" facts={facts} />)}</li>
         {sources.map((s) => <li key={s.url}><a href={s.url} target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-ink">{s.label}</a></li>)}
       </ol>

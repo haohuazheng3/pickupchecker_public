@@ -70,7 +70,7 @@ function TapFlow({ taps }: { taps: string[] }) {
     <ol className="flex flex-wrap items-center gap-x-2 gap-y-2" aria-label="The four taps">
       {taps.map((t, i) => (
         <li key={t} className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-[var(--pane-solid)] py-1 pl-1 pr-3.5 text-sm font-semibold text-ink">
+          <span className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-[var(--pane-solid)] py-1 ps-1 pe-3.5 text-sm font-semibold text-ink">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-[var(--accent-ink)]">{i + 1}</span>{t}
           </span>
           {i < taps.length - 1 && <span aria-hidden className="text-ink-3">→</span>}
@@ -291,11 +291,11 @@ export default async function GrabRestockGuide() {
         <div className="pane p-6 sm:p-8">
           <h2 className="display text-2xl sm:text-3xl">Where it goes wrong</h2>
           <table className="mt-4 w-full text-sm">
-            <thead><tr className="text-left text-xs uppercase tracking-wide text-ink-3"><th className="pb-2 font-semibold">If…</th><th className="pb-2 font-semibold">Do…</th></tr></thead>
+            <thead><tr className="text-start text-xs uppercase tracking-wide text-ink-3"><th className="pb-2 font-semibold">If…</th><th className="pb-2 font-semibold">Do…</th></tr></thead>
             <tbody>
               {wrong.map(([a, b]) => (
                 <tr key={a} className="border-t border-line align-top">
-                  <td className="py-2.5 pr-3 text-ink-3">{a}</td>
+                  <td className="py-2.5 pe-3 text-ink-3">{a}</td>
                   <td className="py-2.5 font-medium text-ink">{b}</td>
                 </tr>
               ))}

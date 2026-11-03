@@ -232,7 +232,7 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
                 <div className="min-w-0">
                   <span className="font-semibold">{p.name}</span>
                   <span className="text-ink-2">{fill(d.row, { limit: N(p.limit), price: `$${p.priceUsd}` })}</span>
-                  {k === recommend && !mine && <span className="ml-2 rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent">{fill(d.fitsYour, { n: N(plan.used) })}</span>}
+                  {k === recommend && !mine && <span className="ms-2 rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent">{fill(d.fitsYour, { n: N(plan.used) })}</span>}
                 </div>
                 {mine ? <span className="text-sm font-semibold text-accent">{d.yourPlan}</span>
                   : paid ? (

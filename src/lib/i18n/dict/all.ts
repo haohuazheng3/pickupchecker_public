@@ -12,6 +12,7 @@ import { it } from "./it";
 import { es } from "./es";
 import { nl } from "./nl";
 import { sv } from "./sv";
+import { ar } from "./ar";
 
 export const DICTS: Record<Lang, Dict> = {
   en: en,
@@ -25,6 +26,7 @@ export const DICTS: Record<Lang, Dict> = {
   es: es,
   nl: nl,
   sv: sv,
+  ar: ar,
   "de-CH": swiss(de),
   "fr-CA": fr,
 };

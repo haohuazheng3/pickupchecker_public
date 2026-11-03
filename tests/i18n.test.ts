@@ -6,7 +6,7 @@ import { agoFine, hour, secs, stamp, plural, price, distance, fitTitleW, titleWi
 import { hourLabel, localStamp } from "@/lib/content/siteFacts";
 import { fmtHour } from "@/lib/seo/enrich";
 import { formatAgo } from "@/components/site/LiveAgo";
-import { appleStoreLabel, cityLabel, colorLabel, countryLabel, regionLabel } from "@/lib/i18n/places";
+import { appleStoreLabel, cityLabel, colorLabel, countryLabel, regionLabel, storeLabel } from "@/lib/i18n/places";
 import { COUNTRIES } from "@/lib/apple/countries";
 import { storesOf, storePath } from "@/lib/apple/catalog";
 import { offerFor } from "@/components/i18n/LangSuggest";
@@ -22,7 +22,7 @@ describe("language versions and paths (docs/i18n.md §6)", () => {
     expect(localeFromSegment("us")).toBeUndefined();
     expect(localeFromSegment("xx-yy")).toBeUndefined();
     expect(nativeLocale("DE-CH")?.lang).toBe("de-CH");
-    expect(NATIVE_LOCALES).toHaveLength(16);
+    expect(NATIVE_LOCALES).toHaveLength(17);
   });
   it("moves English-form hrefs to the reader's language only where that version exists", () => {
     expect(localizePath("/jp/stores/tokyo/tokyo/ginza", "ja")).toBe("/ja-jp/stores/tokyo/tokyo/ginza");
@@ -146,9 +146,34 @@ describe("notifications keep English as it was and follow the person's language"
 
 describe("dictionaries", () => {
   it("every language is registered (a missing one falls back to English)", () => {
-    for (const l of ["en", "ja", "ko", "zh-TW", "zh-HK", "de", "de-CH", "fr", "fr-CA", "it", "es", "nl", "sv"] as const) {
+    for (const l of ["en", "ja", "ko", "zh-TW", "zh-HK", "de", "de-CH", "fr", "fr-CA", "it", "es", "nl", "sv", "ar"] as const) {
       expect(DICTS[l], l).toBeTruthy();
       expect(CDICTS[l], l).toBeTruthy();
     }
+  });
+});
+
+describe("names across sibling variants", () => {
+  it("a store's name falls back to its sibling variant's (Traditional Chinese, Canadian French)", () => {
+    const hk = storesOf("hk").find((x) => x.storeNumber === "R409")!;
+    const tw = storesOf("tw").find((x) => x.storeNumber === "R713")!;
+    const be = storesOf("be").find((x) => x.storeNumber === "R486")!;
+    expect(storeLabel(hk, "zh-TW")).toBe("銅鑼灣");
+    expect(storeLabel(tw, "zh-HK")).toBe("台北 101");
+    expect(storeLabel(be, "fr-CA")).toBe("Bruxelles");
+    expect(storeLabel(be, "en")).toBe(be.name);
+  });
+});
+
+describe("Arabic (UAE)", () => {
+  it("has its own version with Apple's Arabic names and Western digits", () => {
+    const ar = localeFromSegment("ar-ae")!;
+    expect(ar).toMatchObject({ lang: "ar", cc: "ae", tag: "ar-AE", native: true });
+    expect(pathInLocale("/ae/stores", ar)).toBe("/ar-ae/stores");
+    expect(colorLabel("Night Sky", "ar")).toBe("سماء الليل");
+    expect(cityLabel("ae", "Dubai", "ar")).toBe("دبي");
+    expect(appleStoreLabel(storesOf("ae").find((x) => x.storeNumber === "R597")!, "ar")).toBe("Apple دبي مول");
+    expect(plural("ar", 2, { one: "متجر", two: "متجران", few: "# متاجر", other: "# متجر" })).toBe("متجران");
+    expect(price("ar", COUNTRIES.ae, 4999)).toMatch(/4,999/);
   });
 });

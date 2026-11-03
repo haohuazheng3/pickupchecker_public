@@ -1,5 +1,6 @@
 /** "Keep exploring" rows for another country's pages: its models, regions and cities, never another country's stores. */
 import { PendingLink as Link } from "@/components/ui/PendingLink";
+import { bidi } from "@/lib/i18n/format";
 import { MODELS, DEFAULT_MODEL, mapPath, restocksPath, placeTarget } from "@/lib/apple/catalog";
 import { prefixOf, type Country } from "@/lib/apple/countries";
 import { regionRefs, topCities, topRegions, regionWord } from "@/lib/seo/countryLinks";
@@ -16,7 +17,7 @@ export function BrowseCountryModels({ country: c, current, title }: { country: C
       title={title ?? d.liveByModel}
       links={[
         ...MODELS.map((m) => ({ href: `${p}/stock/${m.slug}`, label: d.modelStock(m.name), meta: m.key === current ? d.thisPage : undefined })),
-        ...MODELS.map((m) => ({ href: `${restocksPath(c.cc)}?model=${m.key}`, label: d.restockLog(m.short) })),
+        ...MODELS.map((m) => ({ href: `${restocksPath(c.cc)}?model=${m.key}`, label: d.restockLog(bidi(m.short, pageLocale().lang)) })),
         { href: `${mapPath(c.cc)}?model=${DEFAULT_MODEL}`, label: d.liveMap },
       ]}
     />

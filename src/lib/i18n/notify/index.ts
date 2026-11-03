@@ -12,6 +12,7 @@ import { notifyIt } from "./it";
 import { notifyEs } from "./es";
 import { notifyNl } from "./nl";
 import { notifySv } from "./sv";
+import { notifyAr } from "./ar";
 
 const ss = (s: string) => s.replace(/ß/g, "ss");
 /** Swiss German: German with ss for ß (strings and the strings functions return). */
@@ -31,6 +32,7 @@ const BY: Partial<Record<Lang, NotifyText>> = {
   es: notifyEs,
   nl: notifyNl,
   sv: notifySv,
+  ar: notifyAr,
   "de-CH": swissText(notifyDe),
   "fr-CA": notifyFr
 };

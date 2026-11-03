@@ -134,6 +134,8 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
         ? fill(d.overPlan, { n: num(lang, n), plan: PLANS[plan.key].name, limit: num(lang, plan.limit) })
         : fill(d.overMost, { n: num(lang, n), most: num(lang, MOST) }));
       setRefused((k) => k + 1);
+      // Demand past the plan (or the 50 of Max): what decides whether a bigger plan is worth offering.
+      track("alert_cap_refused", { plan: plan?.key ?? "none", wanted: n, limit: max });
       return;
     }
     setNotice(null);
@@ -256,7 +258,7 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
           ) : (
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
               {PAID_PLANS.map((k) => (
-                <button key={k} type="button" onClick={() => void goCheckout(k)} className={`rounded-2xl border p-3 text-left transition hover:border-accent ${k === fit ? "border-accent bg-accent/8" : "border-line-2"}`}>
+                <button key={k} type="button" onClick={() => void goCheckout(k)} className={`rounded-2xl border p-3 text-start transition hover:border-accent ${k === fit ? "border-accent bg-accent/8" : "border-line-2"}`}>
                   <div className="flex items-baseline justify-between"><span className="font-semibold">{PLANS[k].name}</span><span className="text-sm"><b>${PLANS[k].priceUsd}</b>{d.perMo}</span></div>
                   <div className="mt-0.5 text-xs text-ink-3">{plural(lang, PLANS[k].limit, d.alerts)}{k === fit ? fill(d.fitsYour, { n: N(count) }) : ""}</div>
                 </button>

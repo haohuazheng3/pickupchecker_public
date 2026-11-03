@@ -195,15 +195,15 @@ export function StorePicker({ value, onToggle, onPretick, room, owned = [], pref
     return (
       <div key={s.storeNumber} className={`flex items-center hover:bg-ink/5 ${on ? "bg-accent/8" : full && !mine ? "opacity-50" : ""}`}>
         <button type="button" role="checkbox" aria-checked={on} onClick={() => onToggle(s.storeNumber)} aria-disabled={!on && !mine && full}
-          className="flex min-w-0 flex-1 items-center gap-3 py-3 pl-4 pr-2 text-left text-sm">
+          className="flex min-w-0 flex-1 items-center gap-3 py-3 ps-4 pe-2 text-start text-sm">
           <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs font-bold ${on ? "border-accent bg-accent" : "border-ink/25 bg-pane"}`} style={on ? { color: "var(--accent-ink)" } : undefined} aria-hidden>{on ? "✓" : ""}</span>
           <span className="min-w-0 flex-1"><span className="block truncate font-medium">{nameOf(s)}</span><span className="block truncate text-xs text-ink-3">{lineOf(s)}</span></span>
           {mine && <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${on ? "bg-accent/12 text-accent" : "bg-warn/12 text-warn"}`}>{on ? d.on : d.turningOff}</span>}
-          {dist != null && <span className="shrink-0 whitespace-nowrap text-right text-xs tabular-nums text-ink-3" title={d.byRoadTitle}>≈{formatRoad(dist, COUNTRIES[s.country ?? "us"].unit, lang)}<br />{drive(dist)}</span>}
+          {dist != null && <span className="shrink-0 whitespace-nowrap text-end text-xs tabular-nums text-ink-3" title={d.byRoadTitle}>≈{formatRoad(dist, COUNTRIES[s.country ?? "us"].unit, lang)}<br />{drive(dist)}</span>}
         </button>
         {dist != null && (
           <a href={directionsUrl(s)} target="_blank" rel="noopener noreferrer" aria-label={fill(d.directionsTo, { store: appleOf(s) })} title={d.directions}
-            className="mr-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3 hover:bg-ink/8 hover:text-ink">
+            className="me-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3 hover:bg-ink/8 hover:text-ink">
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 11l18-8-8 18-2-8-8-2z" /></svg>
           </a>
         )}
@@ -233,7 +233,7 @@ export function StorePicker({ value, onToggle, onPretick, room, owned = [], pref
       )}
       <div className="mt-3 divide-y divide-line overflow-hidden rounded-2xl border border-line" role="group" aria-label={d.storesLabel}>
         {loc === "asking" && ranked.length === 0 && Array.from({ length: 6 }, (_, i) => (
-          <div key={i} className="flex items-center gap-3 px-4 py-3"><div className="skeleton h-5 w-5 rounded-md" /><div className="skeleton h-4 w-1/2" /><div className="skeleton ml-auto h-3 w-16" /></div>
+          <div key={i} className="flex items-center gap-3 px-4 py-3"><div className="skeleton h-5 w-5 rounded-md" /><div className="skeleton h-4 w-1/2" /><div className="skeleton ms-auto h-3 w-16" /></div>
         ))}
         {visible.map(row)}
         {ranked.length > shown && (

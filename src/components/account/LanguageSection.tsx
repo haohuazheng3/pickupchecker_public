@@ -37,7 +37,7 @@ export function LanguageSection({ saved }: { saved: string | null }) {
       <select id="pc-language" className="mt-2 w-full max-w-sm rounded-xl border border-line-2 bg-[var(--pane-solid)] px-3 py-2 text-sm text-ink" value={current} disabled={busy} onChange={(e) => void pick(e.target.value)}>
         {OPTIONS.map((o) => <option key={o.id} value={o.id}>{LANG_NAMES[o.lang]}</option>)}
       </select>
-      {busy && <span className="ml-2 text-xs text-ink-3">{d.saving}</span>}
+      {busy && <span className="ms-2 text-xs text-ink-3">{d.saving}</span>}
       <p className="mt-2 text-xs text-ink-3">{d.help}</p>
       {savedLang !== (loc.native ? loc.lang : "en") && !saved && <p className="mt-1 text-xs text-ink-3">{fill(d.alertsIn, { lang: LANG_NAMES[savedLang] })}</p>}
     </Section>

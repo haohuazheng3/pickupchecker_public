@@ -10,6 +10,8 @@ import { baseLang, type Lang } from "./locales";
 export const LANG_TAG: Record<Lang, string> = {
   en: "en-US", ja: "ja-JP", ko: "ko-KR", "zh-TW": "zh-TW", "zh-HK": "zh-HK", de: "de-DE", "de-CH": "de-CH",
   fr: "fr-FR", "fr-CA": "fr-CA", it: "it-IT", es: "es-ES", nl: "nl-NL", sv: "sv-SE",
+  // UAE Arabic with Western digits, as Apple and the UAE's shops write prices and times.
+  ar: "ar-AE-u-nu-latn",
 };
 
 /** Italian and Spanish Intl leave four-digit numbers ungrouped ("2369 €"); Apple there writes "2.369 €". */
@@ -26,7 +28,7 @@ export function pct(lang: Lang, n: number): string {
 }
 
 /** Plural forms of one phrase; languages without plurals give `other` only. */
-export interface Forms { one?: string; two?: string; few?: string; many?: string; other: string }
+export interface Forms { zero?: string; one?: string; two?: string; few?: string; many?: string; other: string }
 const rules = new Map<string, Intl.PluralRules>();
 /** The form for n, with "#" replaced by the formatted number. */
 export function plural(lang: Lang, n: number, f: Forms | string): string {
@@ -37,6 +39,12 @@ export function plural(lang: Lang, n: number, f: Forms | string): string {
   const k = r.select(n) as keyof Forms;
   return (f[k] ?? f.other).replace(/#/g, num(lang, n));
 }
+
+/**
+ * A Latin name inside right-to-left text, isolated (FSI…PDI) so "18 Pro Max" keeps its order on the Arabic pages;
+ * every other language gets the string untouched.
+ */
+export const bidi = (s: string, lang: Lang): string => (lang === "ar" ? `\u2068${s}\u2069` : s);
 
 /** "{n} stores" → filled; unknown keys stay. */
 export function fill(s: string, vars: Record<string, string | number>): string {
@@ -55,6 +63,7 @@ const UNITS: Record<string, { s: string; m: string; h: string; d: string; sep: s
   es: { s: "s", m: "min", h: "h", d: "d", sep: " " },
   nl: { s: "sec", m: "min", h: "u", d: "d", sep: " " },
   sv: { s: "s", m: "min", h: "tim", d: "d", sep: " " },
+  ar: { s: "ث", m: "د", h: "س", d: "ي", sep: " " },
 };
 const unitsOf = (lang: Lang) => UNITS[baseLang(lang)] ?? UNITS.en;
 /** One amount + unit: "75 s", "75秒", "75 Sek.". */
@@ -133,6 +142,7 @@ const AGO: Record<string, { tpl: string; now: string; never: string }> = {
   es: { tpl: "hace {d}", now: "ahora mismo", never: "nunca" },
   nl: { tpl: "{d} geleden", now: "zojuist", never: "nooit" },
   sv: { tpl: "för {d} sedan", now: "nyss", never: "aldrig" },
+  ar: { tpl: "منذ {d}", now: "الآن", never: "لم يحدث بعد" },
 };
 const agoOf = (lang: Lang) => AGO[baseLang(lang)] ?? AGO.en;
 export function never(lang: Lang): string { return agoOf(lang).never; }
@@ -187,7 +197,7 @@ export function price(lang: Lang, c: Country, amount: number): string {
 /** Road distance: English pages and dashboards keep the store country's unit (mi in the US and UK), every other language km. */
 export function distance(lang: Lang, cc: CountryCode, miles: number): string {
   if (lang === "en") return COUNTRIES[cc].unit === "mi" ? `${Math.round(miles)} mi` : `${Math.round(miles * 1.609344)} km`;
-  return `${num(lang, Math.round(miles * 1.609344))} km`;
+  return `${num(lang, Math.round(miles * 1.609344))} ${lang === "ar" ? "كم" : "km"}`;
 }
 
 /** Titles: CJK characters take about twice a Latin letter's width in a result line. */

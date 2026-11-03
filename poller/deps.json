@@ -52,6 +52,7 @@
   "src/lib/env.ts",
   "src/lib/errors.ts",
   "src/lib/i18n/locales.ts",
+  "src/lib/i18n/notify/ar.ts",
   "src/lib/i18n/notify/de.ts",
   "src/lib/i18n/notify/en.ts",
   "src/lib/i18n/notify/es.ts",

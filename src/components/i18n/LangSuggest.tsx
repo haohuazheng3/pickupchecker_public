@@ -13,7 +13,7 @@ import { baseLang, localeFromSegment, localesOf, pathInLocale, type Lang, type L
 const OFFER: Partial<Record<string, string>> = {
   ja: "このページを日本語で見る", ko: "이 페이지를 한국어로 보기", "zh-TW": "以繁體中文閱讀本頁", "zh-HK": "以繁體中文閱讀本頁",
   de: "Diese Seite auf Deutsch lesen", "de-CH": "Diese Seite auf Deutsch lesen", fr: "Lire cette page en français", "fr-CA": "Lire cette page en français",
-  it: "Leggi questa pagina in italiano", es: "Leer esta página en español", nl: "Deze pagina in het Nederlands lezen", sv: "Läs sidan på svenska",
+  it: "Leggi questa pagina in italiano", es: "Leer esta página en español", nl: "Deze pagina in het Nederlands lezen", sv: "Läs sidan på svenska", ar: "اقرأ هذه الصفحة بالعربية",
 };
 const KEY = "pc_lang_offer_off";
 
@@ -49,7 +49,7 @@ export function LangSuggest() {
   const href = `${pathInLocale(pathname, to)}${qs ? `?${qs}` : ""}`;
   return (
     <div className="mx-auto mt-2 flex max-w-6xl items-center justify-between gap-3 px-4 text-sm" lang={to.tag}>
-      <a href={href} className="font-medium text-accent underline-offset-2 hover:underline">{OFFER[to.lang] ?? to.tag} →</a>
+      <a href={href} dir={to.lang === "ar" ? "rtl" : undefined} className="font-medium text-accent underline-offset-2 hover:underline">{OFFER[to.lang] ?? to.tag} {to.lang === "ar" ? "←" : "→"}</a>
       <button type="button" aria-label="×" className="text-ink-3 hover:text-ink" onClick={() => { try { localStorage.setItem(KEY, "1"); } catch { /* ignore */ } setTo(null); }}>×</button>
     </div>
   );

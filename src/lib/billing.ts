@@ -103,7 +103,8 @@ async function checkoutSession(userId: string, email: string, plan: PaidPlanKey,
     metadata: meta,
     subscription_data: { metadata: meta },
     custom_text: {
-      submit: { message: notifyText(lang).checkoutSubmit(PLANS[plan].name, PLANS[plan].limit, SPEED.fastSec, SPEED.checkSec, SPEED.alertSec) },
+      // The line under Stripe's button in the page's own language: Arabic has no Stripe Checkout locale, so English there.
+      submit: { message: notifyText(STRIPE_LOCALE[lang] ? lang : "en").checkoutSubmit(PLANS[plan].name, PLANS[plan].limit, SPEED.fastSec, SPEED.checkSec, SPEED.alertSec) },
     },
     // Per-session branding: the Stripe account is shared with sibling products, so the brand is set here.
     branding_settings: { display_name: "PickupChecker", background_color: "#f6f7f5", button_color: "#0a7f49", border_style: "rounded" },

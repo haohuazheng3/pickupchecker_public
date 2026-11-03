@@ -59,7 +59,7 @@ function taxSentence(cc: CountryCode, region?: string): string {
   }
   const r = includedRate(c);
   if (r == null) return `En iPhone Duo med 256GB kostar ${kr(cc, duo)}, och eftersom Hongkong saknar moms är det vad du betalar vid hämtning.`;
-  return `En iPhone Duo med 256GB kostar ${kr(cc, duo)} i ${land(cc)}, ${pc(r)} ${taxWord(c)} ingår: priset på apple.com är det du betalar när du hämtar i butik.`;
+  return `En iPhone Duo med 256GB kostar ${kr(cc, duo)} i ${land(cc)}, ${pc(r)} ${taxWord(c)} ingår: apple.com-priset gäller vid hämtning.`;
 }
 
 const PRICE_ROWS: [ModelKey, string][] = [["duo", "256GB"], ["duo", "1TB"], ["18-pro-max", "256GB"], ["18-pro-max", "1TB"], ["18-pro", "256GB"]];

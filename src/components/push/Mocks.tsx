@@ -211,7 +211,7 @@ export function AndroidPermissionMock({ t = EN }: { t?: MockText }) {
     <Screen>
       <div className="mock-fill mock-dim"><div className="mock-skel w-3/4" /><div className="mock-skel w-1/2" /><div className="mock-skel w-2/3" /></div>
       <div className="mock-alert mock-alert-android">
-        <div className="mock-alert-title text-left">{l.title}</div>
+        <div className="mock-alert-title text-start">{l.title}</div>
         <div className="mock-alert-buttons mock-alert-buttons-android"><span>{l.dontAllow}</span><Hl label={l.allow} below><span className="font-semibold text-accent">{l.allow}</span></Hl></div>
       </div>
     </Screen>

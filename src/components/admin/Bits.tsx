@@ -14,7 +14,7 @@ export function Stat({ label, value, sub, tone }: { label: string; value: string
 export function Table({ head, rows }: { head: string[]; rows: (string | number | null | undefined | React.ReactNode)[][] }) {
   return (
     <div className="min-w-0 overflow-auto rounded-2xl border border-line">
-      <table className="w-full text-left text-sm">
+      <table className="w-full text-start text-sm">
         <thead className="bg-ink/4 text-xs uppercase tracking-wide text-ink-3"><tr>{head.map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
         <tbody>
           {rows.length === 0 && <tr><td className="px-3 py-6 text-center text-ink-3" colSpan={head.length}>Nothing here.</td></tr>}

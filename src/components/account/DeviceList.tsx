@@ -28,7 +28,7 @@ export function DeviceList({ devices }: { devices: DeviceView[] }) {
           <span>
             <span className="font-medium">{d.platforms[x.platform] ?? platformLabel(x.platform as Platform)}</span>
             <span className="text-ink-3">{fill(d.meta, { kind: x.standalone ? d.homeScreenApp : d.browser, added: x.added })}{x.lastAlert ? fill(d.lastAlert, { when: x.lastAlert }) : ""}</span>
-            {x.disabledAt && <span className="ml-2 rounded-full bg-bad/15 px-2 py-0.5 text-xs text-bad">{d.stopped}</span>}
+            {x.disabledAt && <span className="ms-2 rounded-full bg-bad/15 px-2 py-0.5 text-xs text-bad">{d.stopped}</span>}
           </span>
           <button type="button" className="text-ink-3 hover:text-ink" disabled={busy === x.id} onClick={() => void remove(x.id)}>{d.remove}</button>
         </li>

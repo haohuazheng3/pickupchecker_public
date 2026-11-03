@@ -52,7 +52,7 @@ export function HealthStrip({ label, cells, legend }: { label: string; cells: St
 export function KV({ rows }: { rows: [string, React.ReactNode][] }) {
   return (
     <dl className="divide-y divide-line text-sm">
-      {rows.map(([k, v]) => <div key={k} className="flex items-start justify-between gap-4 py-1.5"><dt className="shrink-0 text-ink-3">{k}</dt><dd className="min-w-0 break-all text-right text-ink-2">{v}</dd></div>)}
+      {rows.map(([k, v]) => <div key={k} className="flex items-start justify-between gap-4 py-1.5"><dt className="shrink-0 text-ink-3">{k}</dt><dd className="min-w-0 break-all text-end text-ink-2">{v}</dd></div>)}
     </dl>
   );
 }

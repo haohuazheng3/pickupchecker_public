@@ -31,12 +31,12 @@ function ConfigGrid({ model, facts }: { model: ModelKey; facts: Facts }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[22rem] text-sm">
-        <caption className="mb-2 text-left text-xs text-ink-3">{d.configsCaption(lang === "en" ? STORES.length : N(lang, STORES.length), modelByKey(model)!.name)}</caption>
-        <thead><tr><th className="py-1.5 pr-2 text-left font-medium text-ink-3">{d.storage}</th>{colors.map((c) => <th key={c} className="px-1 py-1.5 text-center font-medium text-ink-2"><span className="inline-flex items-center gap-1.5"><Swatch color={c} className="h-2.5 w-2.5" />{colorLabel(c, lang)}</span></th>)}</tr></thead>
+        <caption className="mb-2 text-start text-xs text-ink-3">{d.configsCaption(lang === "en" ? STORES.length : N(lang, STORES.length), modelByKey(model)!.name)}</caption>
+        <thead><tr><th className="py-1.5 pe-2 text-start font-medium text-ink-3">{d.storage}</th>{colors.map((c) => <th key={c} className="px-1 py-1.5 text-center font-medium text-ink-2"><span className="inline-flex items-center gap-1.5"><Swatch color={c} className="h-2.5 w-2.5" />{colorLabel(c, lang)}</span></th>)}</tr></thead>
         <tbody className="divide-y divide-line">
           {storages.map((s) => (
             <tr key={s}>
-              <th scope="row" className="py-2 pr-2 text-left font-medium text-ink">{s}</th>
+              <th scope="row" className="py-2 pe-2 text-start font-medium text-ink">{s}</th>
               {colors.map((c) => <td key={c} className="px-1 py-2 text-center"><Link href={productPath(productFor(model, s, c))} aria-label={`${modelByKey(model)!.name} ${s} ${colorLabel(c, lang)}`}><Cell n={f.byConfig[`${s} ${c}`] ?? 0} /></Link></td>)}
             </tr>
           ))}
@@ -59,13 +59,13 @@ function PriceTable({ model, facts }: { model: ModelKey; facts: Facts }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[20rem] text-sm">
-        <caption className="mb-2 text-left text-xs text-ink-3">{d.pricesCaption(m.name)}</caption>
-        <thead><tr className="text-left text-ink-3"><th className="py-1.5 pr-3 font-medium">{d.storage}</th><th className="py-1.5 pr-3 font-medium">{d.price}</th><th className="py-1.5 font-medium">{d.bestColor}</th></tr></thead>
+        <caption className="mb-2 text-start text-xs text-ink-3">{d.pricesCaption(m.name)}</caption>
+        <thead><tr className="text-start text-ink-3"><th className="py-1.5 pe-3 font-medium">{d.storage}</th><th className="py-1.5 pe-3 font-medium">{d.price}</th><th className="py-1.5 font-medium">{d.bestColor}</th></tr></thead>
         <tbody className="divide-y divide-line">
           {byStorage.map((r) => (
             <tr key={r.storage}>
-              <th scope="row" className="py-2 pr-3 text-left font-medium text-ink"><Link href={productPath(productFor(model, r.storage))} className="hover:underline">{r.storage}</Link></th>
-              <td className="py-2 pr-3 tabular-nums text-ink">{lang === "en" ? fmtPrice(r.price) : price(lang, COUNTRIES.us, r.price)}</td>
+              <th scope="row" className="py-2 pe-3 text-start font-medium text-ink"><Link href={productPath(productFor(model, r.storage))} className="hover:underline">{r.storage}</Link></th>
+              <td className="py-2 pe-3 tabular-nums text-ink">{lang === "en" ? fmtPrice(r.price) : price(lang, COUNTRIES.us, r.price)}</td>
               <td className="py-2"><Cell n={r.stores} /></td>
             </tr>
           ))}

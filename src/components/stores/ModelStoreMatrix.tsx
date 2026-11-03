@@ -1,5 +1,6 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { MODELS, storePath, cityLine, type Store } from "@/lib/apple/catalog";
+import { bidi } from "@/lib/i18n/format";
 import { productFor, productPath, storePlace } from "@/lib/seo/products";
 import type { StoreStockSummary } from "@/lib/stock/queries";
 import { normalizeHours, todayLabel } from "@/lib/seo/enrich";
@@ -23,8 +24,8 @@ export function ModelStoreMatrix({ stores, stock, showCity = true, now = new Dat
     <div className="pane-2 overflow-hidden">
       <div className="grid grid-cols-[1fr_repeat(3,3.4rem)] gap-x-2 border-b border-line px-3 py-2 text-[0.65rem] font-semibold uppercase tracking-wider text-ink-3 sm:grid-cols-[1fr_repeat(3,5.5rem)_7rem] sm:px-4">
         <span>{d.store}</span>
-        {MODELS.map((m) => <span key={m.key} className="text-center">{m.short}</span>)}
-        <span className="hidden text-right sm:block">{d.checked}</span>
+        {MODELS.map((m) => <span key={m.key} className="text-center">{bidi(m.short, lang)}</span>)}
+        <span className="hidden text-end sm:block">{d.checked}</span>
       </div>
       <ul className="divide-y divide-line">
         {stores.map((s) => {
@@ -47,7 +48,7 @@ export function ModelStoreMatrix({ stores, stock, showCity = true, now = new Dat
                   </Link>
                 );
               })}
-              <span className="hidden text-right text-xs text-ink-3 sm:block"><LiveChecked iso={r?.lastCheckedAt ?? null} stores={[s.storeNumber]} /></span>
+              <span className="hidden text-end text-xs text-ink-3 sm:block"><LiveChecked iso={r?.lastCheckedAt ?? null} stores={[s.storeNumber]} /></span>
             </li>
           );
         })}

@@ -11,7 +11,7 @@ import { fmtLife, medianBand, type SelloutSummary, type Sellouts } from "@/lib/s
 import { t, pageLocale } from "@/lib/i18n/server";
 import type { Dict } from "@/lib/i18n/dict";
 import type { Lang } from "@/lib/i18n/locales";
-import { num, pct as pctOf, stamp, unit } from "@/lib/i18n/format";
+import { num, pct as pctOf, stamp, unit, bidi } from "@/lib/i18n/format";
 import { appleStoreLabel, configLabel } from "@/lib/i18n/places";
 import { Measured, Stat, StatGrid } from "@/components/ui/Viz";
 
@@ -56,12 +56,12 @@ function headline(d: Sellouts, label: string, duo: SelloutSummary | undefined, w
 function ModelRow({ name, s, lang }: { name: string; s: SelloutSummary; lang: Lang }) {
   return (
     <tr className="border-b border-line">
-      <th scope="row" className="py-2 pr-3 text-left font-medium text-ink">{name}</th>
-      <td className="py-2 pr-3 tabular-nums">{s.n}</td>
-      <td className="py-2 pr-3 tabular-nums">{secs(s.medianSec, lang)}</td>
-      <td className="py-2 pr-3 tabular-nums">{pct(s.within30, lang)}</td>
-      <td className="py-2 pr-3 tabular-nums">{pct(s.within60, lang)}</td>
-      <td className="py-2 pr-3 tabular-nums">{secs(s.fastestSec, lang)}</td>
+      <th scope="row" className="py-2 pe-3 text-start font-medium text-ink">{name}</th>
+      <td className="py-2 pe-3 tabular-nums">{s.n}</td>
+      <td className="py-2 pe-3 tabular-nums">{secs(s.medianSec, lang)}</td>
+      <td className="py-2 pe-3 tabular-nums">{pct(s.within30, lang)}</td>
+      <td className="py-2 pe-3 tabular-nums">{pct(s.within60, lang)}</td>
+      <td className="py-2 pe-3 tabular-nums">{secs(s.fastestSec, lang)}</td>
     </tr>
   );
 }
@@ -95,15 +95,15 @@ export function SellOutTimes({ data, label, showStore = false, limit = 10 }: { d
       {models.length > 1 && (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[30rem] border-collapse text-sm">
-            <caption className="mb-2 text-left text-xs text-ink-3">{w.caption(data.summary.days)}</caption>
+            <caption className="mb-2 text-start text-xs text-ink-3">{w.caption(data.summary.days)}</caption>
             <thead>
-              <tr className="border-b border-line-2 text-left text-ink">
-                <th scope="col" className="py-2 pr-3 font-semibold">{w.thIphone}</th>
-                <th scope="col" className="py-2 pr-3 font-semibold">{w.thSoldOut}</th>
-                <th scope="col" className="py-2 pr-3 font-semibold">{w.thHalf}</th>
-                <th scope="col" className="py-2 pr-3 font-semibold">{w.thWithin30}</th>
-                <th scope="col" className="py-2 pr-3 font-semibold">{w.thWithin60}</th>
-                <th scope="col" className="py-2 pr-3 font-semibold">{w.thFastest}</th>
+              <tr className="border-b border-line-2 text-start text-ink">
+                <th scope="col" className="py-2 pe-3 font-semibold">{w.thIphone}</th>
+                <th scope="col" className="py-2 pe-3 font-semibold">{w.thSoldOut}</th>
+                <th scope="col" className="py-2 pe-3 font-semibold">{w.thHalf}</th>
+                <th scope="col" className="py-2 pe-3 font-semibold">{w.thWithin30}</th>
+                <th scope="col" className="py-2 pe-3 font-semibold">{w.thWithin60}</th>
+                <th scope="col" className="py-2 pe-3 font-semibold">{w.thFastest}</th>
               </tr>
             </thead>
             <tbody>{models.map((m) => <ModelRow key={m.key} name={m.name} s={data.byModel[m.key]!} lang={lang} />)}</tbody>
@@ -130,13 +130,13 @@ export function SellOutTimes({ data, label, showStore = false, limit = 10 }: { d
                 <li key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 py-2 sm:grid-cols-[minmax(0,1fr)_7rem_auto]">
                   <span className="min-w-0 truncate">
                     <span className="tabular-nums text-ink-3">{when}</span>{" · "}
-                    <span className="text-ink">{model?.short} {configLabel(item, lang)}</span>
+                    <span className="text-ink">{bidi(model?.short ?? "", lang)} {configLabel(item, lang)}</span>
                     {showStore && <>{" · "}<Link href={storePath(store)} className="underline-offset-2 hover:underline">{lang === "en" ? appleName(store) : appleStoreLabel(store, lang)}</Link></>}
                   </span>
                   <span className="col-span-2 flex h-2 items-center sm:col-span-1" aria-hidden>
                     <span className={`h-1.5 rounded-full ${!gone ? "bg-accent/35" : fast ? "bg-warn" : "bg-ink/25"}`} style={{ width }} />
                   </span>
-                  <span className={`col-start-2 row-start-1 shrink-0 text-right tabular-nums font-medium sm:col-start-3 ${!gone ? "text-accent" : fast ? "text-warn" : "text-ink"}`}>
+                  <span className={`col-start-2 row-start-1 shrink-0 text-end tabular-nums font-medium sm:col-start-3 ${!gone ? "text-accent" : fast ? "text-warn" : "text-ink"}`}>
                     {!gone ? w.stillListed(secs(r.listedSec, lang)) : r.exact ? life(r.lowSec!, r.highSec!, lang) : w.approx(life(r.lowSec!, r.highSec!, lang))}
                   </span>
                 </li>

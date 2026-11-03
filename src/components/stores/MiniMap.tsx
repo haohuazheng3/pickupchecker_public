@@ -47,7 +47,7 @@ export function MiniMap({ lat, lng, label, href }: { lat: number; lng: number; l
   return (
     <Link href={href} className="pane-hover relative block h-56 overflow-hidden rounded-[20px] border border-line bg-bg-2" aria-label={fill(d.aria, { label })}>
       <div ref={el} className="h-full w-full" />
-      <span className="absolute bottom-3 left-3 rounded-full border border-line-2 bg-pane px-3 py-1 text-xs backdrop-blur">{d.cta}</span>
+      <span className="absolute bottom-3 start-3 rounded-full border border-line-2 bg-pane px-3 py-1 text-xs backdrop-blur">{d.cta}</span>
     </Link>
   );
 }

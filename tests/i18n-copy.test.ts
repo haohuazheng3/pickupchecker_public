@@ -7,11 +7,12 @@ import { join } from "node:path";
  * (every store) or 5 seconds (stores with alerts), nothing else; and no language promotes refunds beyond the
  * pricing page's one policy line. Scans each language's dictionary sources.
  */
-const LANGS = ["ja", "ko", "zh-tw", "zh-hk", "de", "fr", "it", "es", "nl", "sv"];
+const LANGS = ["ja", "ko", "zh-tw", "zh-hk", "de", "fr", "it", "es", "nl", "sv", "ar"];
 const EVERY: RegExp[] = [
   /(\d+)\s*秒(?:ごと|おき|毎)/g, /(\d+)\s*초\s*마다/g, /每\s*(\d+)\s*秒/g,
   /\balle\s+(\d+)\s*(?:Sekunden|Sek\.|s\b)/g, /\btoutes les\s+(\d+)\s*(?:secondes|s\b)/g, /\bogni\s+(\d+)\s*(?:secondi|s\b)/g,
   /\bcada\s+(\d+)\s*(?:segundos|s\b)/g, /\belke\s+(\d+)\s*(?:seconden|sec\.?|s\b)/g, /\bvar\s+(\d+)(?::e)?\s*(?:sekund|s\b)/g,
+  /كل\s+(\d+)\s*(?:ثانية|ثوانٍ|ثوان|ث\b)/g,
 ];
 function files(dir: string): string[] {
   if (!existsSync(dir)) return [];

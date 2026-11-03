@@ -87,7 +87,7 @@ function taxSentence(cc: CountryCode, region?: string): string {
   }
   const r = includedRate(COUNTRIES[cc]);
   if (r == null) return `Een iPhone Duo met 256GB kost ${money(cc, duo)}, en zonder btw in Hongkong is dat precies wat je betaalt bij het ophalen.`;
-  return `Een iPhone Duo met 256GB kost ${money(cc, duo)} ${inC(cc)}, inclusief ${pct(L, r)} ${taxWord(cc)}: de prijs op apple.com is precies wat je betaalt bij het ophalen.`;
+  return `Een iPhone Duo met 256GB kost ${money(cc, duo)} ${inC(cc)}, inclusief ${pct(L, r)} ${taxWord(cc)}: de apple.com-prijs geldt ook bij ophalen.`;
 }
 
 const PRICE_ROWS: [ModelKey, string][] = [["duo", "256GB"], ["duo", "1TB"], ["18-pro-max", "256GB"], ["18-pro-max", "1TB"], ["18-pro", "256GB"]];

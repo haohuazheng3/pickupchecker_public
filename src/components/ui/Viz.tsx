@@ -20,7 +20,7 @@ export function Dont({ className = "" }: { className?: string }) {
 }
 /** An arrow: a step or a consequence. */
 export function Next({ className = "" }: { className?: string }) {
-  return <svg viewBox="0 0 16 16" className={`mt-[3px] h-3.5 w-3.5 shrink-0 text-ink-3 ${className}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 8h9M8.5 4.5L12 8l-3.5 3.5" /></svg>;
+  return <svg viewBox="0 0 16 16" className={`mt-[3px] h-3.5 w-3.5 shrink-0 text-ink-3 rtl:-scale-x-100 ${className}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 8h9M8.5 4.5L12 8l-3.5 3.5" /></svg>;
 }
 
 /* ------------------------------------------------------------------------------------------- big number */
@@ -38,7 +38,7 @@ export function Stat({ value, unit, label, tone = "plain", live = false, size = 
   return (
     <div className={`min-w-0 rounded-[var(--radius-2)] border p-4 ${frame} ${className}`}>
       <div className={`display flex items-baseline gap-1.5 tabular-nums ${type} ${ink}`}>
-        {live && <span className="dot dot-ok dot-live relative top-[-2px] mr-1 shrink-0" aria-hidden />}
+        {live && <span className="dot dot-ok dot-live relative top-[-2px] me-1 shrink-0" aria-hidden />}
         <span className="min-w-0 break-words">{value}</span>{unit && <span className="shrink-0 text-base font-semibold text-ink-3">{unit}</span>}
       </div>
       <div className="mt-1 text-xs leading-snug text-ink-3">{label}</div>
@@ -109,7 +109,7 @@ export function Measured({ title, children, className = "" }: { title?: ReactNod
   return (
     <details className={`group mt-3 text-xs text-ink-3 ${className}`}>
       <summary className="inline-flex cursor-pointer list-none items-center gap-1 font-medium underline-offset-2 hover:text-ink [&::-webkit-details-marker]:hidden">
-        <svg viewBox="0 0 16 16" className="h-3 w-3 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 4l4 4-4 4" /></svg>
+        <svg viewBox="0 0 16 16" className="h-3 w-3 transition-transform group-open:rotate-90 rtl:-scale-x-100 rtl:group-open:-rotate-90" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 4l4 4-4 4" /></svg>
         {title === undefined ? t().content.measured : title}
       </summary>
       <div className="mt-2 max-w-3xl leading-relaxed">{children}</div>

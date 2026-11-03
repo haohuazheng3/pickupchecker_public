@@ -38,7 +38,7 @@ export function Section({ id, title, summary, badge, defaultOpen = true, inner =
   return (
     <section id={id} className={`${inner ? "pane-2" : "pane"} scroll-mt-28 overflow-hidden`}>
       <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen((v) => !v)}
-        className={`flex w-full items-center gap-3 text-left transition hover:bg-ink/[0.025] ${inner ? "px-4 py-3.5" : "px-5 py-4 sm:px-6"}`}>
+        className={`flex w-full items-center gap-3 text-start transition hover:bg-ink/[0.025] ${inner ? "px-4 py-3.5" : "px-5 py-4 sm:px-6"}`}>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2"><span className={inner ? "font-semibold" : "text-lg font-semibold"}>{title}</span>{badge}</span>
           {summary != null && <span className="mt-0.5 block truncate text-sm text-ink-3">{summary}</span>}

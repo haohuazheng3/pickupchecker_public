@@ -16,6 +16,9 @@ const STORE: Partial<Record<string, Record<string, string>>> = {
   fr: { R486: "Bruxelles" },
   // Hong Kong: what people type ("apple 廣東道" 9,900, "apple ifc" 9,900, "apple apm" 2,400, "apple 又一城" 260).
   "zh-HK": { R409: "銅鑼灣", R428: "ifc mall", R485: "又一城", R673: "apm Hong Kong", R610: "新城市廣場", R499: "廣東道" },
+  // UAE: Apple's Arabic site has no store pages (they redirect to English), so the names people type in Arabic
+  // ("ابل ياس مول" 720, "ابل دبي مول" 480, "ابل الجيمي مول" 320 a month, DataForSEO 2026-11-03).
+  ar: { R597: "دبي مول", R596: "مول الإمارات", R595: "ياس مول", R706: "جزيرة الماريه", R785: "الجيمي مول" },
 };
 
 /** City names by country, English → the language's. */
@@ -38,6 +41,7 @@ const CITY: Partial<Record<string, Partial<Record<CountryCode, Record<string, st
   },
   nl: { nl: { "The Hague": "Den Haag" }, be: { Brussels: "Brussel" } },
   it: { it: { Florence: "Firenze", Milan: "Milano", Rome: "Roma", Turin: "Torino" } },
+  ar: { ae: { Dubai: "دبي", "Abu Dhabi": "أبوظبي", "Al Ain": "العين" } },
 };
 
 /** Region names (Apple's store-list groups), English → the language's. */
@@ -57,6 +61,7 @@ const REGION: Partial<Record<string, Partial<Record<CountryCode, Record<string, 
   },
   nl: { nl: { "North Holland": "Noord-Holland", "South Holland": "Zuid-Holland" }, be: { Brussels: "Brussels Hoofdstedelijk Gewest" } },
   it: { it: { Florence: "Firenze", Milan: "Milano", Rome: "Roma", Turin: "Torino", Venice: "Venezia" } },
+  ar: { ae: { Dubai: "دبي", "Abu Dhabi": "أبوظبي" } },
 };
 
 /** Apple's colour names in each language (Sweden writes them in lower case, as Apple does). */
@@ -73,13 +78,24 @@ const COLOR: Partial<Record<Lang, Record<string, string>>> = {
   es: { "Night Sky": "Cielo nocturno", "Star White": "Blanco estelar", Black: "Negro", Burgundy: "Burdeos", Glacier: "Azul glacial", Silver: "Plata" },
   nl: { "Night Sky": "Nachthemel", "Star White": "Sterrenwit", Black: "Zwart", Burgundy: "Bordeauxrood", Glacier: "Gletsjer", Silver: "Zilver" },
   sv: { "Night Sky": "natthimmel", "Star White": "stjärnvit", Black: "svart", Burgundy: "bourgogne", Glacier: "glaciär", Silver: "silver" },
+  // apple.com/ae-ar/iphone-duo/specs and /iphone-18-pro/specs.
+  ar: { "Night Sky": "سماء الليل", "Star White": "أبيض النجوم", Black: "أسود", Burgundy: "عنّابي", Glacier: "جليدي", Silver: "فضي" },
 };
 
 const fam = (lang: Lang) => (lang === "zh-TW" || lang === "zh-HK" ? "zh" : baseLang(lang));
 
 /** The store's own name in the language ("銀座", "가로수길"), else its English one. */
+/**
+ * Where a variant has no name of its own for a store, the one its sibling uses: a Taipei reader watching Causeway
+ * Bay reads Hong Kong's 銅鑼灣 (both write Traditional Chinese), a Montréal reader watching Brussels reads Bruxelles.
+ */
+const STORE_FALLBACK: Partial<Record<Lang, Lang[]>> = { "zh-TW": ["zh-HK"], "zh-HK": ["zh-TW"], "fr-CA": ["fr"], "de-CH": ["de"] };
 export function storeLabel(s: { storeNumber: string; name: string }, lang: Lang): string {
-  return STORE[lang]?.[s.storeNumber] ?? s.name;
+  for (const l of [lang, ...(STORE_FALLBACK[lang] ?? [])]) {
+    const n = STORE[l]?.[s.storeNumber];
+    if (n) return n;
+  }
+  return s.name;
 }
 /** "Apple 銀座", "Apple Kurfürstendamm": the name people search for. English keeps catalog.appleName's rules. */
 export function appleStoreLabel(s: { storeNumber: string; name: string }, lang: Lang): string {
@@ -103,7 +119,8 @@ const names = new Map<string, Intl.DisplayNames>();
 /** The country's name in the language (Intl), English: the site's own name ("United Kingdom"). */
 /** Where Intl's name is the long official one ("中國香港特別行政區", "Sonderverwaltungsregion Hongkong"): what people say. */
 const SHORT_NAME: Partial<Record<CountryCode, Record<string, string>>> = {
-  hk: { ja: "香港", ko: "홍콩", zh: "香港", de: "Hongkong", fr: "Hong Kong", it: "Hong Kong", es: "Hong Kong", nl: "Hongkong", sv: "Hongkong" },
+  hk: { ja: "香港", ko: "홍콩", zh: "香港", de: "Hongkong", fr: "Hong Kong", it: "Hong Kong", es: "Hong Kong", nl: "Hongkong", sv: "Hongkong", ar: "هونغ كونغ" },
+  ae: { ar: "الإمارات" },
 };
 export function countryLabel(cc: CountryCode, lang: Lang): string {
   if (lang === "en") return COUNTRIES[cc].name;

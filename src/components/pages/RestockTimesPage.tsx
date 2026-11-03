@@ -54,15 +54,15 @@ export async function restockTimesMetadata(c: Country, loc: Locale = englishLoca
   };
 }
 
-const th = "border-b border-line-2 py-2 pr-3 text-left font-semibold text-ink";
-const td = "py-2 pr-3 align-top tabular-nums";
-const rowTh = "py-2 pr-3 text-left font-medium text-ink";
+const th = "border-b border-line-2 py-2 pe-3 text-start font-semibold text-ink";
+const td = "py-2 pe-3 align-top tabular-nums";
+const rowTh = "py-2 pe-3 text-start font-medium text-ink";
 
 function Table({ caption, head, children, min = "28rem" }: { caption: string; head: string[]; children: React.ReactNode; min?: string }) {
   return (
     <div className="my-5 overflow-x-auto">
       <table className="w-full border-collapse text-sm" style={{ minWidth: min }}>
-        <caption className="mb-2 text-left text-xs text-ink-3">{caption}</caption>
+        <caption className="mb-2 text-start text-xs text-ink-3">{caption}</caption>
         <thead><tr>{head.map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead>
         <tbody>{children}</tbody>
       </table>
@@ -270,16 +270,16 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
                 <td className={td}>{F.n(d.restocks)}</td>
                 {!one && <td className={td}>{d.stores}</td>}
                 <td className={td}>{d.peakHour == null ? "–" : F.range(d.peakHour, d.peakHour + 1)}</td>
-                <td className="py-2 pr-3 align-top text-ink-3">PickupChecker</td>
+                <td className="py-2 pe-3 align-top text-ink-3">PickupChecker</td>
               </tr>
             ))}
             {[...t.reports].reverse().map((d) => (
               <tr key={d.date} className="border-b border-line text-ink-3">
-                <th scope="row" className="py-2 pr-3 text-left font-medium">{F.date(d.date)}</th>
+                <th scope="row" className="py-2 pe-3 text-start font-medium">{F.date(d.date)}</th>
                 <td className={td}>{F.n(d.restocks)}</td>
                 {!one && <td className={td}>{d.stores}</td>}
                 <td className={td}>{d.peakHour == null ? "–" : F.range(d.peakHour, d.peakHour + 1)}</td>
-                <td className="py-2 pr-3 align-top">{V.reportedBy(reportNames)}</td>
+                <td className="py-2 pe-3 align-top">{V.reportedBy(reportNames)}</td>
               </tr>
             ))}
           </Table>
@@ -302,7 +302,7 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
                     <th scope="row" className={rowTh}><Link href={r.path} className="hover:underline">{region(r.name)}</Link></th>
                     <td className={td}>{F.n(r.restocks)}</td>
                     <td className={td}>{V.ofN(r.stores, r.storesTotal)}</td>
-                    <td className="py-2 pr-3 align-top">{r.lastAt && r.lastStore ? <>{stamp(r.lastAt, r.lastStore)} · {storeByNumber(r.lastStore) ? <Link href={storePath(storeByNumber(r.lastStore)!)} className="hover:underline">{F.store(storeByNumber(r.lastStore)!)}</Link> : r.lastStore}</> : "–"}</td>
+                    <td className="py-2 pe-3 align-top">{r.lastAt && r.lastStore ? <>{stamp(r.lastAt, r.lastStore)} · {storeByNumber(r.lastStore) ? <Link href={storePath(storeByNumber(r.lastStore)!)} className="hover:underline">{F.store(storeByNumber(r.lastStore)!)}</Link> : r.lastStore}</> : "–"}</td>
                   </tr>
                 ))}
               </Table>
@@ -315,7 +315,7 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
                     <td className={td}>{F.n(r.restocks)}</td>
                     <td className={td}>{r.days}</td>
                     <td className={td}>{r.peakHour != null ? F.hour(r.peakHour) : "–"}</td>
-                    <td className="py-2 pr-3 align-top">{F.local(r.lastAt, r.store!)}</td>
+                    <td className="py-2 pe-3 align-top">{F.local(r.lastAt, r.store!)}</td>
                   </tr>
                 ))}
               </Table>
@@ -352,7 +352,7 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
                 <th scope="row" className={rowTh}>{cfg(p.partNumber)}</th>
                 <td className={td}>{F.n(p.restocks)}</td>
                 <td className={td}>{t.n ? F.pct(p.restocks / t.n) : "–"}</td>
-                <td className="py-2 pr-3 align-top">{p.lastAt && p.lastStore ? <>{stamp(p.lastAt, p.lastStore)}{!one && storeByNumber(p.lastStore) ? <> · <Link href={storePath(storeByNumber(p.lastStore)!)} className="hover:underline">{F.store(storeByNumber(p.lastStore)!)}</Link></> : null}</> : "–"}</td>
+                <td className="py-2 pe-3 align-top">{p.lastAt && p.lastStore ? <>{stamp(p.lastAt, p.lastStore)}{!one && storeByNumber(p.lastStore) ? <> · <Link href={storePath(storeByNumber(p.lastStore)!)} className="hover:underline">{F.store(storeByNumber(p.lastStore)!)}</Link></> : null}</> : "–"}</td>
               </tr>
             ))}
           </Table>
@@ -407,7 +407,7 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
             {V.claims(x).map((r) => (
               <tr key={r.claim} className="border-b border-line">
                 <th scope="row" className={rowTh}>{r.claim}</th>
-                <td className="py-2 pr-3 align-top">{r.answer}</td>
+                <td className="py-2 pe-3 align-top">{r.answer}</td>
               </tr>
             ))}
           </Table>

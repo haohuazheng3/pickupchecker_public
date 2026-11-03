@@ -17,11 +17,11 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div className="mx-auto max-w-[1400px] px-4 pt-5">
       <div className="pane flex flex-wrap items-center gap-2 px-3 py-2">
-        <span className="eyebrow mr-1 pl-1">Ops</span>
+        <span className="eyebrow me-1 ps-1">Ops</span>
         <nav className="flex flex-wrap gap-1" aria-label="Admin sections">
           {TABS.map(([href, label]) => <Link key={href} href={href} className="chip px-3 py-1.5 text-xs" data-on={href === "/admin" ? path === "/admin" : path.startsWith(href)}>{label}</Link>)}
         </nav>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2">
           <AdminTools via={who.via} />
         </div>
       </div>

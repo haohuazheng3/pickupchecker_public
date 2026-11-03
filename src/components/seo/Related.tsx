@@ -29,7 +29,7 @@ export function LinkRow({ title, links, more, className = "" }: { title: string;
   if (links.length === 0) return null;
   return (
     <div className={className}>
-      <div className="flex items-baseline justify-between gap-3"><div className="eyebrow">{title}</div>{more && <Link href={more.href} className="text-xs text-ink-3 hover:text-ink">{more.label} →</Link>}</div>
+      <div className="flex items-baseline justify-between gap-3"><div className="eyebrow">{title}</div>{more && <Link href={more.href} className="text-xs text-ink-3 hover:text-ink">{more.label} <span className="inline-block rtl:-scale-x-100">→</span></Link>}</div>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {links.map((l) => <Link key={l.href + l.label} href={l.href} className="chip px-3 py-1.5 text-xs">{l.label}{l.meta && <span className="text-ink-3"> · {l.meta}</span>}</Link>)}
       </div>

@@ -44,7 +44,7 @@ export default async function AdminPoller({ searchParams }: PageProps<"/admin/po
         <Section title="Poller events" aside={<a className="underline" href="/admin/logs?t=ops&source=poller">all →</a>}>
           {events.length === 0 ? <p className="text-sm text-ink-3">Nothing logged yet — starts, stops, throttling and mode switches show here.</p> : (
             <ul className="divide-y divide-line text-sm">
-              {events.map((e) => <li key={e.id} className="flex gap-3 py-1.5"><span className="w-16 shrink-0 text-ink-3">{timeAgo(e.at)}</span><span className={`w-12 shrink-0 text-xs uppercase ${e.level === "error" ? "text-bad" : e.level === "warn" ? "text-warn" : "text-ink-3"}`}>{e.level}</span><span className="text-ink-2">{e.message}{e.data ? <code className="ml-2 break-all text-xs text-ink-3">{JSON.stringify(e.data).slice(0, 120)}</code> : null}</span></li>)}
+              {events.map((e) => <li key={e.id} className="flex gap-3 py-1.5"><span className="w-16 shrink-0 text-ink-3">{timeAgo(e.at)}</span><span className={`w-12 shrink-0 text-xs uppercase ${e.level === "error" ? "text-bad" : e.level === "warn" ? "text-warn" : "text-ink-3"}`}>{e.level}</span><span className="text-ink-2">{e.message}{e.data ? <code className="ms-2 break-all text-xs text-ink-3">{JSON.stringify(e.data).slice(0, 120)}</code> : null}</span></li>)}
             </ul>
           )}
         </Section>

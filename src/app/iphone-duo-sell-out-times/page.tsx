@@ -80,26 +80,26 @@ function LifeTable({ caption, head, rows }: { caption: string; head: string; row
   return (
     <div className="my-4 overflow-x-auto">
       <table className="w-full min-w-[30rem] border-collapse text-sm">
-        <caption className="mb-2 text-left text-xs text-ink-3">{caption}</caption>
+        <caption className="mb-2 text-start text-xs text-ink-3">{caption}</caption>
         <thead>
-          <tr className="border-b border-line-2 text-left text-ink">
-            <th scope="col" className="py-2 pr-3 font-semibold">{head}</th>
-            <th scope="col" className="py-2 pr-3 font-semibold">Sold out</th>
-            <th scope="col" className="py-2 pr-3 font-semibold">Half gone within</th>
-            <th scope="col" className="py-2 pr-3 font-semibold">≤ 30 s</th>
-            <th scope="col" className="py-2 pr-3 font-semibold">≤ 1 min</th>
-            <th scope="col" className="py-2 pr-3 font-semibold">Fastest</th>
+          <tr className="border-b border-line-2 text-start text-ink">
+            <th scope="col" className="py-2 pe-3 font-semibold">{head}</th>
+            <th scope="col" className="py-2 pe-3 font-semibold">Sold out</th>
+            <th scope="col" className="py-2 pe-3 font-semibold">Half gone within</th>
+            <th scope="col" className="py-2 pe-3 font-semibold">≤ 30 s</th>
+            <th scope="col" className="py-2 pe-3 font-semibold">≤ 1 min</th>
+            <th scope="col" className="py-2 pe-3 font-semibold">Fastest</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
             <tr key={i} className="border-b border-line">
-              <th scope="row" className="py-2 pr-3 text-left font-medium text-ink">{r.label}</th>
-              <td className="py-2 pr-3 tabular-nums">{r.s.n}{r.s.n > 0 && r.s.n < SOLID ? <span className="text-ink-3"> · thin</span> : null}</td>
-              <td className="py-2 pr-3 tabular-nums">{secs(r.s.medianSec)}</td>
-              <td className="py-2 pr-3 tabular-nums">{r.s.n ? pct(r.s.within30) : "–"}</td>
-              <td className="py-2 pr-3 tabular-nums">{r.s.n ? pct(r.s.within60) : "–"}</td>
-              <td className="py-2 pr-3 tabular-nums">{secs(r.s.fastestSec)}</td>
+              <th scope="row" className="py-2 pe-3 text-start font-medium text-ink">{r.label}</th>
+              <td className="py-2 pe-3 tabular-nums">{r.s.n}{r.s.n > 0 && r.s.n < SOLID ? <span className="text-ink-3"> · thin</span> : null}</td>
+              <td className="py-2 pe-3 tabular-nums">{secs(r.s.medianSec)}</td>
+              <td className="py-2 pe-3 tabular-nums">{r.s.n ? pct(r.s.within30) : "–"}</td>
+              <td className="py-2 pe-3 tabular-nums">{r.s.n ? pct(r.s.within60) : "–"}</td>
+              <td className="py-2 pe-3 tabular-nums">{secs(r.s.fastestSec)}</td>
             </tr>
           ))}
         </tbody>
@@ -123,11 +123,11 @@ function KeyTable({ rows }: { rows: [ReactNode, ReactNode][] }) {
   return (
     <div className="my-4 overflow-x-auto">
       <table className="w-full min-w-[20rem] text-sm">
-        <thead><tr className="text-left text-xs uppercase tracking-wide text-ink-3"><th className="pb-2 pr-3 font-semibold">Reads</th><th className="pb-2 font-semibold">Means</th></tr></thead>
+        <thead><tr className="text-start text-xs uppercase tracking-wide text-ink-3"><th className="pb-2 pe-3 font-semibold">Reads</th><th className="pb-2 font-semibold">Means</th></tr></thead>
         <tbody>
           {rows.map(([a, b], i) => (
             <tr key={i} className="border-t border-line align-top">
-              <td className="py-2 pr-3 font-semibold tabular-nums text-ink">{a}</td>
+              <td className="py-2 pe-3 font-semibold tabular-nums text-ink">{a}</td>
               <td className="py-2 text-ink-2">{b}</td>
             </tr>
           ))}

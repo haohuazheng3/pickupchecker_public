@@ -99,7 +99,7 @@ export function Consent() {
     <div
       role="region"
       aria-label={d.region}
-      className="fixed inset-x-3 z-[60] sm:inset-x-auto sm:right-5 sm:w-[380px]"
+      className="fixed inset-x-3 z-[60] sm:inset-x-auto sm:end-5 sm:w-[380px]"
       style={{ bottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
     >
       <div className="rounded-[var(--radius-2)] border p-5" style={{ background: "var(--pane-solid)", borderColor: "var(--line-2)", boxShadow: "var(--shadow)" }}>
@@ -135,5 +135,5 @@ export function TrackingChoice() {
       </span>
     );
   }
-  return <button type="button" className="text-left hover:text-ink" onClick={() => setAnalyticsChoice("declined")}>{d.dontTrack}</button>;
+  return <button type="button" className="text-start hover:text-ink" onClick={() => setAnalyticsChoice("declined")}>{d.dontTrack}</button>;
 }

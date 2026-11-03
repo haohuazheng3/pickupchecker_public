@@ -74,7 +74,8 @@ async function IntlStoresIndex({ c }: { c: Country }) {
       <JsonLd data={itemList} />
       <Breadcrumbs items={[{ href: prefixOf(cc), label: short }, { label: V.crumb }]} />
       <h1 className="display mt-2 text-3xl sm:text-5xl">{P.storesIndexTitle(cc)}</h1>
-      <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2"><Inline text={intro} facts={facts} /></p>
+      {/* The answer sentence first, on its own; a native intro may carry a second paragraph ("\n\n"). */}
+      {intro.split("\n\n").map((para, i) => <p key={i} className={`${i ? "mt-2" : "mt-3"} max-w-3xl text-lg leading-relaxed text-ink-2`}><Inline text={para} facts={facts} /></p>)}
       <div className="mt-6 flex flex-wrap gap-2"><Link href={`${mapPath(cc)}?model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">{C.liveMap}</Link><Link href={restocksPath(cc)} className="btn btn-ghost btn-sm">{C.restockLog}</Link><Link href={alert} className="btn btn-primary btn-sm">{C.alertMe}</Link></div>
       <AlertPanelFor href={alert} summary={V.panel(c)} country={cc} />
 
@@ -92,10 +93,10 @@ async function IntlStoresIndex({ c }: { c: Country }) {
         {hasRegions && (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
-              <caption className="mb-2 text-left text-xs text-ink-3">{V.topCaption(c)}</caption>
-              <thead><tr className="text-left text-ink-3"><th className="py-1.5 pr-4 font-medium">{V.regionHead(c)}</th><th className="py-1.5 pr-4 font-medium">{V.colStores}</th><th className="py-1.5 font-medium">{V.colCities}</th></tr></thead>
+              <caption className="mb-2 text-start text-xs text-ink-3">{V.topCaption(c)}</caption>
+              <thead><tr className="text-start text-ink-3"><th className="py-1.5 pe-4 font-medium">{V.regionHead(c)}</th><th className="py-1.5 pe-4 font-medium">{V.colStores}</th><th className="py-1.5 font-medium">{V.colCities}</th></tr></thead>
               <tbody className="divide-y divide-line">
-                {tops.map((s) => <tr key={s.slug}><td className="py-1.5 pr-4"><Link href={s.href} className="hover:underline">{s.name}</Link></td><td className="py-1.5 pr-4 tabular-nums">{s.count}</td><td className="py-1.5 tabular-nums">{s.cities}</td></tr>)}
+                {tops.map((s) => <tr key={s.slug}><td className="py-1.5 pe-4"><Link href={s.href} className="hover:underline">{s.name}</Link></td><td className="py-1.5 pe-4 tabular-nums">{s.count}</td><td className="py-1.5 tabular-nums">{s.cities}</td></tr>)}
               </tbody>
             </table>
           </div>
@@ -150,7 +151,7 @@ async function IntlStoresIndex({ c }: { c: Country }) {
       <RelatedBlock>
         <BrowseCountryPopular country={c} />
         <BrowseCountryModels country={c} />
-        <LinkRow title={C.more} links={[{ href: prefixOf(cc), label: C.checker(c) }, { href: restocksPath(cc), label: C.restockLog }, { href: mapPath(cc), label: C.liveMap }, { href: "/install", label: V.getApp }, { href: "/how-it-works", label: V.howItWorks }, { href: "/pricing", label: V.pricing }]} />
+        <LinkRow title={C.more} links={[{ href: prefixOf(cc), label: C.checker(c) }, { href: restocksPath(cc), label: C.restockLog }, { href: mapPath(cc), label: C.liveMap }, { href: "/install", label: V.getApp }, { href: "/how-it-works", label: V.howItWorks }, { href: "/pricing", label: V.pricing }, ...(loc.native ? [{ href: `${prefixOf(cc)}/iphone-duo-restock-times`, label: dictT().place.home.restockTimesChip }] : [])]} />
       </RelatedBlock>
     </div>
   );

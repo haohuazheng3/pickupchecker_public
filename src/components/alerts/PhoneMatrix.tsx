@@ -9,7 +9,7 @@ import { COUNTRIES, formatPrice, type CountryCode } from "@/lib/apple/countries"
 import type { GeoStore } from "@/lib/geo";
 import { phoneKey, type Phone } from "@/lib/alertSet";
 import { useLang, useT } from "@/components/i18n/LangProvider";
-import { fill, price } from "@/lib/i18n/format";
+import { fill, price, bidi } from "@/lib/i18n/format";
 import { colorLabel } from "@/lib/i18n/places";
 import type { Lang } from "@/lib/i18n/locales";
 
@@ -75,7 +75,7 @@ export function PhoneMatrix({ catalog, selected, onToggle, initialModel, disable
           <tbody>
             {storages.map((s) => (
               <tr key={s}>
-                <th scope="row" className="pr-1 text-left text-xs font-semibold text-ink-2">{s}</th>
+                <th scope="row" className="pe-1 text-start text-xs font-semibold text-ink-2">{s}</th>
                 {colors.map((c) => {
                   const cfg = configs.find((x) => x.storage === s && x.color === c);
                   if (!cfg) return <td key={c} />;
@@ -103,5 +103,5 @@ export function PhoneMatrix({ catalog, selected, onToggle, initialModel, disable
 /** "iPhone Duo 256GB Night Sky", or "Duo 256GB Night Sky" short; the colour in Apple's name for it in `lang`. */
 export function phoneName(p: Phone, short = false, lang: Lang = "en"): string {
   const m = MODELS.find((x) => x.key === p.model);
-  return `${short ? m?.short ?? p.model : m?.name ?? p.model} ${p.storage} ${colorLabel(p.color, lang)}`;
+  return `${short ? bidi(m?.short ?? p.model, lang) : m?.name ?? p.model} ${p.storage} ${colorLabel(p.color, lang)}`;
 }

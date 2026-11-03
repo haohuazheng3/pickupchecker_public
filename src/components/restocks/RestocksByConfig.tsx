@@ -1,5 +1,6 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { PART_INDEX, MODELS, modelKeyFor } from "@/lib/apple/catalog";
+import { bidi } from "@/lib/i18n/format";
 import type { CountryCode } from "@/lib/apple/countries";
 import type { PlaceStats } from "@/lib/stock/queries";
 import { alertHref } from "@/lib/seo/enrich";
@@ -25,7 +26,7 @@ export function RestocksByConfig({ stats, label, store, limit = 10, country }: {
             <li key={r.partNumber} className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 text-sm">
               <Swatch color={r.item.color} />
               <div className="min-w-0">
-                <div className="flex items-baseline justify-between gap-2"><span className="truncate text-ink">{short} {configLabel(r.item, lang)}</span><span className="shrink-0 tabular-nums text-ink-3">{d.times(r.restocks)}</span></div>
+                <div className="flex items-baseline justify-between gap-2"><span className="truncate text-ink">{bidi(short, lang)} {configLabel(r.item, lang)}</span><span className="shrink-0 tabular-nums text-ink-3">{d.times(r.restocks)}</span></div>
                 <div className="mt-1 h-1.5 w-full rounded-full bg-ink/6"><div className="h-full rounded-full bg-accent" style={{ width: `${(r.restocks / max) * 100}%` }} /></div>
               </div>
               <Link href={alertHref({ model: key, storage: r.item.storage, color: r.item.color, store, country })} className="text-xs font-medium text-ink hover:underline">{d.alert}</Link>

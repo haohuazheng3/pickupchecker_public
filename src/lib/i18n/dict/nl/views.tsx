@@ -340,7 +340,7 @@ export const views: Dict["views"] = {
     duoBlock: (alert: string) => `De snelste manier om er een te krijgen is een alert bij de winkels waar je kunt komen: [stel een iPhone Duo-alert in](${alert}). Elke winkel × exacte configuratie is één alert, en de push komt seconden nadat een winkel hem aanbiedt.`,
     intro: (c: Country, n: number, spread: string, now: { duo: number; max: number; pro: number }, tax: string) => n === 1
       ? `Er is **1 Apple Store** ${inC(c)}: ${appleOf(storesOf(c.cc)[0])}, ${spread}. Nu op te halen: iPhone Duo **${now.duo ? "ja" : "nee"}**, iPhone 18 Pro Max **${now.max ? "ja" : "nee"}**, 18 Pro **${now.pro ? "ja" : "nee"}**. ${tax}`
-      : `Er ${n === 1 ? "is" : "zijn"} **${cnt(n, "Apple Store", "Apple Stores")}** ${inC(c)}, ${spread}. Op dit moment ${now.duo === 1 ? "heeft" : "hebben"} **${n$(now.duo)}** daarvan een iPhone Duo om op te halen, **${n$(now.max)}** de iPhone 18 Pro Max en **${n$(now.pro)}** de 18 Pro. ${tax}${c.cc === "nl" ? " Rotterdam en Utrecht hebben geen Apple Store: vanuit Rotterdam ligt Apple Den Haag het dichtstbij, vanuit Utrecht Apple Amsterdam." : ""}`,
+      : `Er ${n === 1 ? "is" : "zijn"} **${cnt(n, "Apple Store", "Apple Stores")}** ${inC(c)}, ${spread}. Op dit moment ${now.duo === 1 ? "heeft" : "hebben"} **${n$(now.duo)}** daarvan een iPhone Duo om op te halen, **${n$(now.max)}** de iPhone 18 Pro Max en **${n$(now.pro)}** de 18 Pro. ${tax}${c.cc === "nl" ? "\n\nRotterdam en Utrecht hebben geen Apple Store: vanuit Rotterdam ligt Apple Den Haag het dichtstbij, vanuit Utrecht Apple Amsterdam." : ""}`,
     crumb: "Apple Stores",
     panel: (c: Country) => `Kies de iPhones en vink de winkels ${inC(c)} aan waar je kunt komen`,
     matrixLabel: "Voorraad per winkel",

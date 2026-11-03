@@ -4,8 +4,9 @@
  * and 日本語, Switzerland's in English, Deutsch and Français…); on app pages every language the site speaks (the
  * person's choice, kept in the `pc_lang` cookie for the dashboard, pushes and emails). Countries: the same kind of
  * page in another country where one exists — home ↔ home, /stores ↔ /{cc}/stores, /stock/{model}, the map, the
- * restock log — else that country's home, in the version for the reader's language. The list renders only when
- * opened, so pages carry no extra links until someone asks.
+ * restock log — else that country's home, in the version for the reader's language — and under each country with pages
+ * in more than one language, every one of them (English, 日本語, Deutsch, Français…), so all versions can be found from
+ * any page. The list renders only when opened, so pages carry no extra links until someone asks.
  */
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -72,7 +73,7 @@ export function CountrySwitcher({ countries }: { countries: SwitchCountry[] }) {
         {badge}
       </button>
       {open && (
-        <div className="pane absolute right-0 top-11 z-50 max-h-[70vh] w-60 overflow-y-auto p-1.5 shadow-lg" role="menu">
+        <div className="pane absolute end-0 top-11 z-50 max-h-[70vh] w-64 overflow-y-auto p-1.5 shadow-lg" role="menu" style={{ background: "var(--pane-solid)" }}>
           {versions.length > 1 && (
             <>
               <div className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-ink-3">{d.language}</div>
@@ -81,18 +82,34 @@ export function CountrySwitcher({ countries }: { countries: SwitchCountry[] }) {
                 const label = appPage ? LANG_NAMES[v.loc.lang] : versionLabel(v.loc);
                 // A version switch is always a full page load (PendingLink: another language) — or, on an app page, a reload in the new language.
                 return appPage
-                  ? <button key={v.loc.lang} type="button" role="menuitem" onClick={() => { remember(v.loc); window.location.reload(); }} className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm hover:bg-ink/6 ${on ? "font-semibold text-ink" : "text-ink-2"}`}>{label}</button>
+                  ? <button key={v.loc.lang} type="button" role="menuitem" onClick={() => { remember(v.loc); window.location.reload(); }} className={`flex w-full items-center rounded-xl px-3 py-2 text-start text-sm hover:bg-ink/6 ${on ? "font-semibold text-ink" : "text-ink-2"}`}>{label}</button>
                   : <a key={v.loc.tag} href={v.href} role="menuitem" hrefLang={v.loc.tag} lang={v.loc.tag} onClick={() => remember(v.loc)} className={`flex items-center rounded-xl px-3 py-2 text-sm hover:bg-ink/6 ${on ? "font-semibold text-ink" : "text-ink-2"}`}>{label}</a>;
               })}
               <div className="mx-3 my-1.5 border-t border-line" />
               <div className="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-ink-3">{d.country}</div>
             </>
           )}
-          {countries.map((c) => (
-            <Link key={c.cc} href={localizePath(switchHref(pathname, c), loc.lang)} role="menuitem" className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm hover:bg-ink/6 ${c.cc === current.cc ? "font-semibold text-ink" : "text-ink-2"}`} onClick={() => setOpen(false)}>
-              <span>{nameOf(c)}</span><span className="text-xs text-ink-3">{c.cc === "us" ? "US" : c.cc.toUpperCase()}</span>
-            </Link>
-          ))}
+          {countries.map((c) => {
+            const href = switchHref(pathname, c);
+            const langs = localesOf(c.cc);
+            return (
+              <div key={c.cc}>
+                <Link href={localizePath(href, loc.lang)} role="menuitem" className={`flex items-center justify-between rounded-xl px-3 pt-2 text-sm hover:bg-ink/6 ${langs.length > 1 ? "pb-1" : "pb-2"} ${c.cc === current.cc ? "font-semibold text-ink" : "text-ink-2"}`} onClick={() => setOpen(false)}>
+                  <span>{nameOf(c)}</span><span className="text-xs text-ink-3">{c.cc === "us" ? "US" : c.cc.toUpperCase()}</span>
+                </Link>
+                {/* Every language each country's pages are written in, one tap away from any page (a full load: another language). */}
+                {langs.length > 1 && (
+                  <div className="flex flex-wrap gap-1 px-3 pb-2">
+                    {langs.map((l) => {
+                      const on = c.cc === current.cc && l.lang === currentLang && !appPage;
+                      return <a key={l.tag} href={pathInLocale(href, l)} role="menuitem" hrefLang={l.tag} lang={l.tag} onClick={() => { remember(l); setOpen(false); }}
+                        className={`rounded-full border px-2 py-0.5 text-[11px] leading-5 hover:bg-ink/8 ${on ? "border-ink/40 font-semibold text-ink" : "border-line-2 text-ink-3"}`}>{versionLabel(l)}</a>;
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

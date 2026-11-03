@@ -5,6 +5,7 @@
  * tax rule and stores (seo.md §12: "iPhone Stock Checker {Country}: {n} Apple Stores, Checked Every 15s").
  */
 import type { Metadata } from "next";
+import { bidi } from "@/lib/i18n/format";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { MODELS, modelByKey, STORE_INDEX, appleFamilyUrl, storesOf, placeTarget, mapPath, restocksPath, type ModelKey } from "@/lib/apple/catalog";
 import { prefixOf, type Country } from "@/lib/apple/countries";
@@ -142,7 +143,7 @@ async function Board({ model, c }: { model: ModelKey; c: Country }) {
       <div className="grid grid-cols-3 gap-2">
         <Link href={`${p}/stock/${meta.slug}`} className={`min-w-0 rounded-2xl border p-3 ${inStock.length ? "border-accent/30 bg-accent/[0.06]" : "border-line bg-[var(--pane-solid)]"}`}>
           <div className="flex items-center gap-1.5 text-2xl font-semibold tabular-nums"><Dot state={inStock.length ? "ok" : "idle"} live={inStock.length > 0} />{inStock.length}</div>
-          <div className="truncate text-xs text-ink-3">{H.storesWith(meta.short)}</div>
+          <div className="truncate text-xs text-ink-3">{H.storesWith(bidi(meta.short, lang))}</div>
         </Link>
         <Link href={`${restocksPath(cc)}?model=${model}`} className="min-w-0 rounded-2xl border border-line bg-[var(--pane-solid)] p-3">
           <div className="text-2xl font-semibold tabular-nums">{counts.day}</div>
@@ -159,13 +160,13 @@ async function Board({ model, c }: { model: ModelKey; c: Country }) {
           {inStock.length > 6 && <Link href={`${p}/stock/${meta.slug}`} className="rounded-full bg-ink/6 px-2.5 py-1 text-xs text-ink-2">{H.more(inStock.length - 6)}</Link>}
         </div>
       )}
-      <div className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">{H.latest(meta.short)}</div>
-      <RestockFeed rows={feed} model={model} showModel={false} emptyText={H.none(meta.short)} />
+      <div className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">{H.latest(bidi(meta.short, lang))}</div>
+      <RestockFeed rows={feed} model={model} showModel={false} emptyText={H.none(bidi(meta.short, lang))} />
       <div className="mt-3 flex flex-wrap gap-2">
         <Link href={`${restocksPath(cc)}?model=${model}`} className="btn btn-ghost btn-sm">{H.allRestocks}</Link>
-        <Link href={`${mapPath(cc)}?model=${model}`} className="btn btn-ghost btn-sm">{H.modelMap(meta.short)}</Link>
+        <Link href={`${mapPath(cc)}?model=${model}`} className="btn btn-ghost btn-sm">{H.modelMap(bidi(meta.short, lang))}</Link>
         <a href={appleFamilyUrl(model, cc)} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm">{H.buy}</a>
-        <Link href={`${p}/stock/${meta.slug}`} className="btn btn-ghost btn-sm">{H.liveStock(meta.short)}</Link>
+        <Link href={`${p}/stock/${meta.slug}`} className="btn btn-ghost btn-sm">{H.liveStock(bidi(meta.short, lang))}</Link>
       </div>
     </>
   );
@@ -200,7 +201,8 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
     index: index ? { path: index.path, indexable: index.indexable } : null,
   });
   const rtPath = `${p}/iphone-duo-restock-times`;
-  const faq: Faq[] = P.homeFaq(cc, { n: rt.n, stores: rt.stores, storesTotal: rt.storesTotal, peakHour: rt.peakHour, path: rtPath });
+  // Native versions add the restock-times question; five at most (the base spec), so "can you reserve it" goes.
+  const faq: Faq[] = P.homeFaq(cc, { n: rt.n, stores: rt.stores, storesTotal: rt.storesTotal, peakHour: rt.peakHour, path: rtPath }).slice(0, loc.native ? 5 : undefined);
   const ld = {
     "@context": "https://schema.org",
     "@graph": [

@@ -47,7 +47,7 @@ import { hreflangFor } from "./shared";
 import { englishLocale, pathInLocale, type Lang, type Locale } from "@/lib/i18n/locales";
 import { dict, type Dict } from "@/lib/i18n/dict";
 import { pageLocale, t as dictT } from "@/lib/i18n/server";
-import { distance } from "@/lib/i18n/format";
+import { distance, bidi } from "@/lib/i18n/format";
 import { appleStoreLabel, cityLabel, configLabel, countryLabel, regionLabel, storeLabel } from "@/lib/i18n/places";
 
 const INDEXABLE = process.env.NEXT_PUBLIC_INDEXABLE === "1";
@@ -329,11 +329,11 @@ export async function ProductPage({ country: c, params: p }: { country: Country;
         </div>
       ) : ib ? (
         <div className="mx-auto mt-8 max-w-3xl space-y-8">
-          <RichFaq items={[...faq, ...intlFaq]} facts={emptyFacts(c.cc)} title={V.faqTitleCountry(product.name, c)} />
+          <RichFaq items={[...faq, ...intlFaq].slice(0, loc.native ? 5 : undefined)} facts={emptyFacts(c.cc)} title={V.faqTitleCountry(product.name, c)} />
           <SourceList sources={[c.cc === "us" ? pickupHelp(c.cc) : dictT().place.sources(c.cc).pickupHelp, { label: V.buySource(product.name, c), url: appleBuyUrl({ model: product.name, storage: "256GB", color: "" }, c.cc) }, c.cc === "us" ? TAX_SOURCES[c.cc as Exclude<typeof c.cc, "us">] : dictT().place.sources(c.cc).tax]} facts={emptyFacts(c.cc)} where={C.sourcesWhere(place.stores.length, c)} since={C.since} />
         </div>
       ) : (
-        <div className="mt-6"><Faq items={faq} title={V.faqTitle(product.short, label)} /></div>
+        <div className="mt-6"><Faq items={faq} title={V.faqTitle(bidi(product.short, lang), label)} /></div>
       )}
 
       <RelatedBlock title={V.nearby}>
@@ -345,8 +345,10 @@ export async function ProductPage({ country: c, params: p }: { country: Country;
           { href: placePagePath(place), label: top ? (us ? "Every Apple Store" : V.everyAppleStoreIn(c)) : V.everyIphone(where) },
           { href: `${restocksPath(c.cc)}?model=${product.model}`, label: C.restockLog },
           { href: `${mapPath(c.cc)}?model=${product.model}${place.store ? `&store=${place.store.storeNumber}` : ""}`, label: C.liveMap },
-          ...(top ? [] : [{ href: productPath(product, t.root), label: V.across(product.short, c) }]),
+          ...(top ? [] : [{ href: productPath(product, t.root), label: V.across(bidi(product.short, lang), c) }]),
           ...(intlTop ? [{ href: prefixOf(c.cc), label: C.checker(c) }, ...(placeTarget(c.cc)?.indexable ? [{ href: storesIndexPath(c.cc), label: C.appleStoresIn(c) }] : [])] : []),
+          // Native versions only (English pages keep their links): the Duo page leads to the restock-times page.
+          ...(intlTop && loc.native && product.model === "duo" ? [{ href: `${prefixOf(c.cc)}/iphone-duo-restock-times`, label: dictT().place.home.restockTimesChip }] : []),
         ]} />
       </RelatedBlock>
     </div>

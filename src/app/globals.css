@@ -432,6 +432,12 @@ html.dialog-open { overflow: hidden; }
    break a long run without spaces rather than push a tile or table wider than a phone. */
 :lang(ko) { word-break: keep-all; overflow-wrap: anywhere; }
 :lang(ja), :lang(zh) { line-break: strict; overflow-wrap: anywhere; }
+/* Arabic (UAE version, dir="rtl"): letter-spacing breaks the joined script and Geist has no Arabic glyphs, so the
+   system's Arabic face takes over at a size and line height that read comfortably; Latin runs keep Geist. */
+:lang(ar):not(.input-code) { letter-spacing: normal !important; }
+:lang(ar) body, body:lang(ar) { font-family: var(--font-geist-sans), "Geeza Pro", "SF Arabic", "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif; line-height: 1.7; }
+:lang(ar) .eyebrow { text-transform: none; font-size: .8rem; }
+:lang(ar) .display { line-height: 1.25; }
 /* Translated labels run longer than English (German ~30 %): on a native version a button or chip may wrap rather
    than run off a phone screen. English pages (html lang="en") keep their one-line buttons exactly as before. */
 html:not([lang="en"]) .btn, html:not([lang="en"]) .chip { white-space: normal; max-width: 100%; line-height: 1.25; text-align: center; }

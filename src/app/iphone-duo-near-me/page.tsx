@@ -75,11 +75,11 @@ function KeyTable({ head, rows }: { head: [string, string]; rows: [ReactNode, Re
   return (
     <div className="my-4 overflow-x-auto">
       <table className="w-full min-w-[20rem] text-sm">
-        <thead><tr className="text-left text-xs uppercase tracking-wide text-ink-3"><th className="pb-2 pr-3 font-semibold">{head[0]}</th><th className="pb-2 font-semibold">{head[1]}</th></tr></thead>
+        <thead><tr className="text-start text-xs uppercase tracking-wide text-ink-3"><th className="pb-2 pe-3 font-semibold">{head[0]}</th><th className="pb-2 font-semibold">{head[1]}</th></tr></thead>
         <tbody>
           {rows.map(([a, b], i) => (
             <tr key={i} className="border-t border-line align-top">
-              <td className="whitespace-nowrap py-2 pr-3 font-semibold text-ink">{a}</td>
+              <td className="whitespace-nowrap py-2 pe-3 font-semibold text-ink">{a}</td>
               <td className="py-2 text-ink-2">{b}</td>
             </tr>
           ))}
@@ -255,12 +255,12 @@ export default async function NearMePage() {
           {hasPattern && top.length > 0 && (
             <div className="my-4 overflow-x-auto">
               <table className="w-full min-w-[20rem] text-sm">
-                <caption className="mb-2 text-left text-xs text-ink-3">The stores with the most iPhone Duo restocks since {longDate(rt.since)}: listed because people ask, not because you should drive to them</caption>
-                <thead><tr className="text-left text-xs uppercase tracking-wide text-ink-3"><th className="pb-2 pr-3 font-semibold">Store</th><th className="pb-2 font-semibold">Restocks</th></tr></thead>
+                <caption className="mb-2 text-start text-xs text-ink-3">The stores with the most iPhone Duo restocks since {longDate(rt.since)}: listed because people ask, not because you should drive to them</caption>
+                <thead><tr className="text-start text-xs uppercase tracking-wide text-ink-3"><th className="pb-2 pe-3 font-semibold">Store</th><th className="pb-2 font-semibold">Restocks</th></tr></thead>
                 <tbody>
                   {top.map((t) => (
                     <tr key={t.store.storeNumber} className="border-t border-line">
-                      <td className="py-2 pr-3 font-medium text-ink"><Link href={storePath(t.store)}>{appleName(t.store)}</Link>, {cityLine(t.store)}</td>
+                      <td className="py-2 pe-3 font-medium text-ink"><Link href={storePath(t.store)}>{appleName(t.store)}</Link>, {cityLine(t.store)}</td>
                       <td className="py-2 tabular-nums">{n(t.restocks)}</td>
                     </tr>
                   ))}

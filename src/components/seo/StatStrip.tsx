@@ -3,7 +3,7 @@ import { MODELS, PART_INDEX, STORE_INDEX, type ModelKey } from "@/lib/apple/cata
 import type { PlaceStats } from "@/lib/stock/queries";
 import { countIn, fmtDuration } from "@/lib/seo/enrich";
 import { t, pageLocale } from "@/lib/i18n/server";
-import { num } from "@/lib/i18n/format";
+import { num, bidi } from "@/lib/i18n/format";
 import { colorLabel, storeLabel } from "@/lib/i18n/places";
 import { LiveAgo } from "@/components/site/LiveAgo";
 import { Dot } from "@/components/stock/StatusBits";
@@ -49,7 +49,7 @@ export function PlaceStatStrip({ stores, cities, stockNow, stats, storeMode = fa
   if (model) items.push({ label: d.inStockNow, value: v(stockNow[model]), hint: d.ofStores(s(stores)), live: stockNow[model] > 0 });
   else {
     items.push({ label: d.stores, value: v(stores), hint: cities != null ? countIn(lang, cities, d.nCities) : d.tracked });
-    for (const m of MODELS) items.push({ label: d.modelNow(m.short), value: v(stockNow[m.key]), hint: storeMode ? d.configsInStock : countIn(lang, stockNow[m.key], d.storesWithStock), live: stockNow[m.key] > 0 });
+    for (const m of MODELS) items.push({ label: d.modelNow(bidi(m.short, lang)), value: v(stockNow[m.key]), hint: storeMode ? d.configsInStock : countIn(lang, stockNow[m.key], d.storesWithStock), live: stockNow[m.key] > 0 });
   }
   items.push({ label: d.restocks24h, value: v(stats.day), hint: d.restocksHint(s(stats.week), s(stats.month), s(stats.days)) });
   items.push({ label: d.sellOuts(s(stats.days)), value: v(stats.soldouts), hint: stats.medianMs != null ? d.stays(fmtDuration(stats.medianMs, lang)) : d.noPairs });

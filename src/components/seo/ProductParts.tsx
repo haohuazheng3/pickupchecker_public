@@ -16,7 +16,7 @@ import { Dot } from "@/components/stock/StatusBits";
 import { LiveAgo } from "@/components/site/LiveAgo";
 import { t, pageLocale } from "@/lib/i18n/server";
 import type { Lang } from "@/lib/i18n/locales";
-import { distance, num, price, secs, unit } from "@/lib/i18n/format";
+import { distance, num, price, secs, unit, bidi } from "@/lib/i18n/format";
 import { cityLabel, colorLabel, configLabel, regionLabel, storeLabel } from "@/lib/i18n/places";
 
 /** Road distance from straight-line miles, in the country's unit ("12 mi" / "19 km"); other languages always km. */
@@ -70,7 +70,7 @@ export function ProductNav({ facets, place, unit }: { facets: Facets; place: Pla
         {facets.models.map((f) => (
           <Link key={f.label} href={productPath(f.product, place)} scroll={false} aria-current={f.on ? "page" : undefined}
             className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-sm font-medium transition-colors ${f.on ? "bg-[var(--pane-solid)] text-ink shadow-sm" : "text-ink-2 hover:text-ink"}`}>
-            <span className="truncate">{f.label}</span> <Count n={f.count} />
+            <span className="truncate">{bidi(f.label, lang)}</span> <Count n={f.count} />
           </Link>
         ))}
       </div>
