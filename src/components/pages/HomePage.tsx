@@ -31,7 +31,9 @@ import { getFacts } from "@/lib/content/facts";
 import { Inline } from "@/components/content/Inline";
 import { KeywordSections, slugId, type KeywordSection } from "@/components/content/KeywordSections";
 import { RichFaq, SourceList } from "@/components/content/RichFaq";
-import { itemListJsonLd } from "@/lib/seo/enrich";
+import { alertHref, itemListJsonLd } from "@/lib/seo/enrich";
+import { Last24Hours } from "@/components/restocks/Last24Hours";
+import { recentByConfig } from "@/lib/stock/recent";
 import { allStoresPhrase, homeH1, homeTitle, modelRows, priceSection, spreadPhrase, taxFaqIntl } from "@/lib/seo/countryCopy";
 import { regionWord } from "@/lib/seo/countryLinks";
 import { TAX_SOURCES, pickupHelp, storeListSource } from "@/content/country-tax";
@@ -65,7 +67,7 @@ export async function HomePage({ country: c, searchParams: sp }: { country: Coun
   const model: ModelKey = start.initialModel;
   const startSignIn = sp.signin === "1";
   const next = typeof sp.next === "string" ? sp.next : undefined;
-  const [facts, sell] = await Promise.all([getFacts(), sellouts({ country: "us" })]);
+  const [facts, sell, recent] = await Promise.all([getFacts(), sellouts({ country: "us" }), recentByConfig({ country: "us" })]);
   const sections = HOME_TITLES.h2.map((h) => ({ id: slugId(h.keyword), h2: h.title, ...HOME_SECTIONS[h.keyword] }));
   const ld = {
     "@context": "https://schema.org",
@@ -100,6 +102,9 @@ export async function HomePage({ country: c, searchParams: sp }: { country: Coun
         <Link href="/map" className="chip px-3 py-1.5 text-xs">Live map</Link>
         <Link href="/stores" className="chip px-3 py-1.5 text-xs">Stores by state</Link>
       </section>
+
+      {/* The country-wide answer to "did the Duo restock in the last 24 hours, and which configuration?", in one sentence and a table. */}
+      <div className="mt-6"><Last24Hours data={recent} label="in the US" stores={storesOf("us")} country="us" alert={alertHref({ model: "duo" })} /></div>
 
       <RelatedBlock title="Browse stock by place">
         <BrowsePopular />
@@ -169,7 +174,7 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
   const model: ModelKey = start.model ?? "duo";
   const startSignIn = sp.signin === "1";
   const next = typeof sp.next === "string" ? sp.next : undefined;
-  const [facts, sell] = await Promise.all([getFacts(cc), sellouts({ country: cc })]);
+  const [facts, sell, recent] = await Promise.all([getFacts(cc), sellouts({ country: cc }), recentByConfig({ country: cc })]);
   const stores = storesOf(cc);
   const n = stores.length;
   const where = theName(c);
@@ -241,6 +246,8 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
         <Link href={mapPath(cc)} className="chip px-3 py-1.5 text-xs">Live map</Link>
         {index && <Link href={index.path} className="chip px-3 py-1.5 text-xs">{index.indexable ? (c.regionNoun && n > 3 ? `Stores by ${regionWord(cc)}` : "All stores") : `Apple ${stores[0].name}`}</Link>}
       </section>
+
+      <div className="mt-6"><Last24Hours data={recent} label={c.inName} stores={stores} country={cc} alert={alertHref({ model: "duo", country: cc })} /></div>
 
       <RelatedBlock title={`Browse stock ${c.inName}`}>
         <BrowseCountryPopular country={c} />

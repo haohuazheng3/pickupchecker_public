@@ -31,8 +31,16 @@ export function countryEntries(cc: Exclude<CountryCode, "us">, base: string, now
   for (const m of MODELS) out.push({ url: `${base}${p}/stock/${m.slug}`, lastModified: now, changeFrequency: "always", priority: 0.75 });
   out.push({ url: `${base}${restocksPath(cc)}`, lastModified: now, changeFrequency: "hourly", priority: 0.5 });
   out.push({ url: `${base}${mapPath(cc)}`, lastModified: now, changeFrequency: "hourly", priority: 0.5 });
+  // The country's restock-times question page (seo.md §13): its numbers change with every restock.
+  out.push({ url: `${base}${p}/iphone-duo-restock-times`, lastModified: latestOf(stores.map((s) => s.storeNumber)), changeFrequency: "hourly", priority: 0.7 });
   return out;
 }
+
+/**
+ * The iPhone Duo question pages (seo.md §13): one answer page per question people put to search and answer
+ * engines. Their numbers are live, so they change with the restock log.
+ */
+export const QUESTION_PAGES = ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained"] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pickupchecker.com";
@@ -45,6 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return best ?? now;
   };
   const statics = ["", "/how-it-works", "/pricing", "/install", "/map", "/restocks", "/about", "/contact", "/privacy", "/terms", "/refunds", "/stores"].map((p) => ({ url: `${base}${p}`, lastModified: now, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.6 }));
+  const questions = QUESTION_PAGES.map((p) => ({ url: `${base}${p}`, lastModified: now, changeFrequency: "hourly" as const, priority: 0.8 }));
   const models = MODELS.map((m) => ({ url: `${base}/stock/${m.slug}`, lastModified: now, changeFrequency: "always" as const, priority: 0.8 }));
   const states = statesWithStores().filter((s) => hasStatePage(s.name)).map((s) => ({ url: `${base}/stores/${s.slug}`, lastModified: latestOf(STORES.filter((x) => x.state === s.name).map((x) => x.storeNumber)), changeFrequency: "hourly" as const, priority: 0.9 }));
   const cities = citiesWithStores().filter((c) => c.stores.length > 1).map((c) => ({ url: `${base}${cityPath(c.state, c.name)}`, lastModified: latestOf(c.stores.map((x) => x.storeNumber)), changeFrequency: "hourly" as const, priority: 0.85 }));
@@ -56,5 +65,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // <place>", and one indexed page per place keeps the site free of near-duplicates.
   const products: MetadataRoute.Sitemap = PRODUCTS.filter((p) => (p.kind === "storage" || p.kind === "color") && isIndexedProductPage(p, US)).map((p) => ({ url: `${base}${productPath(p, US)}`, lastModified: now, changeFrequency: "hourly" as const, priority: 0.5 }));
   const countries = INTL_CODES.flatMap((cc) => countryEntries(cc, base, now, latestOf));
-  return [...statics, ...models, ...states, ...cities, ...stores, ...products, ...countries];
+  return [...statics, ...questions, ...models, ...states, ...cities, ...stores, ...products, ...countries];
 }

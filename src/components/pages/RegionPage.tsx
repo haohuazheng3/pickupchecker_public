@@ -32,6 +32,8 @@ import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { sellouts } from "@/lib/stock/sellouts";
 import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestocksByConfig } from "@/components/restocks/RestocksByConfig";
+import { Last24Hours } from "@/components/restocks/Last24Hours";
+import { recentByConfig } from "@/lib/stock/recent";
 import { placeTitle, placeDescription, placeIntro, placeSections, taxFaq, type PlaceCopyInput } from "@/lib/seo/placeCopy";
 import { intlPlaceTitle, intlPlaceDescription, intlPlaceIntro, intlPlaceSections, taxFaqIntl, placeLabel, type IntlPlaceInput } from "@/lib/seo/countryCopy";
 import { KeywordSections } from "@/components/content/KeywordSections";
@@ -64,7 +66,7 @@ const load = cache(async (cc: Country["cc"], slug: string) => {
   const thin = stores.length <= THIN;
   const outside = nearestOutsideState({ ...centroid(stores), state: s.name, country: cc }, 6);
   const extra = thin ? [...new Set([...outside, ...stores.flatMap((x) => nearestOutsideState(x, 4))].map((x) => x.storeNumber))] : outside.map((x) => x.storeNumber);
-  const [stock, feed, stats, pstats, full, duoStats, maxStats, reports, sell] = await Promise.all([
+  const [stock, feed, stats, pstats, full, duoStats, maxStats, reports, sell, recent] = await Promise.all([
     storesStock([...numbers, ...extra]),
     restockFeed({ state: s.name, limit: 12, country: cc }),
     restockStats(numbers, tz, 30),
@@ -74,12 +76,13 @@ const load = cache(async (cc: Country["cc"], slug: string) => {
     placeStats({ storeNumbers: numbers, model: "18-pro-max", tz }),
     restockReportStats(numbers, tz, 30),
     sellouts({ storeNumbers: numbers, country: cc }),
+    recentByConfig({ storeNumbers: numbers, country: cc }),
   ]);
   const stockNow = Object.fromEntries(MODELS.map((m) => [m.key, stores.filter((x) => (stock.get(x.storeNumber)?.perModel[m.key].available ?? 0) > 0).length])) as Record<ModelKey, number>;
   const duoStores = stores.filter((x) => (stock.get(x.storeNumber)?.perModel[DEFAULT_MODEL].available ?? 0) > 0);
   const copy: PlaceCopyInput = { kind: "state", name: s.name, state: s.name, stateSlug: s.slug, stores, cities: cities.length, stockNow, stock, duo: duoStats, max: maxStats };
   const intl: IntlPlaceInput | null = cc === "us" ? null : { cc, kind: "state", name: s.name, region: s.name, regionSlug: s.slug, stores, cities: cities.length, stockNow, stock, duo: duoStats, max: maxStats };
-  return { s, stores, cities, numbers, tz, thin, outside, stock, feed, stats, pstats, full, stockNow, duoStores, copy, intl, reports, sell };
+  return { s, stores, cities, numbers, tz, thin, outside, stock, feed, stats, pstats, full, stockNow, duoStores, copy, intl, reports, sell, recent };
 });
 
 export async function regionMetadata(c: Country, p: { state: string }): Promise<Metadata> {
@@ -137,6 +140,9 @@ export async function RegionPage({ country: c, params: p }: { country: Country; 
         </div>
       </div>
       <AlertPanelFor href={alert} summary={`Pick the phones and tick the ${s.name} stores you can get to`} country={cc} />
+
+      {/* The answer to "has the Duo restocked anywhere in {state} in the last 24 hours, and which configuration?" comes before the matrix. */}
+      <div className="mt-6"><Last24Hours data={d.recent} label={`in ${s.name}`} stores={stores} country={cc} stock={d.stock} lastBefore={d.copy.duo.lastRestock} alert={alert} /></div>
 
       <div className="mt-6"><ModelPlaceCards place={us ? statePlace(s.name)! : treeOf(cc).regionPlace(s.name)!} stockNow={d.stockNow} of={stores.length} unit="stores with it" /></div>
       <div className="mt-3"><PlaceStatStrip stores={stores.length} cities={cities.length} stockNow={d.stockNow} stats={d.pstats} /></div>

@@ -85,7 +85,7 @@ export default async function HowItWorks() {
       `Set an alert for that store and configuration, so you do not have to watch: it is checked every ${SPEED.fastSec} seconds from then on.`,
     ] },
     { t: "p", text: exampleLine },
-    { t: "p", text: "A pattern is history, not a promise: Apple publishes no restock schedule, and a launch week can look nothing like the week after. That is why the alert, not the chart, is what gets you the phone." },
+    { t: "p", text: "A pattern is history, not a promise: Apple publishes no restock schedule, and a launch week can look nothing like the week after. That is why the alert, not the chart, is what gets you the phone. The country-wide picture, hour by hour and day by day, is on [When does Apple restock the iPhone Duo?](/iphone-duo-restock-times); how long each restock lasted is on [How fast does an iPhone Duo restock sell out?](/iphone-duo-sell-out-times)." },
     { t: "img", id: "apple-store-pickup-counter" },
   ];
   const coverage: Block[] = [

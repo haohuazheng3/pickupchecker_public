@@ -94,9 +94,10 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
   const base = "https://pickupchecker.com";
   const now = new Date();
   const per = Object.fromEntries(INTL_CODES.map((cc) => [cc, countryEntries(cc, base, now, () => now).map((e) => e.url)]));
-  it("counts per country (home + index + region/city pages + stores + 3 models + log + map)", () => {
+  it("counts per country (home + index + region/city pages + stores + 3 models + log + map + restock times)", () => {
     const counts = Object.fromEntries(INTL_CODES.map((cc) => [cc, per[cc].length]));
-    expect(counts).toEqual({ ca: 43, uk: 55, au: 32, de: 30, fr: 32, it: 29, es: 22, jp: 20, kr: 15, hk: 13, sg: 10, ae: 15, ch: 12, nl: 11, se: 10, tw: 9, at: 7, be: 7 });
+    expect(counts).toEqual({ ca: 44, uk: 56, au: 33, de: 31, fr: 33, it: 30, es: 23, jp: 21, kr: 16, hk: 14, sg: 11, ae: 16, ch: 13, nl: 12, se: 11, tw: 10, at: 8, be: 8 });
+    for (const cc of INTL_CODES) expect(per[cc]).toContain(`${base}/${cc}/iphone-duo-restock-times`);
   });
   it("lists no URL the proxy would redirect or reject, and every store", () => {
     for (const cc of INTL_CODES) {
@@ -113,8 +114,10 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
     const all = (await sitemap()).map((e) => e.url);
     expect(new Set(all).size).toBe(all.length);
     const us = all.filter((u) => !INTL_CODES.some((cc) => u === `${base}/${cc}` || u.startsWith(`${base}/${cc}/`)));
-    expect(us).toHaveLength(356);
-    expect(all.length).toBe(356 + Object.values(per).reduce((a, l) => a + l.length, 0));
+    // 356 US pages of seo.md §10–11, plus the seven iPhone Duo question pages of §13.
+    expect(us).toHaveLength(356 + 7);
+    for (const p of ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained"]) expect(us).toContain(`${base}${p}`);
+    expect(all.length).toBe(363 + Object.values(per).reduce((a, l) => a + l.length, 0));
   });
 });
 
@@ -131,6 +134,10 @@ describe("hreflang between equivalent pages", () => {
     expect(stores["en-BE"]).toBeUndefined();
     expect(stores["en-CA"]).toBe("/ca/stores");
     expect(hreflangFor({ model: "iphone-duo" })["en-JP"]).toBe("/jp/stock/iphone-duo");
+    const times = hreflangFor("restock-times");
+    expect(times["x-default"]).toBe("/iphone-duo-restock-times");
+    expect(times["en-AU"]).toBe("/au/iphone-duo-restock-times");
+    expect(Object.keys(times)).toHaveLength(20);
   });
 });
 

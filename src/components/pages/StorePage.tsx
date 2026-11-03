@@ -32,6 +32,8 @@ import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { sellouts } from "@/lib/stock/sellouts";
 import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestocksByConfig } from "@/components/restocks/RestocksByConfig";
+import { Last24Hours } from "@/components/restocks/Last24Hours";
+import { recentByConfig } from "@/lib/stock/recent";
 import { MiniMap } from "@/components/stores/MiniMap";
 import { LiveChecked } from "@/components/site/LiveChecked";
 import { CHECK_NOTE } from "@/lib/plans";
@@ -63,7 +65,7 @@ const load = cache(async (s: Store) => {
   const outside = nearestOutsideState(s, 3);
   const inState = nearestInState(s, 4, { excludeCity: true });
   const others = [...new Set([...nearby, ...outside, ...inState].map((n) => n.storeNumber))];
-  const [rows, stock, feed, stats, pstats, reports, lookupOff, sell] = await Promise.all([
+  const [rows, stock, feed, stats, pstats, reports, lookupOff, sell, recent] = await Promise.all([
     storeStatus(s.storeNumber),
     storesStock([s.storeNumber, ...others]),
     restockFeed({ storeNumber: s.storeNumber, kind: "all", limit: 30, country: s.country }),
@@ -72,11 +74,15 @@ const load = cache(async (s: Store) => {
     restockReportStats([s.storeNumber], tz, 30),
     pickupLookupOff(s.storeNumber),
     sellouts({ storeNumbers: [s.storeNumber], country: s.country }),
+    recentByConfig({ storeNumbers: [s.storeNumber], country: s.country }),
   ]);
   const summary = stock.get(s.storeNumber);
   const stockNow = Object.fromEntries(MODELS.map((m) => [m.key, summary?.perModel[m.key].available ?? 0])) as Record<ModelKey, number>;
   const configs = Object.fromEntries(MODELS.map((m) => [m.key, rows.filter((r) => modelKeyFor(r.item.model) === m.key).length || catalogFor(m.key, s.country).length])) as Record<ModelKey, number>;
-  return { tz, nearby, outside, inState, rows, stock, summary, feed, stats, pstats, reports, lookupOff, stockNow, configs, sell };
+  // The last Duo restock in the feed (30 rows, all models): what the 24-hour block names on a quiet day.
+  const lastDuo = feed.find((r) => r.kind === "restock" && modelKeyFor(r.item.model) === "duo");
+  const lastDuoRestock = lastDuo ? { storeNumber: lastDuo.storeNumber, partNumber: lastDuo.partNumber, at: lastDuo.at.toISOString() } : null;
+  return { tz, nearby, outside, inState, rows, stock, summary, feed, stats, pstats, reports, lookupOff, stockNow, configs, sell, recent, lastDuoRestock };
 });
 
 /** True when this is the only Apple Store in its city (the city query lands here). */
@@ -200,6 +206,8 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
         </div>
       </div>
       <AlertPanelFor href={alert} summary={`For Apple ${s.name}: pick the phones, tick this store and any nearby`} country={cc} />
+
+      <div className="mt-6"><Last24Hours data={d.recent} label={`at ${place}`} stores={[s]} country={cc} stock={d.stock} lastBefore={d.lastDuoRestock} alert={alert} /></div>
 
       <div className="mt-6"><ModelPlaceCards place={storePlace(s)} stockNow={d.stockNow} of={Object.fromEntries(MODELS.map((m) => [m.key, catalogFor(m.key, cc).length])) as Record<ModelKey, number>} unit="configs in stock" /></div>
       <div className="mt-3"><PlaceStatStrip stores={1} stockNow={d.stockNow} stats={d.pstats} storeMode /></div>

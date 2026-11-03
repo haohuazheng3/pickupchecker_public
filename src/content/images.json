@@ -32,6 +32,22 @@
   "pexelsId": 28984285
  },
  {
+  "id": "apple-store-crowd-inside",
+  "base": "/img/guides/apple-store-crowd-inside",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A crowd queuing inside a busy Apple Store in a shopping centre",
+  "caption": "Launch-week crowds inside an Apple Store: the stock that reaches the shelf is gone in minutes.",
+  "credit": "Deane Bayas",
+  "creditUrl": "https://www.pexels.com/photo/people-at-the-mall-13753893/",
+  "pexelsId": 13753893
+ },
+ {
   "id": "apple-store-entrance",
   "base": "/img/stores/apple-store-entrance",
   "widths": [
@@ -43,6 +59,22 @@
   "height": 800,
   "alt": "People outside an Apple Store entrance with a glass front",
   "caption": "An Apple Store entrance on a busy afternoon.",
+  "credit": "떡이 민",
+  "creditUrl": "https://www.pexels.com/photo/street-view-of-busy-apple-store-in-urban-setting-33754602/",
+  "pexelsId": 33754602
+ },
+ {
+  "id": "apple-store-entrance-busy",
+  "base": "/img/guides/apple-store-entrance-busy",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "People outside a busy Apple Store entrance with a glass facade and trees",
+  "caption": "An Apple Store entrance on an ordinary afternoon.",
   "credit": "떡이 민",
   "creditUrl": "https://www.pexels.com/photo/street-view-of-busy-apple-store-in-urban-setting-33754602/",
   "pexelsId": 33754602
@@ -78,6 +110,22 @@
   "credit": "Hc Digital",
   "creditUrl": "https://www.pexels.com/photo/people-walking-on-the-sidewalk-near-a-store-with-glass-facade-3508089/",
   "pexelsId": 3508089
+ },
+ {
+  "id": "apple-store-night-vancouver",
+  "base": "/img/guides/apple-store-night-vancouver",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "An Apple Store lit up at night in Vancouver",
+  "caption": "Apple Store at night: pickup stock can appear at any hour, but it lands in the morning far more often.",
+  "credit": "WeStarMoney  Rec",
+  "creditUrl": "https://www.pexels.com/photo/bright-lights-inside-the-apple-building-lobby-14917510/",
+  "pexelsId": 14917510
  },
  {
   "id": "apple-store-pickup-counter",
@@ -160,6 +208,38 @@
   "pexelsId": 5226497
  },
  {
+  "id": "click-and-collect-queue",
+  "base": "/img/guides/click-and-collect-queue",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A blurred indoor queue beside a click-and-collect sign",
+  "caption": "Click and collect: a pickup reservation is a held phone; a walk-in is a hope.",
+  "credit": "wd toro🇲🇨",
+  "creditUrl": "https://www.pexels.com/photo/queue-system-with-click-and-collect-sign-31313198/",
+  "pexelsId": 31313198
+ },
+ {
+  "id": "closed-sign-return-time",
+  "base": "/img/guides/closed-sign-return-time",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A Closed sign on a shop door with an adjustable return time",
+  "caption": "Apple publishes no restock schedule; the observed pattern is the closest thing to one.",
+  "credit": "Tim Mossholder",
+  "creditUrl": "https://www.pexels.com/photo/a-sign-sticking-on-glass-5133463/",
+  "pexelsId": 5133463
+ },
+ {
   "id": "courier-delivery",
   "base": "/img/buying/courier-delivery",
   "widths": [
@@ -224,6 +304,22 @@
   "pexelsId": 40476990
  },
  {
+  "id": "foldable-butterfly",
+  "base": "/img/guides/foldable-butterfly",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Two hands holding an open foldable smartphone showing a butterfly on screen",
+  "caption": "A book-style foldable, open.",
+  "credit": "Zana Latif",
+  "creditUrl": "https://www.pexels.com/photo/a-person-holding-a-smartphone-4313857/",
+  "pexelsId": 4313857
+ },
+ {
   "id": "foldable-hands",
   "base": "/img/phones/foldable-hands",
   "widths": [
@@ -254,6 +350,22 @@
   "credit": "MART  PRODUCTION",
   "creditUrl": "https://www.pexels.com/photo/person-holding-white-iphone-5-c-9558788/",
   "pexelsId": 9558788
+ },
+ {
+  "id": "navigation-app-street",
+  "base": "/img/guides/navigation-app-street",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A person using a navigation app on a smartphone on an urban street",
+  "caption": "Nearest first: the store you can reach in twenty minutes beats the one with more restocks.",
+  "credit": "Theo  Decker",
+  "creditUrl": "https://www.pexels.com/photo/a-person-holding-a-cellphone-5448155/",
+  "pexelsId": 5448155
  },
  {
   "id": "night-line",
@@ -2414,6 +2526,22 @@
   "credit": "Tessa Charles",
   "creditUrl": "https://www.pexels.com/photo/close-up-shot-of-a-cellphone-13886741/",
   "pexelsId": 13886741
+ },
+ {
+  "id": "texting-city-street",
+  "base": "/img/guides/texting-city-street",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A young woman reading her phone on a city street in daytime",
+  "caption": "An alert on your phone is the only part of this you cannot do by hand fast enough.",
+  "credit": "Charlotte May",
+  "creditUrl": "https://www.pexels.com/photo/unrecognizable-female-in-street-with-cellphone-5965635/",
+  "pexelsId": 5965635
  },
  {
   "id": "two-phones-sky",

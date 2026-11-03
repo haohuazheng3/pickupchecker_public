@@ -11,8 +11,13 @@ const RETIRED: Record<string, string> = { "/blog/how-to-find-iphone-18-pro-in-st
  */
 export const TOP_LEVEL: ReadonlySet<string> = new Set([
   "about", "account", "admin", "api", "checkout", "contact", "how-it-works", "install", "map", "pricing", "privacy", "refunds", "restocks", "stock", "stores", "terms",
+  // The iPhone Duo question pages (seo.md §13): one answer page per question people put to search and answer engines.
+  "iphone-duo-restock-times", "iphone-duo-sell-out-times", "iphone-duo-stock-alerts", "iphone-duo-near-me", "how-to-get-an-iphone-duo", "which-iphone-duo-restocks-most", "apple-store-pickup-availability-explained",
   "blog", "opengraph-image", "_not-found", "icons", "img", "vendor", "zip",
 ]);
+
+/** Question pages that exist for every country under its prefix (/ca/iphone-duo-restock-times …). */
+export const COUNTRY_QUESTION_PAGES: ReadonlySet<string> = new Set(["iphone-duo-restock-times"]);
 
 /** Every public place address, built once per process. */
 let known: { states: Set<string>; oneStoreStates: Map<string, string>; cities: Set<string>; oneStoreCities: Map<string, string>; stores: Set<string>; legacy: Map<string, string>; models: Set<string> } | null = null;
@@ -123,6 +128,6 @@ function countryRouteCheck(cc: CountryCode, rest: string[], search: string): { n
     if ("redirect" in place) return { redirect: `${productPath(product, { segments: place.redirect, country: cc })}${search}` };
     return null;
   }
-  if ((head === "restocks" || head === "map") && tail.length === 0) return null;
+  if ((head === "restocks" || head === "map" || COUNTRY_QUESTION_PAGES.has(head)) && tail.length === 0) return null;
   return { notFound: true };
 }
