@@ -3,7 +3,8 @@
 import type { PlanKey } from "./plans";
 import type { DeviceSummary } from "./devices";
 
-export interface Me { signedIn: boolean; plan?: { key: PlanKey; limit: number; used: number }; devices?: DeviceSummary }
+/** `everPaid`: the account has had a subscription at some point (the sign-in page sends it to the account). */
+export interface Me { signedIn: boolean; plan?: { key: PlanKey; limit: number; used: number }; devices?: DeviceSummary; everPaid?: boolean }
 
 let pending: Promise<Me | null> | null = null;
 

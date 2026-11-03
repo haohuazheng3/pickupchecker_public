@@ -9,7 +9,8 @@ import { useAuth } from "@clerk/nextjs";
 import { MODELS, STORE_INDEX, type ModelKey } from "@/lib/apple/catalog-us";
 import { PAID_PLANS, PLANS, SPEED_LINE, type PaidPlanKey } from "@/lib/plans";
 import { alertSetOf, phoneKey, togglePhone, toggleStore, type AlertSet, type Phone } from "@/lib/alertSet";
-import { fetchMe } from "@/lib/me";
+import { fetchMe, forgetMe } from "@/lib/me";
+import { afterSignInPath } from "@/lib/signInRoute";
 import type { AlertStart } from "@/lib/alertStart";
 import { track } from "@/lib/track";
 import { Count, Section, openSection } from "./Section";
@@ -70,11 +71,22 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
     const t = window.setTimeout(() => void loadAccount(), 0);
     return () => window.clearTimeout(t);
   }, [account, isLoaded, isSignedIn, loaded, signInOnly, loadAccount]);
-  // The sign-in link (?signin=1&next=…) for someone already signed in: straight on to where it was going.
+  // Leaving the sign-in page (?signin=1): someone who has paid goes to their account, someone who never has to
+  // the alert setup that ends in a plan (lib/signInRoute.ts); another `next` page is kept.
+  const leaving = useRef(false);
+  const leaveSignIn = useCallback(async () => {
+    if (leaving.current) return;
+    leaving.current = true;
+    forgetMe();
+    const me = await fetchMe();
+    const paid = me ? Boolean(me.everPaid || (me.plan && me.plan.key !== "free")) : true; // unknown: the account page, as before
+    window.location.assign(afterSignInPath({ next, home: window.location.pathname, paid }));
+  }, [next]);
+  // The sign-in link for someone already signed in: straight on.
   useEffect(() => {
     if (!signInOnly || !isLoaded || !isSignedIn || signingIn.current) return;
-    window.location.assign(next && next.startsWith("/") && !next.startsWith("//") ? next : "/account");
-  }, [signInOnly, isLoaded, isSignedIn, next]);
+    void leaveSignIn();
+  }, [signInOnly, isLoaded, isSignedIn, leaveSignIn]);
   useEffect(() => {
     if (!account) return;
     let on = true;
@@ -109,7 +121,7 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
   // Signed out → in: what was picked here joins whatever the account already has, in one save.
   const afterSignIn = useCallback(async () => {
     signingIn.current = true;
-    if (signInOnly) { window.location.assign(next && next.startsWith("/") && !next.startsWith("//") ? next : "/account"); return; }
+    if (signInOnly) { await leaveSignIn(); return; }
     const r = await fetch("/api/watches", { cache: "no-store" });
     const j = (await r.json()) as { watches: Parameters<typeof alertSetOf>[0]; plan: PlanInfo; devices?: { active: number; label: string | null } };
     const have = alertSetOf(j.watches ?? []);
@@ -123,7 +135,7 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
     setLoaded(true);
     setJustSaved(true);
     track("watch_saved", { phones: k.set.phones.length, stores: k.set.stores.length, rules: k.set.phones.length * k.set.stores.length });
-  }, [draft, live, next, signInOnly]);
+  }, [draft, live, signInOnly, leaveSignIn]);
 
   const goCheckout = async (k: PaidPlanKey) => {
     try {
@@ -148,7 +160,7 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
     return (
       <div>
         <h2 className="display text-2xl sm:text-3xl">Sign in</h2>
-        <p className="mt-2 mb-4 text-ink-2">Your email is the account. We send a 6-digit code, no password.</p>
+        <p className="mt-2 mb-4 text-ink-2">Your email is the account. We send a 6-digit code, no password. New here? The same code sets up your account, then you pick your alerts.</p>
         <EmailSignIn onSignedIn={afterSignIn} onVerifying={() => { signingIn.current = true; }} />
       </div>
     );
