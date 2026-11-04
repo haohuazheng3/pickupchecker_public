@@ -21,8 +21,21 @@ const files = readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
 const host = new URL(url).hostname.replace(/^\[|\]$/g, "");
 const local = ["localhost", "127.0.0.1", "::1"].includes(host);
 const ca = process.env.DATABASE_CA?.replace(/\\n/g, "\n").trim() || undefined;
-const client = new pg.Client({ connectionString: url, ssl: local ? false : { ca, rejectUnauthorized: true }, connectionTimeoutMillis: 15_000 });
-await client.connect();
+// The build runs this; on 11-04 a build failed because the server was out of ordinary connection slots
+// (53300) for a moment. That passes in seconds, so wait it out (up to ~30 s) instead of failing the deploy.
+let client;
+for (let i = 0; ; i++) {
+  client = new pg.Client({ connectionString: url, ssl: local ? false : { ca, rejectUnauthorized: true }, connectionTimeoutMillis: 15_000 });
+  try {
+    await client.connect();
+    break;
+  } catch (e) {
+    await client.end().catch(() => {});
+    if (e?.code !== "53300" || i >= 7) throw e;
+    console.warn(`[migrate] database out of connection slots, retrying in ${1 + i} s`);
+    await new Promise((r) => setTimeout(r, 1000 * (1 + i)));
+  }
+}
 try {
   await client.query("CREATE TABLE IF NOT EXISTS _migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())");
   const done = new Set((await client.query("SELECT name FROM _migrations")).rows.map((r) => r.name));
