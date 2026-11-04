@@ -45,7 +45,10 @@ export function poolConfig(url: string, env: Record<string, string | undefined> 
   const ca = env.DATABASE_CA?.replace(/\\n/g, "\n").trim() || undefined;
   return {
     connectionString: url,
-    max: Number(env.DATABASE_POOL_MAX) || (local ? 8 : 3),
+    // Remote = the site on Vercel (the poller hosts set DATABASE_POOL_MAX). 2, not 3: every warm function instance
+    // keeps its pool, and on 11-04 ~20 instances × 3 + the pollers' 19 left 6 of the 87 ordinary slots free; the
+    // two deploys that day doubled the fleet for a few minutes and ~1,500 page queries got 53300 (too many clients).
+    max: Number(env.DATABASE_POOL_MAX) || (local ? 8 : 2),
     idleTimeoutMillis: local ? 30_000 : 5_000,
     connectionTimeoutMillis: 10_000,
     maxLifetimeSeconds: 600,
@@ -105,6 +108,30 @@ export function isFailoverError(e: unknown): boolean {
   return /Connection terminated|timeout exceeded when trying to connect|read-only transaction|the database system is (starting up|shutting down|in recovery mode)/i.test(err?.message ?? "");
 }
 
+/**
+ * The server is out of connection slots (53300: max_connections, or only the slots reserved for the poller role
+ * are left). It passes in seconds as other instances' idle connections close, so it is waited out, not failed.
+ */
+export function isBusyError(e: unknown): boolean {
+  const err = e as { code?: string; message?: string };
+  return err?.code === "53300" || /too many clients|remaining connection slots are reserved/i.test(err?.message ?? "");
+}
+
+/** Waits before each retry of a query refused for want of a slot: about 3.5 s in all, then the error stands. */
+export const BUSY_BACKOFF_MS = [250, 750, 1_000, 1_500];
+
+/** Runs `run`, retrying a busy refusal after each BUSY_BACKOFF_MS wait (exported for the test). */
+export async function waitOutBusy<T>(run: () => Promise<T>, backoff: number[] = BUSY_BACKOFF_MS, sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))): Promise<T> {
+  for (let i = 0; ; i++) {
+    try {
+      return await run();
+    } catch (e) {
+      if (!isBusyError(e) || i >= backoff.length) throw e;
+      await sleep(backoff[i]);
+    }
+  }
+}
+
 const PROBE_SQL = `select pg_is_in_recovery() as recovery, current_setting('pickupchecker.host', true) as host,
   (select value from poller_state where key = 'cluster') as cluster`;
 /** How long a choice stands before it is checked again in the background. */
@@ -156,7 +183,7 @@ export class FailoverPool {
   }
 
   async query(...args: unknown[]): Promise<unknown> {
-    const run = async () => (await this.pool()).query(...(args as Parameters<Pool["query"]>));
+    const run = () => waitOutBusy(async () => (await this.pool()).query(...(args as Parameters<Pool["query"]>)));
     try {
       return await run();
     } catch (e) {
@@ -167,7 +194,7 @@ export class FailoverPool {
   }
 
   async connect(): Promise<PoolClient> {
-    return (await this.pool()).connect();
+    return waitOutBusy(async () => (await this.pool()).connect());
   }
 
   recheck(): Promise<void> {
