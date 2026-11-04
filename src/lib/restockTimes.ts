@@ -2,6 +2,9 @@
  * "When your stores restock" (account page): which hours to be ready at, said in the zone the user's
  * stores are in. Pure, so it is tested.
  */
+import { clock } from "@/lib/i18n/format";
+import type { Lang } from "@/lib/i18n/locales";
+
 const ZONES: Record<string, string> = {
   "America/New_York": "Eastern", "America/Detroit": "Eastern", "America/Indiana/Indianapolis": "Eastern", "America/Kentucky/Louisville": "Eastern",
   "America/Chicago": "Central", "America/Denver": "Mountain", "America/Boise": "Mountain", "America/Phoenix": "Arizona",
@@ -104,6 +107,11 @@ export function placeNow<T extends { min: number }>(points: T[], nowMin: number,
 export function clockLabel(min: number): string {
   const h = Math.floor(min / 60) % 24, m = min % 60;
   return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
+/** 565 → "9:25 AM" (English) / "9:25" in the reader's language (Intl, so the server writes it: see RestockTimeline). */
+export function clockIn(lang: Lang, min: number): string {
+  return lang === "en" ? clockLabel(min) : clock(lang, new Date(Date.UTC(2000, 0, 1, Math.floor(min / 60) % 24, min % 60)), "UTC");
 }
 
 /** 48 → "48 min", 125 → "2 h 5 min", 180 → "3 h". */

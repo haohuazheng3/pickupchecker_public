@@ -125,9 +125,12 @@ export function weekdays(lang: Lang, style: "long" | "short" = "long"): string[]
 export function list(lang: Lang, items: string[], max = 6, more?: (n: number) => string): string {
   if (items.length === 0) return "";
   const lf = new Intl.ListFormat(LANG_TAG[lang], { style: "long", type: "conjunction" });
-  if (items.length <= max) return lf.format(items);
+  // Safari wraps each Arabic item in bidi isolates (U+2068…U+2069) and Node does not, which broke hydration:
+  // the items go back in as given, only the joining words come from Intl.
+  const out = (xs: string[]) => { let i = 0; return lf.formatToParts(xs).map((p) => (p.type === "element" ? xs[i++] : p.value)).join(""); };
+  if (items.length <= max) return out(items);
   const rest = items.length - max;
-  return lf.format([...items.slice(0, max), more ? more(rest) : `+${rest}`]);
+  return out([...items.slice(0, max), more ? more(rest) : `+${rest}`]);
 }
 
 /** "7s ago" / "7秒前" / "vor 7 Sek." — the live "checked … ago" (seconds tick). */

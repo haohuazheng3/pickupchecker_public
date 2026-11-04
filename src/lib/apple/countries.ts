@@ -119,10 +119,17 @@ export function appleShopUrl(c: Country, familySlug: string): string {
 /** Dollars that are not US dollars, written so a reader of a site with US prices never mistakes them. */
 const DOLLAR: Record<string, string> = { CAD: "C$", AUD: "A$", SGD: "S$", TWD: "NT$" };
 
+/**
+ * Euros are written as en-US writes them ("€2,339"): Safari formats "en-DE", "en-NL"… the way the country does
+ * ("2.339 €", "€ 2.339") while the server (Node) writes "€2,339", so the price grid re-rendered differently on
+ * iPhones and React threw away the page's HTML (error #418, 2026-11-04). en-US gives the server's string in both.
+ */
+const priceLocaleOf = (c: Country): string => (c.currency === "EUR" ? "en-US" : c.priceLocale ?? c.locale);
+
 /** A price in the country's currency, English digits, no decimals when whole (JPY/KRW never have them); C$, A$, S$, NT$ for other dollars. */
 export function formatPrice(c: Country, amount: number): string {
   const whole = Number.isInteger(amount);
-  const s = new Intl.NumberFormat(c.priceLocale ?? c.locale, { style: "currency", currency: c.currency, minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 }).format(amount);
+  const s = new Intl.NumberFormat(priceLocaleOf(c), { style: "currency", currency: c.currency, minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 }).format(amount);
   const d = DOLLAR[c.currency];
   return d ? s.replace(/^(-?)\$/, `$1${d}`) : s;
 }

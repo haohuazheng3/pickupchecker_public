@@ -11,7 +11,7 @@ import { MODELS, STORE_INDEX, partNumbersFor, storeTimeZone, storesOf } from "@/
 import { restockPattern, restockReportStats, restockSlots } from "@/lib/stock/queries";
 import { sellouts } from "@/lib/stock/sellouts";
 import { SellOutTimes } from "@/components/restocks/SellOutTimes";
-import { buildTimeline, hourLabel, hourSpan, majorityZone, minuteIn, nextWindow, topHours, zoneName } from "@/lib/restockTimes";
+import { buildTimeline, clockIn, hourLabel, hourSpan, majorityZone, minuteIn, nextWindow, topHours, zoneName } from "@/lib/restockTimes";
 import { Stat, StatGrid } from "@/components/ui/Viz";
 import { RestockTimeline, type TimelineRow } from "./RestockTimeline";
 import { REPORT_MARK, ReportLegendItem, ReportsNote } from "@/components/restocks/ReportsNote";
@@ -173,7 +173,7 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
         )}
         {rep && <ReportsNote reports={rep} mark={patterned ? d.reportMarkBars : d.reportMarkDots} />}
       </section>
-      <RestockTimeline rows={rows} nowMin={nowMin} tz={tz} zone={zone} days={mine.days} hidden={ownLine.hidden} yours={yours} Yours={d.Yours(own.length)} mixed={Boolean(areaLine && areaLine.points.length)} {...(repLine?.points.length && rep ? { reported: { sources: rep.sources, models: rep.models, from: rep.from, to: rep.to } } : {})} />
+      <RestockTimeline rows={rows} nowMin={nowMin} clocks={Object.fromEntries([nowMin, ...rows.map((r) => r.min)].map((m) => [m, clockIn(pageLocale().lang, m)]))} tz={tz} zone={zone} days={mine.days} hidden={ownLine.hidden} yours={yours} Yours={d.Yours(own.length)} mixed={Boolean(areaLine && areaLine.points.length)} {...(repLine?.points.length && rep ? { reported: { sources: rep.sources, models: rep.models, from: rep.from, to: rep.to } } : {})} />
       <section className="pane p-5 sm:p-6" aria-labelledby="sellout-times">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <h2 id="sellout-times" className="text-xl font-semibold">{d.sellTitle}</h2>

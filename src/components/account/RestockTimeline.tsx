@@ -6,13 +6,14 @@
  * user's stores have had few restocks, times from the other stores in their zone are mixed in, hollow and
  * grey. Other trackers' reports at the user's stores (`reported`), when there are any, are rows of their own:
  * dashed rings, "Reported ·", never the "next" time. The minute ticks on the client in the stores' zone; the
- * first render uses the server's, so hydration matches.
+ * first render uses the server's minute and the server's clock strings (`clocks`): Safari's Intl writes some
+ * languages' times differently from Node's ("20:03" for "20 h 03"), which made React discard the page (#418).
  */
 import { useEffect, useState } from "react";
-import { clockLabel, gapLabel, minuteIn, placeNow } from "@/lib/restockTimes";
+import { clockIn, gapLabel, minuteIn, placeNow } from "@/lib/restockTimes";
 import { REPORT_MARK, ReportLegendItem, ReportsNote, type ReportMeta } from "@/components/restocks/ReportsNote";
 import { useLang, useT } from "@/components/i18n/LangProvider";
-import { clock, fill, plural, secs } from "@/lib/i18n/format";
+import { fill, plural, secs } from "@/lib/i18n/format";
 import type { Lang } from "@/lib/i18n/locales";
 
 /** `reported`: a time other trackers published restocks at (restock_reports), not one of ours. */
@@ -21,12 +22,8 @@ export interface TimelineRow { min: number; drops: number; mine: boolean; where:
  * `zone`: "Eastern" in English, the full zone name in another language (the dictionary's templates say which).
  * `Yours`: `yours` at the start of a line ("Your 2 stores"); English derives it.
  */
-interface Props { rows: TimelineRow[]; nowMin: number; tz: string; zone: string; days: number; hidden: number; yours: string; Yours?: string; mixed: boolean; reported?: ReportMeta }
+interface Props { rows: TimelineRow[]; nowMin: number; tz: string; zone: string; days: number; hidden: number; yours: string; Yours?: string; mixed: boolean; reported?: ReportMeta; /** Minute of the day → its clock string, as the server wrote it (every row and `nowMin`). */ clocks?: Record<number, string> }
 
-/** 565 → "9:25 AM" (English) / "9:25" in the reader's language. */
-function clockOf(lang: Lang, min: number): string {
-  return lang === "en" ? clockLabel(min) : clock(lang, new Date(Date.UTC(2000, 0, 1, Math.floor(min / 60) % 24, min % 60)), "UTC");
-}
 /** 125 → "2 h 5 min" (English) / "2 Std. 5 Min.". */
 function gapOf(lang: Lang, min: number): string {
   return lang === "en" ? gapLabel(min) : secs(lang, min * 60);
@@ -39,10 +36,10 @@ const gapPx = (min: number) => Math.round(Math.min(40, 4 + min * 0.1));
 const COLS = "grid-cols-[4.5rem_1.25rem_minmax(0,1fr)_auto] gap-x-2.5";
 const RAIL_X = "start-[5.75rem]";
 
-export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Yours = yours.replace(/^your/, "Your"), mixed, reported }: Props) {
+export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Yours = yours.replace(/^your/, "Your"), mixed, reported, clocks }: Props) {
   const d = useT().account.timeline;
   const lang = useLang();
-  const hm = (min: number) => clockOf(lang, min);
+  const hm = (min: number) => clocks?.[min] ?? clockIn(lang, min);
   const [now, setNow] = useState(nowMin);
   useEffect(() => {
     const tick = () => setNow(minuteIn(tz));

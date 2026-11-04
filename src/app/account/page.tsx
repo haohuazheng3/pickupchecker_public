@@ -19,6 +19,7 @@ import { LanguageSection } from "@/components/account/LanguageSection";
 import { AlertEditor } from "@/components/alerts/AlertEditor";
 import { Section } from "@/components/alerts/Section";
 import { PlanPanel } from "@/components/alerts/PlanPanel";
+import { HydrationProbe } from "@/components/account/HydrationProbe";
 import { buildPhoneCatalog, pickerStoresFor } from "@/components/alerts/catalog";
 import type { CountryCode } from "@/lib/apple/countries";
 import { pageLocale, requestLocale, setPageLocale, t } from "@/lib/i18n/server";
@@ -62,7 +63,8 @@ export default async function Account() {
   for (const s of chosen) counts.set(s.country, (counts.get(s.country) ?? 0) + 1);
   const home = [...counts.entries()].sort((a, b) => b[1] - a[1] || (a[0] === "us" ? -1 : b[0] === "us" ? 1 : 0))[0]?.[0] ?? "us";
   return (
-    <div className="mx-auto max-w-5xl space-y-4 px-4 pt-8">
+    <div id="account-root" className="mx-auto max-w-5xl space-y-4 px-4 pt-8">
+      <HydrationProbe />
       <Identify userRef={u.id} email={u.email} />
       <RefreshOnAlertsChange />
       <div className="flex flex-wrap items-end justify-between gap-4 pb-2">
