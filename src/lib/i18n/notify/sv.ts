@@ -5,7 +5,7 @@
 import type { NotifyText } from "./en";
 
 export const notifySv: NotifyText = {
-  pushTitle: (cfg: string) => `I lager: ${cfg}`,
+  pushTitle: (cfg: string) => cfg,
   pushBody: (where: string, quote: string | null) => `${where}${quote ? ` – ${quote}` : ""}. Tryck för att reservera på apple.com.`,
   testTitle: "Notiser från PickupChecker är på",
   testBody: (time: string, device: string) => `Test skickat ${time} till din ${device}. Notiser om påfyllningar kommer på samma sätt, inom några sekunder.`,

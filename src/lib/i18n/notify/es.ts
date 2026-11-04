@@ -5,7 +5,7 @@
 import type { NotifyText } from "./en";
 
 export const notifyEs: NotifyText = {
-  pushTitle: (cfg: string) => `Disponible: ${cfg}`,
+  pushTitle: (cfg: string) => cfg,
   pushBody: (where: string, quote: string | null) => `${where}${quote ? ` — ${quote}` : ""}. Toca para reservarlo en apple.com.`,
   testTitle: "Las notificaciones de PickupChecker están activadas",
   testBody: (time: string, device: string) => `Prueba enviada a las ${time} a tu ${device}. Las alertas de reposición llegan igual, en segundos.`,

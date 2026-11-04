@@ -53,7 +53,7 @@ export const account: CDict["account"] = {
     turnOff: "Disattiva",
     setupGuide: "Guida alla configurazione",
     miniSteps: ["Tocca Condividi in Safari", "Aggiungi alla schermata Home", "Aprila e consenti le notifiche"],
-    preview: { title: "Disponibile: iPhone Duo 256GB Nero", body: "Apple Via del Corso · Roma — Disponibile oggi. Tocca per prenotarlo su apple.com." },
+    preview: { title: "iPhone Duo 256GB Nero", body: "Apple Via del Corso · Roma — Disponibile oggi. Tocca per prenotarlo su apple.com." },
     test: {
       gone: "Il servizio push dice che l'iscrizione di questo dispositivo non esiste più. Disattiva e riattiva le notifiche su quel dispositivo.",
       none: "Nessun dispositivo ha ricevuto la prova{error}. Disattiva e riattiva le notifiche.",

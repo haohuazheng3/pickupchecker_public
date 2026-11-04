@@ -53,7 +53,7 @@ export const account: CDict["account"] = {
     turnOff: "關閉",
     setupGuide: "設定教學",
     miniSteps: ["在 Safari 按「分享」", "加至主畫面", "打開它，允許通知"],
-    preview: { title: "有貨：iPhone Duo 256GB 夜空色", body: "Apple Canton Road（廣東道）· 香港尖沙咀——今天可提供。按此在 apple.com 預訂。" },
+    preview: { title: "iPhone Duo 256GB 夜空色", body: "Apple Canton Road（廣東道）· 香港尖沙咀——今天可提供。按此在 apple.com 預訂。" },
     test: {
       gone: "推送服務表示這部裝置的訂閱已失效。請在該裝置上關閉再重新開啟通知。",
       none: "沒有裝置收到測試{error}。請關閉再重新開啟通知。",

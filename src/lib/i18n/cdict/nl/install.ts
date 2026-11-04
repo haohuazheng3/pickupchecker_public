@@ -79,6 +79,6 @@ export const install: CDict["install"] = {
     androidAlert: { title: "Toestaan dat PickupChecker je meldingen stuurt?", dontAllow: "Niet toestaan", allow: "Toestaan" },
     desktopAlert: { wantsTo: "pickupchecker.com wil", show: "Meldingen weergeven", block: "Blokkeren", allow: "Toestaan" },
     desktopInstall: { callout: "Installeren", title: "PickupChecker installeren", text: "Opent in een eigen venster", cancel: "Annuleren", install: "Installeren" },
-    lockScreen: { date: "donderdag 29 oktober", now: "nu", title: "Op voorraad: iPhone 18 Pro 256GB Zwart", body: "Apple Amsterdam · Amsterdam — Vandaag beschikbaar. Tik om te reserveren op apple.com." },
+    lockScreen: { date: "donderdag 29 oktober", now: "nu", title: "iPhone 18 Pro 256GB Zwart", body: "Apple Amsterdam · Amsterdam — Vandaag beschikbaar. Tik om te reserveren op apple.com." },
   },
 };

@@ -5,7 +5,7 @@
 import type { NotifyText } from "./en";
 
 export const notifyJa: NotifyText = {
-  pushTitle: (cfg: string) => `在庫あり：${cfg}`,
+  pushTitle: (cfg: string) => cfg,
   pushBody: (where: string, quote: string | null) => `${where}${quote ? `：${quote}` : ""}。タップしてapple.comで受け取りを予約。`,
   testTitle: "PickupCheckerの通知がオンになりました",
   testBody: (time: string, device: string) => `${time}に${device}へテストを送信しました。入荷通知も同じように、数秒で届きます。`,

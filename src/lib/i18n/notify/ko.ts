@@ -2,7 +2,7 @@
 import type { NotifyText } from "./en";
 
 export const notifyKo: NotifyText = {
-  pushTitle: (cfg: string) => `재고 있음: ${cfg}`,
+  pushTitle: (cfg: string) => cfg,
   pushBody: (where: string, quote: string | null) => `${where}${quote ? ` — ${quote}` : ""}. 탭해서 apple.com에서 예약하세요.`,
   testTitle: "PickupChecker 알림이 켜졌어요",
   testBody: (time: string, device: string) => `${device}에 보낸 테스트예요(${time}). 재입고 알림도 이렇게 몇 초 안에 와요.`,

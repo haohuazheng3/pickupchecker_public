@@ -76,6 +76,6 @@ export const install: CDict["install"] = {
     androidAlert: { title: "PickupChecker에서 알림을 보내도록 허용하시겠습니까?", dontAllow: "허용 안함", allow: "허용" },
     desktopAlert: { wantsTo: "pickupchecker.com에서 다음 권한을 요청합니다.", show: "알림 표시", block: "차단", allow: "허용" },
     desktopInstall: { callout: "설치", title: "PickupChecker 앱 설치", text: "별도 창에서 열려요", cancel: "취소", install: "설치" },
-    lockScreen: { date: "10월 29일 목요일", now: "지금", title: "재고 있음: iPhone 18 Pro 256GB 블랙", body: "Apple 가로수길 · 서울 — 오늘 픽업 가능. 탭해서 apple.com에서 예약하세요." },
+    lockScreen: { date: "10월 29일 목요일", now: "지금", title: "iPhone 18 Pro 256GB 블랙", body: "Apple 가로수길 · 서울 — 오늘 픽업 가능. 탭해서 apple.com에서 예약하세요." },
   },
 };

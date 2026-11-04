@@ -48,7 +48,7 @@ describe("push payload", () => {
     const p = restockPayload([{ item, store, quote: "Available Today" }], "w1", new Date("2026-10-29T12:00:00Z"));
     expect(p.v).toBe(1);
     expect(p.kind).toBe("restock");
-    expect(p.title).toBe(`In stock: ${item.model} ${item.storage} ${item.color}`);
+    expect(p.title).toBe(`${item.model} ${item.storage} ${item.color}`);
     expect(p.body).toContain(`Apple ${store.name}`);
     expect(p.body).toContain("Available Today");
     expect(p.url).toMatch(/^\/stores\/[a-z-]+\/[a-z0-9-]+\/[a-z0-9-]+\?from=push$/); // /stores/{state}/{city}/{store}

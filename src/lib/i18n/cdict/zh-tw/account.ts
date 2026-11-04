@@ -56,7 +56,7 @@ export const account: CDict["account"] = {
     turnOff: "關閉",
     setupGuide: "設定教學",
     miniSteps: ["在 Safari 點「分享」", "選「加入主畫面」", "打開它，允許通知"],
-    preview: { title: "有現貨：iPhone Duo 256GB 夜空色", body: "Apple 信義 A13 · 台北 — 今天可取貨。點一下前往 apple.com 預訂。" },
+    preview: { title: "iPhone Duo 256GB 夜空色", body: "Apple 信義 A13 · 台北 — 今天可取貨。點一下前往 apple.com 預訂。" },
     test: {
       gone: "推播服務表示這台裝置的訂閱已失效。請在那台裝置上關閉通知再重新開啟。",
       none: "沒有任何裝置收到測試{error}。請關閉通知再重新開啟。",

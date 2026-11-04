@@ -8,7 +8,7 @@ import type { NotifyText } from "./en";
 const w = (s: string) => `${/^[A-Za-z0-9]/.test(s) ? " " : ""}${s}${/[A-Za-z0-9]$/.test(s) ? " " : ""}`;
 
 export const notifyZhTW: NotifyText = {
-  pushTitle: (cfg: string) => `有現貨：${cfg}`,
+  pushTitle: (cfg: string) => cfg,
   pushBody: (where: string, quote: string | null) => `${where}${quote ? ` — ${quote}` : ""}。點一下前往 apple.com 預訂。`,
   testTitle: "PickupChecker 通知已開啟",
   testBody: (time: string, device: string) => `測試已於 ${time} 送到你的${w(device).trimEnd()}。補貨通知也會這樣送達，只要幾秒。`,

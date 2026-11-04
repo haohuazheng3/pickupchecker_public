@@ -15,7 +15,7 @@ function typo<T>(d: T): T {
 }
 
 const raw: NotifyText = {
-  pushTitle: (cfg) => `En stock : ${cfg}`,
+  pushTitle: (cfg) => cfg,
   pushBody: (where, quote) => `${where}${quote ? ` — ${quote}` : ""}. Touchez pour réserver sur apple.com.`,
   testTitle: "Les notifications PickupChecker sont activées",
   testBody: (time, device) => `Test envoyé à ${time} sur votre ${device}. Les alertes de retour en stock arrivent de la même façon, en quelques secondes.`,

@@ -3,8 +3,8 @@
  * imports: the poller sends these too. Every language mirrors this shape in notify/<lang>.ts.
  */
 export const notifyEn = {
-  /** Push title: "In stock: iPhone Duo 256GB Night Sky" (`cfg` = model, storage and colour as the reader writes them). */
-  pushTitle: (cfg: string) => `In stock: ${cfg}`,
+  /** Push title: "iPhone Duo 256GB Night Sky" alone (`cfg` = model, storage and colour as the reader writes them): a prefix pushed the colour past the one-line banner. */
+  pushTitle: (cfg: string) => cfg,
   /** Push body: `where` = "Apple SoHo · New York, NY"; `quote` = Apple's own pickup wording, when it is in the reader's language. */
   pushBody: (where: string, quote: string | null) => `${where}${quote ? ` — ${quote}` : ""}. Tap to reserve on apple.com.`,
   testTitle: "PickupChecker notifications are on",

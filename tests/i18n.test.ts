@@ -131,7 +131,7 @@ describe("notifications keep English as it was and follow the person's language"
     expect(alertSubject([{ item, store, quote: null }])).toBe("In stock: iPhone Duo 256GB Night Sky at Apple Ginza");
     expect(alertText([{ item, store, quote: null }], "https://x/account")).toContain("Good news — available for in-store pickup right now:");
     const p = restockPayload({ item, store, quote: "本日" }, "w1");
-    expect(p.title).toBe("In stock: iPhone Duo 256GB Night Sky");
+    expect(p.title).toBe("iPhone Duo 256GB Night Sky");
     expect(p.body).not.toContain("本日"); // English readers never get a Japanese quote
     expect(p.url).toBe("/jp/stores/tokyo/tokyo/ginza?from=push");
   });

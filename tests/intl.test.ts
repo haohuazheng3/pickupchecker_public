@@ -287,7 +287,7 @@ describe("alerts for a store outside the US", () => {
   const item = PART_INDEX.get("MK2E4QN/A")!;
   it("push: the store's place line, its country's apple.com, and the store's own page (the UK has pages)", () => {
     const p = restockPayload([{ item, store, quote: "Heute" }], "w1", new Date("2026-11-02T12:00:00Z"));
-    expect(p.title).toBe("In stock: iPhone Duo 256GB Night Sky");
+    expect(p.title).toBe("iPhone Duo 256GB Night Sky");
     expect(p.body).toBe("Apple Regent Street · London, UK. Tap to reserve on apple.com.");
     // Every country has its page tree (COUNTRIES_WITH_PAGES): the alert opens the store's page under /uk.
     expect(COUNTRIES_WITH_PAGES.has("uk")).toBe(true);

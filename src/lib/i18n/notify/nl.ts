@@ -5,7 +5,7 @@
 import type { NotifyText } from "./en";
 
 export const notifyNl: NotifyText = {
-  pushTitle: (cfg: string) => `Op voorraad: ${cfg}`,
+  pushTitle: (cfg: string) => cfg,
   pushBody: (where: string, quote: string | null) => `${where}${quote ? ` — ${quote}` : ""}. Tik om te reserveren op apple.com.`,
   testTitle: "Meldingen van PickupChecker staan aan",
   testBody: (time: string, device: string) => `Test verstuurd om ${time} naar je ${device}. Voorraadalerts komen op dezelfde manier binnen, binnen seconden.`,

@@ -79,6 +79,6 @@ export const install: CDict["install"] = {
     androidAlert: { title: "Autoriser PickupChecker à vous envoyer des notifications ?", dontAllow: "Ne pas autoriser", allow: "Autoriser" },
     desktopAlert: { wantsTo: "pickupchecker.com souhaite", show: "Afficher des notifications", block: "Bloquer", allow: "Autoriser" },
     desktopInstall: { callout: "Installer", title: "Installer PickupChecker ?", text: "S’ouvre dans sa propre fenêtre", cancel: "Annuler", install: "Installer" },
-    lockScreen: { date: "jeudi 29 octobre", now: "maintenant", title: "En stock : iPhone 18 Pro 256GB Noir", body: "Apple Champs-Élysées · Paris — Disponible aujourd’hui. Touchez pour réserver sur apple.com." },
+    lockScreen: { date: "jeudi 29 octobre", now: "maintenant", title: "iPhone 18 Pro 256GB Noir", body: "Apple Champs-Élysées · Paris — Disponible aujourd’hui. Touchez pour réserver sur apple.com." },
   },
 };

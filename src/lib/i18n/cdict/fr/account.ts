@@ -53,7 +53,7 @@ export const account: CDict["account"] = {
     turnOff: "Désactiver",
     setupGuide: "Guide d’installation",
     miniSteps: ["Touchez Partager dans Safari", "Sur l’écran d’accueil", "Ouvrez-la, autorisez les notifications"],
-    preview: { title: "En stock : iPhone Duo 256GB Noir", body: "Apple Champs-Élysées · Paris — Disponible aujourd’hui. Touchez pour réserver sur apple.com." },
+    preview: { title: "iPhone Duo 256GB Noir", body: "Apple Champs-Élysées · Paris — Disponible aujourd’hui. Touchez pour réserver sur apple.com." },
     test: {
       gone: "Le service de notifications indique que l’abonnement de cet appareil n’existe plus. Désactivez puis réactivez les notifications sur cet appareil.",
       none: "Aucun appareil n’a reçu le test{error}. Désactivez puis réactivez les notifications.",

@@ -13,7 +13,7 @@ const secs = (n: number) => ar(n, "ثانية", "ثانيتين", "ثوانٍ", 
 const alerts = (n: number) => ar(n, "تنبيه", "تنبيهان", "تنبيهات", "تنبيهًا");
 
 export const notifyAr: NotifyText = {
-  pushTitle: (cfg: string) => `متوفر: ${cfg}`,
+  pushTitle: (cfg: string) => cfg,
   pushBody: (where: string, quote: string | null) => `${where}${quote ? ` — ${quote}` : ""}. اضغط للحجز على apple.com.`,
   testTitle: "إشعارات PickupChecker مفعّلة",
   testBody: (time: string, device: string) => `أُرسل الاختبار ${time} إلى ${device}. تنبيهات التوفر تصلك بالطريقة نفسها، خلال ثوانٍ.`,

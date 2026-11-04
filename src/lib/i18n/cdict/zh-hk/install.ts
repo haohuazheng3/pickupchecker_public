@@ -79,6 +79,6 @@ export const install: CDict["install"] = {
     androidAlert: { title: "要允許 PickupChecker 傳送通知給你嗎？", dontAllow: "不允許", allow: "允許" },
     desktopAlert: { wantsTo: "pickupchecker.com 想", show: "顯示通知", block: "封鎖", allow: "允許" },
     desktopInstall: { callout: "安裝", title: "安裝 PickupChecker", text: "會在獨立視窗中開啟", cancel: "取消", install: "安裝" },
-    lockScreen: { date: "10月29日 星期四", now: "現在", title: "有貨：iPhone 18 Pro 256GB 黑色", body: "Apple Canton Road（廣東道）· 香港尖沙咀——今天可提供。按此在 apple.com 預訂。" },
+    lockScreen: { date: "10月29日 星期四", now: "現在", title: "iPhone 18 Pro 256GB 黑色", body: "Apple Canton Road（廣東道）· 香港尖沙咀——今天可提供。按此在 apple.com 預訂。" },
   },
 };

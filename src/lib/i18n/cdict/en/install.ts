@@ -83,6 +83,6 @@ export const install = {
     androidAlert: { title: "Allow PickupChecker to send you notifications?", dontAllow: "Don’t allow", allow: "Allow" },
     desktopAlert: { wantsTo: "pickupchecker.com wants to", show: "Show notifications", block: "Block", allow: "Allow" },
     desktopInstall: { callout: "Install", title: "Install PickupChecker", text: "Opens in its own window", cancel: "Cancel", install: "Install" },
-    lockScreen: { date: "Thursday, October 29", now: "now", title: "In stock: iPhone 18 Pro 256GB Black", body: "Apple Fifth Avenue · New York, NY — Available Today. Tap to reserve on apple.com." },
+    lockScreen: { date: "Thursday, October 29", now: "now", title: "iPhone 18 Pro 256GB Black", body: "Apple Fifth Avenue · New York, NY — Available Today. Tap to reserve on apple.com." },
   },
 };

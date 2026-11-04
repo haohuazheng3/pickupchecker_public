@@ -2,7 +2,7 @@
 import type { NotifyText } from "./en";
 
 export const notifyIt: NotifyText = {
-  pushTitle: (cfg: string) => `Disponibile: ${cfg}`,
+  pushTitle: (cfg: string) => cfg,
   pushBody: (where: string, quote: string | null) => `${where}${quote ? ` — ${quote}` : ""}. Tocca per prenotarlo su apple.com.`,
   testTitle: "Le notifiche di PickupChecker sono attive",
   testBody: (time: string, device: string) => `Prova inviata alle ${time} al tuo ${device}. Gli avvisi di rifornimento arrivano allo stesso modo, in pochi secondi.`,

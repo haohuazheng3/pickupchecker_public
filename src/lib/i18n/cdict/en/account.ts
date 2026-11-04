@@ -62,7 +62,7 @@ export const account = {
     /** iPhone in Safari: the three steps under the card (iOS's own words for Share / Add to Home Screen). */
     miniSteps: ["Tap Share in Safari", "Add to Home Screen", "Open it, allow notifications"],
     /** "Preview here": a sample banner drawn by this device. */
-    preview: { title: "In stock: iPhone Duo 256GB Black", body: "Apple Fifth Avenue · New York, NY — Available Today. Tap to reserve on apple.com." },
+    preview: { title: "iPhone Duo 256GB Black", body: "Apple Fifth Avenue · New York, NY — Available Today. Tap to reserve on apple.com." },
     /** "Send a test": what the server answered. {device} names come from the server. */
     test: {
       gone: "The push service says this device's subscription is gone. Turn notifications off and on again on that device.",

@@ -57,7 +57,7 @@ export const account: CDict["account"] = {
     turnOff: "Stäng av",
     setupGuide: "Installationsguide",
     miniSteps: ["Tryck på Dela i Safari", "Lägg till på hemskärmen", "Öppna den och tillåt notiser"],
-    preview: { title: "I lager: iPhone Duo 256GB natthimmel", body: "Apple Mall of Scandinavia · Solna – Tillgänglig idag. Tryck för att reservera på apple.com." },
+    preview: { title: "iPhone Duo 256GB natthimmel", body: "Apple Mall of Scandinavia · Solna – Tillgänglig idag. Tryck för att reservera på apple.com." },
     test: {
       gone: "Notistjänsten säger att den här enhetens prenumeration har försvunnit. Stäng av notiserna och slå på dem igen på den enheten.",
       none: "Ingen enhet fick testet{error}. Stäng av notiserna och slå på dem igen.",

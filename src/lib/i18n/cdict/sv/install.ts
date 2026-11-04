@@ -79,6 +79,6 @@ export const install: CDict["install"] = {
     androidAlert: { title: "Vill du tillåta att PickupChecker skickar aviseringar till dig?", dontAllow: "Tillåt inte", allow: "Tillåt" },
     desktopAlert: { wantsTo: "pickupchecker.com vill", show: "Visa aviseringar", block: "Blockera", allow: "Tillåt" },
     desktopInstall: { callout: "Installera", title: "Installera PickupChecker", text: "Öppnas i ett eget fönster", cancel: "Avbryt", install: "Installera" },
-    lockScreen: { date: "torsdag 29 oktober", now: "nu", title: "I lager: iPhone 18 Pro 256GB svart", body: "Apple Mall of Scandinavia · Solna – Tillgänglig idag. Tryck för att reservera på apple.com." },
+    lockScreen: { date: "torsdag 29 oktober", now: "nu", title: "iPhone 18 Pro 256GB svart", body: "Apple Mall of Scandinavia · Solna – Tillgänglig idag. Tryck för att reservera på apple.com." },
   },
 };

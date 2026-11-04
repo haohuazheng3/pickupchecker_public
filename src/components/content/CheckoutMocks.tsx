@@ -84,7 +84,7 @@ export function AlertBannerMock() {
         <AppIcon size={30} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2"><span className="text-[9px] font-semibold uppercase tracking-wide text-ink-2">PickupChecker</span><span className="text-[9px] text-ink-3">now</span></div>
-          <div className="text-[11px] font-semibold leading-snug text-ink">In stock: iPhone Duo 512GB Star White</div>
+          <div className="text-[11px] font-semibold leading-snug text-ink">iPhone Duo 512GB Star White</div>
           <div className="text-[10px] leading-snug text-ink-2">Apple Somerset · Troy, MI — Available Today.</div>
         </div>
       </div>
