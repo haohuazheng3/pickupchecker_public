@@ -177,7 +177,7 @@ async function watchWorker(now: Date): Promise<void> {
   if (bad && runs >= WORKER_RUNS && !st.mailed) {
     mailed = true; since = now.toISOString();
     await logOps("cron", "warn", `US worker down: ${v.summary}`, { host: v.host });
-    await notifyOwner(`[PickupChecker] US worker ${v.host ?? ""} is down`, `${v.summary}.\nUsers keep their checks: the primary polls the US (sweep and fast lane) again by itself, but on its shared CPU the fast lane is slower. Check the host (systemctl status pickupchecker-poller) and /admin.`).catch(() => undefined);
+    await notifyOwner(`[PickupChecker] US worker ${v.host ?? ""} is down`, `${v.summary}.\nThe primary polls the US (sweep and fast lane) again by itself, but since 2026-11-04 the US IPv6 range is on the worker, so until the primary has a range of its own it can only use the spare egress (host IPv4, then Vercel) and most US checks stop. Fix it fast: restart the worker (systemctl restart pickupchecker-poller on the worker), or move the /56 back to the primary (docs/architecture.md, "US worker host"). See /admin.`).catch(() => undefined);
   } else if (!bad && st.mailed) {
     mailed = false;
     await logOps("cron", "info", `US worker back: ${v.summary}`, { host: v.host });
