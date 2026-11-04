@@ -1,10 +1,16 @@
 /**
- * Two poller hosts (docs/architecture.md「热备主机」): the primary (database + US polling) and a standby in another
- * region (streaming replica + the other countries). Who does what is decided here, from the cluster record in
- * the database every query goes to (db/index.ts picks it):
- *  • cluster = { primary: <host>, epoch }. The host it names polls the US (anchor sweep + fast lane).
- *  • the other countries run on the standby; the primary runs them only while no other host reports doing so
- *    (alive:<host>, written every ALIVE_EVERY_MS), so they come back to it by themselves if the standby stops.
+ * Poller hosts (docs/architecture.md「热备主机」「美国专用轮询机」): the primary (database), a standby in another
+ * region (streaming replica + the other countries) and, optionally, a US worker (no database: the US anchor sweep
+ * and the US fast lane). Who does what is decided here, from the cluster record in the database every query goes
+ * to (db/index.ts picks it):
+ *  • cluster = { primary: <host>, epoch }. The host it names polls the US (anchor sweep + fast lane) — unless a
+ *    US worker reports in (alive:<host>, written every ALIVE_EVERY_MS): then the primary hands the US over and
+ *    takes it back by itself when the worker's record goes stale.
+ *  • the handover never has two hosts writing one store (Postgres deadlocked on exactly that, 2026-11-03): the
+ *    primary keeps reporting "us" until its last US round has finished (poller/main.ts), and the worker starts
+ *    only once no other host reports "us".
+ *  • the other countries run on the standby; the primary runs them only while no other host reports doing so,
+ *    so they come back to it by themselves if the standby stops.
  *  • nothing runs without a writable database (a replica-only view cannot ingest).
  *  • takeover: the standby promotes its replica when, for PROMOTE_AFTER checks in a row, it cannot reach the
  *    primary database AND the site (Vercel, a third vantage point) reports the same. Its own view alone never
@@ -15,7 +21,7 @@
 import { sql } from "drizzle-orm";
 import { db } from "../db";
 
-export type PollerRole = "primary" | "standby";
+export type PollerRole = "primary" | "standby" | "worker";
 export interface ClusterRecord { primary: string; epoch: number; fencedAt?: string }
 /** A standby's view of its replica: the WAL receiver's status ("streaming") and how far behind replay is. */
 export interface ReplicaInfo { status: string | null; lagSec: number | null }
@@ -45,12 +51,22 @@ export function duties(i: DutyInput): Duties {
   if (!i.writable) return { us: false, intl: false, fenced: false, why: "no writable database" };
   const owner = i.cluster?.primary ?? (i.role === "primary" ? i.me : null);
   if (i.role === "primary" && owner !== i.me) return { us: false, intl: false, fenced: true, why: `${owner} took over (epoch ${i.cluster?.epoch})` };
-  const us = owner === i.me;
-  if (!i.intlConfigured) return { us, intl: false, fenced: false, why: us ? "cluster primary" : "standby, no egress for other countries" };
-  const othersRunIntl = i.alive.some((a) => a.host !== i.me && a.duties.includes("intl") && i.now.getTime() - new Date(a.at).getTime() < ALIVE_FRESH_MS);
+  const fresh = (a: AliveRecord) => a.host !== i.me && i.now.getTime() - new Date(a.at).getTime() < ALIVE_FRESH_MS;
+  if (i.role === "worker") {
+    // The US worker waits until no other host reports "us": the primary stops on seeing it and says so only after
+    // its last US round has finished.
+    const othersRunUs = i.alive.some((a) => fresh(a) && a.duties.includes("us"));
+    return { us: !othersRunUs, intl: false, fenced: false, why: othersRunUs ? "US worker, waiting for the US to be handed over" : "US worker" };
+  }
+  const isPrimary = owner === i.me;
+  const worker = i.alive.find((a) => fresh(a) && a.role === "worker");
+  const us = isPrimary && !worker;
+  const usWhy = isPrimary ? (worker ? `cluster primary, US on ${worker.host}` : "cluster primary") : "standby";
+  if (!i.intlConfigured) return { us, intl: false, fenced: false, why: isPrimary ? usWhy : "standby, no egress for other countries" };
+  const othersRunIntl = i.alive.some((a) => fresh(a) && a.duties.includes("intl"));
   // The cluster primary hands the other countries to whoever else runs them; anyone else simply runs them.
-  const intl = us ? !othersRunIntl : true;
-  return { us, intl, fenced: false, why: us ? (intl ? "cluster primary, other countries too" : "cluster primary, other countries elsewhere") : "standby: other countries" };
+  const intl = isPrimary ? !othersRunIntl : true;
+  return { us, intl, fenced: false, why: isPrimary ? `${usWhy}, other countries ${intl ? "too" : "elsewhere"}` : "standby: other countries" };
 }
 
 export function dutyLabel(d: Duties): string {
@@ -89,6 +105,18 @@ export async function intlRunner(): Promise<{ host: string; at: string; intl: Re
   const rows = (await db().execute(sql`select value from poller_state where key like 'alive:%' and updated_at > now() - make_interval(secs => ${ALIVE_FRESH_MS / 1000}) and value->>'duties' like '%intl%' order by updated_at desc limit 1`)).rows as { value: AliveRecord & { intl?: Record<string, unknown> } }[];
   const v = rows[0]?.value;
   return v?.intl ? { host: v.host, at: v.at, intl: v.intl } : null;
+}
+
+/**
+ * Pure: how the US worker stands, for the watchdog. "none" without one in the window the caller read; "down" when its
+ * record went stale (the primary has taken the US back by itself, with the CPU the worker was there to relieve).
+ */
+export function workerVerdict(alive: AliveRecord[], now: Date): { state: "ok" | "down" | "none"; host: string | null; summary: string } {
+  const w = alive.filter((a) => a.role === "worker").sort((a, b) => b.at.localeCompare(a.at))[0];
+  if (!w) return { state: "none", host: null, summary: "no US worker" };
+  const age = now.getTime() - new Date(w.at).getTime();
+  if (age > STANDBY_STALE_MS) return { state: "down", host: w.host, summary: `${w.host} last reported ${Math.round(age / 1000)} s ago` };
+  return { state: "ok", host: w.host, summary: `${w.host} reports, duties ${w.duties}` };
 }
 
 /** A standby is unhealthy when its alive record is older than this, or its replica not streaming / this far behind. */

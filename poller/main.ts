@@ -24,17 +24,19 @@
  *    poll_log keeps only its failures (one sweeps row per round, mode "intl"); totals ride along with the
  *    heartbeat. Runs only in full mode (the spare egress is budgeted for the US).
  *  • heartbeat after every sweep (the Vercel watchdog alerts when it stops, or when the data goes stale)
- *  • two hosts (POLLER_ROLE primary | standby, stock/cluster.ts): every ALIVE_EVERY_MS each one decides its duties
- *    from the cluster record — the cluster primary polls the US, the standby the other countries (the primary
- *    takes them back when no one else reports doing them) — and writes alive:<host>. The standby promotes its
- *    database replica when the primary database is unreachable from it and from the site for a minute; an old
- *    primary that finds a newer epoch fences itself (docs/architecture.md「热备主机」)
+ *  • hosts (POLLER_ROLE primary | standby | worker, stock/cluster.ts): every ALIVE_EVERY_MS each one decides its
+ *    duties from the cluster record and the others' alive:<host> records — the cluster primary polls the US unless
+ *    a US worker reports in, the standby the other countries (the primary takes either back when no one else
+ *    reports doing it). The standby promotes its database replica when the primary database is unreachable from
+ *    it and from the site for a minute; an old primary that finds a newer epoch fences itself
+ *    (docs/architecture.md「热备主机」「美国专用轮询机」). A host reports "us" until its last US round has
+ *    finished, so a handover never has two processes writing one store.
  *  • a sweep stuck for STUCK_MS exits the process, and systemd starts a fresh one. A round of the other
  *    countries stuck for INTL_STUCK_MS only restarts their own loop (the US sweep never restarts for them).
  *
  *  Env: DATABASE_URL (the poller's own role, which has reserved connection slots: infra/linode/postgres.sh),
  *       DATABASE_URL_STANDBY (the other host's database: TLS from the primary, loopback on the standby),
- *       POLLER_ROLE (primary | standby),
+ *       POLLER_ROLE (primary | standby | worker: no database of its own, polls the US once handed over),
  *       RESEND_API_KEY, IPV6_PREFIX (e.g. 2600:3c0a:e000:1b::/56, or "auto" = read
  *       IPV6_PREFIX_FILE written by anyip.sh, else derive the /64 of the first global address), SITE_URL,
  *       POLLER_TOKEN (for the vercel egress fallback), CADENCE_SEC, CONCURRENCY, SWEEP_TIMEOUT_MS (6000),
@@ -73,7 +75,7 @@ const INTL_CADENCE_SEC = Number(process.env.INTL_CADENCE_SEC ?? 15);
 const INTL_CONCURRENCY = Number(process.env.INTL_CONCURRENCY ?? 12);
 const INTL_TIMEOUT_MS = Number(process.env.INTL_TIMEOUT_MS ?? 6000);
 const HOST = process.env.HOST_LABEL ?? os.hostname();
-const ROLE: PollerRole = process.env.POLLER_ROLE === "standby" ? "standby" : "primary";
+const ROLE: PollerRole = process.env.POLLER_ROLE === "standby" ? "standby" : process.env.POLLER_ROLE === "worker" ? "worker" : "primary";
 const PREFIX = resolvePrefix(process.env.IPV6_PREFIX ?? "");
 const SITE = process.env.SITE_URL ?? "https://pickupchecker.com";
 const POLLER_TOKEN = process.env.POLLER_TOKEN ?? "";
@@ -245,7 +247,8 @@ async function fastLoop(egress: Egress, active: () => boolean) {
         const mine = targetsForDuties(targets, duty);
         fastStats.stores = mine.size; fastStats.pairs = [...mine.values()].reduce((a, p) => a + p.length, 0);
         if (mine.size > 0) {
-          const r = await runFastRound({ egress, targets: mine, concurrency: FAST_CONCURRENCY, timeoutMs: FAST_TIMEOUT_MS });
+          usBusy.fast = duty.us; // set before the first await: the alive record must not drop "us" mid-round
+          const r = await runFastRound({ egress, targets: mine, concurrency: FAST_CONCURRENCY, timeoutMs: FAST_TIMEOUT_MS }).finally(() => { usBusy.fast = false; });
           fastStats.rounds++; fastStats.requests += r.requests; fastStats.failures += r.failures; fastStats.throttled += r.throttled; fastStats.timeouts += r.timeouts;
           fastStats.transitions += r.transitions; fastStats.confirmed += r.confirmed; fastStats.refuted += r.refuted;
           fastStats.lastAt = new Date().toISOString(); fastStats.lastDurationMs = r.durationMs;
@@ -385,6 +388,11 @@ async function intlLoop(egress: Egress, active: () => boolean, generation: numbe
 
 /** What this host polls now (stock/cluster.ts decides; nothing until the first check has run). */
 let duty: Duties = { us: false, intl: false, fenced: false, why: "starting" };
+/**
+ * A US round (the anchor sweep, a fast-lane round with US stores) still running after `duty.us` went false: the
+ * alive record keeps saying "us" until it has finished, and the US worker waits for that before it starts.
+ */
+const usBusy = { sweep: false, fast: false };
 
 async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return Promise.race([p, new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`no answer in ${ms} ms`)), ms))]);
@@ -413,7 +421,7 @@ async function takeOver(cluster: ClusterRecord | null, why: string) {
   await logOps("poller", "error", `${HOST} took over: its database is now the primary (epoch ${record.epoch})`, { host: HOST, why, from: record.from }).catch(() => undefined);
   await notifyOwner(
     `[PickupChecker] ${HOST} took over from ${record.from ?? "the primary"}`,
-    `The primary database was unreachable from ${HOST} and from the site for a minute (${why}).\n${HOST} promoted its replica (epoch ${record.epoch}) and now polls the US, the fast lane and the other countries, and sends the alerts. The site follows by itself.\n\nWhen the old primary is back it fences itself (no polling, never chosen by the site). Make it the new standby with infra/linode/standby.sh (docs/architecture.md, 热备主机).`,
+    `The primary database was unreachable from ${HOST} and from the site for a minute (${why}).\n${HOST} promoted its replica (epoch ${record.epoch}) and now polls the other countries and sends their alerts; the US (sweep and fast lane) stays with the US worker while it reports in, else ${HOST} polls it too. The site follows by itself.\n\nWhen the old primary is back it fences itself (no polling, never chosen by the site). Make it the new standby with infra/linode/standby.sh (docs/architecture.md, 热备主机).`,
   ).catch(() => undefined);
 }
 
@@ -432,8 +440,10 @@ async function clusterLoop(intlConfigured: boolean) {
     try {
       const st = await dbStatus();
       const writable = st ? st.writable : true;
-      const [cluster, alive] = await Promise.all([readCluster().catch(() => null), readAlive().catch(() => [])]);
-      duty = duties({ me: HOST, role: ROLE, cluster, alive, now: new Date(), intlConfigured, writable });
+      const [cluster, alive] = await Promise.all([readCluster().catch(() => null), readAlive().catch(() => null)]);
+      // Without the other hosts' records a decision could start a second writer of the US stores: keep the last one
+      // (a database that refuses writes means no duties either way). The standby's takeover check below still runs.
+      if (alive || !writable) duty = duties({ me: HOST, role: ROLE, cluster, alive: alive ?? [], now: new Date(), intlConfigured, writable });
       if (duty.fenced && cluster && !fenced) {
         fenced = true;
         await fence(cluster);
@@ -456,7 +466,7 @@ async function clusterLoop(intlConfigured: boolean) {
           if (step.promote) await takeOver(cluster, step.why);
         }
       }
-      const label = dutyLabel(duty);
+      const label = dutyLabel({ ...duty, us: duty.us || usBusy.sweep || usBusy.fast });
       if (label !== last) {
         console.log(`[cluster] ${HOST} (${ROLE}) duties: ${label} — ${duty.why}`);
         await logOps("poller", "info", `${HOST} duties: ${label} (${duty.why})`, { host: HOST, role: ROLE, epoch: cluster?.epoch ?? null }).catch(() => undefined);
@@ -543,11 +553,13 @@ async function main() {
   for (;;) {
     const t0 = Date.now();
     if (!duty.us) {
-      // Not the cluster primary (or no writable database): nothing to sweep, and idling is not being stuck.
+      // Not polling the US here (a standby, a primary that handed it to the US worker, no writable database):
+      // nothing to sweep, and idling is not being stuck.
       lastProgress = Date.now();
       await new Promise((r) => setTimeout(r, 2_000));
       continue;
     }
+    usBusy.sweep = true; // before the first await (see usBusy)
     try {
       const egress = mode === "full" && ipv6 ? ipv6 : spare;
       // Spare identities have a few requests per half hour: spend them on watched, stale pairs first.
@@ -593,6 +605,8 @@ async function main() {
       console.error("[poller] sweep failed:", e);
       await recordError("poller", `sweep failed: ${errorMessage(e)}`, { host: HOST }).catch(() => undefined);
       await logOps("poller", "error", `sweep failed: ${errorMessage(e)}`, { host: HOST }).catch(() => undefined);
+    } finally {
+      usBusy.sweep = false;
     }
     const elapsed = Date.now() - t0;
     const pause = mode === "full" ? Math.max(2_000, CADENCE_SEC * 1000 - elapsed + (consecutiveBad ? 40_000 : 0)) : Math.max(2_000, 40_000 - elapsed);

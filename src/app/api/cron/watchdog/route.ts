@@ -9,7 +9,7 @@ import { PARTIAL_SEC, freshness, intlVerdict, intlWatchStep, pollerVerdict, type
 import type { CountryCode } from "@/lib/apple/countries";
 import { CAPACITY_IDLE, CLEAR_RUNS, FAST_STORES_WARN, ROUND_WINDOW_MIN, capacityReasons, capacityStep, recentRounds, watchedLagP90, type CapacityState } from "@/lib/stock/capacity";
 import { SPEED } from "@/lib/plans";
-import { intlRunner, readAlive, standbyVerdict } from "@/lib/stock/cluster";
+import { intlRunner, readAlive, standbyVerdict, workerVerdict } from "@/lib/stock/cluster";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,6 +64,7 @@ export async function GET(req: Request) {
       await watchCapacity(hb.value, now).catch((e) => recordError("web", `watchdog (capacity) failed: ${errorMessage(e)}`));
     }
     await watchStandby(now).catch((e) => recordError("web", `watchdog (standby) failed: ${errorMessage(e)}`));
+    await watchWorker(now).catch((e) => recordError("web", `watchdog (US worker) failed: ${errorMessage(e)}`));
 
     if (v.state === "silent" || v.state === "blind") {
       const firstTime = !wd.down || wd.kind !== v.state;
@@ -158,6 +159,32 @@ async function watchStandby(now: Date): Promise<void> {
     since = null;
   }
   if (runs !== st.runs || mailed !== st.mailed) await writeState("watchdog:standby", { runs, mailed, since });
+}
+
+/**
+ * The US worker (state key "watchdog:worker"): its alive record stale for WORKER_RUNS runs in a row → one mail; one
+ * when it is back. Users keep their checks meanwhile (the primary takes the US back by itself), but on the shared
+ * CPU the fast lane slows down again.
+ */
+const WORKER_RUNS = 3;
+async function watchWorker(now: Date): Promise<void> {
+  const v = workerVerdict(await readAlive(24 * 60), now);
+  if (v.state === "none") return;
+  const st = (await readState<{ runs: number; mailed: boolean; since?: string | null }>("watchdog:worker"))?.value ?? { runs: 0, mailed: false };
+  const bad = v.state !== "ok";
+  const runs = bad ? st.runs + 1 : 0;
+  let mailed = st.mailed, since = st.since ?? null;
+  if (bad && runs >= WORKER_RUNS && !st.mailed) {
+    mailed = true; since = now.toISOString();
+    await logOps("cron", "warn", `US worker down: ${v.summary}`, { host: v.host });
+    await notifyOwner(`[PickupChecker] US worker ${v.host ?? ""} is down`, `${v.summary}.\nUsers keep their checks: the primary polls the US (sweep and fast lane) again by itself, but on its shared CPU the fast lane is slower. Check the host (systemctl status pickupchecker-poller) and /admin.`).catch(() => undefined);
+  } else if (!bad && st.mailed) {
+    mailed = false;
+    await logOps("cron", "info", `US worker back: ${v.summary}`, { host: v.host });
+    await notifyOwner(`[PickupChecker] US worker ${v.host ?? ""} is back`, `${v.summary} (it was out since ${st.since ?? "?"}).`).catch(() => undefined);
+    since = null;
+  }
+  if (runs !== st.runs || mailed !== st.mailed) await writeState("watchdog:worker", { runs, mailed, since });
 }
 
 /** Capacity early warning (state key "watchdog:capacity"; the rules are capacity.ts's). */

@@ -62,6 +62,39 @@ describe("duties — who polls what", () => {
   });
 });
 
+describe("duties — the US worker takes the US without two hosts ever writing one store", () => {
+  const primary = { me: "linode-1", role: "primary" as const, cluster: { primary: "linode-1", epoch: 1 }, now, intlConfigured: true, writable: true };
+  const standby = { host: "linode-2", role: "standby" as const, duties: "intl", at: ago(5) };
+  const worker = { host: "linode-3", role: "worker" as const, duties: "none", at: ago(5) };
+  const wk = { me: "linode-3", role: "worker" as const, cluster: { primary: "linode-1", epoch: 1 }, now, intlConfigured: false, writable: true };
+  it("the primary hands the US to a worker that reports in, and takes it back when the worker goes quiet", () => {
+    expect(dutyLabel(duties({ ...primary, alive: [standby, worker] }))).toBe("none");
+    expect(dutyLabel(duties({ ...primary, alive: [standby, { ...worker, at: ago(120) }] }))).toBe("us");
+    expect(dutyLabel(duties({ ...primary, alive: [{ ...worker, at: ago(120) }] }))).toBe("us+intl");
+  });
+  it("the worker waits while another host still reports the US, then starts", () => {
+    const p = { host: "linode-1", role: "primary" as const, duties: "us", at: ago(5) };
+    expect(duties({ ...wk, alive: [p, standby] })).toMatchObject({ us: false, intl: false });
+    expect(duties({ ...wk, alive: [{ ...p, duties: "none" }, standby] })).toMatchObject({ us: true, intl: false });
+    // A primary that died mid-round: its stale record no longer holds the worker back.
+    expect(duties({ ...wk, alive: [{ ...p, at: ago(120) }] })).toMatchObject({ us: true });
+  });
+  it("a promoted standby hands the US to the worker too, and the worker keeps it", () => {
+    const promoted = { ...primary, me: "linode-2", role: "standby" as const, cluster: { primary: "linode-2", epoch: 2 } };
+    expect(dutyLabel(duties({ ...promoted, alive: [worker] }))).toBe("intl");
+    expect(duties({ ...wk, cluster: { primary: "linode-2", epoch: 2 }, alive: [{ host: "linode-2", role: "standby" as const, duties: "intl", at: ago(5) }] })).toMatchObject({ us: true });
+  });
+  it("the worker never polls without a writable database", () => {
+    expect(dutyLabel(duties({ ...wk, alive: [], writable: false }))).toBe("none");
+  });
+  it("workerVerdict: ok while it reports, down when stale, none without one", async () => {
+    const { workerVerdict } = await import("@/lib/stock/cluster");
+    expect(workerVerdict([standby, worker], now).state).toBe("ok");
+    expect(workerVerdict([{ ...worker, at: ago(90) }], now).state).toBe("down");
+    expect(workerVerdict([standby], now).state).toBe("none");
+  });
+});
+
 describe("promoteStep — a takeover needs a minute of agreement from two vantage points", () => {
   it("promotes after PROMOTE_AFTER checks the primary is unreachable from here and from the site", () => {
     let st = { misses: 0 };

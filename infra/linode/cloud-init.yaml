@@ -169,13 +169,16 @@ write_files:
       }
       HOST=$(sed -n 's/^HOST_LABEL=//p' /opt/pickupchecker/poller.env | head -1)
       # Healthy = this host finished two rounds of its duty (a full US sweep covering ≥ 250 stores, or an
-      # other-country round covering ≥ 150), or it reported itself alive with no duty at all (a standby).
-      # The local database answers either way (a standby's replica carries the primary's rows within a second).
+      # other-country round covering ≥ 150), or it reported itself alive with no duty at all (a standby, or a
+      # primary whose US runs on the worker).
+      # Counted through the poller's own database connection (scripts/poller-gate.ts), so a host without a database
+      # of its own (the US worker) is gated the same way.
       healthy() {
         local since=$(date +%s) n
         while [ $(( $(date +%s) - since )) -lt "$GATE_SEC" ]; do
           sleep 10
-          n=$(sudo -u postgres psql -d pickupchecker -qXtAc "select (select count(*) from sweeps where host = '$HOST' and started_at > to_timestamp($since) and finished_at is not null and ((mode = 'full' and stores_covered >= 250) or (mode = 'intl' and stores_covered >= 150))) + (select count(*) * 2 from poller_state where key = 'alive:$HOST' and updated_at > to_timestamp($since) and value->>'duties' = 'none')" 2>/dev/null || echo 0)
+          n=$(systemd-run --quiet --wait --pipe --collect -p User=poller -p EnvironmentFile=/opt/pickupchecker/poller.env -p WorkingDirectory="$APP" \
+                /usr/local/bin/node --import tsx scripts/poller-gate.ts "$HOST" "$since" 2>/dev/null || echo 0)
           [ "${n:-0}" -ge 2 ] && return 0
         done
         return 1
