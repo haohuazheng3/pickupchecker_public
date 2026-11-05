@@ -341,7 +341,7 @@ export const views = {
     h1: (x: RestockTimesView) => x.t.unknown
       ? `When does Apple restock the iPhone Duo ${x.c.inName}?`
       : x.t.n > 0
-        ? `Is Apple still restocking the iPhone Duo ${x.c.inName}? Yes — here is when, hour by hour`
+        ? `When does Apple restock the iPhone Duo ${x.c.inName}? ${x.pattern ? `Mostly ${rangeLabel(x.w.from, x.w.to)}, store local time` : "Hour by hour, from our own checks"}`
         : `Is Apple restocking the iPhone Duo ${x.c.inName}? Not yet, by our checks — here is what we watch`,
     /** The answer paragraph under the H1. */
     intro: (x: RestockTimesView) => {
@@ -349,10 +349,14 @@ export const views = {
       const where = x.c.inName;
       return t.unknown ? (
         <>Our restock log could not be read just now; the stores {where} are still being checked every {SPEED.checkSec} seconds, and this page returns with its numbers on the next load.</>
+      ) : t.n > 0 && pattern ? (
+        // The sentence an answer engine lifts whole: share, sample size, since-date, window, local time (docs/research.md §8).
+        <>
+          <b className="text-ink">{rtPct(w.share)} of the {rtN(t.n)} iPhone Duo restocks</b> PickupChecker confirmed at {one ? "the Apple Store" : "Apple Stores"} {where} since {longDate(t.since)} landed <b className="text-ink">between {rangeLabel(w.from, w.to)}</b> in the store&apos;s local time{x.sell ? <>, and a typical one sold out in about {Math.round(x.sell.medianSec / 5) * 5} seconds</> : null}. <b className="text-ink">Yes, Apple is still restocking it</b>{tracked > 1 ? <>: on {t.days} of the {tracked} days so far</> : <> (one day of tracking so far)</>}.
+        </>
       ) : t.n > 0 ? (
         <>
-          <b className="text-ink">Yes.</b> {one ? "The Apple Store" : "Apple Stores"} {where} {one ? "has" : "have"} restocked the iPhone Duo <b className="text-ink">{rtN(t.n)} times since {longDate(t.since)}</b>{tracked > 1 ? <>, on {t.days} of the {tracked} days</> : <> (one day of tracking so far)</>}
-          {pattern && <>, <b className="text-ink">{rtPct(w.share)} of them between {rangeLabel(w.from, w.to)}</b> in the store&apos;s local time</>}.
+          <b className="text-ink">Yes.</b> {one ? "The Apple Store" : "Apple Stores"} {where} {one ? "has" : "have"} restocked the iPhone Duo <b className="text-ink">{rtN(t.n)} times since {longDate(t.since)}</b>{tracked > 1 ? <>, on {t.days} of the {tracked} days</> : <> (one day of tracking so far)</>}; a usual hour is stated from {PATTERN_MIN} restocks over {PATTERN_MIN_DAYS} different days.
         </>
       ) : (
         <>

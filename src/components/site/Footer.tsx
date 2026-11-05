@@ -71,6 +71,9 @@ export function Footer({ loc }: { loc: Locale }) {
             <li><Link href="/how-to-grab-an-iphone-duo-restock" className="hover:text-ink">Grab a restock in 20 seconds</Link></li>
             <li><Link href="/which-iphone-duo-restocks-most" className="hover:text-ink">Which configuration restocks most?</Link></li>
             <li><Link href="/apple-store-pickup-availability-explained" className="hover:text-ink">What “unavailable for pickup” means</Link></li>
+            <li><Link href="/iphone-duo-back-in-stock" className="hover:text-ink">Is it back in stock right now?</Link></li>
+            <li><Link href="/iphone-duo-stock-checker" className="hover:text-ink">iPhone Duo stock checker</Link></li>
+            <li><Link href="/where-to-buy-iphone-duo" className="hover:text-ink">Where to buy one today</Link></li>
           </ul>
         </div>
         <div className="hairline mt-6 pt-5 text-sm">

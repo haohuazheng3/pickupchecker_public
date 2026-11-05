@@ -109,7 +109,7 @@ export default async function DuoStockAlerts() {
   ];
 
   const faq: Faq[] = [
-    { q: "Do alerts work on iPhone without an app from the App Store?", a: `Yes: add PickupChecker to your Home Screen from Safari and allow notifications once, a web app with web push that Apple supports for Home Screen web apps ([Apple Developer](${WEB_PUSH}); [install guide](/install)). Without a device set up, alerts arrive by email from alerts@pickupchecker.com.` },
+    { q: "Do alerts work on iPhone without an app from the App Store?", a: `Yes: add PickupChecker to your Home Screen from Safari and allow notifications once, a web app with web push that Apple supports for Home Screen web apps ([Apple Developer](${WEB_PUSH}); [install guide](/install)). Alerts are notifications only: without a device set up, nothing is sent, so the Home Screen app is the first step.` },
     { q: "How many alerts do I need?", a: `Usually ${PLANS.plus.limit} or fewer: one configuration at the stores you can reach, two acceptable colors being two alerts per store. ${PLANS.plus.name} covers ${PLANS.plus.limit}, ${PLANS.pro.name} ${PLANS.pro.limit}, ${PLANS.max.name} ${PLANS.max.limit} ([pricing](/pricing)).` },
     { q: "Can PickupChecker reserve the phone for me?", a: "No: it tells you within seconds that a store lists your configuration, and you reserve on apple.com with in-store pickup, where Apple holds it for you. PickupChecker is independent and not affiliated with Apple; it reads the same pickup availability anyone can see on apple.com, just far more often." },
     { q: `Why every ${SPEED.fastSec} seconds and not every second?`, a: `Because apple.com answers a limited number of requests from one address, and every restock must be confirmed by a second answer about a second later, which asking every second would not shorten and would risk getting no answers at all. At ${SPEED.fastSec} seconds the longest wait between a restock and our first look is ${SPEED.fastSec} seconds${ds ? `, against a median listing of ${ds.medianSec}` : ""}.` },
@@ -209,7 +209,7 @@ export default async function DuoStockAlerts() {
               <StepStrip className="lg:grid-cols-2!" steps={[
                 { title: "Check", hint: <>your stores asked for your exact configuration every {SPEED.fastSec} seconds; every other US Apple Store every {SPEED.checkSec}</> },
                 { title: "Confirm", hint: "the first \"available\" is asked again about a second later; a restock counts only when both agree" },
-                { title: "Push", hint: <Inline text={`about ${SPEED.alertSec} seconds after confirmation, to the PickupChecker app on your Home Screen ([install](/install)), naming store and configuration; no device → an email from alerts@pickupchecker.com`} facts={facts} /> },
+                { title: "Push", hint: <Inline text={`about ${SPEED.alertSec} seconds after confirmation, to the PickupChecker app on your Home Screen ([install](/install)), naming store and configuration; notifications only, so set the device up first`} facts={facts} /> },
                 { title: "Once", hint: "one push per restock: nothing while it stays listed, nothing for sell-outs or a store's first sighting" },
               ]} />
               <BlockView b={alertTable} facts={facts} />

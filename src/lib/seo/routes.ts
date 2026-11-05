@@ -14,6 +14,8 @@ export const TOP_LEVEL: ReadonlySet<string> = new Set([
   "about", "account", "admin", "api", "checkout", "contact", "how-it-works", "install", "map", "pricing", "privacy", "refunds", "restocks", "stock", "stores", "terms",
   // The iPhone Duo question pages (seo.md §13): one answer page per question people put to search and answer engines.
   "iphone-duo-restock-times", "iphone-duo-sell-out-times", "iphone-duo-stock-alerts", "iphone-duo-near-me", "how-to-get-an-iphone-duo", "which-iphone-duo-restocks-most", "apple-store-pickup-availability-explained", "how-to-grab-an-iphone-duo-restock",
+  // The phrasing pages (docs/research.md §8.3 C): the words people type when they do not know a tracker exists.
+  "iphone-duo-back-in-stock", "iphone-duo-stock-checker", "where-to-buy-iphone-duo",
   "blog", "opengraph-image", "_not-found", "icons", "img", "vendor", "zip",
 ]);
 
@@ -78,6 +80,25 @@ export function publicRouteCheck(pathname: string, search = ""): { notFound: tru
       return to ? { redirect: to + search } : { notFound: true };
     }
     if (parts.length === 4) return k.stores.has(parts.slice(1).join("/")) ? null : { notFound: true };
+    return { notFound: true };
+  }
+  // /iphone-duo-restock-times/{state}[/{city}]: the same one-page-per-place rules as /stores (a one-store place is
+  // its store's page, a one-city state its city's restock-times page), decided here so a wrong slug is a real 404.
+  if (parts[0] === "iphone-duo-restock-times" && parts.length > 1) {
+    const k = knownPaths();
+    if (parts.length === 2) {
+      if (k.states.has(parts[1])) return null;
+      const only = k.oneStoreStates.get(parts[1]);
+      if (!only) return { notFound: true };
+      const cityPage = only.match(/^\/stores\/([^/]+)\/([^/]+)$/);
+      return { redirect: (cityPage ? `/iphone-duo-restock-times/${cityPage[1]}/${cityPage[2]}` : only) + search };
+    }
+    if (parts.length === 3) {
+      const key = `${parts[1]}/${parts[2]}`;
+      if (k.cities.has(key)) return null;
+      const only = k.oneStoreCities.get(key);
+      return only ? { redirect: only + search } : { notFound: true };
+    }
     return { notFound: true };
   }
   if (parts[0] === "stock" && parts.length > 1) {

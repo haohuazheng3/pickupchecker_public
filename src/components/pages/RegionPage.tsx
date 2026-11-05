@@ -27,6 +27,7 @@ import { StoreBlock } from "@/components/stores/StoreBlock";
 import { NearbyStores } from "@/components/stores/NearbyStores";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
+import { restockTimesPath } from "@/lib/content/restockTimes";
 import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { sellouts } from "@/lib/stock/sellouts";
 import { DailyBars } from "@/components/restocks/DailyBars";
@@ -185,6 +186,7 @@ export async function RegionPage({ country: c, params: p }: { country: Country; 
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">{G.whenRestock(name)}</h2>
           <div className="mt-3"><RestockClock stats={d.stats} label={G.inPlace(name)} reports={d.reports} /></div>
+          {us && <p className="mt-3 text-sm"><Link href={restockTimesPath(s.name)} className="font-medium text-ink underline-offset-2 hover:underline">When does the iPhone Duo restock in {s.name}? Hour by hour, every store →</Link></p>}
         </section>
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">{G.howFast(name)}</h2>

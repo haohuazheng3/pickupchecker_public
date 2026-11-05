@@ -29,8 +29,12 @@ import { pageLocale, t as dictT } from "@/lib/i18n/server";
 import { colorLabel, configLabel, countryLabel, regionLabel } from "@/lib/i18n/places";
 import type { RestockTimesView } from "@/lib/i18n/dict/en/views";
 import { hreflangFor } from "./shared";
+import { restockPlaces } from "./PlaceRestockTimesPage";
+import { CHECK_NOTE } from "@/lib/plans";
 
 const SITE = "https://pickupchecker.com";
+/** "Nov 5, 2026, 10:12 AM EST": the visible "updated" stamp, in the country's reference zone. */
+const UPDATED = (tz: string) => new Intl.DateTimeFormat("en-US", { timeZone: tz, month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
 
 const load = cache(async (cc: Country["cc"]) => Promise.all([duoRestockTimes(cc), storesWithStockNow(undefined, cc), recentByConfig({ country: cc })]));
 
@@ -194,6 +198,8 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
       <p className="mt-4 text-lg leading-relaxed text-ink-2">
         {V.intro(x)}
       </p>
+      {/* The visible date an answer engine quotes next to the numbers (docs/research.md §8.3): English pages only. */}
+      {lang === "en" && <p className="mt-2 text-sm text-ink-3">Updated {UPDATED(c.timeZone).format(new Date(t.at))} · data since {F.longDate(t.since)} · {stores.length} Apple {one ? "Store" : "Stores"} · checked {CHECK_NOTE}</p>}
       {heroTiles.length > 0 && <StatGrid cols={4} className="mt-6">{heroTiles}</StatGrid>}
       {!t.unknown && t.n > 0 && (
         <Points className="mt-4" items={V.heroPoints(x, t.latest && latestStore && today && today.restocks > 0 ? { config: cfg(t.latest.partNumber), store: latestStore, at: t.latest.at } : null)} />
@@ -434,6 +440,9 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
           { href: "/apple-store-pickup-availability-explained", label: V.questions.unavailable },
         ]} />
         <LinkRow title={V.otherCountries(us)} links={otherCountries} />
+        {/* The US page hands down to its states and cities: "When does the iPhone Duo restock in Los Angeles?" (docs/research.md §8.3 B). */}
+        {us && <LinkRow title="By state" links={restockPlaces().states.map((p) => ({ href: p.href, label: p.label, meta: String(p.stores.length) }))} />}
+        {us && <LinkRow title="By city" links={restockPlaces().cities.map((p) => ({ href: p.href, label: `${p.label}, ${p.stateCode}`, meta: String(p.stores.length) }))} />}
       </RelatedBlock>
 
       <div className="mt-10"><RichFaq items={faq} facts={facts} title={V.faqTitle} /></div>

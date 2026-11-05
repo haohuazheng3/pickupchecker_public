@@ -41,7 +41,7 @@ export function countryEntries(cc: Exclude<CountryCode, "us">, base: string, now
  * The iPhone Duo question pages (seo.md §13): one answer page per question people put to search and answer
  * engines. Their numbers are live, so they change with the restock log.
  */
-export const QUESTION_PAGES = ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock"] as const;
+export const QUESTION_PAGES = ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock", "/iphone-duo-back-in-stock", "/iphone-duo-stock-checker", "/where-to-buy-iphone-duo"] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pickupchecker.com";
@@ -55,6 +55,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   };
   const statics = ["", "/how-it-works", "/pricing", "/install", "/map", "/restocks", "/about", "/contact", "/privacy", "/terms", "/refunds", "/stores"].map((p) => ({ url: `${base}${p}`, lastModified: now, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.6 }));
   const questions = QUESTION_PAGES.map((p) => ({ url: `${base}${p}`, lastModified: now, changeFrequency: "hourly" as const, priority: 0.8 }));
+  // "When does the iPhone Duo restock in {state / city}?" (docs/research.md §8.3 B): one page per US state with a page of
+  // its own and per two-plus-store city, under the national restock-times page; its numbers change with every restock.
+  const restockPlaces = [
+    ...statesWithStores().filter((s) => hasStatePage(s.name)).map((s) => ({ url: `${base}/iphone-duo-restock-times/${s.slug}`, lastModified: latestOf(STORES.filter((x) => x.state === s.name).map((x) => x.storeNumber)), changeFrequency: "hourly" as const, priority: 0.75 })),
+    ...citiesWithStores().filter((c) => c.stores.length > 1).map((c) => ({ url: `${base}/iphone-duo-restock-times/${c.stateSlug}/${c.slug}`, lastModified: latestOf(c.stores.map((x) => x.storeNumber)), changeFrequency: "hourly" as const, priority: 0.75 })),
+  ];
   const models = MODELS.map((m) => ({ url: `${base}/stock/${m.slug}`, lastModified: now, changeFrequency: "always" as const, priority: 0.8 }));
   const states = statesWithStores().filter((s) => hasStatePage(s.name)).map((s) => ({ url: `${base}/stores/${s.slug}`, lastModified: latestOf(STORES.filter((x) => x.state === s.name).map((x) => x.storeNumber)), changeFrequency: "hourly" as const, priority: 0.9 }));
   const cities = citiesWithStores().filter((c) => c.stores.length > 1).map((c) => ({ url: `${base}${cityPath(c.state, c.name)}`, lastModified: latestOf(c.stores.map((x) => x.storeNumber)), changeFrequency: "hourly" as const, priority: 0.85 }));
@@ -68,5 +74,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const countries = INTL_CODES.flatMap((cc) => countryEntries(cc, base, now, latestOf));
   // Each country's pages in its own languages (docs/i18n.md §6): the same set under /{lang}-{cc}.
   const natives = NATIVE_LOCALES.flatMap((loc) => countryEntries(loc.cc as Exclude<CountryCode, "us">, base, now, latestOf).map((e) => ({ ...e, url: `${base}${pathInLocale(e.url.slice(base.length), loc)}` })));
-  return [...statics, ...questions, ...models, ...states, ...cities, ...stores, ...products, ...countries, ...natives];
+  return [...statics, ...questions, ...restockPlaces, ...models, ...states, ...cities, ...stores, ...products, ...countries, ...natives];
 }

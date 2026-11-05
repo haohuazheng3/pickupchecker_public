@@ -9,7 +9,7 @@
 import { unstable_cache } from "next/cache";
 import { and, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { db, hasDatabase, schema } from "../db";
-import { PART_INDEX, partNumbersFor, statePath, statesWithStores, storeTimeZone, storesOf, type Store } from "../apple/catalog";
+import { PART_INDEX, citySlug, hasStatePage, partNumbersFor, statePath, stateSlug, statesWithStores, storeByNumber, storePath, storeTimeZone, storesOf, type Store } from "../apple/catalog";
 import { COUNTRIES, type CountryCode } from "../apple/countries";
 import { countryScope } from "../stock/queries";
 import { recordError, errorMessage } from "../errors";
@@ -36,6 +36,8 @@ export interface DayRow {
   ours: boolean;
 }
 export interface RegionRow { name: string; slug: string; path: string; restocks: number; stores: number; storesTotal: number; lastAt: string | null; lastStore: string | null }
+/** One city of the scope (a state's page lists its cities): `path` is the city's own restock-times page, or its store's page when the city has one store. */
+export interface CityRow extends RegionRow { state: string }
 export interface PartRow { partNumber: string; restocks: number; lastAt: string | null; lastStore: string | null }
 export interface StoreRow { storeNumber: string; restocks: number; days: number; peakHour: number | null; lastAt: string }
 export interface DropRow { at: string; stores: number; restocks: number }
@@ -63,7 +65,10 @@ export interface RestockTimes {
   latest: { storeNumber: string; partNumber: string; at: string } | null;
   /** Most restocks first. */
   byRegion: RegionRow[];
+  /** The scope's cities, most restocks first (a place page; empty for a whole country). */
+  byCity: CityRow[];
   byPart: PartRow[];
+  /** The 12 busiest stores of a country; every store of a place (state or city) page. */
   topStores: StoreRow[];
   /** 30-minute slots in which the most stores restocked at once, most first. */
   drops: DropRow[];
@@ -102,14 +107,24 @@ export function selloutFrom(secs: number[]): SelloutFacts | null {
   return { n: v.length, medianSec: Math.round(median), within2min: v.filter((d) => d <= 120).length / v.length, within20min: v.filter((d) => d <= 1200).length / v.length, fastestSec: Math.round(v[0]) };
 }
 
-export function emptyRestockTimes(cc: CountryCode, now = new Date()): RestockTimes {
-  return { at: now.toISOString(), cc, since: trackingSince(cc), n: 0, stores: 0, storesTotal: storesOf(cc).length, days: 0, spanDays: 0, byHour: Array(24).fill(0), byWeekday: Array(7).fill(0), peakHour: null, peakWeekday: null, daily: [], today: null, latest: null, byRegion: [], byPart: [], topStores: [], drops: [], sellout: null, reports: [] };
+/**
+ * A place inside a country whose restock times are read on their own: a US state or a two-plus-store city
+ * (/iphone-duo-restock-times/{state}[/{city}]). `stores` are the place's stores; everything is counted over them only.
+ */
+export interface RestockScope { stores: Store[] }
+
+export function emptyRestockTimes(cc: CountryCode, now = new Date(), scope?: RestockScope): RestockTimes {
+  return { at: now.toISOString(), cc, since: trackingSince(cc), n: 0, stores: 0, storesTotal: (scope?.stores ?? storesOf(cc)).length, days: 0, spanDays: 0, byHour: Array(24).fill(0), byWeekday: Array(7).fill(0), peakHour: null, peakWeekday: null, daily: [], today: null, latest: null, byRegion: [], byCity: [], byPart: [], topStores: [], drops: [], sellout: null, reports: [] };
 }
 
-/** Pure: the whole page's numbers from 30-minute slot rows, restock lifetimes and other trackers' slot rows. */
-export function restockTimesFrom(cc: CountryCode, rows: SlotRow[], pairSecs: number[], reports: ReportSlotRow[], now = new Date()): RestockTimes {
-  const out = emptyRestockTimes(cc, now);
-  const stores = storesOf(cc);
+/**
+ * Pure: the whole page's numbers from 30-minute slot rows, restock lifetimes and other trackers' slot rows. With a
+ * `scope`, only that place's stores count (rows of other stores are dropped), its cities are listed and every one of
+ * its stores appears in `topStores`; without one, the country as before.
+ */
+export function restockTimesFrom(cc: CountryCode, rows: SlotRow[], pairSecs: number[], reports: ReportSlotRow[], now = new Date(), scope?: RestockScope): RestockTimes {
+  const out = emptyRestockTimes(cc, now, scope);
+  const stores = scope?.stores ?? storesOf(cc);
   const byNumber = new Map(stores.map((s) => [s.storeNumber, s]));
   const countryTz = COUNTRIES[cc].timeZone;
   const tzOf = (n: string): string => { const s = byNumber.get(n); return s ? storeTimeZone(s) : countryTz; };
@@ -164,10 +179,29 @@ export function restockTimesFrom(cc: CountryCode, rows: SlotRow[], pairSecs: num
   });
   out.today = out.daily.find((d) => d.date === todayKey) ?? null;
 
-  out.byRegion = statesWithStores(cc).map((r) => {
+  // A place's regions are only its own (a city's its state); a country's every region, restocks or not.
+  const scopeStates = scope ? new Set(stores.map((s) => s.state)) : null;
+  out.byRegion = statesWithStores(cc).filter((r) => !scopeStates || scopeStates.has(r.name)).map((r) => {
     const a = region.get(r.name);
-    return { name: r.name, slug: r.slug, path: statePath(r.name, cc), restocks: a?.restocks ?? 0, stores: a?.stores.size ?? 0, storesTotal: r.count, lastAt: a?.lastAt ?? null, lastStore: a?.lastStore ?? null };
+    return { name: r.name, slug: r.slug, path: statePath(r.name, cc), restocks: a?.restocks ?? 0, stores: a?.stores.size ?? 0, storesTotal: scope ? stores.filter((s) => s.state === r.name).length : r.count, lastAt: a?.lastAt ?? null, lastStore: a?.lastStore ?? null };
   }).sort((a, b) => b.restocks - a.restocks || a.name.localeCompare(b.name));
+
+  // The place's cities (a state page lists them; a city page lists itself): counted from the per-store rows.
+  if (scope) {
+    const cities = new Map<string, { state: string; stores: Store[] }>();
+    for (const s of stores) { const k = `${s.state}|${s.city}`; const c = cities.get(k) ?? { state: s.state, stores: [] }; c.stores.push(s); cities.set(k, c); }
+    out.byCity = [...cities.entries()].map(([k, c]) => {
+      const name = k.slice(k.indexOf("|") + 1);
+      let restocks = 0, lastAt: string | null = null, lastStore: string | null = null, hit = 0;
+      for (const s of c.stores) {
+        const st = store.get(s.storeNumber);
+        if (!st) continue;
+        hit++; restocks += st.restocks;
+        if (!lastAt || st.lastAt > lastAt) { lastAt = st.lastAt; lastStore = s.storeNumber; }
+      }
+      return { name, slug: citySlug(name), state: c.state, path: restockTimesPath(c.state, name, cc), restocks, stores: hit, storesTotal: c.stores.length, lastAt, lastStore };
+    }).sort((a, b) => b.restocks - a.restocks || a.name.localeCompare(b.name));
+  }
 
   out.byPart = partNumbersFor("duo", [], [], cc).filter((p) => PART_INDEX.has(p)).map((partNumber) => {
     const a = part.get(partNumber);
@@ -177,7 +211,7 @@ export function restockTimesFrom(cc: CountryCode, rows: SlotRow[], pairSecs: num
   out.topStores = [...store.entries()]
     .map(([storeNumber, a]) => ({ storeNumber, restocks: a.restocks, days: a.dates.size, peakHour: a.restocks >= PATTERN_MIN && a.dates.size >= PATTERN_MIN_DAYS ? argmax(a.hours) : null, lastAt: a.lastAt }))
     .sort((a, b) => b.restocks - a.restocks || a.lastAt.localeCompare(b.lastAt))
-    .slice(0, 12);
+    .slice(0, scope ? stores.length : 12);
 
   out.drops = [...slot.entries()].map(([at, a]) => ({ at, stores: a.stores.size, restocks: a.restocks })).sort((a, b) => b.stores - a.stores || b.restocks - a.restocks || a.at.localeCompare(b.at)).slice(0, 6);
 
@@ -196,10 +230,12 @@ export function restockTimesFrom(cc: CountryCode, rows: SlotRow[], pairSecs: num
 }
 
 const cached = unstable_cache(
-  async (cc: CountryCode): Promise<RestockTimes> => {
+  // `storeNumbers` null = the whole country; a sorted list = one place of it (its key is part of the cache key).
+  async (cc: CountryCode, storeNumbers: string[] | null): Promise<RestockTimes> => {
     const since = new Date(`${trackingSince(cc)}T00:00:00Z`);
     const parts = partNumbersFor("duo", [], [], cc);
-    const scope = countryScope(cc, null, parts);
+    const scope = countryScope(cc, storeNumbers, parts);
+    const place: RestockScope | undefined = storeNumbers ? { stores: storeNumbers.map((n) => storeByNumber(n)).filter((s): s is Store => Boolean(s)) } : undefined;
     const ev = schema.availabilityEvents;
     const scopeConds = [...(scope.stores ? [inArray(ev.storeNumber, scope.stores)] : []), ...(scope.parts ? [inArray(ev.partNumber, scope.parts)] : [])];
     const where = and(eq(ev.firstSeen, false), gte(ev.at, since), ...scopeConds);
@@ -223,7 +259,7 @@ const cached = unstable_cache(
         const slotR = sql<string>`date_bin('30 minutes', ${rr.at}, timestamp with time zone '2026-01-01 00:00:00+00')`;
         return d.select({ storeNumber: rr.storeNumber, slot: slotR, n: sql<number>`count(*)::int` })
           .from(rr)
-          .where(and(inArray(rr.partNumber, parts), inArray(rr.storeNumber, storesOf(cc).map((s: Store) => s.storeNumber)), lt(rr.at, since)))
+          .where(and(inArray(rr.partNumber, parts), inArray(rr.storeNumber, storeNumbers ?? storesOf(cc).map((s: Store) => s.storeNumber)), lt(rr.at, since)))
           .groupBy(rr.storeNumber, slotR);
       })(),
     ]);
@@ -233,9 +269,11 @@ const cached = unstable_cache(
       slots.map((r) => ({ storeNumber: r.storeNumber, partNumber: r.partNumber, slot: iso(r.slot), n: Number(r.n), last: iso(r.last) })),
       pairs.map((p) => Number(p.secs)).filter((x) => Number.isFinite(x) && x >= 0),
       reports.map((r) => ({ storeNumber: r.storeNumber, slot: iso(r.slot), n: Number(r.n) })),
+      new Date(),
+      place,
     );
   },
-  ["duo-restock-times-v1"],
+  ["duo-restock-times-v2"],
   { revalidate: 300 },
 );
 
@@ -243,11 +281,41 @@ const cached = unstable_cache(
 export async function duoRestockTimes(cc: CountryCode): Promise<RestockTimes> {
   if (!hasDatabase()) return emptyRestockTimes(cc);
   try {
-    return await cached(cc);
+    return await cached(cc, null);
   } catch (e) {
     await recordError("web", `duo restock times ${cc}: ${errorMessage(e)}`).catch(() => undefined);
     return { ...emptyRestockTimes(cc), unknown: true };
   }
+}
+
+/** One place's (a state's or a city's) iPhone Duo restock times, counted over its stores only; same placeholders. */
+export async function duoRestockTimesAt(cc: CountryCode, stores: Store[]): Promise<RestockTimes> {
+  const scope = { stores };
+  if (!hasDatabase() || stores.length === 0) return emptyRestockTimes(cc, new Date(), scope);
+  try {
+    return await cached(cc, stores.map((s) => s.storeNumber).sort());
+  } catch (e) {
+    await recordError("web", `duo restock times ${cc} ${stores.length} stores: ${errorMessage(e)}`).catch(() => undefined);
+    return { ...emptyRestockTimes(cc, new Date(), scope), unknown: true };
+  }
+}
+
+/**
+ * The restock-times page of a US place: /iphone-duo-restock-times/{state} for a state with a page of its own,
+ * /iphone-duo-restock-times/{state}/{city} for a two-plus-store city; a one-store city or state has no page of its
+ * own and answers with its store's page (the proxy 308s there too), a one-city state with its city's page.
+ */
+export function restockTimesPath(stateName: string, city?: string, cc: CountryCode = "us"): string {
+  if (cc !== "us") return `/${cc}/iphone-duo-restock-times`;
+  if (city) {
+    const here = storesOf(cc).filter((s) => s.state === stateName && s.city === city);
+    return here.length === 1 ? storePath(here[0]) : `/iphone-duo-restock-times/${stateSlug(stateName)}/${citySlug(city)}`;
+  }
+  if (hasStatePage(stateName, cc)) return `/iphone-duo-restock-times/${stateSlug(stateName)}`;
+  const here = storesOf(cc).filter((s) => s.state === stateName);
+  if (here.length === 1) return storePath(here[0]);
+  // One city holds every store of the state (Hawaii, DC): the city's page.
+  return restockTimesPath(stateName, here[0].city, cc);
 }
 
 /** "9–11 AM", "11 AM–1 PM", "noon–2 PM": a local-hour window [from, to). */

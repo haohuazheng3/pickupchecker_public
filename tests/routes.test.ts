@@ -49,3 +49,23 @@ describe("publicRouteCheck (proxy: real 404 / 308 before the page streams)", () 
     for (const s of STORES) expect(publicRouteCheck(storePath(s))).toBeNull();
   });
 });
+
+describe("the state and city restock-times pages (/iphone-duo-restock-times/{state}[/{city}])", () => {
+  it("lets every place with a page through and 404s the rest", () => {
+    expect(publicRouteCheck("/iphone-duo-restock-times")).toBeNull();
+    expect(publicRouteCheck("/iphone-duo-restock-times/california")).toBeNull();
+    expect(publicRouteCheck("/iphone-duo-restock-times/california/los-angeles")).toBeNull();
+    expect(publicRouteCheck("/iphone-duo-restock-times/new-york/new-york")).toBeNull();
+    expect(publicRouteCheck("/iphone-duo-restock-times/notastate")).toEqual({ notFound: true });
+    expect(publicRouteCheck("/iphone-duo-restock-times/california/nowhere")).toEqual({ notFound: true });
+    expect(publicRouteCheck("/iphone-duo-restock-times/california/los-angeles/extra")).toEqual({ notFound: true });
+  });
+  it("folds one-store places into their store page and a one-city state into its city's page", () => {
+    const delaware = STORES.find((s) => s.state === "Delaware")!;
+    expect(publicRouteCheck("/iphone-duo-restock-times/delaware")).toEqual({ redirect: storePath(delaware) });
+    expect(publicRouteCheck("/iphone-duo-restock-times/hawaii")).toEqual({ redirect: "/iphone-duo-restock-times/hawaii/honolulu" });
+    expect(publicRouteCheck("/iphone-duo-restock-times/hawaii/honolulu")).toBeNull();
+    // Birmingham, AL has one store: the city address is that store.
+    expect(publicRouteCheck(`/iphone-duo-restock-times/${state}/${city}`)).toEqual({ redirect: storePath(store) });
+  });
+});

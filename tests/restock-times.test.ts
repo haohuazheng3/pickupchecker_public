@@ -120,3 +120,48 @@ describe("iPhone Duo restock times", () => {
     expect(hourShare(Array(24).fill(0), 9, 11)).toBe(0);
   });
 });
+
+describe("one place's restock times (a state or a city)", async () => {
+  const { restockTimesPath } = await import("@/lib/content/restockTimes");
+  const { STORES, hasStatePage, storePath } = await import("@/lib/apple/catalog");
+  const us = storesOf("us");
+  const parts = partNumbersFor("duo", [], [], "us");
+  const la = us.filter((s) => s.state === "California" && s.city === "Los Angeles");
+  const sf = us.filter((s) => s.state === "California" && s.city === "San Francisco");
+  const ca = us.filter((s) => s.state === "California");
+  const ny = us.find((s) => s.state === "New York")!;
+  const since = trackingSince("us");
+  const d1 = dayRange(since, since)[0];
+  const now = new Date(`${d1}T23:00:00Z`);
+  const at = (store: typeof ny, hour: number) => localInstant(storeTimeZone(store), d1, hour);
+  const row = (store: typeof ny, hour: number, n = 1): SlotRow => ({ storeNumber: store.storeNumber, partNumber: parts[0], slot: at(store, hour), n, last: at(store, hour) });
+
+  it("counts only the place's stores, lists its cities and every one of its stores", () => {
+    const rows = [row(la[0], 9, 3), row(la[1], 10, 1), row(sf[0], 9, 2), row(ny, 9, 7)];
+    const state = restockTimesFrom("us", rows, [], [], now, { stores: ca });
+    expect(state.n).toBe(6); // New York's 7 are outside the scope
+    expect(state.storesTotal).toBe(ca.length);
+    expect(state.byRegion).toEqual([expect.objectContaining({ name: "California", restocks: 6, stores: 3, storesTotal: ca.length })]);
+    expect(state.byCity[0]).toMatchObject({ name: "Los Angeles", state: "California", restocks: 4, stores: 2, storesTotal: la.length, path: "/iphone-duo-restock-times/california/los-angeles" });
+    expect(state.byCity.find((c) => c.name === "San Francisco")).toMatchObject({ restocks: 2, path: "/iphone-duo-restock-times/california/san-francisco" });
+    // A one-store city of the state links to its store, not to a page that does not exist.
+    const oneStore = state.byCity.find((c) => c.storesTotal === 1);
+    if (oneStore) expect(oneStore.path).toMatch(/^\/stores\/california\//);
+    expect(state.topStores.length).toBe(3); // every store with a restock, not a top-12 cut
+    const city = restockTimesFrom("us", rows, [], [], now, { stores: la });
+    expect(city.n).toBe(4);
+    expect(city.byCity).toEqual([expect.objectContaining({ name: "Los Angeles", restocks: 4 })]);
+  });
+
+  it("knows which places have a page of their own", () => {
+    expect(restockTimesPath("California")).toBe("/iphone-duo-restock-times/california");
+    expect(restockTimesPath("California", "Los Angeles")).toBe("/iphone-duo-restock-times/california/los-angeles");
+    expect(restockTimesPath("Hawaii")).toBe("/iphone-duo-restock-times/hawaii/honolulu");
+    const delaware = STORES.find((s) => s.state === "Delaware")!;
+    expect(hasStatePage("Delaware")).toBe(false);
+    expect(restockTimesPath("Delaware")).toBe(storePath(delaware));
+    const oneStoreCity = STORES.find((s) => STORES.filter((x) => x.state === s.state && x.city === s.city).length === 1)!;
+    expect(restockTimesPath(oneStoreCity.state, oneStoreCity.city)).toBe(storePath(oneStoreCity));
+    expect(restockTimesPath("Ontario", undefined, "ca")).toBe("/ca/iphone-duo-restock-times");
+  });
+});

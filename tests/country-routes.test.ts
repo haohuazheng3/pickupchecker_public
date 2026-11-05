@@ -1,7 +1,7 @@
 import { NATIVE_LOCALES } from "@/lib/i18n/locales";
 import { describe, expect, it } from "vitest";
 import { publicRouteCheck } from "@/lib/seo/routes";
-import { storesOf, storePath, placeTarget } from "@/lib/apple/catalog";
+import { storesOf, storePath, placeTarget, statesWithStores, citiesWithStores, hasStatePage } from "@/lib/apple/catalog";
 import { INTL_CODES } from "@/lib/apple/countries";
 import sitemap, { countryEntries } from "@/app/sitemap";
 import { switchHref, type SwitchCountry } from "@/components/site/CountrySwitcher";
@@ -116,12 +116,17 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
     expect(new Set(all).size).toBe(all.length);
     const prefixes = [...INTL_CODES, ...NATIVE_LOCALES.map((l) => l.id)];
     const us = all.filter((u) => !prefixes.some((p) => u === `${base}/${p}` || u.startsWith(`${base}/${p}/`)));
-    // 356 US pages of seo.md §10–11, plus the eight iPhone Duo question pages of §13.
-    expect(us).toHaveLength(356 + 8);
-    for (const p of ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock"]) expect(us).toContain(`${base}${p}`);
+    // 356 US pages of seo.md §10–11, the eight iPhone Duo question pages of §13, the three phrasing pages and the
+    // state (32) and city (26) restock-times pages of docs/research.md §8.3.
+    const placePages = statesWithStores().filter((s) => hasStatePage(s.name)).length + citiesWithStores().filter((c) => c.stores.length > 1).length;
+    expect(placePages).toBe(58);
+    expect(us).toHaveLength(356 + 8 + 3 + placePages);
+    for (const p of ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock", "/iphone-duo-back-in-stock", "/iphone-duo-stock-checker", "/where-to-buy-iphone-duo", "/iphone-duo-restock-times/california", "/iphone-duo-restock-times/california/los-angeles", "/iphone-duo-restock-times/hawaii/honolulu"]) expect(us).toContain(`${base}${p}`);
+    expect(us).not.toContain(`${base}/iphone-duo-restock-times/hawaii`);
+    expect(us).not.toContain(`${base}/iphone-duo-restock-times/delaware`);
     // Every country's pages once in English and once per language it also has (docs/i18n.md §6).
     const natives = NATIVE_LOCALES.reduce((a, l) => a + per[l.cc as keyof typeof per].length, 0);
-    expect(all.length).toBe(364 + Object.values(per).reduce((a, l) => a + l.length, 0) + natives);
+    expect(all.length).toBe(us.length + Object.values(per).reduce((a, l) => a + l.length, 0) + natives);
     for (const l of NATIVE_LOCALES) {
       const mine = all.filter((u) => u === `${base}/${l.id}` || u.startsWith(`${base}/${l.id}/`));
       expect(mine.length, l.id).toBe(per[l.cc as keyof typeof per].length);

@@ -27,6 +27,7 @@ import { StoreInfo, HoursTable } from "@/components/stores/StoreInfo";
 import { NearbyStores } from "@/components/stores/NearbyStores";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
+import { restockTimesPath } from "@/lib/content/restockTimes";
 import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { sellouts } from "@/lib/stock/sellouts";
 import { DailyBars } from "@/components/restocks/DailyBars";
@@ -155,6 +156,8 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
   if (!us) { const tf = P.taxFaq(cc, place, cc === "ca" ? s.state : undefined); questions.push({ q: cc === "ca" ? S.taxQ(place) : tf.q, a: tf.a }); }
   questions.push({ q: S.pickupQ(place), a: S.pickupA(place) });
   const alone = onlyInCity(s);
+  // The restock-times page of this store's city (two-plus stores) or state (with a page of its own), US only.
+  const rtLink = us ? [{ href: restockTimesPath(s.state, s.city), place: s.city }, { href: restockTimesPath(s.state), place: s.state }].find((l) => l.href.startsWith("/iphone-duo-restock-times/")) : undefined;
   const soleInState = us && isOneStoreState(s.state);
   const soleInCountry = !us && all.length === 1;
   const sole = soleRegion(s);
@@ -241,6 +244,7 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
           <section className="pane p-5">
             <h2 className="text-xl font-semibold">{S.whenRestock(N.store(s))}</h2>
             <div className="mt-3"><RestockClock stats={d.stats} label={G.here} reports={d.reports} /></div>
+            {rtLink && <p className="mt-3 text-sm"><Link href={rtLink.href} className="font-medium text-ink underline-offset-2 hover:underline">When does the iPhone Duo restock in {rtLink.place}? Every store, hour by hour →</Link></p>}
           </section>
           <section className="pane p-5">
             <h2 className="text-xl font-semibold">{S.howFast(N.store(s))}</h2>
