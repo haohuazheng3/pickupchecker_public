@@ -85,7 +85,7 @@ export const content: Dict["content"] = {
       "Elke bevestigde wijziging wordt gelogd; dat logboek voedt de grafiek en de geschiedenis op deze pagina.",
     ];
   },
-  alertRule: "Eén alert = één winkel, één model, één opslag, één kleur; een push (of e-mail) gaat eruit binnen seconden nadat apple.com op beschikbaar springt.",
+  alertRule: "Eén alert = één winkel, één model, één opslag, één kleur; een push gaat eruit binnen seconden nadat apple.com op beschikbaar springt.",
 
   titles: {
     state: (name: string, duoNow: string, stores: string) => [

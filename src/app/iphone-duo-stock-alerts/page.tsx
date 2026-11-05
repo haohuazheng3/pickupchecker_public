@@ -77,7 +77,7 @@ export default async function DuoStockAlerts() {
   const alertTable: Block = { t: "table", head: ["What one alert is", "Detail"], rows: [
     ["Scope", "one Apple Store × one exact configuration (model, storage, color)"],
     ["Confirmation", "two matching answers from apple.com, about 1 second apart"],
-    ["Delivery", `push about ${SPEED.alertSec} seconds after confirmation; email when no device is set up`],
+    ["Delivery", `push about ${SPEED.alertSec} seconds after confirmation; notifications only, never email`],
     ["Coverage", `${STORES.length} US Apple Stores, plus ${intl} stores in ${INTL_CODES.length} other countries`],
   ], caption: "The same checks for every plan.", source: "PickupChecker's poller; the two-answer rule is described on [how it works](/how-it-works)" };
   const compareTable: Block = { t: "table", head: ["Tracker", "Check interval, as published on their own sites, November 2026", "Push delay, as claimed"], rows: [

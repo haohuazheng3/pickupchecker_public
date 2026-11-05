@@ -88,7 +88,7 @@ export const content: Dict["content"] = {
       "確認した変化はすべて記録され、このページの入荷グラフと履歴に反映されます。",
     ];
   },
-  alertRule: "通知1件＝1店舗 × 1機種 × 1容量 × 1カラー。apple.comで受け取り可能に変わってから数秒で、プッシュ通知（またはメール）が届きます。",
+  alertRule: "通知1件＝1店舗 × 1機種 × 1容量 × 1カラー。apple.comで受け取り可能に変わってから数秒で、プッシュ通知が届きます。",
 
   titles: {
     state: (name: string, duoNow: string, stores: string) => [

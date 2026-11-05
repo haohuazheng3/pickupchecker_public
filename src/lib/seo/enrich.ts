@@ -342,7 +342,7 @@ export function peakOf(stats: { byHour: number[]; byWeekday: number[]; total: nu
 export interface FaqItem { q: string; a: string }
 
 /** English; `alertRule(lang)` for a page's language (the dictionary's content.alertRule). */
-export const ALERT_RULE = "One alert = one store, one model, one storage size, one color; a push (or email) goes out within seconds of apple.com flipping to available.";
+export const ALERT_RULE = "One alert = one store, one model, one storage size, one color; a push goes out within seconds of apple.com flipping to available.";
 export function alertRule(lang: Lang = "en"): string {
   return lang === "en" ? ALERT_RULE : dict(lang).content.alertRule;
 }

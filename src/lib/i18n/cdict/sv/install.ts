@@ -64,7 +64,7 @@ export const install: CDict["install"] = {
   notes: [
     { q: "Varför Safari på iPhone?", a: "Bara Safari kan lägga till en webbplats på hemskärmen. Webbläsare inuti andra appar kan inte det." },
     { q: "Batteriet?", a: "Inget körs i din telefon. Våra servrar sköter kollandet." },
-    { q: "E-post?", a: "Ingen enhet med notiser på? Då går notisen till din e-post i stället." },
+    { q: "E-post?", a: "Nej. Bevakningar kommer bara som notiser, så slå på dem på minst en enhet." },
     { q: "Flera enheter?", a: "Logga in med samma e-post på var och en. Varje enhet får varje notis." },
   ],
   cta: { title: "Ingen bevakning än?", button: "Skapa en bevakning" },

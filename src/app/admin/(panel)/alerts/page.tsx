@@ -23,7 +23,7 @@ export default async function AdminAlerts({ searchParams }: PageProps<"/admin/al
         <Stat label="Active alert rules" value={watches.filter((w) => w.w.active && !w.w.paused).length} sub={`${watches.filter((w) => w.w.paused).length} paused · ${watches.filter((w) => !w.w.active).length} deleted · ${watches.filter((w) => w.w.active && ["active", "trialing", "past_due"].includes(w.subStatus ?? "")).length} covered by a subscription`} />
         <Stat label="Rules by model" value={MODELS.map((m) => `${m.short} ${watches.filter((w) => w.w.active && w.w.model === m.key).length}`).join(" · ")} />
       </section>
-      <Section title="Alerts · last 24 h" aside="hourly · push first, email only for users without a device">
+      <Section title="Alerts · last 24 h" aside="hourly · push only (no email alerts since 2026-11-05; email bars are history)">
         <StackedBars data={buckets} series={[{ key: "pushSent", label: "push sent", color: PALETTE.blue }, { key: "emailSent", label: "email sent", color: PALETTE.aqua }, { key: "failed", label: "failed", color: PALETTE.critical }]} />
       </Section>
       <Section title="Delivery log">

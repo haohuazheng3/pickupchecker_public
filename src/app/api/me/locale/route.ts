@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 /**
  * The person picks a language (header switch, dashboard): `{ locale: "ja-jp" | "en" }`. Always sets the
  * `pc_lang` cookie (the dashboard and app pages); signed in, also the account's language, which pushes,
- * alert emails and Stripe pages follow (docs/i18n.md §6).
+ * the "notifications stopped" email and Stripe pages follow (docs/i18n.md §6).
  */
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as { locale?: unknown } | null;

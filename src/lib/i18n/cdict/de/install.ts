@@ -64,7 +64,7 @@ export const install: CDict["install"] = {
   notes: [
     { q: "Warum Safari auf dem iPhone?", a: "Nur Safari kann eine Website zum Home-Bildschirm hinzufügen. In-App-Browser können das nicht." },
     { q: "Akku?", a: "Auf Ihrem Handy läuft nichts. Das Prüfen übernehmen unsere Server." },
-    { q: "E-Mail?", a: "Kein Gerät mit eingeschalteten Mitteilungen? Dann geht der Alarm an Ihre E-Mail." },
+    { q: "E-Mail?", a: "Nein. Alarme kommen nur als Mitteilung – schalten Sie sie also auf mindestens einem Gerät ein." },
     { q: "Mehrere Geräte?", a: "Auf jedem mit derselben E-Mail anmelden. Jedes Gerät bekommt jeden Alarm." },
   ],
   cta: { title: "Noch kein Alarm?", button: "Alarm einrichten" },

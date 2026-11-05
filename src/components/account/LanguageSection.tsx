@@ -1,6 +1,6 @@
 "use client";
 /**
- * The dashboard's language: one select for this page, pushes, alert emails and Stripe (docs/i18n.md §6). A member
+ * The dashboard's language: one select for this page, pushes and Stripe (docs/i18n.md §6). A member
  * may watch stores in several countries; the language is theirs, not the stores'. On a new device the account's
  * saved language wins once (the cookie follows it), so pushes and the dashboard never disagree.
  */

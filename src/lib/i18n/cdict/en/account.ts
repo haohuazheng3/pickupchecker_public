@@ -34,13 +34,13 @@ export const account = {
       checking: "Checking this device…",
       inAppBrowser: "Tap ··· and choose **Open in Safari** (or Chrome).",
       needsInstall: "On iPhone and iPad, notifications only work from the Home Screen app.",
-      unsupported: "This browser can't receive notifications, so alerts go to your email.",
+      unsupported: "This browser can't receive notifications, and alerts never go by email. Turn them on in the Home Screen app or on another device.",
       needsSignin: "Sign in on this device to turn on notifications.",
       deniedIos: "Allow in **Settings → Notifications → PickupChecker**, then reload.",
       denied: "Allow in your browser's site settings, then reload.",
-      readyIos: "Off on this device, so your alerts go to your email for now. Tap **Turn on notifications**, then **Allow**, to get them here within seconds.",
-      readyDevice: "Off on this device, so your alerts go to your email for now. Tap **Turn on notifications** to get them here within seconds.",
-      readyBrowser: "Off on this browser, so your alerts go to your email for now. Tap **Turn on notifications** to get them here within seconds.",
+      readyIos: "Off, so restock alerts can't reach you: they come only as notifications, never by email. Tap **Turn on notifications**, then **Allow**, to get them here within seconds.",
+      readyDevice: "Off, so restock alerts can't reach you: they come only as notifications, never by email. Tap **Turn on notifications** to get them here within seconds.",
+      readyBrowser: "Off on this browser, so restock alerts can't reach you: they come only as notifications, never by email. Tap **Turn on notifications** to get them here within seconds.",
       on: "Restocks arrive here in seconds, even with the app closed.",
     },
     /** Another device on the account already gets the alerts; {label} is a device name ("iPhone app", "2 devices"). */
@@ -125,8 +125,8 @@ export const account = {
   /** The dashboard's language setting. */
   language: {
     title: "Language",
-    label: "Language for this page, your alerts and emails",
-    help: "Pushes, alert emails and Stripe's checkout follow this choice; prices stay in each store's currency, times in each store's own time zone.",
+    label: "Language for this page and your alerts",
+    help: "Notifications and Stripe's checkout follow this choice; prices stay in each store's currency, times in each store's own time zone.",
     alertsIn: "Your alerts are currently sent in {lang}.",
     saving: "Saving…",
   },

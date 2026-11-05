@@ -3,9 +3,9 @@ import { Page } from "@/components/site/Page";
 export const metadata: Metadata = { title: "Terms of Service", description: "The terms for using PickupChecker: live stock data shown as is, alerts on paid plans, and what we can and cannot promise.", alternates: { canonical: "/terms" } };
 export default function Terms() {
   return (
-    <Page title="Terms of Service" lead="Last updated October 29, 2026.">
+    <Page title="Terms of Service" lead="Last updated November 5, 2026.">
       <h2>The service</h2>
-      <p>PickupChecker sends phone and email notifications about in-store pickup availability of selected iPhone models at Apple Stores in the United States, based on publicly displayed availability on apple.com. We don&apos;t sell devices, reserve them for you, or guarantee that a notification results in a purchase.</p>
+      <p>PickupChecker sends phone notifications (never email alerts) about in-store pickup availability of selected iPhone models at Apple Stores in the United States, based on publicly displayed availability on apple.com. We don&apos;t sell devices, reserve them for you, or guarantee that a notification results in a purchase.</p>
       <h2>Accounts</h2>
       <p>You sign in with a one-time email code. Keep access to that mailbox secure; you are responsible for activity under your account.</p>
       <h2>Subscriptions</h2>

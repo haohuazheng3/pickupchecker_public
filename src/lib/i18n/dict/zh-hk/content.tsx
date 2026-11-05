@@ -92,7 +92,7 @@ export const content: Dict["content"] = {
       "每個確認的變化都會記錄下來；本頁的補貨圖表和歷史，就是由這些記錄而來。",
     ];
   },
-  alertRule: "一個提醒 = 一間分店、一個型號、一個容量、一種顏色；apple.com 一轉為有貨，推送（或電郵）幾秒內發出。",
+  alertRule: "一個提醒 = 一間分店、一個型號、一個容量、一種顏色；apple.com 一轉為有貨，推送幾秒內發出。",
 
   titles: {
     state: (name: string, duoNow: string, stores: string) => [

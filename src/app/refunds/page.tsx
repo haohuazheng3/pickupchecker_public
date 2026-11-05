@@ -7,7 +7,7 @@ export default function Refunds() {
       <h2>When you can get a refund</h2>
       <ul>
         <li><b>Within 7 days</b> of the payment, counted from the moment you were charged.</li>
-        <li><b>Before any restock alert has reached you</b> since that payment. Once a restock push has been sent to any of your devices, or a restock email has been sent to you, the service has been used for that payment and it isn&apos;t refundable.</li>
+        <li><b>Before any restock alert has reached you</b> since that payment. Once a restock notification has been sent to any of your devices, the service has been used for that payment and it isn&apos;t refundable.</li>
         <li>Test notifications don&apos;t count: &ldquo;Send a test notification&rdquo; and &ldquo;Preview on this device&rdquo; never use up your refund.</li>
       </ul>
       <h2>How to ask</h2>

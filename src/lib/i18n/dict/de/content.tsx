@@ -85,7 +85,7 @@ export const content: Dict["content"] = {
       "Jede bestätigte Änderung wird protokolliert; dieses Protokoll speist das Restock-Diagramm und den Verlauf auf dieser Seite.",
     ];
   },
-  alertRule: "Ein Alarm = ein Store, ein Modell, eine Speichergröße, eine Farbe; ein Push (oder eine E-Mail) geht Sekunden nach dem Sprung auf „verfügbar“ bei apple.com raus.",
+  alertRule: "Ein Alarm = ein Store, ein Modell, eine Speichergröße, eine Farbe; ein Push geht Sekunden nach dem Sprung auf „verfügbar“ bei apple.com raus.",
 
   titles: {
     state: (name: string, duoNow: string, stores: string) => [

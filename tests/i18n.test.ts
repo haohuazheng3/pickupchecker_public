@@ -10,7 +10,6 @@ import { appleStoreLabel, cityLabel, colorLabel, countryLabel, regionLabel, stor
 import { COUNTRIES } from "@/lib/apple/countries";
 import { storesOf, storePath } from "@/lib/apple/catalog";
 import { offerFor } from "@/components/i18n/LangSuggest";
-import { alertSubject, alertText } from "@/lib/mail/resend";
 import { restockPayload } from "@/lib/push/payload";
 import { CDICTS } from "@/lib/i18n/cdict/all";
 import { DICTS } from "@/lib/i18n/dict/all";
@@ -127,9 +126,7 @@ describe("names in each language (Apple's own)", () => {
 describe("notifications keep English as it was and follow the person's language", () => {
   const store = storesOf("jp").find((s) => s.slug === "ginza")!;
   const item = { model: "iPhone Duo", storage: "256GB", color: "Night Sky", partNumber: "X", price: 1, sku: "X" } as never;
-  it("English subject and push unchanged", () => {
-    expect(alertSubject([{ item, store, quote: null }])).toBe("In stock: iPhone Duo 256GB Night Sky at Apple Ginza");
-    expect(alertText([{ item, store, quote: null }], "https://x/account")).toContain("Good news — available for in-store pickup right now:");
+  it("English push unchanged", () => {
     const p = restockPayload({ item, store, quote: "本日" }, "w1");
     expect(p.title).toBe("iPhone Duo 256GB Night Sky");
     expect(p.body).not.toContain("本日"); // English readers never get a Japanese quote
