@@ -14,7 +14,7 @@ export async function recordError(
   try {
     console.error(`[${source}] ${message}`, sample ? JSON.stringify(sample).slice(0, 2000) : "");
     if (!hasDatabase()) return;
-    const normalized = message.replace(/\d+/g, "#").slice(0, 300);
+    const normalized = errorFingerprintText(message);
     const fingerprint = createHash("sha1").update(`${source}:${normalized}`).digest("hex").slice(0, 24);
     await db()
       .insert(schema.errorGroups)
@@ -31,6 +31,19 @@ export async function recordError(
   } catch (e) {
     console.error("[errors] failed to record error", e);
   }
+}
+
+/**
+ * The text an error group is keyed on. Numbers become "#", and IP addresses become "<ip>" first:
+ * poller messages carry a random IPv6 source address per request, and hex groups survive the digit
+ * pass, so one network blip on 2026-11-05 (≈130 requests) opened ≈130 separate error groups.
+ */
+export function errorFingerprintText(message: string): string {
+  return message
+    .replace(/(?<![\w:])[0-9a-f]{0,4}(?::[0-9a-f]{0,4}){2,7}(?::\d+)?(?![\w:])/gi, "<ip>")
+    .replace(/\b\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?\b/g, "<ip>")
+    .replace(/\d+/g, "#")
+    .slice(0, 300);
 }
 
 export function errorMessage(e: unknown): string {
