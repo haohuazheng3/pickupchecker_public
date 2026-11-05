@@ -79,21 +79,42 @@ function esc(s: string): string {
 /** Sends one alert email; returns the provider id. Throws on failure (caller records it). */
 export async function sendAlertEmail(to: string, lines: AlertLine[], watchId: string, lang: Lang = "en"): Promise<string> {
   const manageUrl = `${env.siteUrl()}/account?watch=${encodeURIComponent(watchId)}`;
-  const { data, error } = await client().emails.send({
-    from: env.alertsFrom(),
-    to,
-    subject: alertSubject(lines, lang),
-    text: alertText(lines, manageUrl, lang),
-    html: alertHtml(lines, manageUrl, lang),
-    headers: { "X-Entity-Ref-ID": `${watchId}-${Date.now()}` },
-    tags: [{ name: "kind", value: "restock" }],
-  });
-  if (error) throw new Error(`${error.name}: ${error.message}`);
-  return data?.id ?? "";
+  const ref = `${watchId}-${Date.now()}`;
+  return withRateLimitRetry(() =>
+    client().emails.send({
+      from: env.alertsFrom(),
+      to,
+      subject: alertSubject(lines, lang),
+      text: alertText(lines, manageUrl, lang),
+      html: alertHtml(lines, manageUrl, lang),
+      headers: { "X-Entity-Ref-ID": ref },
+      tags: [{ name: "kind", value: "restock" }],
+    }),
+  );
 }
 
 export async function sendPlainEmail(to: string, subject: string, text: string): Promise<string> {
-  const { data, error } = await client().emails.send({ from: env.alertsFrom(), to, subject, text });
-  if (error) throw new Error(`${error.name}: ${error.message}`);
-  return data?.id ?? "";
+  return withRateLimitRetry(() => client().emails.send({ from: env.alertsFrom(), to, subject, text }));
+}
+
+type SendResult = { data: { id?: string } | null; error: { name: string; message: string } | null };
+
+/**
+ * Resend allows 10 requests per second for the whole account, and one restock can alert dozens
+ * of email-only members at once from three hosts — on 11-05 14:00 UTC a paying member's alert
+ * was lost to `rate_limit_exceeded`. A rate-limited send was not delivered, so it is safe to
+ * retry: wait (with jitter, so parallel senders spread out) and try again, up to ~4 s in all.
+ * Any other error still throws at once (the caller records it).
+ */
+export async function withRateLimitRetry(
+  send: () => Promise<SendResult>,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((r) => setTimeout(r, ms)),
+  waits: readonly number[] = [400, 900, 1300, 1600],
+): Promise<string> {
+  for (let attempt = 0; ; attempt++) {
+    const { data, error } = await send();
+    if (!error) return data?.id ?? "";
+    if (error.name !== "rate_limit_exceeded" || attempt >= waits.length) throw new Error(`${error.name}: ${error.message}`);
+    await sleep(waits[attempt] + Math.floor(Math.random() * 300));
+  }
 }
