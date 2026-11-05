@@ -18,7 +18,7 @@ import { RefreshOnAlertsChange } from "@/components/account/RefreshOnAlertsChang
 import { LanguageSection } from "@/components/account/LanguageSection";
 import { AlertEditor } from "@/components/alerts/AlertEditor";
 import { Section } from "@/components/alerts/Section";
-import { PlanPanel } from "@/components/alerts/PlanPanel";
+import { CancelPlanLink, PlanPanel } from "@/components/alerts/PlanPanel";
 import { HydrationProbe } from "@/components/account/HydrationProbe";
 import { buildPhoneCatalog, pickerStoresFor } from "@/components/alerts/catalog";
 import type { CountryCode } from "@/lib/apple/countries";
@@ -78,6 +78,7 @@ export default async function Account() {
       <AlertEditor variant="page" catalog={buildPhoneCatalog(home, lang)} known={chosen} account={{ set, plan: { key: plan.key, limit: plan.limit, used: active } }} />
 
       <Section id="plan" title={d.plan.title} defaultOpen={plan.key === "free"}
+        foot={plan.key !== "free" && !sub?.cancelAtPeriodEnd ? <CancelPlanLink /> : undefined}
         summary={plan.key === "free" ? d.plan.none : `${d.plan.summary(PLANS[plan.key].name, Math.min(active, plan.limit), plan.limit)}${renews ? (sub?.cancelAtPeriodEnd ? d.plan.ends(renews) : d.plan.renews(renews)) : ""}`}>
         <PlanPanel recommend={plan.key === "free" ? fit : active > plan.limit ? PAID_PLANS.find((k) => PLANS[k].limit >= active) ?? "max" : null}
           plan={{ key: plan.key, limit: plan.limit, used: active, renewsAt: sub?.currentPeriodEnd?.toISOString() ?? null, cancelAtPeriodEnd: Boolean(sub?.cancelAtPeriodEnd), status: sub?.status ?? null, hasCustomer: Boolean(row[0]?.stripeCustomerId) }} />

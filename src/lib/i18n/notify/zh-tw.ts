@@ -32,6 +32,9 @@ export const notifyZhTW: NotifyText = {
     htmlStorePage: "門市頁面 →",
     htmlTip: "門市取貨的現貨消失得很快——在 Apple Store App 或 apple.com 預訂，選擇 <b>取貨</b>，再選這家門市。",
     htmlManage: "管理或暫停這則通知",
+    cancel: (url: string) => `已經買到 iPhone 了嗎？隨時可以取消訂閱：${url}`,
+    htmlGotIt: "已經買到 iPhone 了嗎？",
+    htmlCancel: "隨時取消訂閱",
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}：${limit} 則通知。你的門市每 ${fastSec} 秒檢查一次（每家門市每 ${checkSec} 秒），確認補貨後約 ${alertSec} 秒推播。按月計費，隨時可取消。`,
   stopped: {

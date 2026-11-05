@@ -37,6 +37,9 @@ export const notifyAr: NotifyText = {
     htmlStorePage: "صفحة المتجر ←",
     htmlTip: "مخزون الاستلام ينفد بسرعة — احجز من تطبيق Apple Store أو apple.com، واختر <b>Pick up</b> (الاستلام) ثم المتجر.",
     htmlManage: "إدارة هذا التنبيه أو إيقافه مؤقتًا",
+    cancel: (url: string) => `حصلت على iPhone؟ يمكنك الإلغاء في أي وقت: ${url}`,
+    htmlGotIt: "حصلت على iPhone؟",
+    htmlCancel: "ألغِ في أي وقت",
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${alerts(limit)}. نفحص متاجرك كل ${secs(fastSec)} (وكل المتاجر كل ${secs(checkSec)})، ويصلك إشعار بعد نحو ${secs(alertSec)} من تأكيد التوفر. اشتراك شهري، ألغِ في أي وقت.`,
   stopped: {

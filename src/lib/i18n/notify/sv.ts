@@ -29,6 +29,9 @@ export const notifySv: NotifyText = {
     htmlStorePage: "Butikssidan →",
     htmlTip: "Lager för hämtning försvinner snabbt – reservera i appen Apple Store eller på apple.com, välj <b>Hämta i butik</b> och välj butiken.",
     htmlManage: "Hantera eller pausa den här bevakningen",
+    cancel: (url: string) => `Har du fått din iPhone? Säg upp när du vill: ${url}`,
+    htmlGotIt: "Har du fått din iPhone?",
+    htmlCancel: "Säg upp när du vill",
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${limit} bevakningar. Dina butiker kollas var ${fastSec}:e sekund (alla butiker var ${checkSec}:e sekund), och notisen kommer cirka ${alertSec} s efter att en påfyllning bekräftats. Månadsvis, avsluta när du vill.`,
   stopped: {

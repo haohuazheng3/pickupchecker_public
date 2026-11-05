@@ -29,6 +29,9 @@ export const notifyDe: NotifyText = {
     htmlStorePage: "Store-Seite →",
     htmlTip: "Abhol-Ware ist schnell weg – reservieren Sie in der Apple Store App oder auf apple.com, wählen Sie <b>Abholen</b> und dann den Store.",
     htmlManage: "Diesen Alarm verwalten oder pausieren",
+    cancel: (url: string) => `Schon Ihr iPhone bekommen? Jederzeit kündbar: ${url}`,
+    htmlGotIt: "Schon Ihr iPhone bekommen?",
+    htmlCancel: "Jederzeit kündigen",
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${limit} Alarme. Ihre Stores werden alle ${fastSec} Sek. geprüft (jeder Store alle ${checkSec} Sek.), mit einem Push etwa ${alertSec} Sek. nach einem bestätigten Restock. Monatlich, jederzeit kündbar.`,
   stopped: {

@@ -10,8 +10,10 @@ export function openSection(id: string) {
   window.dispatchEvent(new CustomEvent("pc:open-section", { detail: id }));
 }
 
-export function Section({ id, title, summary, badge, defaultOpen = true, inner = false, onOpen, children }: {
+export function Section({ id, title, summary, badge, foot, defaultOpen = true, inner = false, onOpen, children }: {
   id: string; title: ReactNode; summary?: ReactNode; badge?: ReactNode; defaultOpen?: boolean;
+  /** A line under the header, outside the fold, shown open or folded (the plan's "Cancel subscription"). */
+  foot?: ReactNode;
   /** Told the first time the section is open (lazy bodies). */
   onOpen?: () => void;
   /** Nested in another card (the alert panels): a lighter frame. */
@@ -45,6 +47,7 @@ export function Section({ id, title, summary, badge, defaultOpen = true, inner =
         </span>
         <svg viewBox="0 0 20 20" className={`h-5 w-5 shrink-0 text-ink-3 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m5 7.5 5 5 5-5" /></svg>
       </button>
+      {foot != null && <div className={inner ? "-mt-2 px-4 pb-3" : "-mt-2 px-5 pb-4 sm:px-6"}>{foot}</div>}
       <div id={bodyId} hidden={!open} className={`border-t border-line ${inner ? "px-4 pb-4 pt-3.5" : "px-5 pb-5 pt-4 sm:px-6 sm:pb-6"}`}>{children}</div>
     </section>
   );

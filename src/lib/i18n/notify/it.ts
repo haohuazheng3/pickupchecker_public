@@ -26,6 +26,9 @@ export const notifyIt: NotifyText = {
     htmlStorePage: "Pagina del negozio →",
     htmlTip: "La disponibilità per il ritiro sparisce in fretta: prenota nell'app Apple Store o su apple.com, scegli <b>Ritiro</b> e seleziona il negozio.",
     htmlManage: "Gestisci o metti in pausa questo avviso",
+    cancel: (url: string) => `Hai già il tuo iPhone? Disdici quando vuoi: ${url}`,
+    htmlGotIt: "Hai già il tuo iPhone?",
+    htmlCancel: "Disdici quando vuoi",
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${limit} avvisi. I tuoi negozi vengono controllati ogni ${fastSec} s (tutti i negozi ogni ${checkSec} s), con una notifica circa ${alertSec} s dopo un rifornimento confermato. Mensile, disdici quando vuoi.`,
   stopped: {

@@ -30,6 +30,9 @@ export const notifyEs: NotifyText = {
     htmlStorePage: "Página de la tienda →",
     htmlTip: "El stock para recogida vuela: resérvalo en la app Apple Store o en apple.com, elige <b>Recogida</b> y selecciona la tienda.",
     htmlManage: "Gestiona o pausa esta alerta",
+    cancel: (url: string) => `¿Ya tienes tu iPhone? Cancela cuando quieras: ${url}`,
+    htmlGotIt: "¿Ya tienes tu iPhone?",
+    htmlCancel: "Cancela cuando quieras",
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${limit} alertas. Tus tiendas se comprueban cada ${fastSec} s (todas las tiendas, cada ${checkSec} s) y el aviso llega unos ${alertSec} s después de confirmarse una reposición. Mensual, cancela cuando quieras.`,
   stopped: {

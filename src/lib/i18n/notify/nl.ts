@@ -29,6 +29,9 @@ export const notifyNl: NotifyText = {
     htmlStorePage: "Winkelpagina →",
     htmlTip: "Ophaalvoorraad gaat snel — reserveer in de Apple Store-app of op apple.com, kies <b>Ophalen</b> en selecteer de winkel.",
     htmlManage: "Deze alert beheren of pauzeren",
+    cancel: (url: string) => `Heb je je iPhone al? Opzeggen kan altijd: ${url}`,
+    htmlGotIt: "Heb je je iPhone al?",
+    htmlCancel: "Opzeggen kan altijd",
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${limit} alerts. Je winkels worden elke ${fastSec} sec. gecheckt (elke winkel elke ${checkSec} sec.), met een push zo'n ${alertSec} sec. nadat nieuwe voorraad is bevestigd. Per maand, altijd opzegbaar.`,
   stopped: {

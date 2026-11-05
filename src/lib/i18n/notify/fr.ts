@@ -39,6 +39,9 @@ const raw: NotifyText = {
     htmlStorePage: "Page du magasin →",
     htmlTip: "Le stock en retrait part vite : réservez dans l’app Apple Store ou sur apple.com, choisissez <b>le retrait en magasin</b> et sélectionnez le magasin.",
     htmlManage: "Gérer ou mettre en pause cette alerte",
+    cancel: (url: string) => `Vous avez votre iPhone ? Résiliez à tout moment : ${url}`,
+    htmlGotIt: "Vous avez votre iPhone ?",
+    htmlCancel: "Résiliez à tout moment",
   },
   checkoutSubmit: (plan, limit, fastSec, checkSec, alertSec) => `${plan} : ${limit} alertes. Vos magasins sont vérifiés toutes les ${fastSec} s (chaque magasin toutes les ${checkSec} s), avec une notification environ ${alertSec} s après la confirmation d’un retour en stock. Mensuel, résiliable à tout moment.`,
   stopped: {

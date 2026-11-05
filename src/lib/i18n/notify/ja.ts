@@ -29,6 +29,9 @@ export const notifyJa: NotifyText = {
     htmlStorePage: "店舗ページ →",
     htmlTip: "店頭受け取りの在庫はすぐになくなります。Apple Storeアプリかapple.comで<b>受け取り</b>を選び、店舗を指定してください。",
     htmlManage: "この通知を管理・一時停止",
+    cancel: (url: string) => `iPhoneを手に入れましたか？いつでも解約できます：${url}`,
+    htmlGotIt: "iPhoneを手に入れましたか？",
+    htmlCancel: "いつでも解約できます",
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}：通知${limit}件。選んだ店舗は${fastSec}秒ごと（全店舗は${checkSec}秒ごと）にチェックし、入荷を確認してから約${alertSec}秒でプッシュ通知。月額、いつでも解約できます。`,
   stopped: {

@@ -31,6 +31,10 @@ export const notifyEn = {
     /** HTML: <b>…</b> allowed. */
     htmlTip: "Pickup stock moves fast — reserve in the Apple Store app or on apple.com, choose <b>Pick up</b> and select the store.",
     htmlManage: "Manage or pause this alert",
+    /** The plan's way out, under every alert: `url` = /account/cancel (lands on the plan's cancel step). */
+    cancel: (url: string) => `Got your iPhone? Cancel anytime: ${url}`,
+    htmlGotIt: "Got your iPhone?",
+    htmlCancel: "Cancel anytime",
   },
   /** Stripe Checkout's line above the pay button: the plan, its alerts, how fast checks run (5 s / 15 s / ~3 s push). */
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${limit} alerts. Your stores are checked every ${fastSec} s (every store every ${checkSec} s), with a push about ${alertSec} s after a restock is confirmed. Monthly, cancel anytime.`,

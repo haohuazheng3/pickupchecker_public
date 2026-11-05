@@ -26,6 +26,9 @@ export const notifyKo: NotifyText = {
     htmlStorePage: "매장 페이지 →",
     htmlTip: "픽업 재고는 금방 사라져요. Apple Store 앱이나 apple.com에서 <b>매장 픽업</b>을 선택하고 해당 매장을 고르세요.",
     htmlManage: "이 알림 관리 또는 일시 중지",
+    cancel: (url: string) => `iPhone을 구하셨나요? 언제든 해지할 수 있어요: ${url}`,
+    htmlGotIt: "iPhone을 구하셨나요?",
+    htmlCancel: "언제든 해지하기",
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: 알림 ${limit}개. 내 매장은 ${fastSec}초마다(전체 매장은 ${checkSec}초마다) 확인하고, 재입고가 확인되면 약 ${alertSec}초 후 푸시가 와요. 월 구독, 언제든 해지 가능.`,
   stopped: {

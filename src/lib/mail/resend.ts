@@ -36,6 +36,9 @@ export function alertSubject(lines: AlertLine[], lang: Lang = "en"): string {
   return notifyText(lang).email.subject(configText(first.item, lang), storeName(first, lang), lines.length - 1);
 }
 
+/** "Cancel anytime" under every alert: a path, since signing in on the way keeps the path but not a query. */
+const cancelUrlOf = (manageUrl: string) => new URL("/account/cancel", manageUrl).toString();
+
 export function alertText(lines: AlertLine[], manageUrl: string, lang: Lang = "en"): string {
   const E = notifyText(lang).email;
   const body = lines
@@ -45,7 +48,7 @@ export function alertText(lines: AlertLine[], manageUrl: string, lang: Lang = "e
         `${alertQuote(l, lang) ? ` (${alertQuote(l, lang)})` : ""}\n  ${E.reserve}: ${appleBuyIphoneUrl(l.store.country)}\n  ${E.store}: ${l.store.url ?? ""}`,
     )
     .join("\n\n");
-  return `${E.intro}\n\n${body}\n\n${E.tip}\n\n${E.manage(manageUrl)}\n\n— PickupChecker`;
+  return `${E.intro}\n\n${body}\n\n${E.tip}\n\n${E.manage(manageUrl)}\n${E.cancel(cancelUrlOf(manageUrl))}\n\n— PickupChecker`;
 }
 
 export function alertHtml(lines: AlertLine[], manageUrl: string, lang: Lang = "en"): string {
@@ -65,7 +68,7 @@ export function alertHtml(lines: AlertLine[], manageUrl: string, lang: Lang = "e
 <table role="presentation" width="560" style="max-width:560px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.06)">
 <tr><td style="padding:22px 16px 10px;font:700 20px/1.2 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#0b0b0f">${E.htmlTitle}</td></tr>
 ${rows}
-<tr><td style="padding:16px;border-top:1px solid #e9e9ee;font:13px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#6b6b76">${E.htmlTip}<br><br><a href="${esc(manageUrl)}" style="color:#0b0b0f">${E.htmlManage}</a> · PickupChecker</td></tr>
+<tr><td style="padding:16px;border-top:1px solid #e9e9ee;font:13px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#6b6b76">${E.htmlTip}<br><br><a href="${esc(manageUrl)}" style="color:#0b0b0f">${E.htmlManage}</a> · PickupChecker<br>${E.htmlGotIt} <a href="${esc(cancelUrlOf(manageUrl))}" style="color:#0b0b0f">${E.htmlCancel}</a></td></tr>
 </table></td></tr></table></body></html>`;
 }
 

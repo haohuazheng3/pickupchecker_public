@@ -5,6 +5,8 @@
  * monthly price from the next renewal, how many alerts it holds, the card — and only "Confirm" changes it.
  * "Cancel subscription" works the same way: it says until when the plan keeps working and what stops after,
  * and only the second button cancels (at the end of the paid period). Until then "Resume" takes it back.
+ * Its link sits under the Plan header, so it shows with the section folded (CancelPlanLink), and every alert
+ * email's "Cancel anytime" lands on the same step (/account/cancel → /account?cancel=1#plan).
  */
 import { useApiError } from "@/components/i18n/useApiError";
 import { useEffect, useState } from "react";
@@ -16,6 +18,7 @@ import { useLang, useT } from "@/components/i18n/LangProvider";
 import { Rich } from "@/components/i18n/Rich";
 import { day as dayIn, fill, num, plural, unit } from "@/lib/i18n/format";
 import type { Lang } from "@/lib/i18n/locales";
+import { openSection } from "./Section";
 
 export interface PlanView { key: PlanKey; limit: number; used: number; renewsAt: string | null; cancelAtPeriodEnd: boolean; status: string | null; hasCustomer: boolean }
 interface Preview { from: PaidPlanKey; to: PaidPlanKey; upgrade: boolean; nowCents: number; exact: boolean; monthlyCents: number; renewsAt: string | null; daysLeft: number; card: string | null; prorationDate: number }
@@ -111,6 +114,18 @@ export function ChangeConfirm({ to, used, onDone, onCancel }: { to: PaidPlanKey;
   );
 }
 
+/** Opens the Plan section on its cancel step (the header link, the email's "Cancel anytime"). */
+export function startCancel() {
+  openSection("plan");
+  window.dispatchEvent(new CustomEvent("pc:plan-cancel"));
+}
+
+/** "Cancel subscription" under the Plan header: in view with the section folded, not only at its bottom. */
+export function CancelPlanLink() {
+  const d = useT().alerts.plan;
+  return <button type="button" className="text-sm text-ink-2 underline decoration-ink-3/50 underline-offset-4 hover:text-ink" onClick={startCancel}>{d.cancelSub}</button>;
+}
+
 /** Second step of "Cancel subscription": what keeps working, until when, and what stops after. */
 function CancelConfirm({ plan, onDone, onKeep }: { plan: PlanView; onDone: (endsAt: string | null) => void; onKeep: () => void }) {
   const t = useT().alerts;
@@ -170,6 +185,21 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
   const paid = plan.key !== "free";
   const def = PLANS[plan.key];
   const over = plan.used > plan.limit;
+  const cancellable = paid && !plan.cancelAtPeriodEnd;
+  useEffect(() => {
+    const on = () => { if (!cancellable) return; setCancelling(true); setOpen(null); setDone(null); };
+    window.addEventListener("pc:plan-cancel", on);
+    return () => window.removeEventListener("pc:plan-cancel", on);
+  }, [cancellable]);
+  // Arriving from an alert email's "Cancel anytime": the cancel step, once (the query goes so a reload doesn't
+  // reopen it). A tick later, so the section's own listener (a parent's effect runs after this one) is on.
+  useEffect(() => {
+    const u = new URL(window.location.href);
+    if (u.searchParams.get("cancel") !== "1") return;
+    u.searchParams.delete("cancel");
+    window.history.replaceState(window.history.state, "", u.pathname + u.search + u.hash);
+    window.setTimeout(startCancel, 0);
+  }, []);
   const go = async (k: PaidPlanKey) => {
     setBusy(k); setError(null);
     try { const url = await openUrl("/api/stripe/checkout", d.unavailable, { plan: k }, tErr); track("checkout_started", { plan: k, from: plan.key }); window.location.assign(url); }
@@ -219,6 +249,10 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
           <p className="mt-2 text-xs text-ink-3"><span aria-hidden>⚡ </span>{fill(t.editor.speedLine, { fast: unit(lang, SPEED.fastSec, "s"), all: unit(lang, SPEED.checkSec, "s"), push: unit(lang, SPEED.alertSec, "s") })}</p>
         </>
       )}
+      {paid && cancelling && (
+        <CancelConfirm plan={plan} onKeep={() => setCancelling(false)}
+          onDone={(endsAt) => { setCancelling(false); setDone(fill(d.cancelledUntil, { plan: def.name, date: when(endsAt) })); router.refresh(); }} />
+      )}
       {done && <p role="status" className="mt-3 rounded-xl bg-accent/10 px-3 py-2 text-sm text-ink">✓ {done}</p>}
 
       <ul className="mt-4 divide-y divide-line rounded-2xl border border-line">
@@ -251,14 +285,7 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
         })}
       </ul>
       {error && <p role="alert" className="mt-3 text-sm text-bad">{error}</p>}
-      {paid && cancelling && (
-        <CancelConfirm plan={plan} onKeep={() => setCancelling(false)}
-          onDone={(endsAt) => { setCancelling(false); setDone(fill(d.cancelledUntil, { plan: def.name, date: when(endsAt) })); router.refresh(); }} />
-      )}
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-        {paid && !plan.cancelAtPeriodEnd && !cancelling && (
-          <button type="button" className="btn btn-ghost btn-sm" disabled={busy != null} onClick={() => { setCancelling(true); setOpen(null); setDone(null); }}>{d.cancelSub}</button>
-        )}
         {plan.hasCustomer && <button type="button" className="underline-offset-4 hover:underline" style={{ color: "var(--ink-2)" }} disabled={busy != null} onClick={() => void portal()}>{busy === "portal" && <span className="spinner" />}{d.billing}</button>}
         <span className="text-xs text-ink-3">{paid ? d.paidNote : d.checkoutNote}</span>
       </div>

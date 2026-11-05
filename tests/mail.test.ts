@@ -18,4 +18,12 @@ describe("alert email", () => {
     expect(h).toContain("Reserve on apple.com");
     expect(h).not.toContain("<script");
   });
+  it("ends with a way to cancel the plan, in the reader's language", () => {
+    const t = alertText(lines, "https://pickupchecker.com/account?watch=x");
+    expect(t).toContain("Cancel anytime: https://pickupchecker.com/account/cancel");
+    const h = alertHtml(lines, "https://pickupchecker.com/account?watch=x");
+    expect(h).toContain('href="https://pickupchecker.com/account/cancel"');
+    expect(h).toContain(">Cancel anytime</a>");
+    expect(alertText(lines, "https://pickupchecker.com/account?watch=x", "ja")).toContain("いつでも解約できます：https://pickupchecker.com/account/cancel");
+  });
 });
