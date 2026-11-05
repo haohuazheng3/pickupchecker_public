@@ -35,6 +35,20 @@ export const notifyEn = {
     cancel: (url: string) => `Got your iPhone? Cancel anytime: ${url}`,
     htmlGotIt: "Got your iPhone?",
     htmlCancel: "Cancel anytime",
+    /** Under every alert that went by e-mail: the faster way exists. `url` = /install. */
+    nudge: (url: string) => `This came by email because no phone has notifications on for your account. A phone notification lands about 3 seconds after a restock — open PickupChecker from your Home Screen and tap "Turn on notifications": ${url}`,
+    /** HTML: <b> and the link allowed; `url` is already escaped. */
+    htmlNudge: (url: string) => `This came by email because no phone has notifications on for your account. A <b>phone notification lands about 3 seconds</b> after a restock — open PickupChecker from your Home Screen and tap <b>Turn on notifications</b>. <a href="${url}" style="color:#0a7f3f">How to set it up →</a>`,
+  },
+  /** The one e-mail (at most every 14 days) to a member whose alerts go by e-mail: turn notifications on. */
+  nudge: {
+    subject: "Get iPhone Duo restock alerts on your phone, about 3 seconds after they happen",
+    intro: "Your PickupChecker alerts arrive by email because no phone has notifications turned on for your account. Email is the slow lane: a typical iPhone Duo restock sells out in about a minute, while a phone notification lands about 3 seconds after we confirm the restock.",
+    howTitle: "Turn them on in under a minute:",
+    stepsIos: ["On your iPhone, open pickupchecker.com in Safari, tap Share, then Add to Home Screen.", "Open PickupChecker from the Home Screen (not Safari) and sign in.", "On the Account page, tap Turn on notifications, then Allow."],
+    stepsOther: "On Android or a computer: open pickupchecker.com/account and tap Turn on notifications.",
+    after: "Until a device is on, your alerts keep coming by email; from then on they arrive as notifications, and the email stops.",
+    cta: (url: string) => `Setup guide with pictures: ${url}`,
   },
   /** Stripe Checkout's line above the pay button: the plan, its alerts, how fast checks run (5 s / 15 s / ~3 s push). */
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${limit} alerts. Your stores are checked every ${fastSec} s (every store every ${checkSec} s), with a push about ${alertSec} s after a restock is confirmed. Monthly, cancel anytime.`,

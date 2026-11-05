@@ -35,6 +35,8 @@ export const notifyZhHK: NotifyText = {
     cancel: (url: string) => `已買到 iPhone？隨時可以取消訂閱：${url}`,
     htmlGotIt: "已買到 iPhone？",
     htmlCancel: "隨時取消訂閱",
+    nudge: (url: string) => `這封郵件是因為您的帳戶沒有任何手機開啟通知才寄出的。手機通知在補貨後約 3 秒就會送達——請從主畫面開啟 PickupChecker，按「開啟通知」：${url}`,
+    htmlNudge: (url: string) => `這封郵件是因為您的帳戶沒有任何手機開啟通知才寄出的。<b>手機通知在補貨後約 3 秒</b>就會送達——請從主畫面開啟 PickupChecker，按<b>開啟通知</b>。<a href="${url}" style="color:#0a7f3f">設定方法 →</a>`,
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}：${limit} 個提醒。你的分店每 ${fastSec} 秒檢查一次（所有分店每 ${checkSec} 秒），確認補貨後約 ${alertSec} 秒推送。按月收費，隨時取消。`,
   stopped: {
@@ -45,5 +47,14 @@ export const notifyZhHK: NotifyText = {
     reopenIos: "請從主畫面（不是 Safari）打開 PickupChecker，在帳戶頁按「開啟通知」。",
     reopenOther: "請打開 PickupChecker，前往帳戶頁並按「開啟通知」。",
     causes: "常見原因：App 已從主畫面移除、通知在「設定」中被關閉，或手機曾經還原。",
+  },
+  nudge: {
+    subject: "在手機上接收 iPhone Duo 補貨提醒，補貨後約 3 秒送達",
+    intro: "您的 PickupChecker 提醒目前以郵件寄送，因為您的帳戶沒有任何手機開啟通知。郵件是慢車道：一次 iPhone Duo 補貨通常約一分鐘就售罄，而手機通知在我們確認補貨後約 3 秒就會送達。",
+    howTitle: "不用一分鐘即可開啟：",
+    stepsIos: ["在 iPhone 的 Safari 開啟 pickupchecker.com，按「分享」，再按「加入主畫面」。", "從主畫面（而不是 Safari）開啟 PickupChecker 並登入。", "在「帳戶」頁按「開啟通知」，再按「允許」。"],
+    stepsOther: "Android 或電腦：開啟 pickupchecker.com/account，按「開啟通知」。",
+    after: "在有裝置開啟通知之前，提醒會繼續以郵件寄送；之後改以通知送達，郵件即停止。",
+    cta: (url: string) => `圖文設定教學：${url}`,
   },
 };

@@ -32,6 +32,8 @@ export const notifyJa: NotifyText = {
     cancel: (url: string) => `iPhoneを手に入れましたか？いつでも解約できます：${url}`,
     htmlGotIt: "iPhoneを手に入れましたか？",
     htmlCancel: "いつでも解約できます",
+    nudge: (url: string) => `このメールが届いたのは、お客様のアカウントで通知をオンにしたスマートフォンがないためです。スマートフォンの通知なら入荷から約3秒で届きます。ホーム画面からPickupCheckerを開き、「通知をオンにする」をタップしてください：${url}`,
+    htmlNudge: (url: string) => `このメールが届いたのは、お客様のアカウントで通知をオンにしたスマートフォンがないためです。<b>スマートフォンの通知なら入荷から約3秒</b>で届きます。ホーム画面からPickupCheckerを開き、<b>通知をオンにする</b>をタップしてください。<a href="${url}" style="color:#0a7f3f">設定方法 →</a>`,
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}：通知${limit}件。選んだ店舗は${fastSec}秒ごと（全店舗は${checkSec}秒ごと）にチェックし、入荷を確認してから約${alertSec}秒でプッシュ通知。月額、いつでも解約できます。`,
   stopped: {
@@ -42,5 +44,14 @@ export const notifyJa: NotifyText = {
     reopenIos: "ホーム画面から（Safariではなく）PickupCheckerを開き、「マイ通知」ページで「通知をオンにする」をタップしてください。",
     reopenOther: "PickupCheckerを開き、「マイ通知」ページで「通知をオンにする」をタップしてください。",
     causes: "よくある原因：ホーム画面からアプリを削除した、設定で通知をオフにした、iPhoneを復元した。",
+  },
+  nudge: {
+    subject: "iPhone Duoの入荷通知をスマートフォンで、入荷から約3秒で受け取る",
+    intro: "PickupCheckerの通知がメールで届いているのは、お客様のアカウントで通知をオンにしたスマートフォンがないためです。メールは遅い経路です。iPhone Duoの入荷は通常1分ほどで売り切れますが、スマートフォンの通知は確認から約3秒で届きます。",
+    howTitle: "1分以内にオンにできます：",
+    stepsIos: ["iPhoneのSafariでpickupchecker.comを開き、共有ボタンから「ホーム画面に追加」をタップします。", "ホーム画面から（Safariではなく）PickupCheckerを開き、ログインします。", "アカウントページで「通知をオンにする」をタップし、「許可」を選びます。"],
+    stepsOther: "Androidやパソコンの場合：pickupchecker.com/accountを開き、「通知をオンにする」をタップしてください。",
+    after: "端末で通知をオンにするまでは、通知はメールで届き続けます。オンにした後は通知として届き、メールは止まります。",
+    cta: (url: string) => `図解付きの設定ガイド：${url}`,
   },
 };

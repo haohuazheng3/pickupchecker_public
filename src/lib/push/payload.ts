@@ -63,15 +63,34 @@ export function sanitizePartNumber(partNumber: string): string {
   return partNumber.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-/** One alert is one store × one model × one storage × one colour, so the tag names all four. */
-export function restockTag(watchId: string, storeNumber: string, partNumber: string): string {
-  return `restock-${watchId}-${storeNumber}-${sanitizePartNumber(partNumber)}`;
+/**
+ * The tag names the rule, the store and every configuration in the banner, so two banners for the same store that
+ * list different configurations never replace each other, while a repeat of the same one does.
+ */
+export function restockTag(watchId: string, storeNumber: string, partNumber: string | string[]): string {
+  const parts = [...new Set(Array.isArray(partNumber) ? partNumber : [partNumber])].sort();
+  return `restock-${watchId}-${storeNumber}-${parts.map(sanitizePartNumber).join("-")}`;
+}
+
+/**
+ * The banner's first line. One configuration: "iPhone Duo 512GB Night Sky". Several of the same model and storage
+ * that came back together: "iPhone Duo 512GB Night Sky & Star White" (11-05: a member watching both colours at
+ * Apple Somerset got two banners a second apart and read only the second). Mixed: each configuration, joined.
+ */
+export function restockTitle(lines: AlertLine[], lang: Lang = "en"): string {
+  const seen = new Set<string>();
+  const items = lines.map((l) => l.item).filter((i) => { const k = i.partNumber; if (seen.has(k)) return false; seen.add(k); return true; });
+  if (items.length <= 1) return configText(items[0] ?? lines[0].item, lang);
+  const sameLine = items.every((i) => i.model === items[0].model && i.storage === items[0].storage);
+  if (sameLine) return `${items[0].model} ${items[0].storage} ${items.map((i) => colorLabel(i.color, lang)).join(" & ")}`;
+  return items.map((i) => configText(i, lang)).join(" + ");
 }
 
 export function restockPayload(lines: AlertLine | AlertLine[], watchId: string, now = new Date(), lang: Lang = "en"): PushPayload {
-  const first = Array.isArray(lines) ? lines[0] : lines;
+  const list = Array.isArray(lines) ? lines : [lines];
+  const first = list[0];
   const T = notifyText(lang);
-  const title = T.pushTitle(configText(first.item, lang));
+  const title = T.pushTitle(restockTitle(list, lang));
   // "Apple SoHo · New York, NY"; elsewhere "Apple Regent Street · London, UK"; in Japanese "Apple 銀座 · 東京, 日本".
   const where = whereText(first.store, lang);
   const quote = alertQuote(first, lang);
@@ -84,7 +103,7 @@ export function restockPayload(lines: AlertLine | AlertLine[], watchId: string, 
     // The store's page where its country's pages are live; elsewhere the account page (never a 404).
     // In the reader's language where the store's country has that version (a Tokyo store for a Japanese reader: /ja-jp/…).
     url: COUNTRIES_WITH_PAGES.has(first.store.country ?? "us") ? localizePath(`${storePath(first.store)}?from=push`, lang) : "/account?from=push",
-    tag: restockTag(watchId, first.store.storeNumber, first.item.partNumber),
+    tag: restockTag(watchId, first.store.storeNumber, list.map((l) => l.item.partNumber)),
     at: now.toISOString(),
     data: { buyUrl: appleBuyUrl(first.item, first.store.country), storeNumber: first.store.storeNumber, partNumber: first.item.partNumber },
   };

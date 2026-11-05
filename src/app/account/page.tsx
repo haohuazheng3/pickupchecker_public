@@ -75,6 +75,14 @@ export default async function Account() {
         <SignOutButton />
       </div>
 
+      {/* First thing on the dashboard (owner 2026-11-05): are phone notifications on? If not, the one button that turns them on. */}
+      <div>
+        <PushSetup vapidPublicKey={env.vapidPublicKey()} account={deviceInfo} />
+        {devices.length > 0 && (
+          <DeviceList devices={devices.map((x) => ({ id: x.id, platform: x.platform, standalone: x.standalone, added: ago(lang, x.createdAt), lastAlert: x.lastSentAt ? ago(lang, x.lastSentAt) : null, disabledAt: x.disabledAt?.toISOString() ?? null, lastError: x.lastError }))} />
+        )}
+      </div>
+
       <AlertEditor variant="page" catalog={buildPhoneCatalog(home, lang)} known={chosen} account={{ set, plan: { key: plan.key, limit: plan.limit, used: active } }} />
 
       <Section id="plan" title={d.plan.title} defaultOpen={plan.key === "free"}
@@ -83,14 +91,6 @@ export default async function Account() {
         <PlanPanel recommend={plan.key === "free" ? fit : active > plan.limit ? PAID_PLANS.find((k) => PLANS[k].limit >= active) ?? "max" : null}
           plan={{ key: plan.key, limit: plan.limit, used: active, renewsAt: sub?.currentPeriodEnd?.toISOString() ?? null, cancelAtPeriodEnd: Boolean(sub?.cancelAtPeriodEnd), status: sub?.status ?? null, hasCustomer: Boolean(row[0]?.stripeCustomerId) }} />
       </Section>
-
-      {/* Always shown, never folded: where alerts land is part of every visit. */}
-      <div>
-        <PushSetup vapidPublicKey={env.vapidPublicKey()} account={deviceInfo} />
-        {devices.length > 0 && (
-          <DeviceList devices={devices.map((x) => ({ id: x.id, platform: x.platform, standalone: x.standalone, added: ago(lang, x.createdAt), lastAlert: x.lastSentAt ? ago(lang, x.lastSentAt) : null, disabledAt: x.disabledAt?.toISOString() ?? null, lastError: x.lastError }))} />
-        )}
-      </div>
 
       {/* What to do before the next alert, so the push leaves four taps; the guide and the window below. */}
       <FastCheckoutCard />

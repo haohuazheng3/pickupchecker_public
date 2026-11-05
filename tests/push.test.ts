@@ -64,6 +64,19 @@ describe("push payload", () => {
     expect(p.tag).toBe("restock-w2-R032-MJQ34LL-A");
     expect(restockPayload({ item, store, quote: null }, "w2").tag).toBe(p.tag);
   });
+  it("names every configuration that came back at the store in one banner (11-05 Somerset: two colours, two banners, one read)", () => {
+    const night = PART_INDEX.get("MK1H4LL/A")!; // iPhone Duo 512GB Night Sky
+    const white = PART_INDEX.get("MK1G4LL/A")!; // iPhone Duo 512GB Star White
+    const p = restockPayload([{ item: night, store, quote: "Available Today" }, { item: white, store, quote: null }], "w3");
+    expect(p.title).toBe("iPhone Duo 512GB Night Sky & Star White");
+    expect(p.body).toContain("Available Today");
+    // A different set of configurations is a different banner, never a replacement of the first.
+    expect(p.tag).toBe("restock-w3-R032-MK1G4LL-A-MK1H4LL-A");
+    expect(p.tag).not.toBe(restockPayload([{ item: night, store, quote: null }], "w3").tag);
+    // Mixed storage sizes: every configuration spelled out.
+    const mixed = restockPayload([{ item: night, store, quote: null }, { item, store, quote: null }], "w3");
+    expect(mixed.title).toBe(`iPhone Duo 512GB Night Sky + ${item.model} ${item.storage} ${item.color}`);
+  });
   it("builds tags the push service and Topic header accept", () => {
     expect(sanitizePartNumber("MJQ34LL/A")).toBe("MJQ34LL-A");
     expect(restockTag("8f1c", "R032", "MJQ34LL/A")).toBe("restock-8f1c-R032-MJQ34LL-A");

@@ -144,6 +144,30 @@ const PUSH_STOPPED_EMAIL_EVERY_MS = 30 * 24 * 60 * 60 * 1000;
  * subscription is revoked, and a user who never opens the app would otherwise never learn their
  * alerts moved to email. users.push_stopped_notified_at keeps it to one email per 30 days.
  */
+/** One "turn notifications on" e-mail per member whose alerts go by e-mail, at most every PUSH_NUDGE_EVERY_MS. */
+export const PUSH_NUDGE_EVERY_MS = 14 * 24 * 3600 * 1000;
+
+/**
+ * A member with no device gets alerts by e-mail; this is the one e-mail that tells them the phone banner exists and
+ * how to turn it on (owner 2026-11-05). Returns true when it was sent now.
+ */
+export async function sendPushNudge(userId: string, email: string, now = new Date(), lang: Lang = "en"): Promise<boolean> {
+  const d = db();
+  const [u] = await d.select({ at: schema.users.pushNudgeSentAt }).from(schema.users).where(eq(schema.users.id, userId)).limit(1);
+  if (u?.at && now.getTime() - u.at.getTime() < PUSH_NUDGE_EVERY_MS) return false;
+  const T = notifyText(lang).nudge;
+  const text = [T.intro, "", T.howTitle, ...T.stepsIos.map((s, i) => `${i + 1}. ${s}`), T.stepsOther, "", T.after, "", T.cta(`${env.siteUrl()}/install`), "", "— PickupChecker"].join("\n");
+  try {
+    await sendPlainEmail(email, T.subject, text);
+    await d.update(schema.users).set({ pushNudgeSentAt: now }).where(eq(schema.users.id, userId));
+    await logOps("poller", "info", "push nudge email sent", { userId });
+    return true;
+  } catch (e) {
+    await recordError("poller", `push nudge email failed: ${errorMessage(e)}`, { userId });
+    return false;
+  }
+}
+
 export async function notifyPushStopped(userId: string, email: string, disabledRows: PushRow[], now = new Date(), lang: Lang = "en"): Promise<boolean> {
   if (disabledRows.length === 0) return false;
   const d = db();

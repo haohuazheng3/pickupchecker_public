@@ -32,6 +32,8 @@ export const notifySv: NotifyText = {
     cancel: (url: string) => `Har du fått din iPhone? Säg upp när du vill: ${url}`,
     htmlGotIt: "Har du fått din iPhone?",
     htmlCancel: "Säg upp när du vill",
+    nudge: (url: string) => `Det här kom med e-post eftersom ingen telefon har notiser påslagna för ditt konto. En notis kommer cirka 3 sekunder efter en påfyllning – öppna PickupChecker från hemskärmen och tryck på ”Slå på notiser”: ${url}`,
+    htmlNudge: (url: string) => `Det här kom med e-post eftersom ingen telefon har notiser påslagna för ditt konto. En <b>notis kommer cirka 3 sekunder</b> efter en påfyllning – öppna PickupChecker från hemskärmen och tryck på <b>Slå på notiser</b>. <a href="${url}" style="color:#0a7f3f">Så gör du →</a>`,
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${limit} bevakningar. Dina butiker kollas var ${fastSec}:e sekund (alla butiker var ${checkSec}:e sekund), och notisen kommer cirka ${alertSec} s efter att en påfyllning bekräftats. Månadsvis, avsluta när du vill.`,
   stopped: {
@@ -42,5 +44,14 @@ export const notifySv: NotifyText = {
     reopenIos: "Öppna PickupChecker från hemskärmen (inte Safari) och tryck på ”Slå på notiser” på kontosidan.",
     reopenOther: "Öppna PickupChecker, gå till kontosidan och tryck på ”Slå på notiser”.",
     causes: "Vanliga orsaker: appen togs bort från hemskärmen, notiserna stängdes av i Inställningar, eller telefonen återställdes.",
+  },
+  nudge: {
+    subject: "Få påfyllningslarm för iPhone Duo i telefonen, cirka 3 sekunder efter påfyllningen",
+    intro: "Dina PickupChecker-larm kommer med e-post eftersom ingen telefon har notiser påslagna för ditt konto. E-post är den långsamma vägen: en typisk iPhone Duo-påfyllning tar slut på ungefär en minut, medan en notis kommer cirka 3 sekunder efter att vi bekräftat den.",
+    howTitle: "Slå på dem på under en minut:",
+    stepsIos: ["Öppna pickupchecker.com i Safari på din iPhone, tryck på Dela och sedan ”Lägg till på hemskärmen”.", "Öppna PickupChecker från hemskärmen (inte Safari) och logga in.", "Tryck på ”Slå på notiser” på kontosidan och sedan på ”Tillåt”."],
+    stepsOther: "På Android eller dator: öppna pickupchecker.com/account och tryck på ”Slå på notiser”.",
+    after: "Tills en enhet är påslagen fortsätter larmen att komma med e-post; därefter kommer de som notiser och e-posten upphör.",
+    cta: (url: string) => `Guide med bilder: ${url}`,
   },
 };

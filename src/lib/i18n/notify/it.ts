@@ -29,6 +29,8 @@ export const notifyIt: NotifyText = {
     cancel: (url: string) => `Hai già il tuo iPhone? Disdici quando vuoi: ${url}`,
     htmlGotIt: "Hai già il tuo iPhone?",
     htmlCancel: "Disdici quando vuoi",
+    nudge: (url: string) => `Questa e-mail è arrivata perché nessun telefono ha le notifiche attive per il suo account. Una notifica arriva circa 3 secondi dopo un rifornimento: apra PickupChecker dalla schermata Home e tocchi «Attiva le notifiche»: ${url}`,
+    htmlNudge: (url: string) => `Questa e-mail è arrivata perché nessun telefono ha le notifiche attive per il suo account. Una <b>notifica arriva circa 3 secondi</b> dopo un rifornimento: apra PickupChecker dalla schermata Home e tocchi <b>Attiva le notifiche</b>. <a href="${url}" style="color:#0a7f3f">Come fare →</a>`,
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${limit} avvisi. I tuoi negozi vengono controllati ogni ${fastSec} s (tutti i negozi ogni ${checkSec} s), con una notifica circa ${alertSec} s dopo un rifornimento confermato. Mensile, disdici quando vuoi.`,
   stopped: {
@@ -39,5 +41,14 @@ export const notifyIt: NotifyText = {
     reopenIos: "Apri PickupChecker dalla schermata Home (non da Safari) e tocca «Attiva le notifiche» nella pagina dell'account.",
     reopenOther: "Apri PickupChecker, vai all'account e tocca «Attiva le notifiche».",
     causes: "Cause comuni: l'app è stata rimossa dalla schermata Home, le notifiche sono state disattivate in Impostazioni o il telefono è stato ripristinato.",
+  },
+  nudge: {
+    subject: "Ricevi gli avvisi di rifornimento iPhone Duo sul telefono, circa 3 secondi dopo",
+    intro: "I suoi avvisi PickupChecker arrivano per e-mail perché nessun telefono ha le notifiche attive per il suo account. L’e-mail è la via lenta: un rifornimento iPhone Duo tipico si esaurisce in circa un minuto, mentre una notifica arriva circa 3 secondi dopo la conferma.",
+    howTitle: "Le attivi in meno di un minuto:",
+    stepsIos: ["Su iPhone apra pickupchecker.com in Safari, tocchi Condividi e poi «Aggiungi alla schermata Home».", "Apra PickupChecker dalla schermata Home (non da Safari) e acceda.", "Nella pagina Account tocchi «Attiva le notifiche» e poi «Consenti»."],
+    stepsOther: "Su Android o computer: apra pickupchecker.com/account e tocchi «Attiva le notifiche».",
+    after: "Finché nessun dispositivo è attivo, gli avvisi continuano ad arrivare per e-mail; da quel momento arrivano come notifiche e l’e-mail si ferma.",
+    cta: (url: string) => `Guida con immagini: ${url}`,
   },
 };

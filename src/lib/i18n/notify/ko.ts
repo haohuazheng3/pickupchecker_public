@@ -29,6 +29,8 @@ export const notifyKo: NotifyText = {
     cancel: (url: string) => `iPhone을 구하셨나요? 언제든 해지할 수 있어요: ${url}`,
     htmlGotIt: "iPhone을 구하셨나요?",
     htmlCancel: "언제든 해지하기",
+    nudge: (url: string) => `이 메일은 계정에 알림을 켠 휴대폰이 없어서 보내드린 것입니다. 휴대폰 알림은 재입고 후 약 3초 만에 도착합니다. 홈 화면에서 PickupChecker를 열고 “알림 켜기”를 눌러 주세요: ${url}`,
+    htmlNudge: (url: string) => `이 메일은 계정에 알림을 켠 휴대폰이 없어서 보내드린 것입니다. <b>휴대폰 알림은 재입고 후 약 3초</b> 만에 도착합니다. 홈 화면에서 PickupChecker를 열고 <b>알림 켜기</b>를 눌러 주세요. <a href="${url}" style="color:#0a7f3f">설정 방법 →</a>`,
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: 알림 ${limit}개. 내 매장은 ${fastSec}초마다(전체 매장은 ${checkSec}초마다) 확인하고, 재입고가 확인되면 약 ${alertSec}초 후 푸시가 와요. 월 구독, 언제든 해지 가능.`,
   stopped: {
@@ -39,5 +41,14 @@ export const notifyKo: NotifyText = {
     reopenIos: "Safari가 아닌 홈 화면에서 PickupChecker를 열고, 내 알림 페이지에서 ‘알림 켜기’를 누르세요.",
     reopenOther: "PickupChecker를 열고 내 알림 페이지에서 ‘알림 켜기’를 누르세요.",
     causes: "흔한 원인: 홈 화면에서 앱을 삭제했거나, 설정에서 알림을 껐거나, 휴대폰을 복원한 경우예요.",
+  },
+  nudge: {
+    subject: "iPhone Duo 재입고 알림을 휴대폰으로, 재입고 후 약 3초 만에 받기",
+    intro: "계정에 알림을 켠 휴대폰이 없어서 PickupChecker 알림이 이메일로 오고 있습니다. 이메일은 느린 경로입니다. iPhone Duo 재입고는 보통 1분 안에 매진되지만, 휴대폰 알림은 확인 후 약 3초 만에 도착합니다.",
+    howTitle: "1분 안에 켤 수 있습니다:",
+    stepsIos: ["iPhone의 Safari에서 pickupchecker.com을 열고 공유 버튼을 누른 뒤 “홈 화면에 추가”를 선택하세요.", "Safari가 아닌 홈 화면에서 PickupChecker를 열고 로그인하세요.", "계정 페이지에서 “알림 켜기”를 누르고 “허용”을 선택하세요."],
+    stepsOther: "Android나 컴퓨터에서는 pickupchecker.com/account를 열고 “알림 켜기”를 누르세요.",
+    after: "기기에서 알림을 켜기 전까지는 알림이 계속 이메일로 오고, 켠 뒤에는 알림으로 오며 이메일은 중단됩니다.",
+    cta: (url: string) => `그림으로 보는 설정 안내: ${url}`,
   },
 };

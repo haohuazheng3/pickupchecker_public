@@ -32,6 +32,8 @@ export const notifyDe: NotifyText = {
     cancel: (url: string) => `Schon Ihr iPhone bekommen? Jederzeit kündbar: ${url}`,
     htmlGotIt: "Schon Ihr iPhone bekommen?",
     htmlCancel: "Jederzeit kündigen",
+    nudge: (url: string) => `Diese Mail kam, weil auf keinem Handy Mitteilungen für Ihr Konto eingeschaltet sind. Eine Handy-Mitteilung kommt etwa 3 Sekunden nach einem Restock an – öffnen Sie PickupChecker vom Home-Bildschirm und tippen Sie auf „Mitteilungen einschalten“: ${url}`,
+    htmlNudge: (url: string) => `Diese Mail kam, weil auf keinem Handy Mitteilungen für Ihr Konto eingeschaltet sind. Eine <b>Handy-Mitteilung kommt etwa 3 Sekunden</b> nach einem Restock an – öffnen Sie PickupChecker vom Home-Bildschirm und tippen Sie auf <b>Mitteilungen einschalten</b>. <a href="${url}" style="color:#0a7f3f">So geht’s →</a>`,
   },
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${limit} Alarme. Ihre Stores werden alle ${fastSec} Sek. geprüft (jeder Store alle ${checkSec} Sek.), mit einem Push etwa ${alertSec} Sek. nach einem bestätigten Restock. Monatlich, jederzeit kündbar.`,
   stopped: {
@@ -42,5 +44,14 @@ export const notifyDe: NotifyText = {
     reopenIos: "Öffnen Sie PickupChecker vom Home-Bildschirm (nicht in Safari) und tippen Sie auf der Kontoseite auf „Mitteilungen einschalten“.",
     reopenOther: "Öffnen Sie PickupChecker, gehen Sie zu „Konto“ und tippen Sie auf „Mitteilungen einschalten“.",
     causes: "Häufige Ursachen: Die App wurde vom Home-Bildschirm entfernt, Mitteilungen wurden in den Einstellungen ausgeschaltet, oder das Handy wurde wiederhergestellt.",
+  },
+  nudge: {
+    subject: "iPhone-Duo-Restock-Alarme aufs Handy, etwa 3 Sekunden nach dem Restock",
+    intro: "Ihre PickupChecker-Alarme kommen per E-Mail, weil auf keinem Handy Mitteilungen für Ihr Konto eingeschaltet sind. E-Mail ist der langsame Weg: Ein typischer iPhone-Duo-Restock ist nach etwa einer Minute ausverkauft, eine Handy-Mitteilung kommt etwa 3 Sekunden nach der Bestätigung an.",
+    howTitle: "In unter einer Minute einschalten:",
+    stepsIos: ["Öffnen Sie pickupchecker.com auf dem iPhone in Safari, tippen Sie auf Teilen und dann auf „Zum Home-Bildschirm“.", "Öffnen Sie PickupChecker vom Home-Bildschirm (nicht in Safari) und melden Sie sich an.", "Tippen Sie auf der Kontoseite auf „Mitteilungen einschalten“ und dann auf „Erlauben“."],
+    stepsOther: "Auf Android oder am Computer: pickupchecker.com/account öffnen und auf „Mitteilungen einschalten“ tippen.",
+    after: "Bis ein Gerät eingeschaltet ist, kommen Ihre Alarme weiter per E-Mail; danach kommen sie als Mitteilung, und die E-Mail hört auf.",
+    cta: (url: string) => `Anleitung mit Bildern: ${url}`,
   },
 };

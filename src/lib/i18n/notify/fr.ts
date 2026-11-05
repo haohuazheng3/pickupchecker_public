@@ -42,6 +42,8 @@ const raw: NotifyText = {
     cancel: (url: string) => `Vous avez votre iPhone ? Résiliez à tout moment : ${url}`,
     htmlGotIt: "Vous avez votre iPhone ?",
     htmlCancel: "Résiliez à tout moment",
+    nudge: (url: string) => `Ce message est arrivé par e-mail parce qu’aucun téléphone n’a les notifications activées pour votre compte. Une notification arrive environ 3 secondes après un réassort – ouvrez PickupChecker depuis l’écran d’accueil et touchez « Activer les notifications » : ${url}`,
+    htmlNudge: (url: string) => `Ce message est arrivé par e-mail parce qu’aucun téléphone n’a les notifications activées pour votre compte. Une <b>notification arrive environ 3 secondes</b> après un réassort – ouvrez PickupChecker depuis l’écran d’accueil et touchez <b>Activer les notifications</b>. <a href="${url}" style="color:#0a7f3f">Comment faire →</a>`,
   },
   checkoutSubmit: (plan, limit, fastSec, checkSec, alertSec) => `${plan} : ${limit} alertes. Vos magasins sont vérifiés toutes les ${fastSec} s (chaque magasin toutes les ${checkSec} s), avec une notification environ ${alertSec} s après la confirmation d’un retour en stock. Mensuel, résiliable à tout moment.`,
   stopped: {
@@ -52,6 +54,15 @@ const raw: NotifyText = {
     reopenIos: "Ouvrez PickupChecker depuis votre écran d’accueil (pas dans Safari) et touchez « Activer les notifications » sur la page Compte.",
     reopenOther: "Ouvrez PickupChecker, allez dans Compte et touchez « Activer les notifications ».",
     causes: "Causes fréquentes : l’app a été retirée de l’écran d’accueil, les notifications ont été désactivées dans Réglages, ou le téléphone a été restauré.",
+  },
+  nudge: {
+    subject: "Recevez les alertes de réassort iPhone Duo sur votre téléphone, environ 3 secondes après",
+    intro: "Vos alertes PickupChecker arrivent par e-mail parce qu’aucun téléphone n’a les notifications activées pour votre compte. L’e-mail est la voie lente : un réassort iPhone Duo typique part en une minute environ, alors qu’une notification arrive environ 3 secondes après la confirmation.",
+    howTitle: "Activez-les en moins d’une minute :",
+    stepsIos: ["Sur votre iPhone, ouvrez pickupchecker.com dans Safari, touchez Partager, puis « Sur l’écran d’accueil ».", "Ouvrez PickupChecker depuis l’écran d’accueil (pas Safari) et connectez-vous.", "Sur la page Compte, touchez « Activer les notifications », puis « Autoriser »."],
+    stepsOther: "Sur Android ou un ordinateur : ouvrez pickupchecker.com/account et touchez « Activer les notifications ».",
+    after: "Tant qu’aucun appareil n’est activé, vos alertes continuent par e-mail ; ensuite elles arrivent en notification et l’e-mail s’arrête.",
+    cta: (url: string) => `Guide illustré : ${url}`,
   },
 };
 

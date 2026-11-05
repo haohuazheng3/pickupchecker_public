@@ -12,7 +12,7 @@ import { db, schema } from "../db";
 import { PART_INDEX, STORE_INDEX, itemFor, modelKeyFor } from "../apple/catalog";
 import { sendAlertEmail } from "../mail/resend";
 import { recordError, errorMessage } from "../errors";
-import { enabledSubscriptionsFor, notifyPushStopped, pushConfigured, sendPushToRows } from "../push/server";
+import { enabledSubscriptionsFor, notifyPushStopped, pushConfigured, sendPushNudge, sendPushToRows } from "../push/server";
 import { logOps } from "../ops";
 import { restockPayload } from "../push/payload";
 import { coveredWatchIds, effectivePlan } from "../plans";
@@ -85,8 +85,11 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
   const cooled = new Set(recent.map((r) => `${r.watchId}|${r.storeNumber}|${r.partNumber}`));
   const pushByUser = pushConfigured() ? await enabledSubscriptionsFor(active.map((c) => c.watch.userId)) : new Map<string, never[]>();
 
-  // Group per watch so one email can carry several stores/SKUs that restocked in the same sweep.
-  const perWatch = new Map<string, { c: (typeof active)[number]; items: { t: Transition; eventId: number }[] }>();
+  // Group per member: every rule of theirs that a restock of this sweep matched. One e-mail carries all of it; pushes go
+  // out one banner per store, naming every configuration that came back there (two banners a second apart for the
+  // same store read as one, 11-05 Apple Somerset).
+  type Hit = { watch: (typeof active)[number]["watch"]; t: Transition; eventId: number };
+  const perUser = new Map<string, { c: (typeof active)[number]; hits: Hit[] }>();
   for (const x of restocks) {
     const item = PART_INDEX.get(x.t.partNumber);
     const store = STORE_INDEX.get(x.t.storeNumber);
@@ -100,81 +103,68 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
         stats.skipped++;
         continue;
       }
-      const g = perWatch.get(w.id) ?? { c, items: [] };
-      g.items.push(x);
-      perWatch.set(w.id, g);
+      const g = perUser.get(w.userId) ?? { c, hits: [] };
+      g.hits.push({ watch: w, t: x.t, eventId: x.eventId });
+      perUser.set(w.userId, g);
     }
   }
 
-  // Every matched rule is sent concurrently: one slow push service never serialises the others.
-  await Promise.all([...perWatch.values()].map(async (g) => {
-    const w = g.c.watch;
-    const started = Date.now();
-    const lines = g.items.map((x) => {
-      const store = STORE_INDEX.get(x.t.storeNumber)!;
-      // The item as the store's country sells it (a ZD/A part at an Austrian store: the Austrian price).
-      const item = itemFor(x.t.partNumber, store.country)!;
-      return { item, store, quote: x.t.quote };
-    });
-    const devices = pushByUser.get(w.userId) ?? [];
+  const lineOf = (h: Hit) => {
+    const store = STORE_INDEX.get(h.t.storeNumber)!;
+    // The item as the store's country sells it (a ZD/A part at an Austrian store: the Austrian price).
+    const item = itemFor(h.t.partNumber, store.country)!;
+    return { item, store, quote: h.t.quote };
+  };
+  const record = (hits: Hit[], channel: "push" | "email", status: "sent" | "failed", extra: { providerId?: string | null; latencyMs?: number; error?: string }) =>
+    d.insert(schema.notifications).values(hits.map((h) => ({
+      watchId: h.watch.id, userId: h.watch.userId, eventId: h.eventId ?? null, storeNumber: h.t.storeNumber, partNumber: h.t.partNumber,
+      channel, status, providerId: extra.providerId ?? null, latencyMs: extra.latencyMs ?? null, error: extra.error, createdAt: now,
+    }))).onConflictDoNothing();
+
+  // Every member is served concurrently: one slow push service never serialises the others.
+  await Promise.all([...perUser.values()].map(async (g) => {
+    const userId = g.c.watch.userId;
+    const devices = pushByUser.get(userId) ?? [];
     // The person's language (their account's, set when they signed up in it or chose it): text, store names, the page the push opens.
     const lang = langOfUser(g.c.locale);
-    let channel: "push" | "email" = devices.length ? "push" : "email";
-    try {
-      let providerId: string | null = null;
-      if (channel === "push") {
-        const r = await sendPushToRows(devices, restockPayload(lines, w.id, now, lang), { source: "poller" });
-        // Only when nothing reached the user: a device the push service dropped (410) while another
-        // device received the alert is a rotation, not an outage.
-        if (r.sent === 0 && r.disabledRows.length) await notifyPushStopped(w.userId, g.c.email, r.disabledRows, now, lang).catch(() => undefined);
-        if (r.sent > 0) providerId = r.firstId;
-        else {
-          // Every device failed: the alert still goes out, by email, instead of being lost.
-          channel = "email";
-          await logOps("poller", "warn", `push to ${devices.length} device(s) failed, falling back to email`, { watchId: w.id, errors: r.errors.slice(0, 3) });
+    const started = Date.now();
+    let byEmail: Hit[] = devices.length ? [] : g.hits;
+    if (devices.length) {
+      // One banner per store, in parallel; a store whose push reached no device falls back to e-mail below.
+      const byStore = new Map<string, Hit[]>();
+      for (const h of g.hits) byStore.set(h.t.storeNumber, [...(byStore.get(h.t.storeNumber) ?? []), h]);
+      await Promise.all([...byStore.values()].map(async (hits) => {
+        try {
+          const r = await sendPushToRows(devices, restockPayload(hits.map(lineOf), hits[0].watch.id, now, lang), { source: "poller" });
+          // Only when nothing reached the user: a device the push service dropped (410) while another
+          // device received the alert is a rotation, not an outage.
+          if (r.sent === 0 && r.disabledRows.length) await notifyPushStopped(userId, g.c.email, r.disabledRows, now, lang).catch(() => undefined);
+          if (r.sent > 0) {
+            await record(hits, "push", "sent", { providerId: r.firstId, latencyMs: Date.now() - started });
+            stats.sent += hits.length;
+          } else {
+            // Every device failed: the alert still goes out, by email, instead of being lost.
+            await logOps("poller", "warn", `push to ${devices.length} device(s) failed, falling back to email`, { watchId: hits[0].watch.id, errors: r.errors.slice(0, 3) });
+            byEmail = [...byEmail, ...hits];
+          }
+        } catch (e) {
+          stats.failed += hits.length;
+          await recordError("poller", `alert push failed: ${errorMessage(e)}`, { watchId: hits[0].watch.id });
+          await record(hits, "push", "failed", { error: errorMessage(e).slice(0, 500) });
         }
-      }
-      if (channel === "email") {
-        providerId = await sendAlertEmail(g.c.email, lines, w.id, lang);
-      }
-      const latency = Date.now() - started;
-      await d
-        .insert(schema.notifications)
-        .values(
-          g.items.map((x) => ({
-            watchId: w.id,
-            userId: w.userId,
-            eventId: x.eventId ?? null,
-            storeNumber: x.t.storeNumber,
-            partNumber: x.t.partNumber,
-            channel,
-            status: "sent",
-            providerId,
-            latencyMs: latency,
-            createdAt: now,
-          })),
-        )
-        .onConflictDoNothing();
-      stats.sent += g.items.length;
+      }));
+    }
+    if (byEmail.length === 0) return;
+    try {
+      const providerId = await sendAlertEmail(g.c.email, byEmail.map(lineOf), byEmail[0].watch.id, lang);
+      await record(byEmail, "email", "sent", { providerId, latencyMs: Date.now() - started });
+      stats.sent += byEmail.length;
+      // No device at all: once in a while, the e-mail that says the phone banner exists (never blocks the alert).
+      if (devices.length === 0) sendPushNudge(userId, g.c.email, now, lang).catch(() => undefined);
     } catch (e) {
-      stats.failed += g.items.length;
-      await recordError("poller", `alert ${channel} failed: ${errorMessage(e)}`, { watchId: w.id });
-      await d
-        .insert(schema.notifications)
-        .values(
-          g.items.map((x) => ({
-            watchId: w.id,
-            userId: w.userId,
-            eventId: x.eventId ?? null,
-            storeNumber: x.t.storeNumber,
-            partNumber: x.t.partNumber,
-            channel,
-            status: "failed",
-            error: errorMessage(e).slice(0, 500),
-            createdAt: now,
-          })),
-        )
-        .onConflictDoNothing();
+      stats.failed += byEmail.length;
+      await recordError("poller", `alert email failed: ${errorMessage(e)}`, { watchId: byEmail[0].watch.id });
+      await record(byEmail, "email", "failed", { error: errorMessage(e).slice(0, 500) });
     }
   }));
   if (eventIds.length) {
