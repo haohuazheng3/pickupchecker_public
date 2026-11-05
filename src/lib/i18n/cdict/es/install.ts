@@ -64,7 +64,7 @@ export const install: CDict["install"] = {
   notes: [
     { q: "¿Por qué Safari en el iPhone?", a: "Solo Safari puede añadir una web a la pantalla de inicio. Los navegadores integrados en otras apps, no." },
     { q: "¿Y la batería?", a: "En tu móvil no se ejecuta nada. Las comprobaciones las hacen nuestros servidores." },
-    { q: "¿Y el correo?", a: "No. Las alertas solo llegan como notificaciones, así que actívalas en al menos un dispositivo." },
+    { q: "¿Y el correo?", a: "¿Ningún dispositivo con las notificaciones activadas? Entonces la alerta te llega por correo." },
     { q: "¿Varios dispositivos?", a: "Inicia sesión con el mismo correo en cada uno. Todos reciben todas las alertas." },
   ],
   cta: { title: "¿Aún no tienes ninguna alerta?", button: "Crea una alerta" },

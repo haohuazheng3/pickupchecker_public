@@ -554,7 +554,7 @@ export default async function DuoBackInStock() {
           <p><b>{PRICE_SENTENCE}</b> That interval is the shortest any iPhone stock tracker publishes that we know of (the others publish {OTHER_TRACKERS}), and against a listing that lasts about {band ?? "a minute"} it is the difference between a push you can act on and a notification about a phone that is already gone.</p>
           <StepStrip className="my-4 lg:grid-cols-3!" steps={[
             { title: "Pick the store and configuration", hint: <>one alert = one Apple Store × one storage and color; two or three stores you can reach by 9 AM beat ten you cannot</> },
-            { title: "Install the Home Screen app", hint: <>on iPhone, add PickupChecker from Safari and allow notifications once; alerts are push notifications only</> },
+            { title: "Install the Home Screen app", hint: <>on iPhone, add PickupChecker from Safari and allow notifications once; alerts arrive as push notifications, or by email while no device is set up</> },
             { title: "Stage Apple's checkout", hint: <>signed in, Apple Pay ready, the configuration&apos;s buy page open; when the push comes, change the store and pay</> },
           ]} />
           <Keys items={[

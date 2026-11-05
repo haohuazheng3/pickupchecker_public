@@ -91,7 +91,7 @@ function Explain({ p, d }: { p: PushState; d: T }) {
     case "needs-signin": return <>{e.needsSignin}</>;
     case "denied": return <B text={p.platform === "ios" ? e.deniedIos : e.denied} />;
     // "Off" must read as off: "you're in the app, restocks land here in seconds" over an Off pill left a paying
-    // user believing they were set while no alert reached a device (FlowGlance, 2026-11-02). Alerts are push only.
+    // user believing they were set while every alert went to their email (FlowGlance, 2026-11-02).
     case "ready": return <B text={p.platform === "ios" ? e.readyIos : p.standalone ? e.readyDevice : e.readyBrowser} />;
     case "on": return <>{e.on}</>;
   }

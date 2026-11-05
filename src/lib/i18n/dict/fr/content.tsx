@@ -86,7 +86,7 @@ export const content: Dict["content"] = {
       "Chaque changement confirmé est enregistré ; ce journal alimente le graphique et l’historique des retours en stock de cette page.",
     ];
   },
-  alertRule: "Une alerte = un magasin, un modèle, une capacité, une couleur ; une notification part quelques secondes après qu’apple.com passe à « disponible ».",
+  alertRule: "Une alerte = un magasin, un modèle, une capacité, une couleur ; une notification (ou un e-mail) part quelques secondes après qu’apple.com passe à « disponible ».",
 
   titles: {
     state: (name, duoNow, stores) => [

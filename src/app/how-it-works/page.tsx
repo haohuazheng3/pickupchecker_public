@@ -268,7 +268,7 @@ export default async function HowItWorks() {
           <Points className="mt-5" items={[
             { text: <>Public availability only: no quantities, no holds</>, no: true },
             { text: <>Apple sometimes shows stock already reserved for other orders</>, no: true },
-            { text: <Inline text="Alerts come only as phone notifications, never by email; on iPhone they need the Home Screen app ([install](/install))" facts={facts} /> },
+            { text: <Inline text="Phone notifications need the Home Screen app ([install](/install)); without one, alerts come by email from alerts@pickupchecker.com" facts={facts} /> },
           ]} />
           <div className="mt-5"><Link href="/#notify" className="btn btn-primary">Set up an alert</Link></div>
         </Section>

@@ -141,9 +141,8 @@ const PUSH_STOPPED_EMAIL_EVERY_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
  * One email when a device goes quiet: iOS drops the subscription when the app is deleted or the
- * subscription is revoked, and alerts are push only (no email alerts), so a user who never opens the
- * app would otherwise never learn they stopped getting alerts. This is an account notice, not a restock
- * alert. users.push_stopped_notified_at keeps it to one email per 30 days.
+ * subscription is revoked, and a user who never opens the app would otherwise never learn their
+ * alerts moved to email. users.push_stopped_notified_at keeps it to one email per 30 days.
  */
 export async function notifyPushStopped(userId: string, email: string, disabledRows: PushRow[], now = new Date(), lang: Lang = "en"): Promise<boolean> {
   if (disabledRows.length === 0) return false;
@@ -157,7 +156,7 @@ export async function notifyPushStopped(userId: string, email: string, disabledR
   const subject = T.subject(device);
   const text = [
     T.gone(device),
-    T.noAlerts,
+    T.byEmail,
     "",
     reopen,
     `${env.siteUrl()}/account`,

@@ -31,13 +31,13 @@ export const account: CDict["account"] = {
       checking: "正在檢查這台裝置…",
       inAppBrowser: "點 ··· 並選擇 **以 Safari 開啟**（或 Chrome）。",
       needsInstall: "在 iPhone 和 iPad 上，只有從主畫面 App 才收得到通知。",
-      unsupported: "這個瀏覽器無法接收通知，而通知不會寄到 Email。請在主畫面 App 或另一台裝置開啟。",
+      unsupported: "這個瀏覽器無法接收通知，所以通知會寄到你的 Email。",
       needsSignin: "請在這台裝置登入，才能開啟通知。",
       deniedIos: "請到 **設定 → 通知 → PickupChecker** 允許，然後重新整理。",
       denied: "請在瀏覽器的網站設定中允許通知，然後重新整理。",
-      readyIos: "目前關閉，所以收不到補貨通知：通知只用推播送出，不會寄 Email。點 **開啟通知**，再點 **允許**，通知就會在幾秒內送到這裡。",
-      readyDevice: "目前關閉，所以收不到補貨通知：通知只用推播送出，不會寄 Email。點 **開啟通知**，通知就會在幾秒內送到這裡。",
-      readyBrowser: "這個瀏覽器目前關閉，所以收不到補貨通知：通知只用推播送出，不會寄 Email。點 **開啟通知**，通知就會在幾秒內送到這裡。",
+      readyIos: "這台裝置還沒開啟，所以目前通知會寄到你的 Email。點 **開啟通知**，再點 **允許**，通知就會在幾秒內送到這裡。",
+      readyDevice: "這台裝置還沒開啟，所以目前通知會寄到你的 Email。點 **開啟通知**，通知就會在幾秒內送到這裡。",
+      readyBrowser: "這個瀏覽器還沒開啟，所以目前通知會寄到你的 Email。點 **開啟通知**，通知就會在幾秒內送到這裡。",
       on: "就算 App 沒開，補貨通知也會在幾秒內送到這裡。",
     },
     elsewhere: {
@@ -109,8 +109,8 @@ export const account: CDict["account"] = {
 
   language: {
     title: "語言",
-    label: "這個頁面與你的通知使用的語言",
-    help: "推播與 Stripe 結帳頁都會依照這個設定；價格維持各門市的幣別，時間用各門市當地的時區。",
+    label: "這個頁面、你的通知與 Email 使用的語言",
+    help: "推播、通知 Email 與 Stripe 結帳頁都會依照這個設定；價格維持各門市的幣別，時間用各門市當地的時區。",
     alertsIn: "你的通知目前使用的語言：{lang}。",
     saving: "儲存中…",
   },

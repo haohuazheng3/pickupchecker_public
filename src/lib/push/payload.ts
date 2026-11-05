@@ -2,19 +2,12 @@
  * What a push notification carries. The service worker (public/sw.js) reads exactly these fields,
  * so keep them small: push services cap payloads at 4 KB and iOS shows ~2 lines of body.
  */
+import type { AlertLine } from "../mail/resend";
 import { appleBuyUrl, storePath, storeLocality, appleName } from "../apple/catalog-us";
 import { COUNTRIES_WITH_PAGES, type CountryCode } from "../apple/countries";
 import { baseLang, localizePath, type Lang } from "../i18n/locales";
 import { appleStoreLabel, cityLabel, colorLabel, countryLabel } from "../i18n/places";
 import { notifyText } from "../i18n/notify";
-import type { CatalogItem, Store } from "../apple/catalog";
-
-/** One restocked phone at one store, as an alert describes it (`quote` = Apple's own pickup wording). */
-export interface AlertLine {
-  item: CatalogItem;
-  store: Store;
-  quote: string | null;
-}
 
 /**
  * Apple's pickup quote, only where it is English: the US answers "Available Today", other countries answer in

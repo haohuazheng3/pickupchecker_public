@@ -93,7 +93,7 @@ export const content: Dict["content"] = {
       "Cada cambio confirmado queda registrado, y ese registro alimenta el gráfico y el historial de reposiciones de esta página.",
     ];
   },
-  alertRule: "Una alerta = una tienda, un modelo, una capacidad y un color; el aviso sale segundos después de que apple.com lo marque como disponible.",
+  alertRule: "Una alerta = una tienda, un modelo, una capacidad y un color; el aviso (o el correo) sale segundos después de que apple.com lo marque como disponible.",
 
   titles: {
     state: (name: string, duoNow: string, stores: string) => [

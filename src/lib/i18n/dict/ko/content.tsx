@@ -86,7 +86,7 @@ export const content: Dict["content"] = {
       "확인된 변화는 모두 기록되고, 이 기록이 이 페이지의 재입고 차트와 이력을 만들어요.",
     ];
   },
-  alertRule: "알림 하나 = 매장 하나, 모델 하나, 용량 하나, 색상 하나. apple.com에서 픽업 가능으로 바뀌면 몇 초 안에 푸시가 가요.",
+  alertRule: "알림 하나 = 매장 하나, 모델 하나, 용량 하나, 색상 하나. apple.com에서 픽업 가능으로 바뀌면 몇 초 안에 푸시(또는 이메일)가 가요.",
 
   titles: {
     state: (name: string, duoNow: string, stores: string) => [

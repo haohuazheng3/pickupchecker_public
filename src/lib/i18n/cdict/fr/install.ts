@@ -64,7 +64,7 @@ export const install: CDict["install"] = {
   notes: [
     { q: "Pourquoi Safari sur iPhone ?", a: "Seul Safari peut ajouter un site à l’écran d’accueil. Les navigateurs intégrés aux apps ne le peuvent pas." },
     { q: "La batterie ?", a: "Rien ne tourne sur votre téléphone. Ce sont nos serveurs qui vérifient." },
-    { q: "Et l’e-mail ?", a: "Non. Les alertes arrivent uniquement en notification : activez-les sur au moins un appareil." },
+    { q: "Et l’e-mail ?", a: "Aucun appareil avec les notifications activées ? L’alerte part alors par e-mail." },
     { q: "Plusieurs appareils ?", a: "Connectez-vous avec le même e-mail sur chacun. Chaque appareil reçoit chaque alerte." },
   ],
   cta: { title: "Pas encore d’alerte ?", button: "Créer une alerte" },

@@ -1,6 +1,5 @@
 /**
- * Notification texts (push, "notifications stopped" email, device names), English. There is no alert email:
- * restock alerts are push only (CLAUDE.md 「提醒只有消息弹窗」). Plain TS with no
+ * Notification texts (push, alert email, "notifications stopped" email, device names), English. Plain TS with no
  * imports: the poller sends these too. Every language mirrors this shape in notify/<lang>.ts.
  */
 export const notifyEn = {
@@ -18,13 +17,32 @@ export const notifyEn = {
     computer: (browser: string) => `computer${browser ? ` (${browser})` : ""}`,
     other: "this device",
   },
+  email: {
+    /** `more`: how many other alerts the same email carries (0 = none). */
+    subject: (cfg: string, store: string, more: number) => `In stock: ${cfg} at ${store}${more > 0 ? ` +${more} more` : ""}`,
+    intro: "Good news — available for in-store pickup right now:",
+    reserve: "Reserve",
+    store: "Store",
+    tip: 'Pickup stock moves fast: open the Apple Store app or apple.com, choose "Pick up", and select the store.',
+    manage: (url: string) => `Manage or pause this alert: ${url}`,
+    htmlTitle: "In stock for pickup now",
+    htmlReserve: "Reserve on apple.com",
+    htmlStorePage: "Store page →",
+    /** HTML: <b>…</b> allowed. */
+    htmlTip: "Pickup stock moves fast — reserve in the Apple Store app or on apple.com, choose <b>Pick up</b> and select the store.",
+    htmlManage: "Manage or pause this alert",
+    /** The plan's way out, under every alert: `url` = /account/cancel (lands on the plan's cancel step). */
+    cancel: (url: string) => `Got your iPhone? Cancel anytime: ${url}`,
+    htmlGotIt: "Got your iPhone?",
+    htmlCancel: "Cancel anytime",
+  },
   /** Stripe Checkout's line above the pay button: the plan, its alerts, how fast checks run (5 s / 15 s / ~3 s push). */
   checkoutSubmit: (plan: string, limit: number, fastSec: number, checkSec: number, alertSec: number) => `${plan}: ${limit} alerts. Your stores are checked every ${fastSec} s (every store every ${checkSec} s), with a push about ${alertSec} s after a restock is confirmed. Monthly, cancel anytime.`,
   stopped: {
     deviceWord: { ios: "iPhone", android: "Android phone", desktop: "computer", other: "device" },
     subject: (device: string) => `Notifications stopped on your ${device} — open PickupChecker from the Home Screen`,
     gone: (device: string) => `Your ${device} stopped accepting PickupChecker notifications (the push service reported the subscription is gone).`,
-    noAlerts: "Until you turn them back on, restock alerts can't reach you: PickupChecker sends alerts only as notifications, never by email.",
+    byEmail: "Restock alerts for your rules now arrive by email until you turn notifications back on.",
     reopenIos: 'Open PickupChecker from your Home Screen (not Safari) and tap "Turn on notifications" on the Account page.',
     reopenOther: 'Open PickupChecker, go to Account and tap "Turn on notifications".',
     causes: "Common causes: the app was removed from the Home Screen, notifications were switched off in Settings, or the phone was restored.",

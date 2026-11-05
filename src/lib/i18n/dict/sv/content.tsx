@@ -89,7 +89,7 @@ export const content: Dict["content"] = {
       "Varje bekräftad ändring loggas; den loggen matar påfyllningsdiagrammet och historiken på den här sidan.",
     ];
   },
-  alertRule: "En bevakning = en butik, en modell, en lagringsstorlek, en färg; en notis går ut inom några sekunder från att apple.com slår om till tillgänglig.",
+  alertRule: "En bevakning = en butik, en modell, en lagringsstorlek, en färg; en notis (eller ett mejl) går ut inom några sekunder från att apple.com slår om till tillgänglig.",
 
   titles: {
     state: (name: string, duoNow: string, stores: string) => [

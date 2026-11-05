@@ -12,6 +12,7 @@ import { buildIntlTasks, parsePollCountries, buildTasks } from "@/lib/stock/swee
 import { freshnessFromRows, intlVerdict, pollerVerdict, INTL_FRESH_FACTOR } from "@/lib/stock/fallback";
 import { countryScope, countryStoreNumbers } from "@/lib/stock/queries";
 import { restockPayload } from "@/lib/push/payload";
+import { alertHtml, alertText } from "@/lib/mail/resend";
 
 const snap = JSON.parse(readFileSync("tests/fixtures/us-catalog-snapshot.json", "utf8")) as {
   stores: { n: string; storePath: string; cityPath: string; statePath: string; hasStatePage: boolean; oneState: boolean; oneCity: boolean; stateSlug: string; citySlug: string; code: string; tz: string }[];
@@ -301,19 +302,28 @@ describe("alerts for a store outside the US", () => {
     expect(q.url).toBe(`${storePath(us)}?from=push`);
     expect(q.body).toContain(" — Available Today. Tap to reserve on apple.com.");
   });
-  it("Apple's local-language pickup quote stays out of English alerts", () => {
+  it("Apple's local-language pickup quote stays out of English alerts (push and email)", () => {
     const jp = storesOf("jp")[0];
     const jpItem = itemFor(catalogOf("jp")[0].partNumber, "jp")!;
     const line = { item: jpItem, store: jp, quote: "本日" };
     expect(restockPayload([line], "w3").body).not.toContain("本日");
+    expect(alertText([line], "https://x/account")).not.toContain("本日");
+    expect(alertHtml([line], "https://x/account")).not.toContain("本日");
     const us = { item: PART_INDEX.get(partNumbersFor("duo")[0])!, store: STORE_INDEX.get("R085")!, quote: "Available Today" };
-    expect(restockPayload([us], "w4").body).toContain("Available Today");
+    expect(alertText([us], "https://x/account")).toContain("(Available Today)");
+    expect(alertHtml([us], "https://x/account")).toContain("Available Today");
   });
   it("Hong Kong's buy links go to the English store; its pickup API keeps the probed path", () => {
     expect(appleBuyIphoneUrl("hk")).toBe("https://www.apple.com/hk/en/shop/buy-iphone");
     expect(appleBuyUrl({ model: "iPhone Duo", storage: "256GB", color: "Night Sky" }, "hk")).toBe("https://www.apple.com/hk/en/shop/buy-iphone/iphone-duo");
     expect(appleBuyIphoneUrl("uk")).toBe("https://www.apple.com/uk/shop/buy-iphone");
     expect(appleBuyIphoneUrl()).toBe("https://www.apple.com/shop/buy-iphone");
+  });
+  it("email: the country's apple.com and a place line without a US state", () => {
+    const lines = [{ item, store, quote: null }];
+    expect(alertText(lines, "https://x/account")).toContain("Reserve: https://www.apple.com/uk/shop/buy-iphone");
+    expect(alertText(lines, "https://x/account")).toContain("Apple Regent Street, London, United Kingdom");
+    expect(alertHtml(lines, "https://x/account")).toContain('href="https://www.apple.com/uk/shop/buy-iphone"');
   });
 });
 

@@ -64,7 +64,7 @@ export const install: CDict["install"] = {
   notes: [
     { q: "Waarom Safari op de iPhone?", a: "Alleen Safari kan een site op je beginscherm zetten. Browsers in apps kunnen dat niet." },
     { q: "Batterij?", a: "Op je telefoon draait niets. Onze servers doen het checken." },
-    { q: "E-mail?", a: "Nee. Alerts komen alleen als melding, dus zet meldingen aan op minstens één apparaat." },
+    { q: "E-mail?", a: "Geen apparaat met meldingen aan? Dan gaat de alert naar je e-mail." },
     { q: "Meerdere apparaten?", a: "Log op elk apparaat in met hetzelfde e-mailadres. Elk apparaat krijgt elke alert." },
   ],
   cta: { title: "Nog geen alert?", button: "Stel een alert in" },

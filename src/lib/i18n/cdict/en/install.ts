@@ -66,7 +66,7 @@ export const install = {
   notes: [
     { q: "Why Safari on iPhone?", a: "Only Safari can add a site to the Home Screen. In-app browsers can't." },
     { q: "Battery?", a: "Nothing runs on your phone. Our servers do the checking." },
-    { q: "Email?", a: "No. Alerts come only as notifications, so turn them on on at least one device." },
+    { q: "Email?", a: "No device with notifications on? The alert goes to your email instead." },
     { q: "Several devices?", a: "Sign in with the same email on each. Every device gets every alert." },
   ],
   cta: { title: "No alert yet?", button: "Set up an alert" },

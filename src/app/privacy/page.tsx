@@ -3,10 +3,10 @@ import { Page } from "@/components/site/Page";
 export const metadata: Metadata = { title: "Privacy Policy", description: "What PickupChecker stores (your email, alerts and push subscription), why, how long, and how to delete it.", alternates: { canonical: "/privacy" } };
 export default function Privacy() {
   return (
-    <Page title="Privacy Policy" lead="Last updated November 5, 2026.">
+    <Page title="Privacy Policy" lead="Last updated October 31, 2026.">
       <h2>What we collect</h2>
       <ul>
-        <li><b>Email address</b> — to sign you in (one-time code) and to reach you about your account. Restock alerts never go by email; they are phone notifications only. Authentication is handled by Clerk.</li>
+        <li><b>Email address</b> — to sign you in (one-time code) and send alerts by email when no device has notifications on. Authentication is handled by Clerk.</li>
         <li><b>Push subscription</b> — when you turn on notifications, your browser gives us an anonymous delivery address (an endpoint and two encryption keys) for that device. We store it with your account and delete it when you turn notifications off or remove the device.</li>
         <li><b>Alert settings</b> — model, storage, color and the stores you picked. If you allow location access, it is used in your browser to sort nearby stores and is never sent to us.</li>
         <li><b>Payment</b> — processed by Stripe. We store your Stripe customer and subscription ids, never card numbers.</li>
@@ -14,7 +14,7 @@ export default function Privacy() {
         <li><b>Server logs</b> — IP address and request metadata for security and rate limiting, kept for 30 days.</li>
       </ul>
       <h2>How we use it</h2>
-      <p>To run the service you asked for: checking stock, matching it with your alerts, sending notifications, billing. We don&apos;t sell or rent personal data.</p>
+      <p>To run the service you asked for: checking stock, matching it with your alerts, sending notifications and emails, billing. We don&apos;t sell or rent personal data.</p>
       <h2>Processors</h2>
       <p>Clerk (authentication), Stripe (payments), Resend (email delivery), Apple, Google and Mozilla push services (delivering notifications to your device), Vercel (hosting) and Linode (our servers, including the database), Cloudflare (DNS and inbound mail), FlowGlance (analytics). Each processes data on our instructions under their own privacy terms.</p>
       <h2 id="analytics">Analytics and your choice</h2>

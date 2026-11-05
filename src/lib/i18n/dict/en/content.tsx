@@ -124,7 +124,7 @@ export const content = {
       `Every confirmed change is logged; that log feeds the restock chart and history on this page.`,
     ];
   },
-  alertRule: "One alert = one store, one model, one storage size, one color; a push goes out within seconds of apple.com flipping to available.",
+  alertRule: "One alert = one store, one model, one storage size, one color; a push (or email) goes out within seconds of apple.com flipping to available.",
 
   /* ------------------------------------------------------------ enrich.ts: page titles (≤ 60 characters; the first that fits wins) */
   titles: {

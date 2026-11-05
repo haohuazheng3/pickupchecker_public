@@ -1,8 +1,6 @@
 /**
- * Turn restock transitions into alerts: a push notification to every device the user turned on.
- * Push is the ONLY alert channel — PickupChecker sends no restock email, not even as a fallback
- * (owner's rule, CLAUDE.md 「提醒只有消息弹窗」). A member with no device gets nothing and a
- * `skipped` / `no_device` row, so the site can tell them to turn notifications on.
+ * Turn restock transitions into alerts: a push notification to every device the user turned on,
+ * or an email when no device has (email is the fallback, not the default).
  *
  *  match: active, unpaused rules of the same store × exact configuration (model, storage, colour)
  *  dedupe: one notification per (watch, event) — unique index; plus a per-(watch, store, part)
@@ -12,8 +10,10 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db, schema } from "../db";
 import { PART_INDEX, STORE_INDEX, itemFor, modelKeyFor } from "../apple/catalog";
+import { sendAlertEmail } from "../mail/resend";
 import { recordError, errorMessage } from "../errors";
 import { enabledSubscriptionsFor, notifyPushStopped, pushConfigured, sendPushToRows } from "../push/server";
+import { logOps } from "../ops";
 import { restockPayload } from "../push/payload";
 import { coveredWatchIds, effectivePlan } from "../plans";
 import type { Transition } from "./ingest";
@@ -85,7 +85,7 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
   const cooled = new Set(recent.map((r) => `${r.watchId}|${r.storeNumber}|${r.partNumber}`));
   const pushByUser = pushConfigured() ? await enabledSubscriptionsFor(active.map((c) => c.watch.userId)) : new Map<string, never[]>();
 
-  // Group per watch so one push can carry several stores/SKUs that restocked in the same sweep.
+  // Group per watch so one email can carry several stores/SKUs that restocked in the same sweep.
   const perWatch = new Map<string, { c: (typeof active)[number]; items: { t: Transition; eventId: number }[] }>();
   for (const x of restocks) {
     const item = PART_INDEX.get(x.t.partNumber);
@@ -119,24 +119,24 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
     const devices = pushByUser.get(w.userId) ?? [];
     // The person's language (their account's, set when they signed up in it or chose it): text, store names, the page the push opens.
     const lang = langOfUser(g.c.locale);
-    // No device with notifications on: nothing is sent (there is no email alert). Recorded as skipped
-    // so the ops review and the account page can see who is missing alerts.
-    if (devices.length === 0) {
-      stats.skipped += g.items.length;
-      await d
-        .insert(schema.notifications)
-        .values(g.items.map((x) => ({ watchId: w.id, userId: w.userId, eventId: x.eventId ?? null, storeNumber: x.t.storeNumber, partNumber: x.t.partNumber, channel: "push", status: "skipped", error: "no_device", createdAt: now })))
-        .onConflictDoNothing();
-      return;
-    }
-    const channel = "push";
+    let channel: "push" | "email" = devices.length ? "push" : "email";
     try {
-      const r = await sendPushToRows(devices, restockPayload(lines, w.id, now, lang), { source: "poller" });
-      // Only when nothing reached the user: a device the push service dropped (410) while another
-      // device received the alert is a rotation, not an outage.
-      if (r.sent === 0 && r.disabledRows.length) await notifyPushStopped(w.userId, g.c.email, r.disabledRows, now, lang).catch(() => undefined);
-      if (r.sent === 0) throw new Error(`push to ${devices.length} device(s) failed: ${r.errors.slice(0, 3).join("; ")}`);
-      const providerId = r.firstId;
+      let providerId: string | null = null;
+      if (channel === "push") {
+        const r = await sendPushToRows(devices, restockPayload(lines, w.id, now, lang), { source: "poller" });
+        // Only when nothing reached the user: a device the push service dropped (410) while another
+        // device received the alert is a rotation, not an outage.
+        if (r.sent === 0 && r.disabledRows.length) await notifyPushStopped(w.userId, g.c.email, r.disabledRows, now, lang).catch(() => undefined);
+        if (r.sent > 0) providerId = r.firstId;
+        else {
+          // Every device failed: the alert still goes out, by email, instead of being lost.
+          channel = "email";
+          await logOps("poller", "warn", `push to ${devices.length} device(s) failed, falling back to email`, { watchId: w.id, errors: r.errors.slice(0, 3) });
+        }
+      }
+      if (channel === "email") {
+        providerId = await sendAlertEmail(g.c.email, lines, w.id, lang);
+      }
       const latency = Date.now() - started;
       await d
         .insert(schema.notifications)

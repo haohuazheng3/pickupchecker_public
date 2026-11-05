@@ -259,7 +259,7 @@ export default async function WhereToBuyPage() {
     { q: "Which iPhone Duo is easiest to buy?", a: topCfg
       ? `${cfgName(topCfg.item)}, by the numbers: ${n(topCfg.restocks)} of the ${n(t.n)} confirmed US restocks since ${since} (${pct(topCfg.restocks / Math.max(1, t.n))})${stockUnknown ? "" : `, ${stores(topCfg.now)} listing it right now`}, ${fmtPrice(topCfg.item.price)} before sales tax.${lastCfg ? ` ${cfgName(lastCfg.item)} is the hardest, with ${n(lastCfg.restocks)}.` : ""} If you need one this week, fix the storage and accept any of its colors; [which iPhone Duo restocks most](/which-iphone-duo-restocks-most) ranks all ${items.length}.`
       : `Too early to rank: no configuration has a confirmed restock since ${since} in a readable log right now. The ranking fills in by itself on [which iPhone Duo restocks most](/which-iphone-duo-restocks-most); until then, fix the storage you need and accept any of its colors.` },
-    { q: "How do I know when a store near me has one?", a: `${PRICE_SENTENCE} On iPhone, add PickupChecker to your Home Screen and allow notifications ([install guide](/install)); alerts are push notifications only. Pick the stores you can reach on [iPhone Duo near me](/iphone-duo-near-me), and the live list of every store is free without an account.` },
+    { q: "How do I know when a store near me has one?", a: `${PRICE_SENTENCE} On iPhone, add PickupChecker to your Home Screen and allow notifications ([install guide](/install)); alerts arrive as push notifications, or by email while no device is set up. Pick the stores you can reach on [iPhone Duo near me](/iphone-duo-near-me), and the live list of every store is free without an account.` },
   ];
 
   const sources: Source[] = [

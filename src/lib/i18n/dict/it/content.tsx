@@ -86,7 +86,7 @@ export const content: Dict["content"] = {
       "Ogni cambiamento confermato viene registrato; quel registro alimenta il grafico e lo storico dei rifornimenti di questa pagina.",
     ];
   },
-  alertRule: "Un avviso = un negozio, un modello, una capacità, un colore; una notifica push parte pochi secondi dopo che apple.com passa a «disponibile».",
+  alertRule: "Un avviso = un negozio, un modello, una capacità, un colore; una notifica push (o un'email) parte pochi secondi dopo che apple.com passa a «disponibile».",
 
   titles: {
     state: (name: string, duoNow: string, stores: string) => [

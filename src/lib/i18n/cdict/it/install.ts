@@ -64,7 +64,7 @@ export const install: CDict["install"] = {
   notes: [
     { q: "Perché Safari su iPhone?", a: "Solo Safari può aggiungere un sito alla schermata Home. I browser interni delle app no." },
     { q: "E la batteria?", a: "Sul telefono non gira niente. I controlli li fanno i nostri server." },
-    { q: "Email?", a: "No. Gli avvisi arrivano solo come notifiche, quindi attivale su almeno un dispositivo." },
+    { q: "Email?", a: "Nessun dispositivo con le notifiche attive? L'avviso arriva via email." },
     { q: "Più dispositivi?", a: "Accedi con la stessa email su ognuno. Ogni dispositivo riceve ogni avviso." },
   ],
   cta: { title: "Ancora nessun avviso?", button: "Imposta un avviso" },
