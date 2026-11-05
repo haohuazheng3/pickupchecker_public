@@ -151,9 +151,14 @@ function quotable(place: RestockPlace, t: RestockTimes, zone: string): string {
   return `The ${where} have restocked the iPhone Duo ${plural(t.n, "time")} since ${longDate(t.since)}, on ${plural(t.days, "day")} — not yet enough to call a usual hour (PickupChecker waits for ${PATTERN_MIN} restocks over ${PATTERN_MIN_DAYS} different days)${t.sellout ? `; a typical one sold out in ${about(t.sellout.medianSec)}` : ""}.`;
 }
 
+/**
+ * The question is the title; "Times by Hour" rides along only while the whole tag (with the " · PickupChecker" suffix,
+ * 16 characters) stays within the 65 Bing's URL inspection flags as "title too long". Never truncated: a long place
+ * name keeps its full question.
+ */
 function titleOf(place: RestockPlace): string {
   const q = `When Does the iPhone Duo Restock in ${place.name}?`;
-  return fitTitle([`${q} Apple Store Times by Hour`, `${q} Times by Hour`, `${q} By Hour`, q], 64);
+  return q.length + " Times by Hour".length + 16 <= 65 ? `${q} Times by Hour` : q;
 }
 
 export async function placeRestockTimesMetadata(place: RestockPlace): Promise<Metadata> {
