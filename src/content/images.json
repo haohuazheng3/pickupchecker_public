@@ -192,6 +192,22 @@
   "pexelsId": 9434650
  },
  {
+  "id": "boxes-stacked",
+  "base": "/img/guides/boxes-stacked",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Sealed cardboard shipping boxes stacked against a white wall",
+  "caption": "A restock is a box opened at the counter, not a number on a website.",
+  "credit": "Ayrat",
+  "creditUrl": "https://www.pexels.com/photo/photograph-of-brown-cardboard-boxes-12354555/",
+  "pexelsId": 12354555
+ },
+ {
   "id": "city-map-phone",
   "base": "/img/buying/city-map-phone",
   "widths": [
@@ -272,6 +288,22 @@
   "pexelsId": 6994108
  },
  {
+  "id": "electronics-store-tables",
+  "base": "/img/guides/electronics-store-tables",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Inside a bright electronics store with phones displayed on long wooden tables",
+  "caption": "Retailers and carriers get their own allocations, on their own schedules.",
+  "credit": "Mathias Reding",
+  "creditUrl": "https://www.pexels.com/photo/a-set-of-tables-and-shelves-with-displayed-cellphones-11297769/",
+  "pexelsId": 11297769
+ },
+ {
   "id": "fifth-avenue-street",
   "base": "/img/stores/fifth-avenue-street",
   "widths": [
@@ -334,6 +366,22 @@
   "credit": "Zana Latif",
   "creditUrl": "https://www.pexels.com/photo/a-person-holding-a-smartphone-4313857/",
   "pexelsId": 4313857
+ },
+ {
+  "id": "laptop-typing-code",
+  "base": "/img/guides/laptop-typing-code",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Hands typing on a laptop whose screen shows a code editor",
+  "caption": "A few lines of code and the stock data is in your own script.",
+  "credit": "cottonbro studio",
+  "creditUrl": "https://www.pexels.com/photo/hands-typing-on-a-laptop-keyboard-5483077/",
+  "pexelsId": 5483077
  },
  {
   "id": "light-blue-case",
@@ -494,6 +542,22 @@
   "credit": "Brett Jordan",
   "creditUrl": "https://www.pexels.com/photo/close-up-photo-of-iphone-2643698/",
   "pexelsId": 2643698
+ },
+ {
+  "id": "phone-shops-street",
+  "base": "/img/guides/phone-shops-street",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A covered street lined with small mobile-phone shops and carrier storefronts",
+  "caption": "Carrier shops and resellers: more doors, each with a smaller allocation.",
+  "credit": "Jimmy Liao",
+  "creditUrl": "https://www.pexels.com/photo/stores-in-passage-17565491/",
+  "pexelsId": 17565491
  },
  {
   "id": "phone-sofa-shopping",
@@ -2528,6 +2592,22 @@
   "pexelsId": 13886741
  },
  {
+  "id": "terminal-logs",
+  "base": "/img/guides/terminal-logs",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A terminal window scrolling log lines on a dark screen",
+  "caption": "What a polling script sees: one JSON answer every 30 seconds.",
+  "credit": "Lewis Kang'ethe Ngugi",
+  "creditUrl": "https://www.pexels.com/photo/turned-on-flat-screen-monitor-289927/",
+  "pexelsId": 289927
+ },
+ {
   "id": "texting-city-street",
   "base": "/img/guides/texting-city-street",
   "widths": [
@@ -2544,6 +2624,22 @@
   "pexelsId": 5965635
  },
  {
+  "id": "two-iphones-stacked",
+  "base": "/img/guides/two-iphones-stacked",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "Two iPhones in dark finishes stacked on a table, Apple logos facing up",
+  "caption": "Same phone, different finish: colour changes the odds less than storage does.",
+  "credit": "Efrem  Efre",
+  "creditUrl": "https://www.pexels.com/photo/two-smartphones-in-close-up-photography-12935351/",
+  "pexelsId": 12935351
+ },
+ {
   "id": "two-phones-sky",
   "base": "/img/phones/two-phones-sky",
   "widths": [
@@ -2558,5 +2654,21 @@
   "credit": "Rubaitul Azad",
   "creditUrl": "https://www.pexels.com/photo/close-up-photo-of-a-person-holding-cellphones-11374459/",
   "pexelsId": 11374459
+ },
+ {
+  "id": "warehouse-aisle",
+  "base": "/img/guides/warehouse-aisle",
+  "widths": [
+   480,
+   800,
+   1200
+  ],
+  "width": 1200,
+  "height": 800,
+  "alt": "A long aisle of a distribution warehouse with stacked pallets on orange racking",
+  "caption": "Supply arrives in waves: restocks cluster on the days shipments reach the stores.",
+  "credit": "Tiger Lily",
+  "creditUrl": "https://www.pexels.com/photo/man-standing-in-an-aisle-of-a-warehouse-carrying-a-box-4483774/",
+  "pexelsId": 4483774
  }
 ]

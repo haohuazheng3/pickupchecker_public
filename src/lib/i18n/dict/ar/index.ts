@@ -9,5 +9,6 @@ import { content } from "./content";
 import { alerts } from "./alerts";
 import { account } from "./account";
 import { views } from "./views";
+import { decide } from "./decide";
 
-export const ar: Dict = { common, chrome, place, pages, views, modules, content, alerts, account };
+export const ar: Dict = { common, chrome, place, pages, views, modules, content, alerts, account, decide };

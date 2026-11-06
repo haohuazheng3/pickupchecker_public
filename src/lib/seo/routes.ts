@@ -17,10 +17,13 @@ export const TOP_LEVEL: ReadonlySet<string> = new Set([
   // The phrasing pages (docs/research.md §8.3 C): the words people type when they do not know a tracker exists.
   "iphone-duo-back-in-stock", "iphone-duo-stock-checker", "where-to-buy-iphone-duo",
   "blog", "opengraph-image", "_not-found", "icons", "img", "vendor", "zip",
+  "iphone-duo-shortage",
+  "iphone-duo-apple-vs-carriers-vs-retailers",
+  "iphone-duo-stock-api",
 ]);
 
 /** Question pages that exist for every country under its prefix (/ca/iphone-duo-restock-times …). */
-export const COUNTRY_QUESTION_PAGES: ReadonlySet<string> = new Set(["iphone-duo-restock-times"]);
+export const COUNTRY_QUESTION_PAGES: ReadonlySet<string> = new Set(["iphone-duo-restock-times", "which-iphone-duo-restocks-most", "iphone-duo-shortage", "iphone-duo-apple-vs-carriers-vs-retailers", "iphone-duo-stock-api"]);
 
 /** Every public place address, built once per process. */
 let known: { states: Set<string>; oneStoreStates: Map<string, string>; cities: Set<string>; oneStoreCities: Map<string, string>; stores: Set<string>; legacy: Map<string, string>; models: Set<string> } | null = null;

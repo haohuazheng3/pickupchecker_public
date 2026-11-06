@@ -12,6 +12,7 @@ import { content } from "./content";
 import { alerts } from "./alerts";
 import { account } from "./account";
 import { views } from "./views";
+import { decide } from "./decide";
 
-export const en = { common, chrome, place, pages, views, modules, content, alerts, account };
+export const en = { common, chrome, place, pages, views, modules, content, alerts, account, decide };
 export type Dict = typeof en;

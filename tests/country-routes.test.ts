@@ -97,8 +97,8 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
   const per = Object.fromEntries(INTL_CODES.map((cc) => [cc, countryEntries(cc, base, now, () => now).map((e) => e.url)]));
   it("counts per country (home + index + region/city pages + stores + 3 models + log + map + restock times)", () => {
     const counts = Object.fromEntries(INTL_CODES.map((cc) => [cc, per[cc].length]));
-    expect(counts).toEqual({ ca: 44, uk: 56, au: 33, de: 31, fr: 33, it: 30, es: 23, jp: 21, kr: 16, hk: 14, sg: 11, ae: 16, ch: 13, nl: 12, se: 11, tw: 10, at: 8, be: 8 });
-    for (const cc of INTL_CODES) expect(per[cc]).toContain(`${base}/${cc}/iphone-duo-restock-times`);
+    expect(counts).toEqual({ ca: 48, uk: 60, au: 37, de: 35, fr: 37, it: 34, es: 27, jp: 25, kr: 20, hk: 18, sg: 15, ae: 20, ch: 17, nl: 16, se: 15, tw: 14, at: 12, be: 12 });
+    for (const cc of INTL_CODES) for (const slug of ["iphone-duo-restock-times", "which-iphone-duo-restocks-most", "iphone-duo-shortage", "iphone-duo-apple-vs-carriers-vs-retailers", "iphone-duo-stock-api"]) expect(per[cc]).toContain(`${base}/${cc}/${slug}`);
   });
   it("lists no URL the proxy would redirect or reject, and every store", () => {
     for (const cc of INTL_CODES) {
@@ -106,7 +106,7 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
         const u = new URL(url);
         expect(publicRouteCheck(u.pathname, u.search), url).toBeNull();
         // Product pages: the three model pages only (everything else is noindex).
-        if (u.pathname.includes("/stock/")) expect(u.pathname).toMatch(new RegExp(`^/${cc}/stock/iphone-(duo|18-pro|18-pro-max)$`));
+        if (u.pathname.includes("/stock/") && !u.pathname.includes("stock-api")) expect(u.pathname).toMatch(new RegExp(`^/${cc}/stock/iphone-(duo|18-pro|18-pro-max)$`));
       }
       for (const s of storesOf(cc)) expect(per[cc]).toContain(`${base}${storePath(s)}`);
     }
@@ -120,7 +120,8 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
     // state (32) and city (26) restock-times pages of docs/research.md §8.3.
     const placePages = statesWithStores().filter((s) => hasStatePage(s.name)).length + citiesWithStores().filter((c) => c.stores.length > 1).length;
     expect(placePages).toBe(58);
-    expect(us).toHaveLength(356 + 8 + 3 + placePages);
+    // …plus the three decision pages of seo.md §16 (the fourth, which-iphone-duo-restocks-most, is one of the eight).
+    expect(us).toHaveLength(356 + 8 + 3 + 3 + placePages);
     for (const p of ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock", "/iphone-duo-back-in-stock", "/iphone-duo-stock-checker", "/where-to-buy-iphone-duo", "/iphone-duo-restock-times/california", "/iphone-duo-restock-times/california/los-angeles", "/iphone-duo-restock-times/hawaii/honolulu"]) expect(us).toContain(`${base}${p}`);
     expect(us).not.toContain(`${base}/iphone-duo-restock-times/hawaii`);
     expect(us).not.toContain(`${base}/iphone-duo-restock-times/delaware`);

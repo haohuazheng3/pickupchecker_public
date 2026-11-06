@@ -5,9 +5,10 @@ import { chrome } from "./chrome";
 import { place } from "./place";
 import { pages } from "./pages";
 import { views } from "./views";
+import { decide } from "./decide";
 import { modules } from "./modules";
 import { content } from "./content";
 import { alerts } from "./alerts";
 import { account } from "./account";
 
-export const zhHK: Dict = panDict({ common, chrome, place, pages, views, modules, content, alerts, account });
+export const zhHK: Dict = panDict({ common, chrome, place, pages, views, modules, content, alerts, account, decide });
