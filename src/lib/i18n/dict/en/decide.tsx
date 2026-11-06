@@ -10,7 +10,7 @@ import type { Country } from "@/lib/apple/countries";
 import type { DuoConfigs, DuoSupply } from "@/lib/content/duoDecide";
 import type { CountryChannels } from "@/lib/content/channels";
 import { exposureHours } from "@/lib/content/duoDecide";
-import { fitTitle, plural, listWords } from "@/lib/seo/enrich";
+import { fitTitle, listWords } from "@/lib/seo/enrich";
 import { SPEED } from "@/lib/plans";
 
 const n = (x: number) => x.toLocaleString("en-US");
@@ -23,6 +23,8 @@ const hours = (sec: number) => (sec >= 3600 ? `${exposureHours(sec)} h` : `${Mat
 const secs = (s: number) => (s >= 120 ? `${Math.round(s / 60)} min` : `${Math.round(s)} s`);
 const ratio = (a: number, b: number) => (b > 0 ? `${(Math.round((a / b) * 10) / 10).toLocaleString("en-US")}×` : "—");
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+/** "3,273 restocks", "1 store": counts with thousands separators. */
+const plural = (x: number, one: string, many = `${one}s`) => `${n(x)} ${x === 1 ? one : many}`;
 
 /** What every decision page's sentences need. */
 export interface DecideCtx {
