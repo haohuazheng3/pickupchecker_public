@@ -9,7 +9,8 @@
  *  • the stores paid alerts point at going unchecked for longer than the fast cadence allows (their 90th
  *    percentile age over LAG_WARN_SEC for LAG_RUNS runs in a row)
  * One mail when it starts (and again if a new reason joins), a reminder a day while it lasts, one when it has
- * been clear for CLEAR_RUNS runs.
+ * been clear for CLEAR_RUNS runs. A reason that drops out and comes back within REARM_RUNS runs is the same
+ * reason, not a new one (2026-11-06: two hours of slow Apple answers made the round reasons flap, 13 mails).
  */
 import { sql } from "drizzle-orm";
 import { db } from "../db";
@@ -23,6 +24,8 @@ export const LAG_WARN_SEC = 7;
 export const LAG_RUNS = 5;
 export const CLEAR_RUNS = 10;
 export const REMIND_MS = 24 * 60 * 60 * 1000;
+/** Runs a mailed reason must stay inactive before it counts as new again when it returns. */
+export const REARM_RUNS = 60;
 
 export interface RoundStat { host: string; mode: string; p50Sec: number; count: number }
 export interface CapacityInput {
@@ -53,7 +56,17 @@ export function capacityReasons(i: CapacityInput): { reasons: Reason[]; lagHigh:
   return { reasons, lagHigh };
 }
 
-export interface CapacityState { mailed: boolean; reasons: string[]; lagRuns: number; clearRuns: number; since?: string | null; lastMail?: string | null }
+export interface CapacityState {
+  mailed: boolean;
+  /** Every reason mailed in this episode, active or resting (a resting one is forgotten after REARM_RUNS runs). */
+  reasons: string[];
+  lagRuns: number;
+  clearRuns: number;
+  since?: string | null;
+  lastMail?: string | null;
+  /** Runs in a row each remembered reason has been inactive. */
+  quiet?: Record<string, number>;
+}
 export const CAPACITY_IDLE: CapacityState = { mailed: false, reasons: [], lagRuns: 0, clearRuns: 0 };
 
 /** Pure: one watchdog run. Returns the next state, which reasons are active, and the mail to send (if any). */
@@ -64,7 +77,10 @@ export function capacityStep(st: CapacityState, now: Date, reasons: Reason[], la
   const keys = active.map((r) => r.key).sort();
   if (active.length) {
     const fresh = keys.some((k) => !st.reasons.includes(k));
-    const base = { ...st, lagRuns, clearRuns: 0, reasons: keys };
+    const quiet: Record<string, number> = {};
+    for (const k of st.reasons) if (!keys.includes(k)) quiet[k] = (st.quiet?.[k] ?? 0) + 1;
+    const remembered = [...new Set([...keys, ...Object.keys(quiet).filter((k) => quiet[k] < REARM_RUNS)])].sort();
+    const base = { ...st, lagRuns, clearRuns: 0, reasons: remembered, quiet };
     if (!st.mailed || fresh) return { next: { ...base, mailed: true, since: st.mailed ? st.since : now.toISOString(), lastMail: now.toISOString() }, active, mail: "warn" };
     if (st.lastMail && now.getTime() - new Date(st.lastMail).getTime() > REMIND_MS) return { next: { ...base, lastMail: now.toISOString() }, active, mail: "remind" };
     return { next: base, active, mail: null };

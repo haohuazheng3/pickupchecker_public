@@ -5,7 +5,7 @@ import * as world from "@/lib/apple/catalog";
 import * as us from "@/lib/apple/catalog-us";
 import { ALL_CODES, COUNTRIES, INTL_CODES, countryFromPrefix, formatPrice, isCountryCode, type CountryCode } from "@/lib/apple/countries";
 import { buildPickupUrl } from "@/lib/apple/client";
-import { intlWatchStep, INTL_RUNS, type IntlWatchState } from "@/lib/stock/fallback";
+import { intlWatchStep, INTL_RUNS, INTL_RECOVER_RUNS, type IntlWatchState } from "@/lib/stock/fallback";
 import { nextCountryBackoff } from "@/lib/stock/sweep";
 import { gate } from "@/lib/stock/fastlane";
 
@@ -185,6 +185,13 @@ describe("the other countries' watchdog mail", () => {
     const mails: (string | null)[] = [];
     for (let i = 0; i < INTL_RUNS + 2; i++) { const s = run(st, true, ["uk"]); mails.push(s.mail); st = s.next; }
     expect(mails).toEqual([null, null, "blind", null, null]);
+    // Recovery waits INTL_RECOVER_RUNS clean judged runs; a relapse in between is the same episode (no second mail).
+    const after: (string | null)[] = [];
+    for (let i = 0; i < INTL_RECOVER_RUNS - 1; i++) { const s = run(st, true, []); after.push(s.mail); st = s.next; }
+    const relapse = run(st, true, ["ca"]); after.push(relapse.mail); st = relapse.next;
+    expect(st.countries).toEqual(["ca", "uk"]);
+    for (let i = 0; i < INTL_RECOVER_RUNS - 1; i++) { const s = run(st, true, []); after.push(s.mail); st = s.next; }
+    expect(after.every((m) => m === null)).toBe(true);
     const r = run(st, true, []);
     expect(r.mail).toBe("recovered");
     expect(r.next).toEqual({ runs: 0, mailed: false, since: null, countries: [] });

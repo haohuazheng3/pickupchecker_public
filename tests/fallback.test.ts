@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { orderTasks, pairKey, pollerVerdict, type Freshness } from "@/lib/stock/fallback";
+import { BAD_RUNS, PARTIAL_CLEAR_RUNS, PARTIAL_RUNS, RECOVER_RUNS, REMIND_MS, US_IDLE, laneDiagnosis, orderTasks, pairKey, pollerVerdict, usWatchStep, type Freshness, type LaneFailures, type PollerState, type UsWatchState } from "@/lib/stock/fallback";
 import type { SweepTask } from "@/lib/stock/sweep";
 
 const fresh = (o: Partial<Freshness> = {}): Freshness => ({ pairs: 100, freshPairs: 100, stores: 10, staleStores: [], oldestSec: 12, ...o });
@@ -36,6 +36,95 @@ describe("pollerVerdict — judged by the data, not only the heartbeat", () => {
   });
   it("no freshness data (the query failed) falls back to the heartbeat alone", () => {
     expect(pollerVerdict(5_000, null).state).toBe("ok");
+  });
+});
+
+/* ---------------- the US watchdog's mails: one per episode ---------------- */
+
+describe("usWatchStep — one mail when it starts, one when it is over", () => {
+  const t0 = Date.UTC(2026, 10, 6, 1, 0);
+  const t = (min: number) => new Date(t0 + min * 60_000);
+  /** Feeds a sequence of verdicts, one a minute; returns the mails and the final state. */
+  const play = (start: UsWatchState, states: PollerState[], from = 0) => {
+    const mails: (string | null)[] = [];
+    let st = start;
+    states.forEach((s, i) => { const r = usWatchStep(st, s, t(from + i)); mails.push(r.mail); st = r.next; });
+    return { mails, st };
+  };
+
+  it("a one-minute blind blip mails nothing at all, and closes quietly", () => {
+    const { mails, st } = play(US_IDLE, ["blind", ...Array<PollerState>(RECOVER_RUNS).fill("ok")]);
+    expect(mails.every((m) => m === null)).toBe(true);
+    expect(st.down).toBe(false);
+    // …but the episode was open while it lasted (the admin board shows it)
+    expect(usWatchStep(US_IDLE, "blind", t(0)).next).toMatchObject({ down: true, kind: "blind", badRuns: 1, since: t(0).toISOString() });
+  });
+
+  it("the 2026-11-06 evening: the share crossing 50 % eleven times in two hours is one blind mail and one recovery mail", () => {
+    const states: PollerState[] = [];
+    for (let i = 0; i < 11; i++) states.push("blind", "blind", "ok", "ok", "partial", "blind", "ok", "ok", "ok", "ok");
+    states.push(...Array<PollerState>(RECOVER_RUNS).fill("ok"));
+    const { mails, st } = play(US_IDLE, states);
+    expect(mails.filter(Boolean)).toEqual(["blind", "recovered"]);
+    expect(mails.indexOf("blind")).toBe(BAD_RUNS - 1);
+    expect(st).toEqual({ down: false, partialRuns: 0, partialMailed: false, partialOkRuns: 0 });
+    // the recovery mail knows how often it wobbled: every "ok → blind" return inside the episode
+    const before = play(US_IDLE, states.slice(0, -RECOVER_RUNS)).st;
+    expect(before.relapses).toBe(21);
+    expect(before.since).toBe(t(0).toISOString());
+  });
+
+  it("silent mails after BAD_RUNS minutes too (the fill-in has run since the first), then a reminder every 3 h", () => {
+    const first = play(US_IDLE, Array<PollerState>(BAD_RUNS).fill("silent"));
+    expect(first.mails).toEqual([...Array(BAD_RUNS - 1).fill(null), "silent"]);
+    const quiet = usWatchStep(first.st, "silent", t(BAD_RUNS));
+    expect(quiet.mail).toBeNull();
+    const later = usWatchStep(quiet.next, "silent", new Date(t(BAD_RUNS - 1).getTime() + REMIND_MS + 60_000));
+    expect(later.mail).toBe("remind");
+  });
+
+  it("blind escalating to silent after its mail says so once; silent easing to blind says nothing", () => {
+    const blind = play(US_IDLE, Array<PollerState>(BAD_RUNS).fill("blind")).st;
+    const esc = usWatchStep(blind, "silent", t(BAD_RUNS));
+    expect(esc.mail).toBe("silent");
+    expect(usWatchStep(esc.next, "silent", t(BAD_RUNS + 1)).mail).toBeNull();
+    expect(usWatchStep(esc.next, "blind", t(BAD_RUNS + 1)).mail).toBeNull();
+  });
+
+  it("partial: a mail after PARTIAL_RUNS minutes, none while it flaps, one once it has been clear for PARTIAL_CLEAR_RUNS", () => {
+    const states: PollerState[] = [...Array<PollerState>(PARTIAL_RUNS).fill("partial"), "ok", "partial", "ok", "partial", "partial", ...Array<PollerState>(PARTIAL_CLEAR_RUNS).fill("ok")];
+    const { mails, st } = play(US_IDLE, states);
+    expect(mails.filter(Boolean)).toEqual(["partial", "partial-cleared"]);
+    expect(mails.indexOf("partial")).toBe(PARTIAL_RUNS - 1);
+    expect(st.partialMailed).toBe(false);
+    // two partial minutes and then fine: no mail
+    expect(play(US_IDLE, ["partial", "partial", "ok"]).mails.every((m) => m === null)).toBe(true);
+  });
+
+  it("while a blind episode is open the partial picture is not judged (its stale stores are the episode's symptom)", () => {
+    const open = play(US_IDLE, ["blind", "blind"]).st;
+    const { mails, st } = play(open, Array<PollerState>(RECOVER_RUNS - 1).fill("partial"), 2);
+    expect(mails.every((m) => m === null)).toBe(true);
+    expect(st.down).toBe(true);
+    expect(st.partialRuns ?? 0).toBe(0);
+  });
+});
+
+describe("laneDiagnosis — whose fault a blind minute is", () => {
+  const base: LaneFailures = { minutes: 5, sweep: { requests: 1000, failed: 0, timedOut: 0, throttled: 0 }, fast: { requests: 10_000, failed: 0 }, intlFailed: 1 };
+  it("timeouts on every lane and abroad: Apple is slow for everyone", () => {
+    const d = laneDiagnosis({ ...base, sweep: { requests: 1000, failed: 550, timedOut: 540, throttled: 0 }, fast: { requests: 10_000, failed: 1200 }, intlFailed: 140 });
+    expect(d).toContain("55% of 1000 requests failed (54% timed out, 0 × 541)");
+    expect(d).toContain("slow for everyone");
+  });
+  it("only the big answers time out: Apple is slow on those", () => {
+    expect(laneDiagnosis({ ...base, sweep: { requests: 1000, failed: 400, timedOut: 390, throttled: 0 } })).toContain("Only the big nearby-stores answers");
+  });
+  it("541s: throttled", () => {
+    expect(laneDiagnosis({ ...base, sweep: { requests: 1000, failed: 600, timedOut: 10, throttled: 590 } })).toContain("throttling");
+  });
+  it("anything else: this host", () => {
+    expect(laneDiagnosis({ ...base, sweep: { requests: 1000, failed: 600, timedOut: 10, throttled: 0 } })).toContain("this host only");
   });
 });
 

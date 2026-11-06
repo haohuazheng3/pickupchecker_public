@@ -5,7 +5,7 @@ import { degradedTick } from "@/lib/stock/degraded";
 import { notifyOwner } from "@/lib/mail/owner";
 import { recordError, errorMessage } from "@/lib/errors";
 import { logOps } from "@/lib/ops";
-import { PARTIAL_SEC, freshness, intlVerdict, intlWatchStep, pollerVerdict, type IntlVerdict, type IntlWatchState, type PollerState } from "@/lib/stock/fallback";
+import { BAD_RUNS, PARTIAL_CLEAR_RUNS, PARTIAL_SEC, RECOVER_RUNS, REMIND_MS, US_IDLE, freshness, intlVerdict, intlWatchStep, laneDiagnosis, pollerVerdict, recentFailures, usWatchStep, type IntlVerdict, type IntlWatchState, type PollerState, type UsWatchState } from "@/lib/stock/fallback";
 import type { CountryCode } from "@/lib/apple/countries";
 import { CAPACITY_IDLE, CLEAR_RUNS, FAST_STORES_WARN, ROUND_WINDOW_MIN, capacityReasons, capacityStep, recentRounds, watchedLagP90, type CapacityState } from "@/lib/stock/capacity";
 import { SPEED } from "@/lib/plans";
@@ -15,25 +15,26 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const REMIND_MS = 3 * 60 * 60 * 1000;
-/** Minutes a "partial" picture must persist before it is worth a mail (restarts and blips clear sooner). */
-const PARTIAL_RUNS = 3;
-
-interface WatchdogState { down: boolean; kind?: PollerState; since?: string; lastMail?: string; partialRuns?: number; partialMailed?: boolean }
 type HeartbeatIntl = { cadenceSec?: number; countries?: CountryCode[]; paused?: boolean } | null;
 interface Heartbeat { at?: string; host?: string; mode?: string; cadenceSec?: number; intl?: HeartbeatIntl; fast?: { stores?: number; pairs?: number } | null; sys?: { load5?: number; cpus?: number; cpuWaitPct?: number | null } }
 
 /**
  * Vercel Cron, every minute. Judges polling by the data (fallback.ts), not only by the heartbeat:
- *  • silent  (no heartbeat 75 s) → serverless fill-in (degraded mode) + mail, reminders every 3 h
- *  • blind   (heartbeat, but under half the pairs checked in a minute) → mail; the poller switches to its
- *            spare egress on its own, so Vercel stays out of the way (they would share one IP budget)
- *  • partial (stores unchecked for 90 s, three runs in a row) → one mail naming them
- *  • a mail when it is over
+ *  • silent  (no heartbeat 75 s) → serverless fill-in (degraded mode) at once; the mail once it has lasted BAD_RUNS
+ *            minutes, reminders every 3 h
+ *  • blind   (heartbeat, but under half the pairs checked in a minute) → a mail after BAD_RUNS minutes, carrying the
+ *            lanes' failure figures (whose fault: Apple slow for everyone, Apple throttling, or this host's egress);
+ *            the poller switches to its spare egress on its own, so Vercel stays out of the way (they would share
+ *            one IP budget)
+ *  • partial (stores unchecked for 90 s, PARTIAL_RUNS runs in a row) → one mail naming them
+ *  • one mail when it is over — after RECOVER_RUNS fine minutes in a row. A verdict wobbling at the line is one
+ *    episode: 2026-11-06 Apple answered slowly for two hours, the US share of fresh pairs crossed 50 % eleven times,
+ *    and the old one-mail-per-crossing rule sent 22 mails. The state machine is usWatchStep (pure, tested).
  * All of that is the US. The other countries (polled store by store every ~30 s) are judged on their own:
- * a country with under half its pairs fresh for three runs in a row → one mail naming it, one when it clears.
- * Never the fill-in (it serves the US only). Judged only while the US itself is fine (ok or partial): when the
- * poller is silent, blind or degraded, or has them paused, their staleness says nothing about them.
+ * a country with under half its pairs fresh for three runs in a row → one mail naming it, one when it has been
+ * fine for INTL_RECOVER_RUNS runs. Never the fill-in (it serves the US only). Judged only while the US itself is
+ * fine (ok or partial): when the poller is silent, blind or degraded, or has them paused, their staleness says
+ * nothing about them.
  * Capacity (stock/capacity.ts) is judged under the same condition: slow rounds from a host near its limit, mailed
  * before anything fails.
  */
@@ -47,7 +48,7 @@ export async function GET(req: Request) {
     const intlInfo = (hb?.value.intl ?? runner?.intl ?? null) as HeartbeatIntl;
     const fresh = await freshness({ intlCadenceSec: intlInfo?.cadenceSec }).catch(() => null);
     const v = pollerVerdict(age, fresh);
-    const wd = (await readState<WatchdogState>("watchdog"))?.value ?? { down: false };
+    const wd = (await readState<UsWatchState>("watchdog"))?.value ?? US_IDLE;
     const now = new Date();
     // On the US host, a blind US (the shared IPv6 egress failing) starves every country: only the US mail goes out
     // then. On their own host they are judged on their own.
@@ -66,55 +67,88 @@ export async function GET(req: Request) {
     await watchStandby(now).catch((e) => recordError("web", `watchdog (standby) failed: ${errorMessage(e)}`));
     await watchWorker(now).catch((e) => recordError("web", `watchdog (US worker) failed: ${errorMessage(e)}`));
 
-    if (v.state === "silent" || v.state === "blind") {
-      const firstTime = !wd.down || wd.kind !== v.state;
-      if (firstTime) await logOps("cron", "error", `polling ${v.state}: ${v.summary}${v.fill ? " — degraded mode on" : ""}`, { ageMs: Number.isFinite(age) ? Math.round(age) : null, host: hb?.value.host ?? null });
-      const lastMail = wd.lastMail ? new Date(wd.lastMail).getTime() : 0;
-      let lastMailAt = wd.lastMail;
-      if (firstTime || now.getTime() - lastMail > REMIND_MS) {
+    const step = usWatchStep(wd, v.state, now);
+    const host = hb?.value.host ?? null;
+    const meta = { ageMs: Number.isFinite(age) ? Math.round(age) : null, host };
+    if (!wd.down && step.next.down) await logOps("cron", "warn", `polling ${v.state}: ${v.summary}${v.fill ? " — degraded mode on" : ""}`, meta);
+    switch (step.mail) {
+      case "silent": {
+        const badRuns = step.next.badRuns ?? 0;
+        await logOps("cron", "error", `polling silent for ${badRuns} min — owner mailed: ${v.summary}`, meta);
         await notifyOwner(
-          v.state === "silent"
-            ? `[PickupChecker] Poller silent for ${Number.isFinite(age) ? Math.round(age / 60000) : "?"} min — degraded mode on`
-            : `[PickupChecker] Poller running but stock checks are failing`,
-          v.state === "silent"
-            ? `The VPS poller has not written a heartbeat since ${hb ? new Date(hb.value.at ?? hb.updatedAt).toISOString() : "(never)"}.\n` +
-              `Vercel is polling in degraded mode (≈1 request/min), watched stores first. Check the host, then /admin.`
-            : `${v.summary}.\nThe poller switches to its spare egress (host IPv4, then Vercel) after two bad rounds; if Apple is blocking the IPv6 range or the route is gone, check the host and /admin/poller.`,
+          `[PickupChecker] Poller silent for ${Number.isFinite(age) ? Math.round(age / 60000) : "?"} min — degraded mode on`,
+          `The VPS poller has not written a heartbeat since ${hb ? new Date(hb.value.at ?? hb.updatedAt).toISOString() : "(never)"} (${badRuns} min running).\n` +
+            `Vercel is polling in degraded mode (≈1 request/min), watched stores first. Check the host, then /admin.\n\n` +
+            `Reminders every ${REMIND_MS / 3600_000} h while it lasts; one mail once polling has been back for ${RECOVER_RUNS} minutes.`,
         ).catch((e) => recordError("web", `watchdog mail failed: ${errorMessage(e)}`));
-        lastMailAt = now.toISOString();
+        break;
       }
-      await writeState("watchdog", { down: true, kind: v.state, since: firstTime ? now.toISOString() : wd.since ?? now.toISOString(), lastMail: lastMailAt ?? null });
-      if (v.fill) {
-        const tick = await degradedTick(3);
-        return NextResponse.json({ state: v.state, degraded: true, ageMs: age, tick });
+      case "blind": {
+        const badRuns = step.next.badRuns ?? 0;
+        await logOps("cron", "error", `polling blind for ${badRuns} min — owner mailed: ${v.summary}`, meta);
+        const lanes = await recentFailures().then(laneDiagnosis).catch((e) => `(poll_log could not be read: ${errorMessage(e)})`);
+        await notifyOwner(
+          `[PickupChecker] Poller running but stock checks are failing`,
+          `${v.summary} (${badRuns} min running, host ${host ?? "?"}).\n\n${lanes}\n\n` +
+            `The poller switches to its spare egress (host IPv4, then Vercel) by itself after two bad rounds. ` +
+            `Reminders every ${REMIND_MS / 3600_000} h while it lasts; one mail once every store has been checked again for ${RECOVER_RUNS} minutes.`,
+        ).catch((e) => recordError("web", `watchdog mail failed: ${errorMessage(e)}`));
+        break;
       }
-      return NextResponse.json({ state: v.state, degraded: false, ageMs: age, summary: v.summary });
+      case "remind": {
+        await logOps("cron", "warn", `polling still ${v.state} — reminder mailed: ${v.summary}`, meta);
+        await notifyOwner(
+          `[PickupChecker] Poller still ${v.state} (${fmtDuration(now.getTime() - new Date(wd.since ?? now).getTime())})`,
+          `${v.summary}.\nSince ${wd.since ?? "?"}; it came back and relapsed ${wd.relapses ?? 0} time(s) in between. Next reminder in ${REMIND_MS / 3600_000} h; one mail when it is over.`,
+        ).catch((e) => recordError("web", `watchdog mail failed: ${errorMessage(e)}`));
+        break;
+      }
+      case "recovered": {
+        const lasted = fmtDuration(now.getTime() - new Date(wd.since ?? now).getTime());
+        await logOps("cron", "info", `polling back to normal (was ${wd.kind ?? "silent"} for ${lasted}, ${wd.relapses ?? 0} relapses)`, { host, downSince: wd.since ?? null, relapses: wd.relapses ?? 0 });
+        await notifyOwner(
+          `[PickupChecker] Poller recovered`,
+          `Polling is back to normal (${host ?? "?"}, mode ${hb?.value.mode ?? "?"}) and has stayed so for ${RECOVER_RUNS} minutes.\n` +
+            `It was ${wd.kind ?? "silent"} from ${wd.since ?? "?"} (${lasted}); it looked over and relapsed ${wd.relapses ?? 0} time(s) in between — one episode, these two mails.`,
+        ).catch(() => undefined);
+        break;
+      }
+      case "partial": {
+        await logOps("cron", "warn", `polling partial: ${v.summary}`, { staleStores: fresh?.staleStores ?? [] });
+        await notifyOwner(
+          `[PickupChecker] Some stores are not being checked`,
+          `${v.summary}.\nThe rest of the country is fine. Usually one coverage anchor's requests keep failing — see /admin/poller. One mail once every store has been checked again for ${PARTIAL_CLEAR_RUNS} minutes.`,
+        ).catch(() => undefined);
+        break;
+      }
+      case "partial-cleared": {
+        await logOps("cron", "info", "polling partial cleared — every store checked again", {});
+        await notifyOwner(`[PickupChecker] Every store is being checked again`, `All ${fresh?.stores ?? "?"} stores have been checked within ${PARTIAL_SEC} s for ${PARTIAL_CLEAR_RUNS} minutes.`).catch(() => undefined);
+        break;
+      }
+      case null:
+        // A blip shorter than BAD_RUNS that is now over: worth a log line, not a mail.
+        if (wd.down && !step.next.down) await logOps("cron", "info", `polling blip over (was ${wd.kind ?? "?"} since ${wd.since ?? "?"}, no mail — under ${BAD_RUNS} min)`, { host, downSince: wd.since ?? null });
+        break;
     }
+    if (JSON.stringify(step.next) !== JSON.stringify(wd)) await writeState("watchdog", { ...step.next });
 
-    if (wd.down) {
-      await logOps("cron", "info", `polling back to normal (was ${wd.kind ?? "silent"})`, { host: hb?.value.host ?? null, downSince: wd.since ?? null });
-      await notifyOwner(`[PickupChecker] Poller recovered`, `Polling is back to normal (${hb?.value.host ?? "?"}, mode ${hb?.value.mode ?? "?"}). It was ${wd.kind ?? "silent"} since ${wd.since ?? "?"}.`).catch(() => undefined);
+    if (v.fill) {
+      const tick = await degradedTick(3);
+      return NextResponse.json({ state: v.state, degraded: true, ageMs: age, tick });
     }
-    // partial: a mail only once it has lasted PARTIAL_RUNS minutes, and one when it clears.
-    const runs = v.state === "partial" ? (wd.partialRuns ?? 0) + 1 : 0;
-    let partialMailed = v.state === "partial" ? Boolean(wd.partialMailed) : false;
-    if (v.state === "partial" && runs >= PARTIAL_RUNS && !partialMailed) {
-      await logOps("cron", "warn", `polling partial: ${v.summary}`, { staleStores: fresh?.staleStores ?? [] });
-      await notifyOwner(`[PickupChecker] Some stores are not being checked`, `${v.summary}.\nThe rest of the country is fine. Usually one coverage anchor's requests keep failing — see /admin/poller.`).catch(() => undefined);
-      partialMailed = true;
-    } else if (v.state !== "partial" && wd.partialMailed) {
-      await logOps("cron", "info", "polling partial cleared — every store checked again", {});
-      await notifyOwner(`[PickupChecker] Every store is being checked again`, `All ${fresh?.stores ?? "?"} stores were checked in the last ${PARTIAL_SEC} s.`).catch(() => undefined);
-    }
-    if (wd.down || runs !== (wd.partialRuns ?? 0) || partialMailed !== Boolean(wd.partialMailed)) {
-      await writeState("watchdog", { down: false, partialRuns: runs, partialMailed });
-    }
-    return NextResponse.json({ state: v.state, degraded: false, ageMs: age });
+    return NextResponse.json({ state: v.state, degraded: false, ageMs: age, ...(v.state === "ok" ? {} : { summary: v.summary }) });
   } catch (e) {
     await recordError("web", `watchdog failed: ${errorMessage(e)}`).catch(() => undefined);
     await probeFromWorker();
     return NextResponse.json({ error: errorMessage(e) }, { status: 500 });
   }
+}
+
+/** "1 h 52 min", "7 min". */
+function fmtDuration(ms: number): string {
+  const min = Math.max(0, Math.round(ms / 60_000));
+  return min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`;
 }
 
 /** The other countries' mail state machine (state key "watchdog:intl"; the rules are intlWatchStep's). */
@@ -126,7 +160,7 @@ async function watchIntl(iv: IntlVerdict | null, judged: boolean, now: Date, usS
     await logOps("cron", "warn", `other countries blind: ${iv!.summary}`, { countries: blind });
     // "The US is fine" only when it is: a partial US shares the cause often enough not to promise it.
     const us = usState === "ok" ? "The US is not affected (its own sweep and checks are fresh)." : `The US is ${usState} at the same time — check both.`;
-    await notifyOwner(`[PickupChecker] Stock checks failing in ${blind.join(", ").toUpperCase()}`, `${iv!.summary}.\n${us} The other countries are asked store by store; usually one country's endpoint is failing or Apple changed its answer there — see /admin/poller and poll_log rows with country set.`).catch(() => undefined);
+    await notifyOwner(`[PickupChecker] Stock checks failing in ${blind.join(", ").toUpperCase()}`, `${iv!.summary}.\n${us} The other countries are asked store by store; usually one country's endpoint is failing or Apple changed its answer there — see /admin/poller and poll_log rows with country set. One mail once they have been fine again for a few minutes.`).catch(() => undefined);
   } else if (step.mail === "recovered") {
     await logOps("cron", "info", "other countries checked again", { were: st.countries ?? [] });
     await notifyOwner(`[PickupChecker] Other countries are being checked again`, `Stock checks recovered in ${(st.countries ?? []).join(", ").toUpperCase() || "every country"} (failing since ${st.since ?? "?"}).`).catch(() => undefined);

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({ db: () => ({}), schema: {} }));
-const { CAPACITY_IDLE, CLEAR_RUNS, LAG_RUNS, REMIND_MS, capacityReasons, capacityStep } = await import("@/lib/stock/capacity");
+const { CAPACITY_IDLE, CLEAR_RUNS, LAG_RUNS, REARM_RUNS, REMIND_MS, capacityReasons, capacityStep } = await import("@/lib/stock/capacity");
 
 const base = { fastStores: 39, rounds: [{ host: "linode-1", mode: "full", p50Sec: 12.3, count: 40 }, { host: "linode-1", mode: "intl", p50Sec: 13.4, count: 40 }], cadence: { full: 15, intl: 15 }, watchedLagP90Sec: 4.7, fastCadenceSec: 5 };
 const t = (min: number) => new Date(Date.UTC(2026, 10, 2, 16, min));
@@ -39,6 +39,28 @@ describe("capacityStep — one mail per episode", () => {
     const round = { key: "round:linode-1:full", text: "slow" };
     expect(capacityStep(a, t(5), [...fast, round], false, 4, 5).mail).toBe("warn");
     expect(capacityStep(a, new Date(t(0).getTime() + REMIND_MS + 60_000), fast, false, 4, 5).mail).toBe("remind");
+  });
+  it("a reason that rests and returns within REARM_RUNS runs is the same reason (2026-11-06: 13 mails from flapping rounds)", () => {
+    const round = { key: "round:linode-3:full", text: "slow" };
+    let st = capacityStep(CAPACITY_IDLE, t(0), fast, false, 4, 5).next;
+    const joined = capacityStep(st, t(1), [...fast, round], false, 4, 5);
+    expect(joined.mail).toBe("warn");
+    st = joined.next;
+    for (let i = 2; i < 2 + REARM_RUNS - 1; i++) {
+      const s = capacityStep(st, t(i), fast, false, 4, 5);
+      expect(s.mail).toBeNull();
+      expect(s.next.reasons).toEqual(["fast-stores", "round:linode-3:full"]);
+      st = s.next;
+    }
+    // back before the hour is up: no mail
+    const back = capacityStep(st, t(70), [...fast, round], false, 4, 5);
+    expect(back.mail).toBeNull();
+    st = back.next;
+    expect(st.quiet).toEqual({});
+    // rests a full hour, then returns: a new reason again
+    for (let i = 0; i < REARM_RUNS; i++) st = capacityStep(st, t(80 + i), fast, false, 4, 5).next;
+    expect(st.reasons).toEqual(["fast-stores"]);
+    expect(capacityStep(st, t(200), [...fast, round], false, 4, 5).mail).toBe("warn");
   });
   it("needs the lag several runs in a row", () => {
     let st = CAPACITY_IDLE;

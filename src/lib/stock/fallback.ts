@@ -136,25 +136,33 @@ export function intlVerdict(f: Freshness | null, enabled?: CountryCode[]): IntlV
 }
 
 /** The other countries' watchdog state ("watchdog:intl"), kept apart from the US one (their trouble never changes what the US does). */
-export interface IntlWatchState { runs: number; mailed: boolean; since?: string | null; countries?: string[] }
+export interface IntlWatchState { runs: number; mailed: boolean; since?: string | null; countries?: string[]; okRuns?: number }
 /** Judged watchdog runs in a row with a blind country before the owner is mailed. */
 export const INTL_RUNS = 3;
+/** Judged runs in a row with nothing blind, after that mail, before the recovery is mailed (a country wobbling at the line is one episode). */
+export const INTL_RECOVER_RUNS = 5;
 
 /**
  * Pure: one watchdog run of the other countries. Blind for INTL_RUNS judged runs in a row → mail "blind" once;
- * nothing blind any more after that mail → mail "recovered". A run that is not judged (paused, degraded, the US
- * not fine, disabled) breaks the streak — the count starts again from zero, so runs scattered over an hour (the
- * 15-minute full-mode probes of a degraded poller) never add up to a mail — and an outstanding mail stays so.
+ * nothing blind for INTL_RECOVER_RUNS judged runs in a row after that mail → mail "recovered". A country that
+ * comes back and relapses in between is the same episode: no second mail, and the recovery mail names every
+ * country the episode touched. A run that is not judged (paused, degraded, the US not fine, disabled) breaks both
+ * streaks — the counts start again from zero, so runs scattered over an hour (the 15-minute full-mode probes of a
+ * degraded poller) never add up to a mail — and an outstanding mail stays so.
  */
 export function intlWatchStep(st: IntlWatchState, judged: boolean, blind: string[], now: Date): { next: IntlWatchState; mail: "blind" | "recovered" | null; write: boolean } {
-  if (!judged) return { next: { ...st, runs: 0 }, mail: null, write: st.runs !== 0 };
+  const okRuns = st.okRuns ?? 0;
+  if (!judged) return { next: { ...st, runs: 0, okRuns: 0 }, mail: null, write: st.runs !== 0 || okRuns !== 0 };
   if (blind.length) {
-    const next: IntlWatchState = { ...st, runs: st.runs + 1, countries: blind };
+    const countries = st.mailed ? [...new Set([...(st.countries ?? []), ...blind])].sort() : blind;
+    const next: IntlWatchState = { ...st, runs: st.runs + 1, okRuns: 0, countries };
     if (next.runs >= INTL_RUNS && !st.mailed) return { next: { ...next, mailed: true, since: now.toISOString() }, mail: "blind", write: true };
     return { next, mail: null, write: true };
   }
-  const next: IntlWatchState = { runs: 0, mailed: false, since: null, countries: [] };
-  return { next, mail: st.mailed ? "recovered" : null, write: st.runs !== 0 || st.mailed };
+  const idle: IntlWatchState = { runs: 0, mailed: false, since: null, countries: [] };
+  if (!st.mailed) return { next: idle, mail: null, write: st.runs !== 0 || okRuns !== 0 };
+  if (okRuns + 1 >= INTL_RECOVER_RUNS) return { next: idle, mail: "recovered", write: true };
+  return { next: { ...st, runs: 0, okRuns: okRuns + 1 }, mail: null, write: true };
 }
 
 export type PollerState = "ok" | "silent" | "blind" | "partial";
@@ -226,4 +234,126 @@ export async function fallbackOrder(tasks: SweepTask[]): Promise<SweepTask[]> {
   const age = new Map<string, number>();
   for (const r of ages.rows as { store_number: string; part_number: string; age: number | null }[]) age.set(pairKey(r.store_number, r.part_number), r.age ?? 1e9);
   return orderTasks(tasks, watched, (s, p) => age.get(pairKey(s, p)) ?? 1e9);
+}
+
+/* ---------------- the US watchdog's mail state machine ---------------- */
+
+/**
+ * The US watchdog state ("watchdog" key). `down` = an episode of silent/blind is open (the admin board shows it
+ * from the first bad minute); the mails inside an episode are usWatchStep's.
+ */
+export interface UsWatchState {
+  down: boolean;
+  kind?: PollerState;
+  since?: string | null;
+  lastMail?: string | null;
+  /** Bad (silent/blind) runs in a row: the first mail waits for BAD_RUNS of them. */
+  badRuns?: number;
+  /** Fine runs in a row since the last bad one: the recovery mail waits for RECOVER_RUNS of them. */
+  okRuns?: number;
+  /** Times the episode looked over and came back (the recovery mail says so). */
+  relapses?: number;
+  partialRuns?: number;
+  partialMailed?: boolean;
+  partialOkRuns?: number;
+}
+export const US_IDLE: UsWatchState = { down: false };
+/** Minutes silent/blind in a row before the owner is mailed (the fill-in starts at once regardless). */
+export const BAD_RUNS = 2;
+/**
+ * Fine minutes in a row before "back to normal" is mailed. 2026-11-06: Apple answered slowly for two hours and the
+ * US share of fresh pairs crossed 50 % eleven times — with a mail per crossing that was 22 mails for one episode.
+ */
+export const RECOVER_RUNS = 5;
+export const REMIND_MS = 3 * 60 * 60 * 1000;
+/** Minutes a "partial" picture must persist before it is worth a mail (restarts and blips clear sooner). */
+export const PARTIAL_RUNS = 3;
+/** Fine minutes in a row before "every store checked again" is mailed. */
+export const PARTIAL_CLEAR_RUNS = 5;
+
+export type UsMail = "silent" | "blind" | "remind" | "recovered" | "partial" | "partial-cleared";
+
+/**
+ * Pure: one watchdog run of the US. An episode opens on the first silent/blind run and closes after RECOVER_RUNS
+ * fine runs in a row; inside it there is at most one first mail (after BAD_RUNS bad runs — silent or blind,
+ * whichever it is then), one more if blind escalates to silent after that mail (the fill-in has started), a
+ * reminder every REMIND_MS, and one recovery mail when it closes — none when it closed before any mail went out.
+ * The partial picture is judged only outside an episode (its stale stores are the episode's symptom); it mails
+ * after PARTIAL_RUNS partial runs and clears after PARTIAL_CLEAR_RUNS fine ones, with the same one-per-episode rule.
+ */
+export function usWatchStep(st: UsWatchState, state: PollerState, now: Date): { next: UsWatchState; mail: UsMail | null } {
+  const t = now.getTime();
+  if (state === "silent" || state === "blind") {
+    const badRuns = (st.badRuns ?? 0) + 1;
+    const relapses = (st.relapses ?? 0) + (st.down && (st.okRuns ?? 0) > 0 ? 1 : 0);
+    const base: UsWatchState = { ...st, down: true, kind: state, since: st.down && st.since ? st.since : now.toISOString(), badRuns, okRuns: 0, relapses };
+    if (!st.lastMail) return badRuns >= BAD_RUNS ? { next: { ...base, lastMail: now.toISOString() }, mail: state } : { next: base, mail: null };
+    const escalated = st.kind === "blind" && state === "silent";
+    if (escalated) return { next: { ...base, lastMail: now.toISOString() }, mail: "silent" };
+    if (t - new Date(st.lastMail).getTime() > REMIND_MS) return { next: { ...base, lastMail: now.toISOString() }, mail: "remind" };
+    return { next: base, mail: null };
+  }
+  if (st.down) {
+    const okRuns = (st.okRuns ?? 0) + 1;
+    if (okRuns < RECOVER_RUNS) return { next: { ...st, okRuns, badRuns: 0 }, mail: null };
+    return { next: { down: false, partialRuns: 0, partialMailed: Boolean(st.partialMailed), partialOkRuns: 0 }, mail: st.lastMail ? "recovered" : null };
+  }
+  if (state === "partial") {
+    const partialRuns = (st.partialRuns ?? 0) + 1;
+    if (partialRuns >= PARTIAL_RUNS && !st.partialMailed) return { next: { down: false, partialRuns, partialMailed: true, partialOkRuns: 0 }, mail: "partial" };
+    return { next: { down: false, partialRuns, partialMailed: Boolean(st.partialMailed), partialOkRuns: 0 }, mail: null };
+  }
+  if (st.partialMailed) {
+    const partialOkRuns = (st.partialOkRuns ?? 0) + 1;
+    if (partialOkRuns >= PARTIAL_CLEAR_RUNS) return { next: { down: false, partialRuns: 0, partialMailed: false, partialOkRuns: 0 }, mail: "partial-cleared" };
+    return { next: { down: false, partialRuns: 0, partialMailed: true, partialOkRuns }, mail: null };
+  }
+  return { next: { down: false, partialRuns: 0, partialMailed: false, partialOkRuns: 0 }, mail: null };
+}
+
+/* ---------------- whose fault a blind minute is ---------------- */
+
+/** The lanes' last minutes from poll_log (the blind mail carries them: who is failing says whose fault it is). */
+export interface LaneFailures {
+  minutes: number;
+  sweep: { requests: number; failed: number; timedOut: number; throttled: number };
+  fast: { requests: number; failed: number };
+  intlFailed: number;
+}
+
+export async function recentFailures(minutes = 5): Promise<LaneFailures> {
+  const r = (await db().execute(sql`
+    select
+      count(*) filter (where country is null and sweep_id not like 'fast%')::int as sweep,
+      count(*) filter (where country is null and sweep_id not like 'fast%' and not ok)::int as sweep_failed,
+      count(*) filter (where country is null and sweep_id not like 'fast%' and not ok and error like 'timed out%')::int as sweep_timed_out,
+      count(*) filter (where country is null and sweep_id not like 'fast%' and http_status = 541)::int as sweep_throttled,
+      count(*) filter (where country is null and sweep_id like 'fast%')::int as fast,
+      count(*) filter (where country is null and sweep_id like 'fast%' and not ok)::int as fast_failed,
+      count(*) filter (where country is not null and not ok)::int as intl_failed
+    from poll_log where at > now() - make_interval(mins => ${minutes})`)).rows[0] as Record<string, number>;
+  return {
+    minutes,
+    sweep: { requests: r.sweep, failed: r.sweep_failed, timedOut: r.sweep_timed_out, throttled: r.sweep_throttled },
+    fast: { requests: r.fast, failed: r.fast_failed },
+    intlFailed: r.intl_failed,
+  };
+}
+
+/**
+ * Pure: the figures and a one-line reading. Timeouts on every lane and in other countries = Apple slow for
+ * everyone (nothing to do on the host); 541s = Apple throttling this range; only the big nearby-stores answers
+ * timing out while one-store checks land = Apple slow on those; anything else = this host's egress.
+ */
+export function laneDiagnosis(f: LaneFailures): string {
+  const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
+  const sweepFail = pct(f.sweep.failed, f.sweep.requests), fastFail = pct(f.fast.failed, f.fast.requests);
+  const timeoutsDominate = f.sweep.failed > 0 && f.sweep.timedOut >= f.sweep.failed / 2;
+  const figures = `Last ${f.minutes} min — US sweep: ${sweepFail}% of ${f.sweep.requests} requests failed (${pct(f.sweep.timedOut, f.sweep.requests)}% timed out, ${f.sweep.throttled} × 541); US fast lane: ${fastFail}% of ${f.fast.requests} failed; other countries: ${f.intlFailed} failed requests.`;
+  let reading: string;
+  if (f.sweep.throttled > 0 && f.sweep.throttled >= f.sweep.failed / 2) reading = "Apple is throttling this host's IPv6 range (541): the poller backs off and switches to its spare egress after two bad rounds — see /admin/poller.";
+  else if (timeoutsDominate && (f.intlFailed >= 20 || fastFail >= 5)) reading = "Timeouts on every lane and in other countries too: Apple's side is slow for everyone. Nothing to fix on the host; it clears by itself.";
+  else if (timeoutsDominate) reading = "Only the big nearby-stores answers time out while the one-store checks (fast lane) land: Apple's side is slow on those. Nothing to fix on the host.";
+  else reading = "Failures on this host only: the IPv6 range may be blocked or the route gone — see /admin/poller, then the host (ip -6 route, journalctl -u pickupchecker-poller).";
+  return `${figures}\n${reading}`;
 }
