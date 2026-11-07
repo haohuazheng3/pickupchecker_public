@@ -6,6 +6,7 @@
 import { ALL_STORES } from "../apple/catalog";
 import { INTL_CODES } from "../apple/countries";
 import { SPEED, OTHER_TRACKERS } from "../plans";
+import { OFFICIAL_SOCIAL_PROFILES } from "./social";
 
 const SITE = "https://pickupchecker.com";
 export const ORG_ID = `${SITE}/#organization`;
@@ -32,6 +33,7 @@ export const siteLd = {
       "@type": "Organization", "@id": ORG_ID, name: "PickupChecker", url: SITE, logo: `${SITE}/icon.svg`,
       slogan: `One step ahead: your Apple Stores checked every ${SPEED.fastSec} seconds`,
       description: SITE_DESCRIPTION,
+      sameAs: OFFICIAL_SOCIAL_PROFILES.map(({ href }) => href),
       knowsAbout: ["iPhone in-store pickup availability", "Apple Store iPhone restock times", "iPhone Duo", "iPhone 18 Pro", "iPhone 18 Pro Max"],
     },
     { "@type": "WebSite", "@id": WEBSITE_ID, name: "PickupChecker", url: SITE, description: SITE_DESCRIPTION, publisher: { "@id": ORG_ID } },

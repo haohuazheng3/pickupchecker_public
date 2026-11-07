@@ -35,6 +35,7 @@ export const metadata: Metadata = {
   description:
     "A phone notification the moment an iPhone Duo, 18 Pro or 18 Pro Max is in stock for pickup at any US Apple Store. Every store checked every 15 seconds, yours every 5. From $5 a month.",
   applicationName: "PickupChecker",
+  other: { "p:domain_verify": "7023e932701cb45d67d43a33c7b2a623" },
   robots: INDEXABLE ? { index: true, follow: true } : { index: false, follow: false },
   openGraph: { type: "website", siteName: "PickupChecker", url: SITE },
   twitter: { card: "summary_large_image" },

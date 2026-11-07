@@ -1,5 +1,6 @@
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { Logo } from "./Logo";
+import { OFFICIAL_SOCIAL_PROFILES } from "@/lib/seo/social";
 import { topStates } from "@/lib/seo/links";
 import { TrackingChoice } from "./Consent";
 import { switchCountries } from "./countries";
@@ -85,6 +86,7 @@ export function Footer({ loc }: { loc: Locale }) {
             {switchCountries().map((c) => <li key={c.cc}><Link href={c.cc === "us" ? "/" : `/${c.cc}`} className="hover:text-ink">{c.name}</Link></li>)}
           </ul>
         </div>
+        <OfficialProfiles />
         <div className="hairline mt-6 flex flex-wrap items-center justify-between gap-3 pt-5 text-xs text-ink-3">
           <span>© {new Date().getFullYear()} PickupChecker</span>
           <Link href="/api/health" className="hover:text-ink">Status</Link>
@@ -162,11 +164,33 @@ function NativeFooter({ loc }: { loc: Locale }) {
             {names.map((c) => <li key={c.cc}><Link href={c.cc === "us" ? "/" : `/${c.cc}`} className="hover:text-ink">{c.names?.[loc.lang] ?? c.name}</Link></li>)}
           </ul>
         </div>
+        <OfficialProfiles />
         <div className="hairline mt-6 flex flex-wrap items-center justify-between gap-3 pt-5 text-xs text-ink-3">
           <span>© {new Date().getFullYear()} PickupChecker</span>
           <Link href="/api/health" className="hover:text-ink">{F.status}</Link>
         </div>
       </div>
     </footer>
+  );
+}
+
+
+function OfficialProfiles() {
+  return (
+    <nav aria-label="Official social accounts" className="hairline mt-6 pt-5 text-sm" lang="en">
+      <div className="eyebrow mb-3">Follow us</div>
+      <ul className="flex flex-wrap gap-x-6 gap-y-3 text-ink-2">
+        {OFFICIAL_SOCIAL_PROFILES.map(({ name, href, icon }) => (
+          <li key={name}>
+            <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 hover:text-ink">
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                {icon === "x" ? <path d="M4 3h5l11 18h-5L4 3Zm16 0L4 21" /> : icon === "pinterest" ? <><circle cx="12" cy="12" r="10" /><path d="m9 20 3-13m-1 8c7 4 9-11 2-10-5 0-7 6-4 9" /></> : <><ellipse cx="12" cy="14" rx="9" ry="6" /><path d="m12 8 2-5 5 1M5 10C1 6 0 13 3 14m16-4c4-4 5 3 2 4m-13 3c2 2 6 2 8 0" /><circle cx="20" cy="4" r="2" /><circle cx="8" cy="13" r="1" fill="currentColor" /><circle cx="16" cy="13" r="1" fill="currentColor" /></>}
+              </svg>
+              {name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
