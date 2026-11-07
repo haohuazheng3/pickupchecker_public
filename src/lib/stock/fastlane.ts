@@ -13,9 +13,10 @@
  */
 import { randomUUID } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
+import { Pool, type PoolConfig } from "pg";
 import { batchParts, fetchPickupAtStore, type PickupResponse } from "../apple/client";
-import { countryOfStore, partNumbersForStore, STORE_INDEX, type ModelKey } from "../apple/catalog";
-import { db, schema } from "../db";
+import { countryOfStore, partNumbersForStore, partNumbersOf, STORE_INDEX, type ModelKey } from "../apple/catalog";
+import { db, dbStatus, schema } from "../db";
 import { errorMessage, recordError } from "../errors";
 import { logOps } from "../ops";
 import { ACTIVE_STATUSES, coveredWatchIds, effectivePlan } from "../plans";
@@ -60,6 +61,156 @@ export function targetsForDuties(targets: Map<string, string[]>, duty: { us: boo
   return new Map([...targets].filter(([store]) => (countryOfStore(store) === "us" ? duty.us : duty.intl)));
 }
 
+export interface SharedFastTarget { store_number: string; part_number: string }
+const SHARED_REFRESH_MS = 60_000;
+const SHARED_MAX_AGE_MS = 120_000;
+
+/** Each application applies its own paid coverage; only anonymous store/part demand is combined. */
+export function mergeFastTargets(...sources: Map<string, string[]>[]): Map<string, string[]> {
+  const merged = new Map<string, Set<string>>();
+  for (const source of sources) for (const [store, parts] of source) {
+    const found = merged.get(store) ?? new Set<string>();
+    for (const part of parts) found.add(part);
+    merged.set(store, found);
+  }
+  return new Map([...merged].sort(([a], [b]) => a.localeCompare(b)).map(([store, parts]) => [store, [...parts].sort()]));
+}
+
+/** Optional source, deliberately separate from the poller's writable DB and connection budget. */
+export function sharedFastlanePoolConfig(env: Record<string, string | undefined>): PoolConfig {
+  const url = new URL(env.FASTLANE_SHARED_DATABASE_URL ?? "");
+  const local = ["localhost", "127.0.0.1", "::1"].includes(url.hostname.replace(/^\[|\]$/g, ""));
+  if (!["postgres:", "postgresql:"].includes(url.protocol) || url.search || url.hash
+    || (url.port && url.port !== "5432") || !url.password
+    || decodeURIComponent(url.username) !== "shelfspring_fastlane_reader"
+    || !["/pickupchecker", "/shelfspring"].includes(url.pathname)
+    || (!local && !["172.232.3.151", "45.33.64.182"].includes(url.hostname))) {
+    throw new Error("Invalid shared fast-lane database scope");
+  }
+  const ca = env.FASTLANE_SHARED_DATABASE_CA?.replace(/\\n/g, "\n").trim();
+  if (!local && !ca) throw new Error("Shared fast-lane database CA is required");
+  return { connectionString: url.toString(), ssl: local ? false : { ca, rejectUnauthorized: true },
+    max: 1, connectionTimeoutMillis: 1500, statement_timeout: 1500, query_timeout: 2000,
+    idleTimeoutMillis: 5000, application_name: "pickupchecker-shared-fastlane-readonly",
+    options: "-c default_transaction_read_only=on -c search_path=pg_catalog" };
+}
+
+/** Follow the original cluster's existing epoch/fencing decision, never independently pick a host. */
+export function sharedFastlaneTarget(status: Awaited<ReturnType<typeof dbStatus>>): "primary" | "standby" {
+  const probe = status?.probes.find((p) => p.name === status.using);
+  if (!status?.writable || !status.using || !probe?.ok || probe.recovery !== false
+    || !probe.host || probe.owner !== probe.host || !Number.isFinite(probe.epoch) || probe.epoch < 0) {
+    throw new Error("No authoritative shared fast-lane primary");
+  }
+  return status.using;
+}
+
+type SharedFeedEvent = "updated" | "unavailable" | "expired" | "recovered";
+/**
+ * Never waits for the other application's database. A completed refresh changes the same target Map
+ * the fast loop already holds; targetsForDuties copies it before a round. Expiry removes only shared
+ * demand even if the local 60-second reload is delayed. No shared failure can skip a local round.
+ */
+export function createSharedFastlaneFeed(read: () => Promise<SharedFastTarget[]>, report: (event: SharedFeedEvent, stores: number, pairs: number) => void = () => undefined) {
+  let local = new Map<string, string[]>(), shared = new Map<string, string[]>();
+  const output = new Map<string, string[]>();
+  let lastAttempt = -Infinity, lastErrorReport = -Infinity, expiresAt = 0;
+  let inFlight = false, unavailable = false, disposed = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const emit = (event: SharedFeedEvent) => {
+    try { report(event, shared.size, [...shared.values()].reduce((n, p) => n + p.length, 0)); } catch { /* diagnostics never affect polling */ }
+  };
+  const publish = () => {
+    const merged = mergeFastTargets(local, Date.now() < expiresAt ? shared : new Map());
+    output.clear();
+    for (const [store, parts] of merged) output.set(store, parts);
+  };
+  const refresh = async () => {
+    try {
+      const rows = await read();
+      if (disposed) return;
+      const next = new Map<string, string[]>();
+      for (const row of rows) {
+        const country = countryOfStore(row.store_number);
+        if (!country || !partNumbersOf(country).includes(row.part_number)) throw new Error("Invalid shared fast-lane target");
+        next.set(row.store_number, [...(next.get(row.store_number) ?? []), row.part_number]);
+      }
+      shared = mergeFastTargets(next);
+      expiresAt = Date.now() + SHARED_MAX_AGE_MS;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => { shared = new Map(); expiresAt = 0; publish(); emit("expired"); }, SHARED_MAX_AGE_MS);
+      timer.unref();
+      publish();
+      emit(unavailable ? "recovered" : "updated");
+      unavailable = false;
+    } catch {
+      if (disposed) return;
+      unavailable = true;
+      publish();
+      if (Date.now() - lastErrorReport >= 600_000) { lastErrorReport = Date.now(); emit("unavailable"); }
+    } finally { inFlight = false; }
+  };
+  return {
+    merge(targets: Map<string, string[]>): Map<string, string[]> {
+      local = mergeFastTargets(targets);
+      publish();
+      if (!disposed && !inFlight && Date.now() - lastAttempt >= SHARED_REFRESH_MS) {
+        inFlight = true; lastAttempt = Date.now(); void refresh();
+      }
+      return output;
+    },
+    dispose() { disposed = true; if (timer) clearTimeout(timer); },
+  };
+}
+
+let sharedFeed: ReturnType<typeof createSharedFastlaneFeed> | undefined;
+let sharedConfigErrorAt = -Infinity;
+function withSharedTargets(local: Map<string, string[]>): Map<string, string[]> {
+  if (!process.env.FASTLANE_SHARED_DATABASE_URL) return local;
+  try {
+    if (!sharedFeed) {
+      const configs: Partial<Record<"primary" | "standby", PoolConfig>> = { primary: sharedFastlanePoolConfig(process.env) };
+      if (process.env.FASTLANE_SHARED_DATABASE_URL_STANDBY) configs.standby = sharedFastlanePoolConfig({
+        ...process.env, FASTLANE_SHARED_DATABASE_URL: process.env.FASTLANE_SHARED_DATABASE_URL_STANDBY,
+      });
+      const pools: Partial<Record<"primary" | "standby", Pool>> = {};
+      sharedFeed = createSharedFastlaneFeed(async () => {
+        const target = sharedFastlaneTarget(await dbStatus());
+        const config = configs[target];
+        if (!config) throw new Error("Shared demand endpoint is not configured");
+        if (!pools[target]) {
+          pools[target] = new Pool(config);
+          // No driver error text: it can contain a DSN or server details.
+          pools[target]!.on("error", () => console.warn("[fast] shared demand idle connection closed"));
+        }
+        const pool = pools[target]!;
+        const client = await pool.connect();
+        try {
+          await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+          const { rows: [state] } = await client.query<{ recovery: boolean }>("SELECT pg_is_in_recovery() AS recovery");
+          if (!state || state.recovery !== false) throw new Error("Shared demand endpoint is not the primary");
+          const result = await client.query<SharedFastTarget>("SELECT store_number, part_number FROM public.shelfspring_fastlane_targets");
+          await client.query("COMMIT");
+          return result.rows;
+        } catch {
+          await client.query("ROLLBACK").catch(() => undefined);
+          throw new Error("Shared fast-lane demand unavailable");
+        } finally { client.release(); }
+      }, (event, stores, pairs) => {
+        const level = event === "unavailable" || event === "expired" ? "warn" : event === "recovered" ? "info" : "debug";
+        void logOps("poller", level, `shared fast-lane demand ${event}`, { source: "shelfspring", stores, pairs, maxAgeSec: SHARED_MAX_AGE_MS / 1000 }).catch(() => undefined);
+      });
+    }
+    return sharedFeed.merge(local);
+  } catch {
+    if (Date.now() - sharedConfigErrorAt >= 600_000) {
+      sharedConfigErrorAt = Date.now();
+      console.warn("[fast] shared demand configuration rejected; local targets continue");
+    }
+    return local;
+  }
+}
+
 export async function loadFastTargets(): Promise<Map<string, string[]>> {
   const d = db();
   const rules = await d
@@ -70,7 +221,7 @@ export async function loadFastTargets(): Promise<Map<string, string[]>> {
   const subs = userIds.length
     ? await d.select({ userId: schema.subscriptions.userId, plan: schema.subscriptions.plan, status: schema.subscriptions.status, alertLimit: schema.subscriptions.alertLimit }).from(schema.subscriptions).where(and(inArray(schema.subscriptions.userId, userIds), inArray(schema.subscriptions.status, ACTIVE_STATUSES)))
     : [];
-  return targetsFromRules(rules, subs);
+  return withSharedTargets(targetsFromRules(rules, subs));
 }
 
 export interface FastTask { storeNumber: string; parts: string[] }
