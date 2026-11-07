@@ -16,7 +16,7 @@
 #
 # Leaves, root-only: /root/pg-secrets/<db>.url (remote: TLS to this host's IPv4), /root/pg-secrets/<db>-local.url
 # (loopback), /root/pg-secrets/poller-local.url (the poller's own role, with reserved connections) and
-# /root/pg-ca/ca.crt (the site pins it as DATABASE_CA). Copy db-maintenance.sh
+# /root/pg-ca/ca.crt (the site pins it as DATABASE_CA). Copy db-maintenance.sh, poll-rollup.sh, core-archive.sh
 # next to this script to (re)install the daily maintenance. Postgres restarts only when its settings change.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -204,7 +204,8 @@ fi
 
 ufw allow 5432/tcp >/dev/null
 
-# Nightly dump of production, one per weekday (seven kept), at a quiet hour for US stores.
+# Nightly dump of production, one per weekday (seven kept), at a quiet hour for US stores. Without poll_log's rows
+# (owner 2026-11-07: ~1.5 GB a day of raw request log; its hourly summary poll_hourly is in the dump).
 install -d -o postgres -g postgres -m 700 /var/backups/pickupchecker
 cat > /etc/systemd/system/pickupchecker-pgdump.service <<'UNIT'
 [Unit]
@@ -212,7 +213,7 @@ Description=Dump the PickupChecker database
 [Service]
 Type=oneshot
 User=postgres
-ExecStart=/bin/sh -c 'pg_dump -Fc pickupchecker > /var/backups/pickupchecker/pickupchecker-$(date +%%a).dump'
+ExecStart=/bin/sh -c 'pg_dump -Fc --exclude-table-data=public.poll_log pickupchecker > /var/backups/pickupchecker/pickupchecker-$(date +%%a).dump'
 UNIT
 cat > /etc/systemd/system/pickupchecker-pgdump.timer <<'UNIT'
 [Unit]
@@ -246,8 +247,55 @@ Persistent=true
 WantedBy=timers.target
 UNIT
 fi
+
+# Hourly poll_log roll-up and trim (poll-rollup.sh; primary only) and the daily dated archive (core-archive.sh;
+# standby only, so it always sits on the other machine). Both hosts get both.
+if [ -f "$HERE/poll-rollup.sh" ]; then
+  install -m 755 "$HERE/poll-rollup.sh" /opt/pickupchecker/poll-rollup.sh
+  cat > /etc/systemd/system/pickupchecker-poll-rollup.service <<'UNIT'
+[Unit]
+Description=Summarise PickupChecker's request log by hour and drop raw rows older than 3 days
+After=postgresql.service
+[Service]
+Type=oneshot
+Environment=HOME=/root
+ExecStart=/opt/pickupchecker/poll-rollup.sh
+UNIT
+  cat > /etc/systemd/system/pickupchecker-poll-rollup.timer <<'UNIT'
+[Unit]
+Description=Hourly PickupChecker request-log roll-up
+[Timer]
+OnCalendar=*-*-* *:07:00 UTC
+Persistent=true
+[Install]
+WantedBy=timers.target
+UNIT
+fi
+if [ -f "$HERE/core-archive.sh" ]; then
+  install -m 755 "$HERE/core-archive.sh" /opt/pickupchecker/core-archive.sh
+  cat > /etc/systemd/system/pickupchecker-archive.service <<'UNIT'
+[Unit]
+Description=Dated daily archive of the PickupChecker data (standby only)
+After=postgresql.service network-online.target
+[Service]
+Type=oneshot
+Environment=HOME=/root
+ExecStart=/opt/pickupchecker/core-archive.sh
+UNIT
+  cat > /etc/systemd/system/pickupchecker-archive.timer <<'UNIT'
+[Unit]
+Description=Daily PickupChecker data archive
+[Timer]
+OnCalendar=*-*-* 10:30:00 UTC
+Persistent=true
+[Install]
+WantedBy=timers.target
+UNIT
+fi
 systemctl daemon-reload
 systemctl enable -q --now pickupchecker-pgdump.timer
-[ -f /etc/systemd/system/pickupchecker-db-maintenance.timer ] && systemctl enable -q --now pickupchecker-db-maintenance.timer
+for t in db-maintenance poll-rollup archive; do
+  if [ -f "/etc/systemd/system/pickupchecker-$t.timer" ]; then systemctl enable -q --now "pickupchecker-$t.timer"; fi
+done
 
 echo "postgres $(sudo -u postgres psql -qtAc 'SHOW server_version') on $IP4:5432 · databases: ${DBS[*]}"

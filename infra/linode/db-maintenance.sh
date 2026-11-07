@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Daily, after the 09:30 dump (pickupchecker-db-maintenance.timer, 10:00 UTC):
-#  1. Trim what grows by itself: poll_log and sweeps keep 14 days, ops_log debug ticks 3 days and the rest
-#     60, expired rate-limit rows go (poll_log alone is ~75 MB a day). Nothing a user made is touched.
+#  0. poll-rollup.sh once more (it also runs hourly): poll_log is summarised into poll_hourly (kept forever) and
+#     raw rows older than 3 days go. The nightly run mails the owner if that fails, and below 3 GB of free disk.
+#  1. Trim what grows by itself: sweeps keep 14 days, ops_log debug ticks 3 days and the rest 60, expired
+#     rate-limit rows go. Nothing a user made is touched; availability_events (restock history) is never trimmed.
 #  2. Off-host copy: the database minus those logs, restored over the Neon project that held it before
 #     2026-10-30 (free tier: a restore is ingress, a minute of compute). Only once the one-off merge has
 #     taken what Neon held, because the restore replaces Neon's tables; one transaction, so a failed run
@@ -19,12 +21,19 @@ notify() {
     curl -fsS -m 40 -X POST "${url%/}/notify" -H "Authorization: Bearer ${token}" -H "content-type: application/json" --data-binary @- >/dev/null || true
 }
 
+HERE="$(cd "$(dirname "$0")" && pwd)"
+if [ -x "$HERE/poll-rollup.sh" ]; then NOTIFY=1 "$HERE/poll-rollup.sh"; else log error "db maintenance: poll-rollup.sh missing" '{}'; fi
+free=$(df -B1 --output=avail /var/lib/postgresql | tail -1 | tr -d ' ')
+if [ "${free:-0}" -lt 3000000000 ]; then
+  log error "db maintenance: disk nearly full" "{\"disk_free_bytes\": ${free:-0}}"
+  notify "[PickupChecker] Database disk nearly full" "$(printf 'Only %s MB free on the database host (%s). Postgres stops accepting writes when the disk is full.\n\ndf:\n%s' "$((free / 1000000))" "$(hostname)" "$(df -h /)")"
+fi
+
 trimmed=$("${P[@]}" -tA <<'SQL'
-with a as (delete from poll_log where at < now() - interval '14 days' returning 1),
-     b as (delete from sweeps where started_at < now() - interval '14 days' returning 1),
+with b as (delete from sweeps where started_at < now() - interval '14 days' returning 1),
      c as (delete from ops_log where (level = 'debug' and at < now() - interval '3 days') or at < now() - interval '60 days' returning 1),
      d as (delete from rate_limits where reset_at < now() - interval '1 day' returning 1)
-select json_build_object('poll_log', (select count(*) from a), 'sweeps', (select count(*) from b), 'ops_log', (select count(*) from c), 'rate_limits', (select count(*) from d),
+select json_build_object('sweeps', (select count(*) from b), 'ops_log', (select count(*) from c), 'rate_limits', (select count(*) from d),
                          'db_bytes', pg_database_size(current_database()));
 SQL
 )
