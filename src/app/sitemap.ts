@@ -57,7 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const n of storeNumbers) { const iso = all[n]; if (iso) { const d = new Date(iso); if (!best || d > best) best = d; } }
     return best ?? now;
   };
-  const statics = ["", "/how-it-works", "/pricing", "/install", "/map", "/restocks", "/about", "/contact", "/privacy", "/terms", "/refunds", "/stores"].map((p) => ({ url: `${base}${p}`, lastModified: now, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.6 }));
+  const statics = ["", "/how-it-works", "/pricing", "/install", "/map", "/restocks", "/about", "/research/iphone-duo-week-2026-11-07", "/contact", "/privacy", "/terms", "/refunds", "/stores"].map((p) => ({ url: `${base}${p}`, lastModified: now, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.6 }));
   const questions = QUESTION_PAGES.map((p) => ({ url: `${base}${p}`, lastModified: now, changeFrequency: "hourly" as const, priority: 0.8 }));
   // "When does the iPhone Duo restock in {state / city}?" (docs/research.md §8.3 B): one page per US state with a page of
   // its own and per two-plus-store city, under the national restock-times page; its numbers change with every restock.

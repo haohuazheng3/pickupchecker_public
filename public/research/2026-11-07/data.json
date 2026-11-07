@@ -1,0 +1,146 @@
+{
+  "start": "2026-10-31T21:00:00Z",
+  "end": "2026-11-07T21:00:00Z",
+  "events": 3009,
+  "storesWithEvents": 266,
+  "catalogStores": 269,
+  "coverage": [
+    {
+      "code": "us",
+      "name": "United States",
+      "stores": 269
+    },
+    {
+      "code": "ca",
+      "name": "Canada",
+      "stores": 28
+    },
+    {
+      "code": "au",
+      "name": "Australia",
+      "stores": 21
+    },
+    {
+      "code": "uk",
+      "name": "United Kingdom",
+      "stores": 39
+    },
+    {
+      "code": "de",
+      "name": "Germany",
+      "stores": 16
+    },
+    {
+      "code": "fr",
+      "name": "France",
+      "stores": 20
+    },
+    {
+      "code": "it",
+      "name": "Italy",
+      "stores": 17
+    },
+    {
+      "code": "es",
+      "name": "Spain",
+      "stores": 12
+    },
+    {
+      "code": "jp",
+      "name": "Japan",
+      "stores": 11
+    },
+    {
+      "code": "sg",
+      "name": "Singapore",
+      "stores": 3
+    },
+    {
+      "code": "hk",
+      "name": "Hong Kong",
+      "stores": 6
+    },
+    {
+      "code": "ae",
+      "name": "United Arab Emirates",
+      "stores": 5
+    },
+    {
+      "code": "ch",
+      "name": "Switzerland",
+      "stores": 4
+    },
+    {
+      "code": "nl",
+      "name": "Netherlands",
+      "stores": 3
+    },
+    {
+      "code": "se",
+      "name": "Sweden",
+      "stores": 3
+    },
+    {
+      "code": "at",
+      "name": "Austria",
+      "stores": 1
+    },
+    {
+      "code": "be",
+      "name": "Belgium",
+      "stores": 1
+    },
+    {
+      "code": "kr",
+      "name": "South Korea",
+      "stores": 7
+    },
+    {
+      "code": "tw",
+      "name": "Taiwan",
+      "stores": 2
+    }
+  ],
+  "configurations": [
+    {
+      "configuration": "256GB Star White",
+      "events": 781,
+      "queensCenter": 17
+    },
+    {
+      "configuration": "512GB Night Sky",
+      "events": 762,
+      "queensCenter": 28
+    },
+    {
+      "configuration": "512GB Star White",
+      "events": 695,
+      "queensCenter": 4
+    },
+    {
+      "configuration": "256GB Night Sky",
+      "events": 688,
+      "queensCenter": 63
+    },
+    {
+      "configuration": "1TB Star White",
+      "events": 28,
+      "queensCenter": 0
+    },
+    {
+      "configuration": "2TB Night Sky",
+      "events": 22,
+      "queensCenter": 1
+    },
+    {
+      "configuration": "2TB Star White",
+      "events": 20,
+      "queensCenter": 0
+    },
+    {
+      "configuration": "1TB Night Sky",
+      "events": 13,
+      "queensCenter": 0
+    }
+  ]
+}
