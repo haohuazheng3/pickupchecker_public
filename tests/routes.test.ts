@@ -9,6 +9,7 @@ const city = citySlug(store.city);
 describe("publicRouteCheck (proxy: real 404 / 308 before the page streams)", () => {
   it("lets every real address through", () => {
     expect(publicRouteCheck("/")).toBeNull();
+    expect(publicRouteCheck("/five-second-checks")).toBeNull();
     expect(publicRouteCheck("/research/iphone-duo-week-2026-11-07")).toBeNull();
     expect(publicRouteCheck("/stores")).toBeNull();
     expect(publicRouteCheck(`/stores/${state}`)).toBeNull();

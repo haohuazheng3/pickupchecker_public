@@ -40,6 +40,7 @@ export function Footer({ loc }: { loc: Locale }) {
             <ul className="space-y-2 text-ink-2">
               <li><Link href="/how-it-works" className="hover:text-ink">How it works</Link></li>
               <li className="not-in-app"><Link href="/install" className="hover:text-ink">Get the app</Link></li>
+              <li><Link href="/five-second-checks" className="hover:text-ink">Measured check intervals</Link></li>
               <li><Link href="/about" className="hover:text-ink">About</Link></li>
               <li><Link href="/research/iphone-duo-week-2026-11-07" className="hover:text-ink">Stock research</Link></li>
               <li><Link href="/contact" className="hover:text-ink">Contact</Link></li>

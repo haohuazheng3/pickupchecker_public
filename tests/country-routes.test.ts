@@ -121,7 +121,7 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
     const placePages = statesWithStores().filter((s) => hasStatePage(s.name)).length + citiesWithStores().filter((c) => c.stores.length > 1).length;
     expect(placePages).toBe(58);
     // …plus the three decision pages of seo.md §16 (the fourth, which-iphone-duo-restocks-most, is one of the eight).
-    expect(us).toHaveLength(356 + 8 + 3 + 3 + placePages + 1); // dated research report
+    expect(us).toHaveLength(356 + 8 + 3 + 3 + placePages + 2); // dated research and check-evidence reports
     expect(us).toContain(`${base}/research/iphone-duo-week-2026-11-07`);
     for (const p of ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock", "/iphone-duo-back-in-stock", "/iphone-duo-stock-checker", "/where-to-buy-iphone-duo", "/iphone-duo-restock-times/california", "/iphone-duo-restock-times/california/los-angeles", "/iphone-duo-restock-times/hawaii/honolulu"]) expect(us).toContain(`${base}${p}`);
     expect(us).not.toContain(`${base}/iphone-duo-restock-times/hawaii`);

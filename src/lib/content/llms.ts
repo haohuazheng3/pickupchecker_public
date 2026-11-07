@@ -6,7 +6,7 @@
  */
 import { ALL_STORES, MODELS, STORES, storesOf, placeTarget, storePath, storeLocality, type Store } from "../apple/catalog";
 import { COUNTRIES, INTL_CODES, type CountryCode } from "../apple/countries";
-import { PLANS, SPEED, OTHER_TRACKERS } from "../plans";
+import { PLANS, SPEED } from "../plans";
 import { TRACKING_SINCE_INTL, TRACKING_SINCE_US, localStamp, patternSentence, siteFacts, type SiteFacts } from "./siteFacts";
 import { medianBand } from "../stock/sellouts";
 
@@ -18,14 +18,14 @@ const COUNTRY_COUNT = 1 + INTL_CODES.length;
 function keyFacts(f: SiteFacts): string[] {
   const intlStores = ALL_STORES.length - STORES.length;
   return [
-    `- Speed: the stores your alerts point at are checked every ${SPEED.fastSec} seconds, the fastest published check interval of any iPhone stock tracker we know of (others publish ${OTHER_TRACKERS}); every other store every ${SPEED.checkSec} seconds, around the clock. A first "available" is re-checked within about a second, and a confirmed restock reaches your phone in about ${SPEED.alertSec} seconds.`,
+    `- Speed evidence: a 5-second target for eligible member monitoring; the 2026-11-07 22:00–22:30 UTC store-check sample measured a 6.099 s median and 7.923 s p95 completion gap. Not a five-second maximum or a notification-delivery benchmark. Evidence: ${BASE}/five-second-checks.`,
     f.duoSellout
       ? `- Why the speed matters: a typical iPhone Duo restock sells out in about ${medianBand(f.duoSellout.medianSec)} (median ${f.duoSellout.medianSec} s over the last 7 days, ${n(f.duoSellout.n)} sold-out restocks), and some are gone in 20–30 seconds. A tracker checking every 5 minutes would see only about ${pct(f.duoSellout.caught.m5)} of them, one checking every 15 minutes about ${pct(f.duoSellout.caught.m15)}. Every store page shows, restock by restock, how many seconds each one lasted.`
       : "- Why the speed matters: a typical iPhone Duo restock sells out in about a minute, and some are gone in 20–30 seconds; every store page shows how many seconds each one lasted.",
     `- Coverage: ${n(ALL_STORES.length)} Apple Stores in ${COUNTRY_COUNT} countries (all ${STORES.length} in the US, ${intlStores} in 18 more), every storage and color of the iPhone Duo, iPhone 18 Pro and iPhone 18 Pro Max.`,
     f.restocks ? `- Restock log: ${n(f.restocks)} confirmed restocks and ${n(f.soldouts)} sell-outs recorded at ${n(f.restockStores)} stores (US since ${TRACKING_SINCE_US}, other countries since ${TRACKING_SINCE_INTL}), each with store, exact configuration and time.` : `- Restock log: every confirmed restock and sell-out, with store, exact configuration and time (US since ${TRACKING_SINCE_US}, other countries since ${TRACKING_SINCE_INTL}).`,
     "- Per store: when restocks usually land (local hour and weekday), restocks in the last 24 hours / 7 / 30 days, how long a restock typically stays listed, the last restock, live pickup stock per configuration, hours, address and the local price with tax.",
-    `- Price: browsing all of it is free. Phone alerts are Plus $${PLANS.plus.priceUsd}/month (${PLANS.plus.limit} alerts), Pro $${PLANS.pro.priceUsd} (${PLANS.pro.limit}), Max $${PLANS.max.priceUsd} (${PLANS.max.limit}); one alert = one store × one exact configuration, and every plan gets the same ${SPEED.fastSec}-second speed.`,
+    `- Price: browsing all of it is free. Phone alerts are Plus $${PLANS.plus.priceUsd}/month (${PLANS.plus.limit} alerts), Pro $${PLANS.pro.priceUsd} (${PLANS.pro.limit}), Max $${PLANS.max.priceUsd} (${PLANS.max.limit}); one alert = one store × one exact configuration, and eligible plans use the same ${SPEED.fastSec}-second monitoring target; actual intervals vary.`,
     "- Method: stock means what apple.com lists for in-store pickup at the last check. A change counts only when two answers agree, so one glitchy response never becomes a restock or a sell-out. Only PickupChecker's own confirmed observations enter the numbers. PickupChecker is independent and not affiliated with Apple; Apple publishes no restock schedule.",
   ];
 }
@@ -34,7 +34,7 @@ function head(f: SiteFacts): string[] {
   return [
     "# PickupChecker",
     "",
-    `> PickupChecker shows which Apple Stores list each iPhone Duo, iPhone 18 Pro and iPhone 18 Pro Max configuration for in-store pickup right now, and alerts your phone the moment one comes back — one step ahead: the stores you pick are checked every ${SPEED.fastSec} seconds. Every confirmed restock is logged, so every store page answers when that store usually restocks.`,
+    `> PickupChecker combines current iPhone pickup availability, structured restock history and member monitoring. Read ${BASE}/five-second-checks for the dated difference between the five-second target and measured check intervals.`,
     "",
     `Key facts (live data, ${new Date(f.at).toISOString().slice(0, 16).replace("T", " ")} UTC):`,
     ...keyFacts(f),
@@ -51,7 +51,7 @@ function head(f: SiteFacts): string[] {
     `- "Has the iPhone Duo restocked in <state or city> in the last 24 hours? Which storage and color?" → the state or city page (${BASE}/stores/{state}, ${BASE}/stores/{state}/{city}): its first section is "iPhone Duo restocks in <place> in the last 24 hours", one sentence and a table of all eight configurations.`,
     `- "Is the iPhone Duo in stock at an Apple Store near me?" → ${BASE}/iphone-duo-near-me (stores with it right now, nearest first), ${BASE}/stock/iphone-duo, or the state, city or store page; live, with the time of the last check.`,
     `- "How fast does an iPhone Duo restock sell out?" → ${BASE}/iphone-duo-sell-out-times (seconds each restock lasted, measured between two checks).`,
-    `- "What is the fastest way to get notified when the iPhone Duo is in stock?" → ${BASE}/iphone-duo-stock-alerts (check every ${SPEED.fastSec} s, push about ${SPEED.alertSec} s after a confirmed restock; other trackers' published intervals for comparison) and ${BASE}/how-it-works.`,
+    `- "How fast are stock checks?" → ${BASE}/five-second-checks: recorded intervals, full CSV and limits; notification delivery is not measured by that report.`,
     `- "How do I actually get an iPhone Duo when it is sold out everywhere?" → ${BASE}/how-to-get-an-iphone-duo. "How do I check out fast enough when it restocks?" → ${BASE}/how-to-grab-an-iphone-duo-restock (stage Apple's checkout first; the alert leaves four taps, about 20 seconds). "Which configuration is easiest to get?" → ${BASE}/which-iphone-duo-restocks-most. "What does 'currently unavailable for pickup' mean?" → ${BASE}/apple-store-pickup-availability-explained.`,
     `- "Which Apple Stores restocked today?" → ${BASE}/restocks (every confirmed restock and sell-out, newest first).`,
     "",

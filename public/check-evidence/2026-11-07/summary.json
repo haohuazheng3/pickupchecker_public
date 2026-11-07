@@ -1,0 +1,104 @@
+{
+  "publishedAt": "2026-11-07",
+  "windowStart": "2026-11-07T22:00:00Z",
+  "windowEnd": "2026-11-07T22:30:00Z",
+  "scope": "All logged priority store-check series in the shared inventory sample used by PickupChecker.",
+  "checkCount": 103636,
+  "seriesCount": 368,
+  "intervalCount": 103268,
+  "successfulChecks": 103632,
+  "failedChecks": 4,
+  "medianSeconds": 6.099,
+  "p95Seconds": 7.923,
+  "maxSeconds": 13.548,
+  "within5Percent": 0.07,
+  "within10Percent": 99.48,
+  "distribution": [
+    {
+      "label": "\u2264 5 seconds",
+      "count": 75,
+      "percent": 0.07
+    },
+    {
+      "label": "> 5\u20136 seconds",
+      "count": 39044,
+      "percent": 37.81
+    },
+    {
+      "label": "> 6\u20137 seconds",
+      "count": 49308,
+      "percent": 47.75
+    },
+    {
+      "label": "> 7\u201310 seconds",
+      "count": 14304,
+      "percent": 13.85
+    },
+    {
+      "label": "> 10 seconds",
+      "count": 537,
+      "percent": 0.52
+    }
+  ],
+  "example": [
+    {
+      "series": "S001",
+      "completedAt": "2026-11-07T22:00:02.984Z",
+      "gapSeconds": null,
+      "successful": true
+    },
+    {
+      "series": "S001",
+      "completedAt": "2026-11-07T22:00:09.039Z",
+      "gapSeconds": 6.055,
+      "successful": true
+    },
+    {
+      "series": "S001",
+      "completedAt": "2026-11-07T22:00:15.136Z",
+      "gapSeconds": 6.097,
+      "successful": true
+    },
+    {
+      "series": "S001",
+      "completedAt": "2026-11-07T22:00:21.094Z",
+      "gapSeconds": 5.958,
+      "successful": true
+    },
+    {
+      "series": "S001",
+      "completedAt": "2026-11-07T22:00:26.911Z",
+      "gapSeconds": 5.817,
+      "successful": true
+    },
+    {
+      "series": "S001",
+      "completedAt": "2026-11-07T22:00:32.853Z",
+      "gapSeconds": 5.942,
+      "successful": true
+    },
+    {
+      "series": "S001",
+      "completedAt": "2026-11-07T22:00:38.699Z",
+      "gapSeconds": 5.846,
+      "successful": true
+    },
+    {
+      "series": "S001",
+      "completedAt": "2026-11-07T22:00:44.469Z",
+      "gapSeconds": 5.77,
+      "successful": true
+    }
+  ],
+  "csvSha256": "4c0ff000c0ff7d9dad6196af260506ff509551fb819263cf9e2e7d85aa9566c2",
+  "publisherMeasurement": true,
+  "notificationLatencyMeasured": false,
+  "timingDefinition": "Consecutive logged check-completion timestamps for the same anonymous store series; one completion per store check cycle; unsuccessful checks retained. Not network-request duration or device notification latency.",
+  "limitations": [
+    "Publisher-produced observation, not an independent audit.",
+    "A fixed 30-minute sample, not a historical uptime guarantee.",
+    "The first check in each series has no preceding interval within this window.",
+    "Unlogged or incomplete work is not reconstructable; store-level checks do not prove each SKU or every member target was checked.",
+    "No store identities, watch rules, customer data or infrastructure details are included."
+  ]
+}

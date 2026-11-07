@@ -78,5 +78,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const countries = INTL_CODES.flatMap((cc) => countryEntries(cc, base, now, latestOf));
   // Each country's pages in its own languages (docs/i18n.md §6): the same set under /{lang}-{cc}.
   const natives = NATIVE_LOCALES.flatMap((loc) => countryEntries(loc.cc as Exclude<CountryCode, "us">, base, now, latestOf).map((e) => ({ ...e, url: `${base}${pathInLocale(e.url.slice(base.length), loc)}` })));
-  return [...statics, ...questions, ...restockPlaces, ...models, ...states, ...cities, ...stores, ...products, ...countries, ...natives];
+  return [{ url: `${base}/five-second-checks`, lastModified: new Date("2026-11-07T22:30:00Z"), changeFrequency: "monthly" as const, priority: 0.7 }, ...statics, ...questions, ...restockPlaces, ...models, ...states, ...cities, ...stores, ...products, ...countries, ...natives];
 }
