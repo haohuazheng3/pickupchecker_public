@@ -6,7 +6,7 @@ import * as us from "@/lib/apple/catalog-us";
 import { ALL_CODES, COUNTRIES, INTL_CODES, countryFromPrefix, formatPrice, isCountryCode, type CountryCode } from "@/lib/apple/countries";
 import { buildPickupUrl } from "@/lib/apple/client";
 import { intlWatchStep, INTL_RUNS, INTL_RECOVER_RUNS, type IntlWatchState } from "@/lib/stock/fallback";
-import { nextCountryBackoff } from "@/lib/stock/sweep";
+import { nextCountryBackoff, recentMedian } from "@/lib/stock/sweep";
 import { gate } from "@/lib/stock/fastlane";
 
 /* ------------------------------------------------------------------ the browser never gets the other countries */
@@ -221,6 +221,27 @@ describe("per-country backoff of the per-store round", () => {
     expect(waits).toEqual([60_000, 120_000, 240_000, 480_000, 960_000, 960_000, 960_000, 960_000, 960_000]);
     expect(nextCountryBackoff(b, { tasks: 2, failed: 0 }, now)).toBeNull();
     expect(nextCountryBackoff(undefined, { tasks: 0, failed: 0 }, now)).toBeNull();
+  });
+
+  it("recentMedian keeps the last window of round durations and gives their median", () => {
+    const now = 10 * 60_000 + 5_000;
+    const samples = [{ at: 0, ms: 9_000 }, { at: 4_000, ms: 9_500 }, { at: 60_000, ms: 6_100 }, { at: 120_000, ms: 7_300 }, { at: now, ms: 6_800 }];
+    const w = recentMedian(samples, now, 10 * 60_000);
+    expect(w.kept.map((s) => s.ms)).toEqual([6_100, 7_300, 6_800]);
+    expect(w).toMatchObject({ count: 3, p50Ms: 6_800 });
+    expect(recentMedian([{ at: 0, ms: 4_000 }, { at: 1, ms: 5_000 }], 2, 60_000)).toMatchObject({ count: 2, p50Ms: 4_500 });
+    expect(recentMedian([], now, 60_000)).toEqual({ kept: [], count: 0, p50Ms: null });
+  });
+
+  it("one failed request never rests a country, however small its anchor round is", () => {
+    const now = 1_000_000;
+    // Korea's anchor round is two requests: one timeout used to be "half the round failed" → 60 s without checks.
+    expect(nextCountryBackoff(undefined, { tasks: 2, failed: 1 }, now)).toBeNull();
+    expect(nextCountryBackoff(undefined, { tasks: 1, failed: 1 }, now)).toBeNull();
+    expect(nextCountryBackoff({ level: 2 }, { tasks: 2, failed: 1 }, now)).toBeNull();
+    // Both of them failing is still a bad round.
+    expect(nextCountryBackoff(undefined, { tasks: 2, failed: 2 }, now)).toEqual({ level: 1, until: now + 60_000 });
+    expect(nextCountryBackoff(undefined, { tasks: 4, failed: 2 }, now)).toEqual({ level: 1, until: now + 60_000 });
   });
 
   it("the confirm gate never lets more than its bound run at once", async () => {

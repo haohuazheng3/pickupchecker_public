@@ -3,15 +3,20 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/db", () => ({ db: () => ({}), schema: {} }));
 const { CAPACITY_IDLE, CLEAR_RUNS, LAG_RUNS, REARM_RUNS, REMIND_MS, capacityReasons, capacityStep } = await import("@/lib/stock/capacity");
 
-const base = { fastStores: 39, rounds: [{ host: "linode-1", mode: "full", p50Sec: 12.3, count: 40 }, { host: "linode-1", mode: "intl", p50Sec: 13.4, count: 40 }], cadence: { full: 15, intl: 15 }, watchedLagP90Sec: 4.7, fastCadenceSec: 5 };
+const base = { rounds: [{ host: "linode-1", mode: "full", p50Sec: 12.3, count: 40 }, { host: "linode-1", mode: "intl", p50Sec: 13.4, count: 40 }], cadence: { full: 15, intl: 15, fast: 5 }, watchedLagP90Sec: 4.7, fastCadenceSec: 5 };
 const t = (min: number) => new Date(Date.UTC(2026, 10, 2, 16, min));
 
 describe("capacityReasons — what is over the line", () => {
-  it("nothing on today's numbers (39 fast-lane stores, rounds 12–13 s, lag under 5 s)", () => {
+  it("nothing on today's numbers (rounds 12–13 s, lag under 5 s)", () => {
     expect(capacityReasons(base)).toEqual({ reasons: [], lagHigh: false });
   });
-  it("the fast lane reaching 80 stores", () => {
-    expect(capacityReasons({ ...base, fastStores: 80 }).reasons.map((r) => r.key)).toEqual(["fast-stores"]);
+  it("a fast-lane round longer than its 5 s cadence, per host; one under 5 s is fine however many stores it has", () => {
+    const r = capacityReasons({ ...base, rounds: [...base.rounds, { host: "linode-2", mode: "fast", p50Sec: 6.7, count: 80 }, { host: "linode-3", mode: "fast", p50Sec: 4.6, count: 110 }] });
+    expect(r.reasons.map((x) => x.key)).toEqual(["round:linode-2:fast"]);
+    expect(r.reasons[0].text).toContain("fast-lane round on linode-2 takes 6.7 s");
+    expect(r.reasons[0].text).toContain("checked every 6.7 s, not every 5 s");
+    // Exactly the cadence is not over it; a sweep is warned a second early, the fast lane is not.
+    expect(capacityReasons({ ...base, rounds: [{ host: "linode-3", mode: "fast", p50Sec: 5, count: 110 }, { host: "linode-3", mode: "full", p50Sec: 14.2, count: 40 }] }).reasons.map((x) => x.key)).toEqual(["round:linode-3:full"]);
   });
   it("a round mode whose median is within a second of its cadence, per host", () => {
     const r = capacityReasons({ ...base, rounds: [...base.rounds, { host: "linode-2", mode: "intl", p50Sec: 14.2, count: 30 }] });

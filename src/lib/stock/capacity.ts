@@ -4,8 +4,11 @@
  * Measured 2026-11-02 on the 1 vCPU poller host: 64% busy with 337 anchor requests, 468 fast-lane and 1,584
  * other-country requests a minute; each extra one-store request costs ~10–16 ms of CPU. The host tops out around
  * 100–140 fast-lane stores, and the poller is one Node thread, so more vCPUs alone do not lift that. Warned on:
- *  • the fast lane reaching FAST_STORES_WARN stores (the leading signal: paid alerts spreading to new stores)
- *  • a round mode's median duration over the last ROUND_WINDOW_MIN close to its cadence (cadence − 1 s)
+ *  • a fast-lane round's median duration (each host's alive record carries its last ROUND_WINDOW_MIN min) over the
+ *    fast cadence: the lane runs back to back, so a 6.7 s round is a 6.7 s check interval for every paid store on
+ *    that host (2026-11-08: replaced the "80 fast-lane stores" line, which the US worker passed at 241 stores while
+ *    still running 3.6 s rounds, and which never saw the other-country lane slow down)
+ *  • a sweep mode's median duration over the last ROUND_WINDOW_MIN close to its cadence (cadence − 1 s)
  *  • the stores paid alerts point at going unchecked for longer than the fast cadence allows (their 90th
  *    percentile age over LAG_WARN_SEC for LAG_RUNS runs in a row)
  * One mail when it starts (and again if a new reason joins), a reminder a day while it lasts, one when it has
@@ -16,7 +19,6 @@ import { sql } from "drizzle-orm";
 import { db } from "../db";
 import { watchedPairs, pairKey } from "./fallback";
 
-export const FAST_STORES_WARN = 80;
 export const ROUND_WINDOW_MIN = 10;
 /** Rounds needed in the window before a median means anything (a restart leaves only a few). */
 export const ROUND_MIN_COUNT = 10;
@@ -29,9 +31,8 @@ export const REARM_RUNS = 60;
 
 export interface RoundStat { host: string; mode: string; p50Sec: number; count: number }
 export interface CapacityInput {
-  fastStores: number | null;
   rounds: RoundStat[];
-  /** Cadence per round mode ("full" = the US anchor sweep, "intl" = the other countries), seconds. */
+  /** Cadence per round mode ("full" = the US anchor sweep, "intl" = the other countries, "fast" = the paid-store lane), seconds. */
   cadence: Record<string, number>;
   /** 90th percentile age of the pairs paid alerts watch, seconds; null when there are none. */
   watchedLagP90Sec: number | null;
@@ -43,12 +44,16 @@ export interface Reason { key: string; text: string }
 /** Pure: what is over the line right now (the lag reason is only a candidate here; capacityStep wants it repeated). */
 export function capacityReasons(i: CapacityInput): { reasons: Reason[]; lagHigh: boolean } {
   const reasons: Reason[] = [];
-  if (i.fastStores != null && i.fastStores >= FAST_STORES_WARN) {
-    reasons.push({ key: "fast-stores", text: `The fast lane now checks ${i.fastStores} stores (warning line ${FAST_STORES_WARN}; this host tops out around 100–140).` });
-  }
   for (const r of i.rounds) {
     const cadence = i.cadence[r.mode];
-    if (!cadence || r.count < ROUND_MIN_COUNT || r.p50Sec <= cadence - 1) continue;
+    // A sweep is warned a second before its cadence; the fast lane only once its rounds are longer than the cadence,
+    // because a round under 5 s still checks every store within 5 s, whatever its length.
+    const slack = r.mode === "fast" ? 0 : 1;
+    if (!cadence || r.count < ROUND_MIN_COUNT || r.p50Sec <= cadence - slack) continue;
+    if (r.mode === "fast") {
+      reasons.push({ key: `round:${r.host}:fast`, text: `The fast-lane round on ${r.host} takes ${r.p50Sec.toFixed(1)} s (median of the last ${ROUND_WINDOW_MIN} min) against a ${cadence} s cadence: its stores with paid alerts are checked every ${r.p50Sec.toFixed(1)} s, not every ${cadence} s.` });
+      continue;
+    }
     const what = r.mode === "intl" ? "other-country round" : r.mode === "full" ? "US round" : `${r.mode} round`;
     reasons.push({ key: `round:${r.host}:${r.mode}`, text: `The ${what} on ${r.host} takes ${r.p50Sec.toFixed(1)} s (median of the last ${ROUND_WINDOW_MIN} min) against a ${cadence} s cadence.` });
   }

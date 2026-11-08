@@ -7,7 +7,7 @@ import { recordError, errorMessage } from "@/lib/errors";
 import { logOps } from "@/lib/ops";
 import { BAD_RUNS, PARTIAL_CLEAR_RUNS, PARTIAL_SEC, RECOVER_RUNS, REMIND_MS, US_IDLE, freshness, intlVerdict, intlWatchStep, laneDiagnosis, pollerVerdict, recentFailures, usWatchStep, type IntlVerdict, type IntlWatchState, type PollerState, type UsWatchState } from "@/lib/stock/fallback";
 import type { CountryCode } from "@/lib/apple/countries";
-import { CAPACITY_IDLE, CLEAR_RUNS, FAST_STORES_WARN, ROUND_WINDOW_MIN, capacityReasons, capacityStep, recentRounds, watchedLagP90, type CapacityState } from "@/lib/stock/capacity";
+import { CAPACITY_IDLE, CLEAR_RUNS, ROUND_WINDOW_MIN, capacityReasons, capacityStep, recentRounds, watchedLagP90, type CapacityState } from "@/lib/stock/capacity";
 import { SPEED } from "@/lib/plans";
 import { intlRunner, readAlive, standbyVerdict, workerVerdict } from "@/lib/stock/cluster";
 
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 type HeartbeatIntl = { cadenceSec?: number; countries?: CountryCode[]; paused?: boolean } | null;
-interface Heartbeat { at?: string; host?: string; mode?: string; cadenceSec?: number; intl?: HeartbeatIntl; fast?: { stores?: number; pairs?: number } | null; sys?: { load5?: number; cpus?: number; cpuWaitPct?: number | null } }
+interface Heartbeat { at?: string; host?: string; mode?: string; cadenceSec?: number; intl?: HeartbeatIntl; fast?: { stores?: number; pairs?: number; rounds10m?: number; p50Ms10m?: number | null } | null; sys?: { load5?: number; cpus?: number; cpuWaitPct?: number | null } }
 
 /**
  * Vercel Cron, every minute. Judges polling by the data (fallback.ts), not only by the heartbeat:
@@ -224,17 +224,21 @@ async function watchWorker(now: Date): Promise<void> {
 /** Capacity early warning (state key "watchdog:capacity"; the rules are capacity.ts's). */
 async function watchCapacity(hb: Heartbeat, now: Date): Promise<void> {
   const st = (await readState<CapacityState>("watchdog:capacity"))?.value ?? CAPACITY_IDLE;
-  const [rounds, lag] = await Promise.all([recentRounds(), watchedLagP90()]);
-  const fastStores = hb.fast?.stores ?? null;
-  const cadence = { full: hb.cadenceSec ?? 15, intl: hb.intl?.cadenceSec ?? 15 };
-  const { reasons, lagHigh } = capacityReasons({ fastStores, rounds, cadence, watchedLagP90Sec: lag, fastCadenceSec: SPEED.fastSec });
+  const [sweepRounds, lag, alive] = await Promise.all([recentRounds(), watchedLagP90(), readAlive(2)]);
+  // The fast lane writes no sweeps rows; each host's alive record carries its last 10 minutes' median round.
+  const lanes = alive.map((a) => a as typeof a & { fast?: Heartbeat["fast"] }).filter((a) => a.fast && a.fast.rounds10m != null && a.fast.p50Ms10m != null);
+  const rounds = [...sweepRounds, ...lanes.map((a) => ({ host: a.host, mode: "fast", p50Sec: a.fast!.p50Ms10m! / 1000, count: a.fast!.rounds10m! }))];
+  const cadence = { full: hb.cadenceSec ?? 15, intl: hb.intl?.cadenceSec ?? 15, fast: SPEED.fastSec };
+  const { reasons, lagHigh } = capacityReasons({ rounds, cadence, watchedLagP90Sec: lag, fastCadenceSec: SPEED.fastSec });
   const step = capacityStep(st, now, reasons, lagHigh, lag, SPEED.fastSec);
   if (step.mail) {
-    const roundLine = rounds.filter((r) => cadence[r.mode as keyof typeof cadence]).map((r) => `${r.mode === "intl" ? "other countries" : "US"} on ${r.host} ${r.p50Sec.toFixed(1)} s`).join(", ") || "no rounds";
+    const name = (m: string) => (m === "intl" ? "other countries" : m === "fast" ? "fast lane" : "US");
+    const roundLine = rounds.filter((r) => cadence[r.mode as keyof typeof cadence]).map((r) => `${name(r.mode)} on ${r.host} ${r.p50Sec.toFixed(1)} s`).join(", ") || "no rounds";
+    const fastLine = lanes.map((a) => `${a.host} ${a.fast!.stores} stores / ${a.fast!.pairs} store × phone pairs, median round ${(a.fast!.p50Ms10m! / 1000).toFixed(1)} s`).join("; ") || `${hb.fast?.stores ?? "?"} stores`;
     const sys = hb.sys ?? {};
     const figures = [
-      `Fast lane: ${fastStores ?? "?"} stores, ${hb.fast?.pairs ?? "?"} store × phone pairs (warning line ${FAST_STORES_WARN} stores).`,
-      `Round medians, last ${ROUND_WINDOW_MIN} min: ${roundLine} (cadence ${cadence.full} s / ${cadence.intl} s).`,
+      `Fast lane (every ${SPEED.fastSec} s): ${fastLine}.`,
+      `Round medians, last ${ROUND_WINDOW_MIN} min: ${roundLine} (cadence ${cadence.full} s / ${cadence.intl} s / ${cadence.fast} s).`,
       `Stores with paid alerts, 90th percentile time since their last check: ${lag == null ? "none watched" : `${lag.toFixed(1)} s`} (fast lane every ${SPEED.fastSec} s).`,
       `Host ${hb.host ?? "?"}: 5-min load ${sys.load5 ?? "?"} on ${sys.cpus ?? "?"} vCPU, a task waiting for CPU ${sys.cpuWaitPct ?? "?"}% of the time.`,
     ].join("\n");
@@ -245,7 +249,7 @@ async function watchCapacity(hb: Heartbeat, now: Date): Promise<void> {
     const text = step.mail === "clear"
       ? `Every check has stayed within its limits for ${CLEAR_RUNS} minutes (the warning started ${st.since ?? "?"}).\n\n${figures}`
       : `${step.active.map((r) => `• ${r.text}`).join("\n")}\n\nNow:\n${figures}\n\n${advice}`;
-    await logOps("cron", step.mail === "clear" ? "info" : "warn", `capacity ${step.mail}: ${step.active.map((r) => r.key).join(", ") || "clear"}`, { fastStores, lag, rounds });
+    await logOps("cron", step.mail === "clear" ? "info" : "warn", `capacity ${step.mail}: ${step.active.map((r) => r.key).join(", ") || "clear"}`, { lag, rounds });
     await notifyOwner(subject, text).catch((e) => recordError("web", `capacity mail failed: ${errorMessage(e)}`));
   }
   if (JSON.stringify(step.next) !== JSON.stringify(st)) await writeState("watchdog:capacity", { ...step.next });

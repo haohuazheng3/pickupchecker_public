@@ -105,17 +105,36 @@ const intlIngestGate = gate(INTL_INGEST_CONCURRENCY);
 
 /** A country whose round failed this much (any reason: 541, refused, timeouts, missing store) rests on its own. */
 export const INTL_COUNTRY_FAIL_SHARE = 0.5;
+/**
+ * …and at least this many requests must have failed. Since the anchor round (2026-11-08) a small country is only
+ * two requests, so one routine timeout was half its round and rested it for 60 s (Korea twice, Belgium once in six
+ * hours: seven stores unchecked for four rounds each time). One failure is retried within the round anyway.
+ */
+export const INTL_COUNTRY_FAIL_MIN = 2;
 const INTL_BACKOFF_MS = 60_000;
 const INTL_BACKOFF_MAX_MS = 16 * 60_000;
 
 /**
- * Pure: a country's rest after one round of the other countries. ≥ INTL_COUNTRY_FAIL_SHARE of its tasks failing
- * on the first pass → 60 s, doubling with each further bad round up to 16 min; a good round clears it (null).
+ * Pure: a country's rest after one round of the other countries. ≥ INTL_COUNTRY_FAIL_SHARE of its tasks (and at
+ * least INTL_COUNTRY_FAIL_MIN of them) failing on the first pass → 60 s, doubling with each further bad round up
+ * to 16 min; a good round clears it (null).
  */
 export function nextCountryBackoff(prev: { level: number } | undefined, round: { tasks: number; failed: number }, now: number): { level: number; until: number } | null {
-  if (round.tasks === 0 || round.failed / round.tasks < INTL_COUNTRY_FAIL_SHARE) return null;
+  if (round.tasks === 0 || round.failed < INTL_COUNTRY_FAIL_MIN || round.failed / round.tasks < INTL_COUNTRY_FAIL_SHARE) return null;
   const level = Math.min((prev?.level ?? 0) + 1, 10);
   return { level, until: now + Math.min(INTL_BACKOFF_MAX_MS, INTL_BACKOFF_MS * 2 ** (level - 1)) };
+}
+
+/**
+ * Pure: a rolling window of round durations for the heartbeat. Samples older than `windowMs` drop off; the rest
+ * give their count and median (the watchdog's capacity check reads them, capacity.ts ROUND_WINDOW_MIN).
+ */
+export function recentMedian(samples: { at: number; ms: number }[], now: number, windowMs: number): { kept: { at: number; ms: number }[]; count: number; p50Ms: number | null } {
+  const kept = samples.filter((s) => now - s.at <= windowMs);
+  if (kept.length === 0) return { kept, count: 0, p50Ms: null };
+  const sorted = kept.map((s) => s.ms).sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return { kept, count: kept.length, p50Ms: sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2) };
 }
 
 /** An egress identity hands out a fetch for one request and learns from its outcome. */

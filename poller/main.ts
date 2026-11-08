@@ -50,7 +50,7 @@ import os from "node:os";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { Agent, fetch as undiciFetch } from "undici";
-import { buildIntlTasks, buildTasks, intlStores, nextCountryBackoff, parsePollCountries, readState, runSweep, singleIdentityEgress, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
+import { buildIntlTasks, buildTasks, intlStores, nextCountryBackoff, parsePollCountries, readState, recentMedian, runSweep, singleIdentityEgress, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
 import { NOT_OFFERED_KEY, nextNotOffered, notOfferedDue, persistNotOffered, restoreNotOffered, type NotOfferedState } from "../src/lib/stock/notOffered";
 import { DIRECT_AFTER_MISSES, INTL_COVERAGE_KEY, coverageStep, directStores, excusedStores, persistCoverage, restoreCoverage, uncoveredByPlan, type CoverageState } from "../src/lib/stock/intlCoverage";
 import { INTL_COVERAGE } from "../src/lib/apple/catalog";
@@ -229,7 +229,11 @@ function rewrap(j: { ok: boolean; location?: string; stores?: { storeNumber: str
 const fastStats = {
   cadenceSec: FAST_CADENCE_SEC, stores: 0, pairs: 0, rounds: 0, requests: 0, failures: 0, throttled: 0, timeouts: 0,
   transitions: 0, confirmed: 0, refuted: 0, errors: 0, paused: false, lastAt: null as string | null, lastDurationMs: 0, targetsAt: null as string | null,
+  /** Rounds in the last FAST_WINDOW_MS and their median duration: the lane runs back to back, so this is the check interval (capacity.ts). */
+  rounds10m: 0, p50Ms10m: null as number | null,
 };
+const FAST_WINDOW_MS = 10 * 60_000; // capacity.ts ROUND_WINDOW_MIN
+const fastWindow: { at: number; ms: number }[] = [];
 
 /**
  * Every FAST_CADENCE_SEC: the stores paid alerts point at, one request each. The target list is re-read
@@ -254,6 +258,9 @@ async function fastLoop(egress: Egress, active: () => boolean) {
           fastStats.rounds++; fastStats.requests += r.requests; fastStats.failures += r.failures; fastStats.throttled += r.throttled; fastStats.timeouts += r.timeouts;
           fastStats.transitions += r.transitions; fastStats.confirmed += r.confirmed; fastStats.refuted += r.refuted;
           fastStats.lastAt = new Date().toISOString(); fastStats.lastDurationMs = r.durationMs;
+          fastWindow.push({ at: Date.now(), ms: r.durationMs });
+          const w = recentMedian(fastWindow, Date.now(), FAST_WINDOW_MS);
+          fastWindow.splice(0, fastWindow.length, ...w.kept); fastStats.rounds10m = w.count; fastStats.p50Ms10m = w.p50Ms;
           if (r.transitions || r.failures || r.confirmed || r.refuted) console.log(`[fast ${r.id.slice(5, 13)}] req=${r.requests} fail=${r.failures} 541=${r.throttled} trans=${r.transitions} confirmed=${r.confirmed} refuted=${r.refuted} ${r.durationMs}ms`);
           if (r.requests >= 4 && r.throttled / r.requests >= 0.5) {
             backoffUntil = Date.now() + 60_000;

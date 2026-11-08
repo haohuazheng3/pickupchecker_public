@@ -23,7 +23,12 @@ export interface Heartbeat {
   sweeps?: number; consecutiveBad?: number;
   ipv6Stats?: { requests: number; throttled: number; errors: number } | null;
   /** The 5 s fast lane over the stores paid alerts point at (poller/main.ts fastStats). */
-  fast?: { cadenceSec: number; stores: number; pairs: number; rounds: number; requests: number; failures: number; throttled: number; confirmed: number; refuted: number; paused: boolean; lastAt: string | null } | null;
+  fast?: {
+    cadenceSec: number; stores: number; pairs: number; rounds: number; requests: number; failures: number; throttled: number; confirmed: number; refuted: number; paused: boolean; lastAt: string | null;
+    lastDurationMs?: number;
+    /** Rounds in the last 10 minutes and their median duration: the lane runs back to back, so this is the check interval (capacity.ts). */
+    rounds10m?: number; p50Ms10m?: number | null;
+  } | null;
   /** The per-store round of the other countries (poller/main.ts intlStats); absent when POLL_COUNTRIES is empty. */
   intl?: {
     cadenceSec: number; countries: string[]; stores: number; tasks: number; rounds: number; requests: number; failures: number; unresolved: number; throttled: number; paused: boolean; lastAt: string | null; lastDurationMs: number;
