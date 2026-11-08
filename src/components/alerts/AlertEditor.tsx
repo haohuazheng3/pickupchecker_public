@@ -63,6 +63,9 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
   const [draft, setDraft] = useState<AlertSet>(() => startSet(catalog, start));
   const [loaded, setLoaded] = useState(Boolean(account)); // the account's set is on screen
   const [notice, setNotice] = useState<string | null>(null);
+  const [checkout, setCheckout] = useState<PaidPlanKey | null>(null);
+  const checkoutInFlight = useRef(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   // Bumped on every refused tick: the inline notice sits above the lists, out of view once someone has
   // scrolled into the store list on a phone (paying members tapped the same row 7 times, 11-03), so a
   // refused tick also flashes the reason at the bottom of the screen for a few seconds.
@@ -177,13 +180,20 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
   }, [draft, live, signInOnly, leaveSignIn, d, tErr]);
 
   const goCheckout = async (k: PaidPlanKey) => {
+    if (checkoutInFlight.current) return;
+    checkoutInFlight.current = true;
+    setCheckout(k); setCheckoutError(null);
     try {
       const r = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: k }) });
       const j = (await r.json().catch(() => ({}))) as { url?: string; error?: string };
       if (!r.ok || !j.url) throw new Error((j.error ? tErr(j.error) : undefined) ?? d.checkoutUnavailable);
       track("checkout_started", { plan: k });
       window.location.assign(j.url);
-    } catch (e) { setNotice(e instanceof Error ? e.message : String(e)); }
+    } catch (e) {
+      setCheckoutError(e instanceof Error ? e.message : String(e));
+      checkoutInFlight.current = false;
+      setCheckout(null);
+    }
   };
 
   // The next plan up, named with what it holds and costs, for the refused-tap toast (none past Max or before a plan).
@@ -272,13 +282,14 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
           ) : (
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
               {PAID_PLANS.map((k) => (
-                <button key={k} type="button" onClick={() => void goCheckout(k)} className={`rounded-2xl border p-3 text-start transition hover:border-accent ${k === fit ? "border-accent bg-accent/8" : "border-line-2"}`}>
-                  <div className="flex items-baseline justify-between"><span className="font-semibold">{PLANS[k].name}</span><span className="text-sm"><b>${PLANS[k].priceUsd}</b>{d.perMo}</span></div>
+                <button key={k} type="button" disabled={checkout != null} aria-busy={checkout === k} onClick={() => void goCheckout(k)} className={`rounded-2xl border p-3 text-start transition hover:border-accent disabled:cursor-wait ${k === fit ? "border-accent bg-accent/8" : "border-line-2"}`}>
+                  <div className="flex items-baseline justify-between"><span className="font-semibold">{checkout === k && <span className="spinner me-1" aria-hidden />}{PLANS[k].name}</span><span className="text-sm"><b>${PLANS[k].priceUsd}</b>{d.perMo}</span></div>
                   <div className="mt-0.5 text-xs text-ink-3">{plural(lang, PLANS[k].limit, d.alerts)}{k === fit ? fill(d.fitsYour, { n: N(count) }) : ""}</div>
                 </button>
               ))}
             </div>
           )}
+          {checkoutError && <p role="alert" className="mt-3 rounded-xl border border-warn/40 bg-warn/10 px-3 py-2 text-sm">{checkoutError}</p>}
           <p className="mt-2 text-xs text-ink-3"><span aria-hidden>⚡ </span>{speed}{d.afterSpeed}</p>
         </div>
       )}
