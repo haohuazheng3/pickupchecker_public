@@ -82,7 +82,7 @@ async function IntlStoresIndex({ c }: { c: Country }) {
       <AlertPanelFor href={alert} summary={V.panel(c)} country={cc} />
 
       <div className="mt-6"><ModelPlaceCards place={treeOf(cc).root} stockNow={d.stockNow} of={stores.length} unit={C.storesWithIt} /></div>
-      <div className="mt-3"><PlaceStatStrip stores={stores.length} cities={cities.length} stockNow={d.stockNow} stats={d.duo!} scoped="Duo" /></div>
+      <div className="mt-3"><PlaceStatStrip stores={stores.length} cities={cities.length} stockNow={d.stockNow} stats={d.duo!} model="duo" scoped="Duo" /></div>
       <section className="mt-6" aria-label={V.matrixLabel}>
         <h2 className="text-xl font-semibold">{V.matrixH2(c)}</h2>
         <p className="mt-1 text-sm text-ink-3">{V.matrixHint}</p>

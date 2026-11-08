@@ -177,7 +177,7 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
     ? (!tax ? "" : tax.combined === 0 ? `${s.state} has no sales tax, so a 256GB iPhone Duo costs $1,999 out the door here.` : `With ${s.state}'s average ${tax.combined}% sales tax, a 256GB iPhone Duo comes to about $${duoTaxed!.total.toLocaleString("en-US")} here.`)
     : P.taxSentence(cc, cc === "ca" ? s.state : undefined);
   const [photo1, photo2] = storePhotos(s);
-  const facts = lang === "en" ? emptyFacts(cc) : { ...emptyFacts(cc), lang };
+  const facts = lang === "en" ? emptyFacts(cc, d.tz) : { ...emptyFacts(cc, d.tz), lang };
   const storeWord = S.storeWord(N.store(s));
   const backups = d.nearby.slice(0, 2);
   const help = us ? pickupHelp(cc) : P.sources(cc as Exclude<typeof cc, "us">).pickupHelp;
@@ -233,10 +233,10 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
 
       {/* The conclusion first (lib/content/duoNow.ts): in stock or not as of now, the last time it was, the pattern, the last three. */}
       <div className="mt-5"><DuoNow d={d.now} label={G.atPlace(place)} name={place} one stores={[s]} country={cc} restockTimesHref={rtLink?.href ?? null} alertHref={alert} /></div>
-      <div className="mt-6"><Last24Hours data={d.recent} label={G.atPlace(place)} stores={[s]} country={cc} stock={d.stock} lastBefore={d.lastDuoRestock} alert={alert} /></div>
+      <div className="mt-6"><Last24Hours data={d.recent} label={G.atPlace(place)} stores={[s]} country={cc} stock={d.stock} lastBefore={d.lastDuoRestock} alert={alert} compact /></div>
 
       <div className="mt-6"><ModelPlaceCards place={storePlace(s)} stockNow={d.stockNow} of={Object.fromEntries(MODELS.map((m) => [m.key, catalogFor(m.key, cc).length])) as Record<ModelKey, number>} unit={S.configsInStock} /></div>
-      <div className="mt-3"><PlaceStatStrip stores={1} stockNow={d.stockNow} stats={d.duoStats} storeMode scoped="Duo" /></div>
+      <div className="mt-3"><PlaceStatStrip stores={1} stockNow={d.stockNow} stats={d.duoStats} storeMode model="duo" scoped="Duo" /></div>
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold">{S.stockNowH2}</h2>
@@ -253,7 +253,7 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           <section className="pane p-5">
-            <h2 className="text-xl font-semibold">{S.whenRestock(N.store(s))}</h2>
+            <h2 className="text-xl font-semibold">{S.whenDuoRestocks(N.store(s))}</h2>
             <div className="mt-3"><RestockClock stats={d.duoClock} label={G.here} reports={d.duoReports} /></div>
             <p className="mt-2 text-xs text-ink-3">{t().modules.duoNow.allModels({ n: d.pstats.month, days: d.pstats.days, peak: peakAll ? peakAll.hour : null })}</p>
             {us && rtLink && <p className="mt-3 text-sm"><Link href={rtLink.href} className="font-medium text-ink underline-offset-2 hover:underline">When does the iPhone Duo restock in {rtLink.place}? Every store, hour by hour →</Link></p>}
@@ -264,7 +264,7 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
           </section>
           <section className="pane p-5">
             <h2 className="text-xl font-semibold">{G.lastDays(d.pstats.days)}</h2>
-            <div className="mt-3"><DailyBars stats={d.pstats} label={G.here} /></div>
+            <div className="mt-3"><DailyBars stats={d.duoStats} label={G.here} /></div>
           </section>
           <section className="pane p-5">
             <h2 className="text-xl font-semibold">{G.restocksBy}</h2>

@@ -114,7 +114,7 @@ export async function HomePage({ country: c, searchParams: sp }: { country: Coun
       </section>
 
       {/* The country-wide answer to "did the Duo restock in the last 24 hours, and which configuration?", in one sentence and a table. */}
-      <div className="mt-6"><Last24Hours data={recent} label="in the US" stores={storesOf("us")} country="us" alert={alertHref({ model: "duo" })} /></div>
+      <div className="mt-6"><Last24Hours data={recent} label="in the US" stores={storesOf("us")} country="us" alert={alertHref({ model: "duo" })} compact /></div>
 
       <RelatedBlock title="Browse stock by place">
         <BrowsePopular />
@@ -245,7 +245,7 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
         {loc.native && <Link href={rtPath} className="chip px-3 py-1.5 text-xs">{P.home.restockTimesChip}</Link>}
       </section>
 
-      <div className="mt-6"><Last24Hours data={recent} label={P.home.last24Label(cc)} stores={stores} country={cc} alert={alertHref({ model: "duo", country: cc })} /></div>
+      <div className="mt-6"><Last24Hours data={recent} label={P.home.last24Label(cc)} stores={stores} country={cc} alert={alertHref({ model: "duo", country: cc })} compact /></div>
 
       <RelatedBlock title={P.home.browse(cc)}>
         <BrowseCountryPopular country={c} />

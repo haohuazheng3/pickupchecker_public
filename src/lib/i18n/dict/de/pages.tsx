@@ -35,6 +35,8 @@ export const pages: Dict["pages"] = {
     here: "hier",
     storesWithIt: "Stores mit Bestand",
     whenRestock: (place: string) => `Wann sind iPhones ${inOrt(place)} wieder vorrätig?`,
+    /** The Duo-only clock on place pages (2026-11-08). */
+    whenDuoRestocks: (place: string) => `Wann ist das iPhone Duo ${inOrt(place)} wieder vorrätig?`,
     howFast: (place: string) => `Wie schnell sind Restocks ${inOrt(place)} ausverkauft?`,
     latestIn: (place: string) => `Neueste Restocks ${inOrt(place)}`,
     noneIn: (place: string) => `Noch kein Restock ${inOrt(place)} erfasst.`,
@@ -121,6 +123,7 @@ export const pages: Dict["pages"] = {
     configsInStock: "Konfig. vorrätig",
     stockNowH2: "Verfügbarkeit zur Abholung jetzt",
     whenRestock: (name: string) => `Wann ist das iPhone bei ${name} wieder vorrätig?`,
+    whenDuoRestocks: (name: string) => `Wann ist das iPhone Duo bei ${name} wieder vorrätig?`,
     howFast: (name: string) => `Wie schnell sind Restocks bei ${name} ausverkauft?`,
     history: "Restock-Verlauf",
     historyEmpty: "Hier wurde noch kein Restock oder Ausverkauf erfasst.",

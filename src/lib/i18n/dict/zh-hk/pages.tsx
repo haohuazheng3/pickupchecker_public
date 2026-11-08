@@ -33,6 +33,8 @@ export const pages: Dict["pages"] = {
     here: "本店",
     storesWithIt: "有貨分店",
     whenRestock: (place: string) => `${place}的分店幾時補貨？`,
+    /** The Duo-only clock on place pages (2026-11-08). */
+    whenDuoRestocks: (place: string) => `${place}的iPhone Duo幾時補貨？`,
     howFast: (place: string) => `${place}的補貨幾快售罄？`,
     latestIn: (place: string) => `${place}最新補貨`,
     noneIn: (place: string) => `${place}暫未有補貨記錄。`,
@@ -123,6 +125,7 @@ export const pages: Dict["pages"] = {
     configsInStock: "有貨款式",
     stockNowH2: "現時取貨現貨",
     whenRestock: (name: string) => `${name}幾時補貨？`,
+    whenDuoRestocks: (name: string) => `${name}的iPhone Duo幾時補貨？`,
     howFast: (name: string) => `${name}的補貨幾快售罄？`,
     history: "補貨記錄",
     historyEmpty: "這裏暫未有補貨或售罄記錄。",

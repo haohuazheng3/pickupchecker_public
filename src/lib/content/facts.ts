@@ -54,7 +54,7 @@ export interface ModelFacts {
  * `country` absent = the US (every fact and token of a page is about one country's stores). `lang` absent = English:
  * a page in another language passes `{ ...facts, lang }` and its tokens read in that language.
  */
-export interface Facts { at: string; models: Record<ModelKey, ModelFacts>; country?: CountryCode; lang?: Lang }
+export interface Facts { at: string; models: Record<ModelKey, ModelFacts>; country?: CountryCode; lang?: Lang; /** A place page's own zone for {{asOf}} (default: the country's reference zone). */ tz?: string }
 
 async function modelFacts(key: ModelKey, cc: CountryCode): Promise<ModelFacts> {
   const items = catalogFor(key, cc);
@@ -126,10 +126,10 @@ function n(v: number, unknown: boolean, lang: Lang = "en"): string {
 const plain = (v: number, lang: Lang) => (lang === "en" ? String(v) : num(lang, v));
 
 /** "Nov 2, 3:04 PM ET" in the US; other countries in their own zone and abbreviation ("GMT", "JST"). Other languages: "2. Nov., 15:04 MEZ". */
-function when(iso: string, cc: CountryCode, lang: Lang = "en"): string {
-  if (lang !== "en") return stamp(lang, iso, COUNTRIES[cc].timeZone, true);
-  if (cc === "us") return `${ET.format(new Date(iso))} ET`;
-  return new Intl.DateTimeFormat("en-US", { timeZone: COUNTRIES[cc].timeZone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(new Date(iso));
+function when(iso: string, cc: CountryCode, lang: Lang = "en", tz?: string): string {
+  if (lang !== "en") return stamp(lang, iso, tz ?? COUNTRIES[cc].timeZone, true);
+  if (cc === "us" && !tz) return `${ET.format(new Date(iso))} ET`;
+  return new Intl.DateTimeFormat("en-US", { timeZone: tz ?? COUNTRIES[cc].timeZone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(new Date(iso));
 }
 const price = (v: number, cc: CountryCode, lang: Lang = "en") => (lang !== "en" ? priceIn(lang, COUNTRIES[cc], v) : cc === "us" ? fmtPrice(v) : formatPrice(COUNTRIES[cc], v));
 /** "October 29, 2026" / "29. Oktober 2026". */
@@ -149,7 +149,7 @@ export function tokenValue(token: string, facts: Facts): string | null {
   if (token === "stores") return plain(storesOf(cc).length, lang);
   if (token === "trackingSince") return longDate(`${TRACKING_SINCE}T12:00:00Z`, lang);
   if (token === "trackingDays") return plain(Math.max(1, Math.ceil((Date.parse(facts.at) - Date.parse(`${TRACKING_SINCE}T00:00:00Z`)) / 86400_000)), lang);
-  if (token === "asOf") return when(facts.at, cc, lang);
+  if (token === "asOf") return when(facts.at, cc, lang, facts.tz);
   const dot = token.indexOf(".");
   if (dot < 0) return null;
   const key = PREFIX[token.slice(0, dot)];
@@ -191,6 +191,6 @@ export function tokensIn(text: string): string[] {
 }
 
 /** For token-free copy that still renders through Inline (store pages): only the global tokens work ({{asOf}} in the country's zone). */
-export function emptyFacts(country: CountryCode = "us"): Facts {
-  return { at: new Date().toISOString(), models: {} as Record<ModelKey, ModelFacts>, ...(country === "us" ? {} : { country }) };
+export function emptyFacts(country: CountryCode = "us", tz?: string): Facts {
+  return { at: new Date().toISOString(), models: {} as Record<ModelKey, ModelFacts>, ...(country === "us" ? {} : { country }), ...(tz ? { tz } : {}) };
 }

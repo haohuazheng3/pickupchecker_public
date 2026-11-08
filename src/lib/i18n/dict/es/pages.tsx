@@ -34,6 +34,8 @@ export const pages: Dict["pages"] = {
     here: "aquí",
     storesWithIt: "tiendas con stock",
     whenRestock: (place: string) => `¿Cuándo reponen stock las tiendas de ${place}?`,
+    /** The Duo-only clock on place pages (2026-11-08). */
+    whenDuoRestocks: (place: string) => `¿Cuándo reponen el iPhone Duo las tiendas de ${place}?`,
     howFast: (place: string) => `¿Cuánto tardan en agotarse las reposiciones en ${place}?`,
     latestIn: (place: string) => `Últimas reposiciones en ${place}`,
     noneIn: (place: string) => `Aún no hay ninguna reposición registrada en ${place}.`,
@@ -120,6 +122,7 @@ export const pages: Dict["pages"] = {
     configsInStock: "configuraciones en stock",
     stockNowH2: "Stock para recogida ahora mismo",
     whenRestock: (name: string) => `¿Cuándo repone stock ${name}?`,
+    whenDuoRestocks: (name: string) => `¿Cuándo repone el iPhone Duo ${name}?`,
     howFast: (name: string) => `¿Cuánto tardan en agotarse las reposiciones en ${name}?`,
     history: "Historial de reposiciones",
     historyEmpty: "Aún no hay reposiciones ni agotamientos registrados aquí.",

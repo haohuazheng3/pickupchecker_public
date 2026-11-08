@@ -37,6 +37,8 @@ export const pages: Dict["pages"] = {
     here: "이 매장",
     storesWithIt: "재고 있는 매장",
     whenRestock: (place: string) => `${place} 매장은 언제 재입고되나요?`,
+    /** The Duo-only clock on place pages (2026-11-08). */
+    whenDuoRestocks: (place: string) => `${place}에서 iPhone Duo는 언제 재입고되나요?`,
     howFast: (place: string) => `${place} 재입고는 얼마나 빨리 품절되나요?`,
     latestIn: (place: string) => `${place} 최근 재입고`,
     noneIn: (place: string) => `${place}에서는 아직 기록된 재입고가 없어요.`,
@@ -126,6 +128,7 @@ export const pages: Dict["pages"] = {
     configsInStock: "재고 있는 구성",
     stockNowH2: "지금 픽업 재고",
     whenRestock: (name: string) => `${eunNeun(name)} 언제 재입고되나요?`,
+    whenDuoRestocks: (name: string) => `${name}에서 iPhone Duo는 언제 재입고되나요?`,
     howFast: (name: string) => `${name} 재입고는 얼마나 빨리 품절되나요?`,
     history: "재입고 기록",
     historyEmpty: "아직 이 매장에서 기록된 재입고나 품절이 없어요.",

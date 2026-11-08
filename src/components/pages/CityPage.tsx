@@ -145,7 +145,7 @@ export async function CityPage({ country, params: p }: { country: Country; param
   const tq = us ? taxFaq(d.copy) : P.taxFaq(cc, cname, cc === "ca" ? c.state : undefined);
   const questions = faq({ kind: "city", place: cname, stores, stockNow: d.stockNow, duoStores: d.duoStores, stats: d.pstats, peak: peakOf(d.duoClock, lang), nearest: d.near, omit: ["lasts"] }, lang);
   if (tq) questions.splice(2, 0, tq);
-  const facts = lang === "en" ? emptyFacts(cc) : { ...emptyFacts(cc), lang };
+  const facts = lang === "en" ? emptyFacts(cc, d.tz) : { ...emptyFacts(cc, d.tz), lang };
   const [photo1, photo2] = us ? placePhotos(`${c.name}, ${c.state}`) : [INTL_PLACE_PHOTOS[`${cc}:${c.name}, ${c.state}`] ?? INTL_PLACE_PHOTOS[`${cc}:${c.state}`] ?? INTL_PLACE_PHOTOS[cc] ?? "phone-map", "apple-store-pickup-counter"];
   const index = placeTarget(cc);
   const crumbs: Crumb[] = us
@@ -171,10 +171,10 @@ export async function CityPage({ country, params: p }: { country: Country; param
       <div className="mt-5"><DuoNow d={d.now} label={G.inPlace(cname)} name={cname} stores={stores} country={cc} restockTimesHref={!d.thin ? restockTimesPath(c.state, c.name, cc) : null} alertHref={alert} /></div>
       <AlertPanelFor href={alert} summary={G.panelPick(cname)} country={cc} />
 
-      <div className="mt-6"><Last24Hours data={d.recent} label={G.inPlace(cname)} stores={stores} country={cc} stock={d.stock} lastBefore={d.copy.duo.lastRestock} alert={alert} /></div>
+      <div className="mt-6"><Last24Hours data={d.recent} label={G.inPlace(cname)} stores={stores} country={cc} stock={d.stock} lastBefore={d.copy.duo.lastRestock} alert={alert} compact /></div>
 
       <div className="mt-6"><ModelPlaceCards place={(us ? cityPlace(c.state, c.name) : treeOf(cc).cityPlace(c.state, c.name)) ?? storePlace(stores[0])} stockNow={d.stockNow} of={stores.length} unit={G.storesWithIt} /></div>
-      <div className="mt-3"><PlaceStatStrip stores={stores.length} stockNow={d.stockNow} stats={d.copy.duo} scoped="Duo" /></div>
+      <div className="mt-3"><PlaceStatStrip stores={stores.length} stockNow={d.stockNow} stats={d.copy.duo} model="duo" scoped="Duo" /></div>
 
       {d.thin ? (
         <div className="mt-8"><StoreBlock store={stores[0]} summary={d.stock.get(stores[0].storeNumber)} rows={d.full.get(stores[0].storeNumber) ?? []} stock={d.stock} /></div>
@@ -204,7 +204,7 @@ export async function CityPage({ country, params: p }: { country: Country; param
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="pane p-5">
-          <h2 className="text-xl font-semibold">{G.whenRestock(cname)}</h2>
+          <h2 className="text-xl font-semibold">{G.whenDuoRestocks(cname)}</h2>
           <div className="mt-3"><RestockClock stats={d.duoClock} label={G.inPlace(cname)} reports={d.duoReports} /></div>
           <p className="mt-2 text-xs text-ink-3">{t().modules.duoNow.allModels({ n: d.pstats.month, days: d.pstats.days, peak: peakOf(d.stats, lang)?.hour ?? null })}</p>
           {us && !d.thin && <p className="mt-3 text-sm"><Link href={restockTimesPath(c.state, c.name)} className="font-medium text-ink underline-offset-2 hover:underline">When does the iPhone Duo restock in {c.name}? Hour by hour, every store →</Link></p>}
@@ -215,7 +215,7 @@ export async function CityPage({ country, params: p }: { country: Country; param
         </section>
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">{G.lastDays(d.pstats.days)}</h2>
-          <div className="mt-3"><DailyBars stats={d.pstats} label={G.inPlace(cname)} /></div>
+          <div className="mt-3"><DailyBars stats={d.copy.duo} label={G.inPlace(cname)} /></div>
         </section>
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">{G.restocksBy}</h2>

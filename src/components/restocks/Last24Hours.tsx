@@ -16,7 +16,7 @@ import { appleStoreLabel, configLabel } from "@/lib/i18n/places";
 import { Swatch } from "@/components/stores/ConfigTable";
 import { Measured, Stat, StatGrid } from "@/components/ui/Viz";
 
-export function Last24Hours({ data, label, stores, country = "us", stock, lastBefore, alert, id = "last-24-hours" }: {
+export function Last24Hours({ data, label, stores, country = "us", stock, lastBefore, alert, id = "last-24-hours", compact = false }: {
   data: RecentByConfig;
   /** "in Michigan", "in Australia", "at Apple Somerset". */
   label: string;
@@ -29,6 +29,8 @@ export function Last24Hours({ data, label, stores, country = "us", stock, lastBe
   /** Where "Alert me" goes. */
   alert?: string;
   id?: string;
+  /** Rendered under the DuoNow block (2026-11-08): keep the sentence and the configuration table, drop the three tiles that repeat the block. */
+  compact?: boolean;
 }) {
   if (stores.length === 0) return null;
   const d = t().modules.last24;
@@ -63,7 +65,7 @@ export function Last24Hours({ data, label, stores, country = "us", stock, lastBe
       </div>
       <p className="mt-2 text-sm font-medium text-ink">{lead}</p>
 
-      {!data.unknown && (
+      {!data.unknown && !compact && (
         <StatGrid cols={3} className="mt-3">
           <Stat value={data.restocks} label={d.tileRestocks} tone={data.restocks > 0 ? "accent" : "muted"} />
           {one

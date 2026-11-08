@@ -107,7 +107,7 @@ export async function StoresIndexPage({ country: c }: { country: Country }) {
       <div className="mt-5"><DuoNow d={d.now} label="in the US" name="the US" stores={STORES} country="us" restockTimesHref="/iphone-duo-restock-times" alertHref={alert} /></div>
 
       <div className="mt-6"><ModelPlaceCards place={US_PLACE} stockNow={d.stockNow} of={STORES.length} unit="stores with it" /></div>
-      <div className="mt-3"><PlaceStatStrip stores={STORES.length} cities={cities.length} stockNow={d.stockNow} stats={d.duo!} scoped="Duo" /></div>
+      <div className="mt-3"><PlaceStatStrip stores={STORES.length} cities={cities.length} stockNow={d.stockNow} stats={d.duo!} model="duo" scoped="Duo" /></div>
 
       <section className="mt-10 max-w-3xl" aria-labelledby="how-many">
         <h2 id="how-many" className="text-2xl font-semibold">How many Apple Stores are there in the US?</h2>
@@ -140,7 +140,7 @@ export async function StoresIndexPage({ country: c }: { country: Country }) {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="pane p-5">
-          <h2 className="text-xl font-semibold">When do stores restock?</h2>
+          <h2 className="text-xl font-semibold">When does the iPhone Duo restock across the US?</h2>
           <div className="mt-3"><RestockClock stats={d.duoClock} label="across the US" reports={d.duoReports} /></div>
           <p className="mt-2 text-xs text-ink-3">{dictT().modules.duoNow.allModels({ n: d.pstats.month, days: d.pstats.days, peak: peakOf(d.stats)?.hour ?? null })}</p>
         </section>

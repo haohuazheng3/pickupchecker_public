@@ -4,7 +4,7 @@
  * every sentence is built from the live stock, the restock log and the 2026 sales-tax table, so each
  * page says something only that place's data can say.
  */
-import { PART_INDEX, STATE_CODES, STORES, catalogFor, appleName, statesWithStores, citiesWithStores, type ModelKey, type Store } from "../apple/catalog";
+import { storeTimeZone, PART_INDEX, STATE_CODES, STORES, catalogFor, appleName, statesWithStores, citiesWithStores, type ModelKey, type Store } from "../apple/catalog";
 import type { PlaceStats, StoreStockSummary } from "../stock/queries";
 import { SALES_TAX, withTax } from "@/content/sales-tax";
 import { neighborStates } from "./links";
@@ -32,7 +32,10 @@ export function sinceWhen(now = Date.now()): string {
   return now - Date.parse("2026-10-29T00:00:00Z") < 30 * 86400_000 ? "since tracking began on October 29" : "in the last 30 days";
 }
 
-const ET = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+/** "Nov 7, 1:32 PM PST": an instant in the place's own zone, the way the rest of the page states times (2026-11-08: it used to say ET on every page, which read as a different time next to the top block's local stamp). */
+const localWhen = (iso: string, store: Store) => new Intl.DateTimeFormat("en-US", { timeZone: storeTimeZone(store), month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(new Date(iso));
+/** "about 3 minutes", or "under a minute" without an "about" in front of it. */
+const aboutFor = (ms: number) => { const d = fmtDuration(ms); return /^under\b/.test(d) ? d : `about ${d}`; };
 const money = (n: number) => `$${n.toLocaleString("en-US")}`;
 
 /**
@@ -119,8 +122,8 @@ function duoPoints(i: PlaceCopyInput, w: string, alert: string): Block[] {
   const last = st.lastRestock ? i.stores.find((s) => s.storeNumber === st.lastRestock!.storeNumber) : undefined;
   const items: string[] = [];
   if (have.length > 0 && st.month > 0) items.push(`**Logged ${sinceWhen()}:** ${plural(st.month, "Duo restock")} at stores here`);
-  if (st.lastRestock && last) items.push(`**Last restock:** ${ET.format(new Date(st.lastRestock.at))} ET at ${appleName(last)}`);
-  if (st.medianMs != null) items.push(`**Typical listing:** a restocked Duo stayed listed about ${fmtDuration(st.medianMs)} (median)`);
+  if (st.lastRestock && last) items.push(`**Last restock:** ${localWhen(st.lastRestock.at, last)} at ${appleName(last)}`);
+  if (st.medianMs != null) items.push(`**Typical listing:** a restocked Duo stayed listed ${aboutFor(st.medianMs)} (median)`);
   items.push(`**Fastest route:** [set an iPhone Duo alert in ${w}](${alert}) at the ${n <= 3 ? (n === 2 ? "two" : "three") : `${Math.min(n, 5)} closest`} stores you can reach`);
   items.push("**One alert** = one store × one exact configuration; the push arrives seconds after a store lists it");
   const blocks: Block[] = [];
@@ -150,7 +153,7 @@ export function placeSections(i: PlaceCopyInput): KeywordSection[] {
         ...(scarce.length ? [`**Scarcest right now:** ${listWords(scarce.map((x) => `${x.label} (${x.stores} of ${n} stores)`))}`] : []),
         `**iPhone 18 Pro:** at ${i.stockNow["18-pro"]} of ${n} stores, ${pairsPct(i, "18-pro")}% of pairs in stock`,
         `**Logged ${sinceWhen()}:** ${i.max.month ? plural(i.max.month, "18 Pro Max restock") : "no 18 Pro Max restock yet"}`,
-        ...(i.max.medianMs != null ? [`**Typical listing:** a restocked Pro Max stayed listed about ${fmtDuration(i.max.medianMs)} (median)`] : []),
+        ...(i.max.medianMs != null ? [`**Typical listing:** a restocked Pro Max stayed listed ${aboutFor(i.max.medianMs)} (median)`] : []),
       ] }],
     },
   ];

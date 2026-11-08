@@ -36,6 +36,8 @@ export const pages: Dict["pages"] = {
     here: "هنا",
     storesWithIt: "متاجر يتوفر فيها",
     whenRestock: (place: string) => `متى يتوفر iPhone في متاجر ${place}؟`,
+    /** The Duo-only clock on place pages (2026-11-08). */
+    whenDuoRestocks: (place: string) => `متى يتوفر iPhone Duo في متاجر ${place}؟`,
     howFast: (place: string) => `كم يصمد المخزون في ${place} قبل أن ينفد؟`,
     latestIn: (place: string) => `أحدث حالات التوفر في ${place}`,
     noneIn: (place: string) => `لم يُسجَّل أي توفر في ${place} بعد.`,
@@ -126,6 +128,7 @@ export const pages: Dict["pages"] = {
     configsInStock: "خيارات متوفرة",
     stockNowH2: "مخزون الاستلام الآن",
     whenRestock: (name: string) => `متى يتوفر iPhone في ${apple(name)}؟`,
+    whenDuoRestocks: (name: string) => `متى يتوفر iPhone Duo في ${apple(name)}؟`,
     howFast: (name: string) => `كم يصمد المخزون في ${apple(name)} قبل أن ينفد؟`,
     history: "سجل التوفر",
     historyEmpty: "لم يُسجَّل هنا أي توفر أو نفاد بعد.",

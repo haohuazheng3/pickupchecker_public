@@ -42,6 +42,8 @@ export const pages: Dict["pages"] = {
     here: "この店舗",
     storesWithIt: "在庫のある店舗",
     whenRestock: (place: string) => `${place}の店舗に入荷するのはいつ？`,
+    /** The Duo-only clock on place pages (2026-11-08). */
+    whenDuoRestocks: (place: string) => `${place}でiPhone Duoが入荷するのはいつ？`,
     howFast: (place: string) => `${place}では入荷はどれくらいで完売する？`,
     latestIn: (place: string) => `${place}の最新の入荷`,
     noneIn: (place: string) => `${place}ではまだ入荷の記録はありません。`,
@@ -129,6 +131,7 @@ export const pages: Dict["pages"] = {
     configsInStock: "在庫のある構成",
     stockNowH2: "現在の店頭受け取り在庫",
     whenRestock: (name: string) => `${apple(name)}の入荷はいつ？`,
+    whenDuoRestocks: (name: string) => `${apple(name)}にiPhone Duoが入荷するのはいつ？`,
     howFast: (name: string) => `${apple(name)}の入荷はどれくらいで完売する？`,
     history: "入荷履歴",
     historyEmpty: "この店舗では、まだ入荷・完売の記録はありません。",

@@ -48,7 +48,7 @@ export function PlaceStatStrip({ stores, cities, stockNow, stats, storeMode = fa
   const v = (x: number) => (lang === "en" ? x : num(lang, x));
   const s = (x: number) => (lang === "en" ? String(x) : num(lang, x));
   const items: Stat[] = [];
-  if (model) items.push({ label: d.inStockNow, value: v(stockNow[model]), hint: d.ofStores(s(stores)), live: stockNow[model] > 0 });
+  if (model) items.push({ label: scoped ? d.modelNow(bidi(scoped, lang)) : d.inStockNow, value: v(stockNow[model]), hint: storeMode ? d.configsInStock : d.ofStores(s(stores)), live: stockNow[model] > 0 });
   else {
     items.push({ label: d.stores, value: v(stores), hint: cities != null ? countIn(lang, cities, d.nCities) : d.tracked });
     for (const m of MODELS) items.push({ label: d.modelNow(bidi(m.short, lang)), value: v(stockNow[m.key]), hint: storeMode ? d.configsInStock : countIn(lang, stockNow[m.key], d.storesWithStock), live: stockNow[m.key] > 0 });
@@ -60,5 +60,5 @@ export function PlaceStatStrip({ stores, cities, stockNow, stats, storeMode = fa
   const lrStore = lr ? STORE_INDEX.get(lr.storeNumber) : undefined;
   const lrItem = lr ? PART_INDEX.get(lr.partNumber) : undefined;
   items.push({ label: sc(d.lastRestock), value: lr ? <LiveAgo iso={lr.at} /> : d.noneYet, hint: lr && lrItem ? `${lrItem.storage} ${colorLabel(lrItem.color, lang)}${lrStore && !storeMode ? ` · ${storeLabel(lrStore, lang)}` : ""}` : d.inLastDays(s(stats.days)) });
-  return <StatStrip items={items} />;
+  return <StatStrip items={items} cols={model ? 4 : 6} />;
 }

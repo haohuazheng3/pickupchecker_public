@@ -47,6 +47,8 @@ export const pages: Dict["pages"] = {
     here: "hier",
     storesWithIt: "winkels met voorraad",
     whenRestock: (place: string) => `Wanneer krijgen de winkels in ${place} nieuwe voorraad?`,
+    /** The Duo-only clock on place pages (2026-11-08). */
+    whenDuoRestocks: (place: string) => `Wanneer krijgen de winkels in ${place} de iPhone Duo weer op voorraad?`,
     howFast: (place: string) => `Hoe snel is nieuwe voorraad in ${place} uitverkocht?`,
     latestIn: (place: string) => `Laatste aanvullingen in ${place}`,
     noneIn: (place: string) => `Nog geen aanvulling gelogd in ${place}.`,
@@ -136,6 +138,7 @@ export const pages: Dict["pages"] = {
     configsInStock: "configuraties op voorraad",
     stockNowH2: "Nu klaar om op te halen",
     whenRestock: (name: string) => `Wanneer krijgt ${name} nieuwe voorraad?`,
+    whenDuoRestocks: (name: string) => `Wanneer heeft ${name} de iPhone Duo weer op voorraad?`,
     howFast: (name: string) => `Hoe snel is nieuwe voorraad bij ${name} uitverkocht?`,
     history: "Voorraadgeschiedenis",
     historyEmpty: "Hier is nog geen aanvulling of uitverkocht gelogd.",
