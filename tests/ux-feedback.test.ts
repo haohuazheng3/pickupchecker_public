@@ -29,7 +29,7 @@ describe("isSamePage (a tap on the link to the page on screen refreshes it)", ()
 describe("the new answers exist in every language", () => {
   it("has the refresh pill, the test-notification guidance, the plan toast and Near me results", () => {
     for (const [lang, d] of Object.entries(CDICTS)) {
-      const strings = [d.chrome.refresh.busy, d.chrome.refresh.done, d.account.push.previewNow, d.account.push.previewShown,
+      const strings = [d.chrome.refresh.busy, d.chrome.refresh.done,
         d.account.push.test.soon, d.account.push.test.iosHint, d.account.push.test.away, d.alerts.editor.overPlanHave,
         d.alerts.editor.upgradeTo, d.alerts.picker.locatedNow, d.alerts.picker.locBlocked];
       for (const s of strings) expect(s, lang).toMatch(/\S/);

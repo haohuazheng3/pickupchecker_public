@@ -52,13 +52,9 @@ export const account: CDict["account"] = {
     signIn: "Inloggen",
     installApp: "App installeren",
     turnOn: "Zet meldingen aan",
-    previewHere: "Voorbeeld hier",
-    previewNow: "nu",
-    previewShown: "Zo ziet een alert eruit. Echte alerts komen binnen seconden op je toegangsscherm, ook als de app dicht is.",
     turnOff: "Uitzetten",
     setupGuide: "Installatiegids",
     miniSteps: ["Tik in Safari op Deel", "Kies Zet op beginscherm", "Open het en sta meldingen toe"],
-    preview: { title: "iPhone Duo 256GB Nachthemel", body: "Apple Amsterdam · Amsterdam — Vandaag beschikbaar. Tik om te reserveren op apple.com." },
     test: {
       gone: "De pushdienst meldt dat het abonnement van dit apparaat niet meer bestaat. Zet meldingen op dat apparaat uit en weer aan.",
       none: "Geen enkel apparaat heeft de test ontvangen{error}. Zet meldingen uit en weer aan.",

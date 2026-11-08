@@ -49,13 +49,9 @@ export const account: CDict["account"] = {
     signIn: "Anmelden",
     installApp: "App installieren",
     turnOn: "Mitteilungen einschalten",
-    previewHere: "Vorschau hier",
-    previewNow: "jetzt",
-    previewShown: "So sieht ein Alarm aus. Echte Alarme kommen in Sekunden auf den Sperrbildschirm, auch wenn die App geschlossen ist.",
     turnOff: "Ausschalten",
     setupGuide: "Anleitung",
     miniSteps: ["In Safari auf „Teilen“ tippen", "„Zum Home-Bildschirm“", "Öffnen, Mitteilungen erlauben"],
-    preview: { title: "iPhone Duo 256GB Schwarz", body: "Apple Kurfürstendamm · Berlin – Heute verfügbar. Tippen, um auf apple.com zu reservieren." },
     test: {
       gone: "Der Push-Dienst meldet, dass das Abo dieses Geräts nicht mehr existiert. Schalten Sie Mitteilungen auf dem Gerät aus und wieder ein.",
       none: "Kein Gerät hat den Test empfangen{error}. Schalten Sie Mitteilungen aus und wieder ein.",

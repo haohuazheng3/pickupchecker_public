@@ -50,13 +50,9 @@ export const account: CDict["account"] = {
     signIn: "Iniciar sesión",
     installApp: "Instalar la app",
     turnOn: "Activar notificaciones",
-    previewHere: "Vista previa aquí",
-    previewNow: "ahora",
-    previewShown: "Así se ve una alerta. Las de verdad llegan en segundos a la pantalla de bloqueo, aunque la app esté cerrada.",
     turnOff: "Desactivar",
     setupGuide: "Guía de configuración",
     miniSteps: ["Toca Compartir en Safari", "Añadir a pantalla de inicio", "Ábrela y permite las notificaciones"],
-    preview: { title: "iPhone Duo 256GB Negro", body: "Apple Puerta del Sol · Madrid — Disponible hoy. Toca para reservarlo en apple.com." },
     test: {
       gone: "El servicio de notificaciones dice que la suscripción de este dispositivo ya no existe. Desactiva y vuelve a activar las notificaciones en ese dispositivo.",
       none: "Ningún dispositivo ha recibido la prueba{error}. Desactiva y vuelve a activar las notificaciones.",

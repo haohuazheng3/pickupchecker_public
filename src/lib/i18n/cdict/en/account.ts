@@ -56,15 +56,10 @@ export const account = {
     signIn: "Sign in",
     installApp: "Install app",
     turnOn: "Turn on notifications",
-    previewHere: "Preview here",
-    previewNow: "now",
-    previewShown: "That's how an alert looks. Real ones reach your lock screen within seconds, even with the app closed.",
     turnOff: "Turn off",
     setupGuide: "Setup guide",
     /** iPhone in Safari: the three steps under the card (iOS's own words for Share / Add to Home Screen). */
     miniSteps: ["Tap Share in Safari", "Add to Home Screen", "Open it, allow notifications"],
-    /** "Preview here": a sample banner drawn by this device. */
-    preview: { title: "iPhone Duo 256GB Black", body: "Apple Fifth Avenue · New York, NY — Available Today. Tap to reserve on apple.com." },
     /** "Send a test": what the server answered. {device} names come from the server. */
     test: {
       gone: "The push service says this device's subscription is gone. Turn notifications off and on again on that device.",

@@ -49,13 +49,9 @@ export const account: CDict["account"] = {
     signIn: "登入",
     installApp: "安裝 App",
     turnOn: "開啟通知",
-    previewHere: "在這裏預覽",
-    previewNow: "現在",
-    previewShown: "提醒看起來就是這樣。真正的提醒即使關閉 App，也會在幾秒內出現在鎖定畫面。",
     turnOff: "關閉",
     setupGuide: "設定教學",
     miniSteps: ["在 Safari 按「分享」", "加至主畫面", "打開它，允許通知"],
-    preview: { title: "iPhone Duo 256GB 夜空色", body: "Apple Canton Road（廣東道）· 香港尖沙咀——今天可提供。按此在 apple.com 預訂。" },
     test: {
       gone: "推送服務表示這部裝置的訂閱已失效。請在該裝置上關閉再重新開啟通知。",
       none: "沒有裝置收到測試{error}。請關閉再重新開啟通知。",

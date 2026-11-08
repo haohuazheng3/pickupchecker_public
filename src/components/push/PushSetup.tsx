@@ -5,7 +5,7 @@
  * when another device (or the Home Screen app, while this is Safari) already gets the alerts, the
  * card says so instead of walking the user through a setup they already did.
  */
-import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { useAppLocale, useT } from "@/components/i18n/LangProvider";
 import type { DeviceSummary } from "@/lib/devices";
@@ -34,15 +34,8 @@ export function B({ text, vars = {} }: { text: string; vars?: Record<string, Rea
 export function PushSetup({ vapidPublicKey, title, compact = false, account }: { vapidPublicKey: string; title?: string; compact?: boolean; account?: DeviceSummary | null }) {
   const p = usePush(vapidPublicKey);
   const d = useT().account.push;
-  // "Preview here" draws the sample banner on the page as well: iPhone shows no OS banner while the app is in front,
-  // so the button looked dead there (FlowGlance 11-07: pressed again and again inside the iPhone app).
-  const [preview, setPreview] = useState(0);
-  useEffect(() => {
-    if (!preview) return;
-    const t = window.setTimeout(() => setPreview(0), 6000);
-    return () => window.clearTimeout(t);
-  }, [preview]);
-  const onPreview = () => { setPreview((k) => k + 1); void previewLocally(d.preview); };
+  // No "Preview here" any more (owner 2026-11-08): its in-page sample banner sat on top of the header card, and
+  // "Send a test notification" already proves the real path end to end, on every device of the account.
   // This browser is not (or cannot be) the one getting alerts, but the account already has one that is.
   const elsewhere = account?.active ? account.label : null;
   const onElsewhere = Boolean(elsewhere) && p.status !== "on" && p.status !== "checking" && p.status !== "needs-signin";
@@ -56,25 +49,13 @@ export function PushSetup({ vapidPublicKey, title, compact = false, account }: {
           </div>
           <p className="mt-1 max-w-xl text-sm text-ink-2">{onElsewhere ? <Elsewhere p={p} label={elsewhere!} d={d} /> : <Explain p={p} d={d} />}</p>
         </div>
-        {onElsewhere ? <ElsewhereActions p={p} d={d} /> : <Actions p={p} d={d} onPreview={onPreview} />}
+        {onElsewhere ? <ElsewhereActions p={p} d={d} /> : <Actions p={p} d={d} />}
       </div>
       {p.status === "needs-install" && !onElsewhere && <IosMiniSteps d={d} />}
-      {preview > 0 && <PreviewBanner key={preview} d={d} />}
-      {preview > 0 && <p className="mt-3 text-sm text-ink-2">{d.previewShown}</p>}
       {p.notice && <p className="mt-3 text-sm text-accent">{p.notice}</p>}
       {p.error && <p role="alert" className="mt-3 text-sm text-bad">{p.error}</p>}
     </section>
   );
-}
-
-/** Shows a sample banner straight from the service worker (no server round trip): proves the OS popup itself works. */
-async function previewLocally(sample: T["preview"]) {
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    await reg.showNotification(sample.title, { body: sample.body, icon: "/icons/icon-192.png", badge: "/icons/badge-96.png", tag: "preview", data: { url: "/account", kind: "test" } });
-  } catch {
-    /* unsupported: the server test still tells the truth */
-  }
 }
 
 function StatusPill({ status, d }: { status: PushState["status"]; d: T }) {
@@ -127,21 +108,7 @@ function ElsewhereActions({ p, d }: { p: PushState; d: T }) {
   );
 }
 
-/** The sample alert as the phone would show it, drawn by the page for a few seconds at the top of the screen. */
-function PreviewBanner({ d }: { d: T }) {
-  return (
-    <div role="status" className="fixed inset-x-3 top-3 z-[60] mx-auto flex max-w-sm items-start gap-3 rounded-[22px] border border-line bg-pane p-3 shadow-lg">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/icons/icon-192.png" alt="" width={38} height={38} className="h-[38px] w-[38px] shrink-0 rounded-[9px]" />
-      <div className="min-w-0 flex-1 text-sm">
-        <div className="flex items-baseline justify-between gap-2"><span className="truncate font-semibold">{d.preview.title}</span><span className="shrink-0 text-xs text-ink-3">{d.previewNow}</span></div>
-        <p className="mt-0.5 text-ink-2">{d.preview.body}</p>
-      </div>
-    </div>
-  );
-}
-
-function Actions({ p, d, onPreview }: { p: PushState; d: T; onPreview: () => void }) {
+function Actions({ p, d }: { p: PushState; d: T }) {
   const spin = p.busy ? <span className="spinner" /> : null;
   // Sign-in happens on the home page of the person's language ("/" in English).
   const home = signInHome(useAppLocale() ?? undefined);
@@ -161,7 +128,6 @@ function Actions({ p, d, onPreview }: { p: PushState; d: T; onPreview: () => voi
       return (
         <div className="flex flex-wrap gap-2">
           <button type="button" className="btn btn-primary btn-sm" disabled={p.busy} onClick={() => void p.sendTest()}>{spin}{d.sendTest}</button>
-          <button type="button" className="btn btn-ghost btn-sm" disabled={p.busy} onClick={onPreview}>{d.previewHere}</button>
           <button type="button" className="btn btn-ghost btn-sm" disabled={p.busy} onClick={() => void p.turnOff()}>{d.turnOff}</button>
         </div>
       );

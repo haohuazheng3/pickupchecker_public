@@ -49,13 +49,9 @@ export const account: CDict["account"] = {
     signIn: "로그인",
     installApp: "앱 설치",
     turnOn: "알림 켜기",
-    previewHere: "여기서 미리 보기",
-    previewNow: "지금",
-    previewShown: "알림은 이렇게 보여요. 실제 알림은 앱을 닫아 두어도 몇 초 안에 잠금 화면에 도착해요.",
     turnOff: "끄기",
     setupGuide: "설정 가이드",
     miniSteps: ["Safari에서 공유 탭", "홈 화면에 추가", "앱을 열고 알림 허용"],
-    preview: { title: "iPhone Duo 256GB 블랙", body: "Apple 가로수길 · 서울 — 오늘 픽업 가능. 탭해서 apple.com에서 예약하세요." },
     test: {
       gone: "푸시 서비스에서 이 기기의 구독이 사라졌다고 해요. 해당 기기에서 알림을 껐다가 다시 켜 주세요.",
       none: "테스트를 받은 기기가 없어요{error}. 알림을 껐다가 다시 켜 주세요.",
