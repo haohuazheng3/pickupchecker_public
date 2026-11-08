@@ -210,8 +210,6 @@ export async function ConfigsPage({ country: c }: { country: Country }) {
       <RelatedBlock title={V.related}>
         <LinkRow title={V.sameData} links={[
           { href: `${prefixOf(cc)}/iphone-duo-restock-times`, label: V.questions.restockTimes },
-          { href: `${prefixOf(cc)}/${DECIDE_SLUGS.shortage}`, label: V.questions.shortage },
-          { href: `${prefixOf(cc)}/${DECIDE_SLUGS.channels}`, label: V.questions.channels },
           { href: `${prefixOf(cc)}/${DECIDE_SLUGS.api}`, label: V.questions.api },
           ...(x.us ? [{ href: "/iphone-duo-sell-out-times", label: V.questions.sellOut }, { href: "/iphone-duo-stock-alerts", label: V.questions.alerts }] : []),
         ]} />

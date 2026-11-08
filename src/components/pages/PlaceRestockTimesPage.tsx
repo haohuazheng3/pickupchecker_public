@@ -560,7 +560,6 @@ export async function PlaceRestockTimesPage({ place }: { place: RestockPlace }) 
         <LinkRow title="More iPhone Duo questions" links={[
           { href: "/iphone-duo-sell-out-times", label: "How fast does it sell out?" },
           { href: "/iphone-duo-stock-alerts", label: "Fastest way to get notified" },
-          { href: "/how-to-get-an-iphone-duo", label: "How to get one when it's sold out" },
           { href: "/which-iphone-duo-restocks-most", label: "Which configuration restocks most?" },
           { href: "/iphone-duo-back-in-stock", label: "Is it back in stock right now?" },
           { href: "/where-to-buy-iphone-duo", label: "Where to buy one today" },

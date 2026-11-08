@@ -6,13 +6,15 @@ import { NATIVE_LOCALES, englishPath, localeFromSegment, localesOf, pathInLocale
 /** When other countries' stores began to be tracked (the sources line of their pages). */
 export const INTL_TRACKING_LABEL = "November 2, 2026";
 
-export type EquivalentPage = "home" | "stores" | "restock-times" | "configs" | "shortage" | "channels" | "api" | { model: string };
+export type EquivalentPage = "home" | "stores" | "restock-times" | "configs" | "api" | { model: string };
 
-/** The four decision pages (seo.md §16) exist in every country and language, under one slug each. */
-export const DECIDE_SLUGS: Record<"configs" | "shortage" | "channels" | "api", string> = {
+/**
+ * The decision pages (seo.md §16) exist in every country and language, under one slug each. Two of the original four
+ * were retired on 2026-11-08 (owner: off-topic, no traffic in 30 days): "iphone-duo-shortage" and
+ * "iphone-duo-apple-vs-carriers-vs-retailers" now 308 to the country's restock-times page (seo/routes.ts RETIRED_*).
+ */
+export const DECIDE_SLUGS: Record<"configs" | "api", string> = {
   configs: "which-iphone-duo-restocks-most",
-  shortage: "iphone-duo-shortage",
-  channels: "iphone-duo-apple-vs-carriers-vs-retailers",
   api: "iphone-duo-stock-api",
 };
 
@@ -21,7 +23,7 @@ export function equivalentPath(cc: CountryCode, page: EquivalentPage): string | 
   if (page === "home") return prefixOf(cc) || "/";
   if (page === "stores") return placeTarget(cc)?.indexable ? storesIndexPath(cc) : null;
   if (page === "restock-times") return `${prefixOf(cc)}/iphone-duo-restock-times`;
-  if (page === "configs" || page === "shortage" || page === "channels" || page === "api") return `${prefixOf(cc)}/${DECIDE_SLUGS[page]}`;
+  if (page === "configs" || page === "api") return `${prefixOf(cc)}/${DECIDE_SLUGS[page]}`;
   return MODELS.some((m) => m.slug === page.model) ? `${prefixOf(cc)}/stock/${page.model}` : null;
 }
 

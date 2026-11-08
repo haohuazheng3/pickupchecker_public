@@ -396,7 +396,6 @@ export default async function SellOutTimesPage() {
           <ChipLinks items={[
             { href: "/iphone-duo-restock-times", label: "When Apple restocks the iPhone Duo" },
             { href: "/apple-store-pickup-availability-explained", label: "How pickup availability works" },
-            { href: "/how-to-get-an-iphone-duo", label: "How to get an iPhone Duo" },
           ]} />
           <Figure id="apple-store-crowd-inside" />
         </section>

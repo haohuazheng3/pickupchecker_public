@@ -5,26 +5,37 @@ import { productBySlug, productFor, productPath, resolvePlace } from "./products
 import { treeOf } from "./tree";
 /** The old blog had one thin post; its topic lives on the 18 Pro stock page. Everything else under /blog goes home. */
 const RETIRED: Record<string, string> = { "/blog/how-to-find-iphone-18-pro-in-stock-near-you": "/stock/iphone-18-pro" };
+/**
+ * Pages retired on 2026-11-08 (owner: off-topic for a stock tracker and no traffic in 30 days — see seo.md §16 末尾):
+ * each 308s to the page that answers the nearest real question. The owner's rule for pages that do have traffic
+ * (never change their URL) is why these are redirects rather than 404s, and why nothing else moved.
+ */
+export const RETIRED_TOP: Record<string, string> = {
+  "iphone-duo-shortage": "/iphone-duo-restock-times",
+  "iphone-duo-apple-vs-carriers-vs-retailers": "/iphone-duo-stock-alerts",
+  "five-second-checks": "/how-it-works#speed",
+  "how-to-get-an-iphone-duo": "/how-to-grab-an-iphone-duo-restock",
+};
+/** The two retired decision pages existed in every country and language: each goes to that country's restock-times page. */
+export const RETIRED_COUNTRY: ReadonlySet<string> = new Set(["iphone-duo-shortage", "iphone-duo-apple-vs-carriers-vs-retailers"]);
 
 /**
  * First path segments that are not another country: the app's own top-level routes, metadata routes without an
  * extension, and the public/ folders (a test keeps this in step with src/app and public/).
  */
 export const TOP_LEVEL: ReadonlySet<string> = new Set([
-  "five-second-checks", "check-evidence",
+  "check-evidence",
   "about", "account", "admin", "api", "checkout", "contact", "how-it-works", "install", "map", "pricing", "privacy", "refunds", "restocks", "stock", "stores", "terms",
   // The iPhone Duo question pages (seo.md §13): one answer page per question people put to search and answer engines.
-  "iphone-duo-restock-times", "iphone-duo-sell-out-times", "iphone-duo-stock-alerts", "iphone-duo-near-me", "how-to-get-an-iphone-duo", "which-iphone-duo-restocks-most", "apple-store-pickup-availability-explained", "how-to-grab-an-iphone-duo-restock",
+  "iphone-duo-restock-times", "iphone-duo-sell-out-times", "iphone-duo-stock-alerts", "iphone-duo-near-me", "which-iphone-duo-restocks-most", "apple-store-pickup-availability-explained", "how-to-grab-an-iphone-duo-restock",
   // The phrasing pages (docs/research.md §8.3 C): the words people type when they do not know a tracker exists.
   "iphone-duo-back-in-stock", "iphone-duo-stock-checker", "where-to-buy-iphone-duo",
   "research", "blog", "opengraph-image", "_not-found", "icons", "img", "vendor", "zip",
-  "iphone-duo-shortage",
-  "iphone-duo-apple-vs-carriers-vs-retailers",
   "iphone-duo-stock-api",
 ]);
 
 /** Question pages that exist for every country under its prefix (/ca/iphone-duo-restock-times …). */
-export const COUNTRY_QUESTION_PAGES: ReadonlySet<string> = new Set(["iphone-duo-restock-times", "which-iphone-duo-restocks-most", "iphone-duo-shortage", "iphone-duo-apple-vs-carriers-vs-retailers", "iphone-duo-stock-api"]);
+export const COUNTRY_QUESTION_PAGES: ReadonlySet<string> = new Set(["iphone-duo-restock-times", "which-iphone-duo-restocks-most", "iphone-duo-stock-api"]);
 
 /** Every public place address, built once per process. */
 let known: { states: Set<string>; oneStoreStates: Map<string, string>; cities: Set<string>; oneStoreCities: Map<string, string>; stores: Set<string>; legacy: Map<string, string>; models: Set<string> } | null = null;
@@ -50,6 +61,7 @@ function knownPaths() {
  */
 export function publicRouteCheck(pathname: string, search = ""): { notFound: true } | { redirect: string } | null {
   const parts = pathname.split("/").filter(Boolean);
+  if (parts.length === 1 && RETIRED_TOP[parts[0]]) return { redirect: RETIRED_TOP[parts[0]] };
   // Any other unknown first segment would land on the /[cc] route and render its 404 late: answer it here.
   if (parts[0] && !/^[a-z]{2}(-[a-z]{2})?$/.test(parts[0]) && !TOP_LEVEL.has(parts[0]) && !parts[parts.length - 1].includes(".")) return { notFound: true };
   // A native version of a country's tree (/ja-jp/…, docs/i18n.md §6): the same rules as its English tree, redirects kept in the version.
@@ -162,5 +174,6 @@ function countryRouteCheck(cc: CountryCode, rest: string[], search: string): { n
     return null;
   }
   if ((head === "restocks" || head === "map" || COUNTRY_QUESTION_PAGES.has(head)) && tail.length === 0) return null;
+  if (head && RETIRED_COUNTRY.has(head) && tail.length === 0) return { redirect: `/${cc}/iphone-duo-restock-times` };
   return { notFound: true };
 }

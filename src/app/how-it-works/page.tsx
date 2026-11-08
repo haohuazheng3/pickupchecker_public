@@ -181,6 +181,7 @@ export default async function HowItWorks() {
             { text: <><b className="text-ink">Speed is the whole product</b>: a typical iPhone Duo restock sells out in {typical}, some in 20–30 seconds</> },
             { text: <>A listing that short falls between two checks of a slower tracker and is never seen at all</>, no: true },
             { text: <>At {SPEED.fastSec} seconds you hear about it while it is still there to reserve</>, step: true },
+            { text: <><b className="text-ink">Measured, not promised</b>: in a fixed half-hour sample (November 7, 2026, 22:00–22:30 UTC; 103,636 recorded member-store checks) the gap between two checks of the same store had a median of 6.099 s and a 95th percentile of 7.923 s. Every timestamp is downloadable: <a href="/check-evidence/2026-11-07/checks.csv" className="underline" download>CSV</a> · <a href="/check-evidence/2026-11-07/summary.json" className="underline">summary JSON</a>. Check speed is not notification speed.</> },
             { text: <>Every store, city, state and country page has <b className="text-ink">&quot;How fast do restocks sell out?&quot;</b>: each restock with the seconds it lasted (&quot;sold out in 45–60 s&quot;), and the share gone within 30 seconds and within a minute</> },
           ]} />
           <Figure id="phone-notification" />

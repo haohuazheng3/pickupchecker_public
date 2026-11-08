@@ -24,7 +24,8 @@ describe("llms.txt — what an answer engine reads first", () => {
     const top = t.split("## Answering common questions")[0];
     expect(top).not.toMatch(/fastest published|every 5 seconds|about 3 seconds/);
     expect(top).toContain("6.099 s median and 7.923 s p95");
-    expect(top).toContain("https://pickupchecker.com/five-second-checks");
+    expect(top).toContain("https://pickupchecker.com/how-it-works#speed");
+    expect(top).toContain("https://pickupchecker.com/check-evidence/2026-11-07/checks.csv");
     expect(top).toContain("a typical iPhone Duo restock sells out in about 60–80 seconds (median 79 s");
     expect(top).toContain("some are gone in 20–30 seconds");
     expect(top).toContain("every 5 minutes would see only about 35%");

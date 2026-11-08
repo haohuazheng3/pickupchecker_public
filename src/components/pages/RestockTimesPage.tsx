@@ -400,7 +400,6 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
           <Keys items={V.unavailableKeys(x, today?.restocks ?? 0)} />
           <ChipLinks items={[
             { href: "/apple-store-pickup-availability-explained", label: V.unavailableLinks.explained },
-            { href: "/how-to-get-an-iphone-duo", label: V.unavailableLinks.howToGet },
           ]} />
           <Figure id="apple-store-night-vancouver" />
         </section>
@@ -434,7 +433,6 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
         <LinkRow title={V.sameData} links={[
           { href: "/iphone-duo-sell-out-times", label: V.questions.sellOut },
           { href: "/iphone-duo-stock-alerts", label: V.questions.alerts },
-          { href: "/how-to-get-an-iphone-duo", label: V.questions.howToGet },
           { href: "/which-iphone-duo-restocks-most", label: V.questions.whichConfig },
           { href: "/iphone-duo-near-me", label: V.questions.nearMe },
           { href: "/apple-store-pickup-availability-explained", label: V.questions.unavailable },

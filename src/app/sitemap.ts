@@ -34,8 +34,8 @@ export function countryEntries(cc: Exclude<CountryCode, "us">, base: string, now
   out.push({ url: `${base}${mapPath(cc)}`, lastModified: now, changeFrequency: "hourly", priority: 0.5 });
   // The country's restock-times question page (seo.md §13): its numbers change with every restock.
   out.push({ url: `${base}${p}/iphone-duo-restock-times`, lastModified: latestOf(stores.map((s) => s.storeNumber)), changeFrequency: "hourly", priority: 0.7 });
-  // The four decision pages (seo.md §16): which configuration, is the shortage easing, Apple vs carriers vs retailers, the API.
-  for (const slug of ["which-iphone-duo-restocks-most", "iphone-duo-shortage", "iphone-duo-apple-vs-carriers-vs-retailers", "iphone-duo-stock-api"]) {
+  // The decision pages (seo.md §16): which configuration and the API (the shortage and channels pages were retired 2026-11-08).
+  for (const slug of ["which-iphone-duo-restocks-most", "iphone-duo-stock-api"]) {
     out.push({ url: `${base}${p}/${slug}`, lastModified: latestOf(stores.map((s) => s.storeNumber)), changeFrequency: "hourly", priority: 0.7 });
   }
   return out;
@@ -45,7 +45,7 @@ export function countryEntries(cc: Exclude<CountryCode, "us">, base: string, now
  * The iPhone Duo question pages (seo.md §13): one answer page per question people put to search and answer
  * engines. Their numbers are live, so they change with the restock log.
  */
-export const QUESTION_PAGES = ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/how-to-get-an-iphone-duo", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock", "/iphone-duo-back-in-stock", "/iphone-duo-stock-checker", "/where-to-buy-iphone-duo", "/iphone-duo-shortage", "/iphone-duo-apple-vs-carriers-vs-retailers", "/iphone-duo-stock-api"] as const;
+export const QUESTION_PAGES = ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock", "/iphone-duo-back-in-stock", "/iphone-duo-stock-checker", "/where-to-buy-iphone-duo", "/iphone-duo-stock-api"] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pickupchecker.com";
@@ -78,5 +78,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const countries = INTL_CODES.flatMap((cc) => countryEntries(cc, base, now, latestOf));
   // Each country's pages in its own languages (docs/i18n.md §6): the same set under /{lang}-{cc}.
   const natives = NATIVE_LOCALES.flatMap((loc) => countryEntries(loc.cc as Exclude<CountryCode, "us">, base, now, latestOf).map((e) => ({ ...e, url: `${base}${pathInLocale(e.url.slice(base.length), loc)}` })));
-  return [{ url: `${base}/five-second-checks`, lastModified: new Date("2026-11-07T22:30:00Z"), changeFrequency: "monthly" as const, priority: 0.7 }, ...statics, ...questions, ...restockPlaces, ...models, ...states, ...cities, ...stores, ...products, ...countries, ...natives];
+  return [...statics, ...questions, ...restockPlaces, ...models, ...states, ...cities, ...stores, ...products, ...countries, ...natives];
 }

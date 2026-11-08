@@ -36,9 +36,9 @@ describe("public API v1 — parameter parsing", () => {
   });
 });
 
-describe("decision pages — every country and language has the four", () => {
+describe("decision pages — every country and language has the two that remain", () => {
   it("equivalentPath knows the slugs and hreflang clusters are complete", () => {
-    for (const page of ["configs", "shortage", "channels", "api"] as const) {
+    for (const page of ["configs", "api"] as const) {
       expect(equivalentPath("us", page)).toBe(`/${DECIDE_SLUGS[page]}`);
       expect(equivalentPath("jp", page)).toBe(`/jp/${DECIDE_SLUGS[page]}`);
       const en = hreflangFor(page);

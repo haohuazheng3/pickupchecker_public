@@ -3,7 +3,7 @@
  * storage size and colour) and "Is the iPhone Duo shortage easing?" (day by day, week over week). Every confirmed Duo
  * restock since tracking began (availability_events, first sightings excluded, as everywhere on the site), each restock's
  * listing lifetime (restock → the next sold-out observation of the same store × configuration; an upper bound, to the
- * next check), and what every store lists right now. Behind /which-iphone-duo-restocks-most and /iphone-duo-shortage and
+ * next check), and what every store lists right now. Behind /which-iphone-duo-restocks-most (and, until 2026-11-08, /iphone-duo-shortage) and
  * their country and language versions. Cached five minutes; JSON-safe (ISO strings, never Date).
  */
 import { unstable_cache } from "next/cache";

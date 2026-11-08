@@ -210,7 +210,6 @@ export async function ApiPage({ country: c }: { country: Country }) {
       <RelatedBlock title={V.related}>
         <LinkRow title={V.sameData} links={[
           { href: `${prefixOf(cc)}/iphone-duo-restock-times`, label: V.questions.restockTimes },
-          { href: `${prefixOf(cc)}/${DECIDE_SLUGS.shortage}`, label: V.questions.shortage },
           { href: `${prefixOf(cc)}/${DECIDE_SLUGS.configs}`, label: V.questions.configs },
           { href: "/how-it-works", label: V.questions.howItWorks },
           ...(x.us ? [{ href: "/iphone-duo-stock-alerts", label: V.questions.alerts }, { href: "/iphone-duo-stock-checker", label: V.questions.stockChecker }] : []),

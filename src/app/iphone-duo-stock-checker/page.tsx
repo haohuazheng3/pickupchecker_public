@@ -554,7 +554,6 @@ export default async function StockCheckerPage() {
           { href: "/iphone-duo-sell-out-times", label: "How fast does a restock sell out?" },
           { href: "/iphone-duo-stock-alerts", label: "iPhone Duo stock alerts" },
           { href: "/iphone-duo-near-me", label: "iPhone Duo near me" },
-          { href: "/how-to-get-an-iphone-duo", label: "How to get an iPhone Duo" },
           { href: "/how-to-grab-an-iphone-duo-restock", label: "How to grab a restock" },
           { href: "/which-iphone-duo-restocks-most", label: "Which iPhone Duo restocks most" },
           { href: "/apple-store-pickup-availability-explained", label: "Pickup availability explained" },

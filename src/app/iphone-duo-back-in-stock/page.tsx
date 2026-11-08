@@ -600,7 +600,6 @@ export default async function DuoBackInStock() {
           { href: "/iphone-duo-sell-out-times", label: "How fast it sells out" },
           { href: "/iphone-duo-stock-alerts", label: "Stock alerts" },
           { href: "/iphone-duo-near-me", label: "iPhone Duo near me" },
-          { href: "/how-to-get-an-iphone-duo", label: "How to get an iPhone Duo" },
           { href: "/how-to-grab-an-iphone-duo-restock", label: "Grab a restock in 20 seconds" },
           { href: "/which-iphone-duo-restocks-most", label: "Which configuration restocks most" },
           { href: "/apple-store-pickup-availability-explained", label: "Pickup availability explained" },

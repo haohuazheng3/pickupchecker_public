@@ -7,9 +7,22 @@ const state = stateSlug(store.state);
 const city = citySlug(store.city);
 
 describe("publicRouteCheck (proxy: real 404 / 308 before the page streams)", () => {
+  it("the pages retired on 2026-11-08 redirect (308) instead of 404ing, in every country and language", () => {
+    expect(publicRouteCheck("/iphone-duo-shortage")).toEqual({ redirect: "/iphone-duo-restock-times" });
+    expect(publicRouteCheck("/iphone-duo-apple-vs-carriers-vs-retailers")).toEqual({ redirect: "/iphone-duo-stock-alerts" });
+    expect(publicRouteCheck("/five-second-checks")).toEqual({ redirect: "/how-it-works#speed" });
+    expect(publicRouteCheck("/how-to-get-an-iphone-duo")).toEqual({ redirect: "/how-to-grab-an-iphone-duo-restock" });
+    expect(publicRouteCheck("/uk/iphone-duo-shortage")).toEqual({ redirect: "/uk/iphone-duo-restock-times" });
+    expect(publicRouteCheck("/ca/iphone-duo-apple-vs-carriers-vs-retailers")).toEqual({ redirect: "/ca/iphone-duo-restock-times" });
+    expect(publicRouteCheck("/ja-jp/iphone-duo-shortage")).toEqual({ redirect: "/ja-jp/iphone-duo-restock-times" });
+    expect(publicRouteCheck("/fr-ca/iphone-duo-apple-vs-carriers-vs-retailers")).toEqual({ redirect: "/fr-ca/iphone-duo-restock-times" });
+    // The surviving decision pages and the evidence files still resolve.
+    expect(publicRouteCheck("/which-iphone-duo-restocks-most")).toBeNull();
+    expect(publicRouteCheck("/uk/iphone-duo-stock-api")).toBeNull();
+    expect(publicRouteCheck("/check-evidence/2026-11-07/checks.csv")).toBeNull();
+  });
   it("lets every real address through", () => {
     expect(publicRouteCheck("/")).toBeNull();
-    expect(publicRouteCheck("/five-second-checks")).toBeNull();
     expect(publicRouteCheck("/research/iphone-duo-week-2026-11-07")).toBeNull();
     expect(publicRouteCheck("/stores")).toBeNull();
     expect(publicRouteCheck(`/stores/${state}`)).toBeNull();
