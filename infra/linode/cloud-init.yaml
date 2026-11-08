@@ -110,18 +110,14 @@ write_files:
     permissions: "0755"
     content: |
       #!/bin/bash
-      # External health probe of the site, every 5 minutes (systemd timer). The mail worker does the
-      # GET + owner email + down/recovery bookkeeping; this host only triggers it.
-      # Reads just the two keys it needs: the env file is not shell syntax (values may contain spaces/<>).
-      set -uo pipefail
-      val() { sed -n "s/^$1=//p" /opt/pickupchecker/poller.env | head -1 | sed 's/^"\(.*\)"$/\1/'; }
-      URL="$(val MAIL_WORKER_URL)"; TOKEN="$(val MAIL_WORKER_TOKEN)"
-      [ -n "$URL" ] && [ -n "$TOKEN" ] || exit 0
-      curl -fsS -m 40 -X POST "${URL%/}/probe" -H "Authorization: Bearer ${TOKEN}" >/dev/null || echo "probe trigger failed"
+      # The real probe is the checkout's infra/linode/probe.sh (the host checks /api/health itself and mails
+      # through owner-mail.sh beside it, Resend first). Before the checkout exists there is nothing to check.
+      [ -x /opt/pickupchecker/app/infra/linode/probe.sh ] && exec /opt/pickupchecker/app/infra/linode/probe.sh
+      exit 0
   - path: /etc/systemd/system/pickupchecker-probe.service
     content: |
       [Unit]
-      Description=Trigger the external health probe (mail worker)
+      Description=External health probe of the site (mails the owner through Resend)
       [Service]
       Type=oneshot
       ExecStart=/opt/pickupchecker/probe.sh
@@ -184,13 +180,9 @@ write_files:
         return 1
       }
       mail() {
-        local url token
-        url=$(sed -n 's/^MAIL_WORKER_URL=//p' /opt/pickupchecker/poller.env | head -1 | sed 's/^"\(.*\)"$/\1/')
-        token=$(sed -n 's/^MAIL_WORKER_TOKEN=//p' /opt/pickupchecker/poller.env | head -1 | sed 's/^"\(.*\)"$/\1/')
         echo "$1: $2"
-        [ -n "$url" ] && [ -n "$token" ] || return 0
-        python3 -c 'import json,sys; print(json.dumps({"subject": sys.argv[1], "text": sys.argv[2]}))' "$1" "$2" |
-          curl -fsS -m 40 -X POST "${url%/}/notify" -H "Authorization: Bearer ${token}" -H "content-type: application/json" --data-binary @- >/dev/null || echo "owner email failed"
+        # Resend first, the mail worker as the fallback (infra/linode/owner-mail.sh).
+        /opt/pickupchecker/owner-mail.sh "$1" "$2" || echo "owner email failed"
       }
       install "${1:-origin/main}"
       new=$(git rev-parse HEAD)

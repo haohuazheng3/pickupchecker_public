@@ -2,10 +2,20 @@ import { env } from "../env";
 import { sendPlainEmail } from "./resend";
 
 /**
- * Owner notifications: the Cloudflare mail worker (free `send_email` binding to the verified
- * owner address) first, Resend as the fallback, console as the last resort.
+ * Owner notifications: Resend first (paid, 50k a month), the Cloudflare mail worker as the fallback, console as the
+ * last resort. Until 2026-11-08 the worker went first, but it shares a Workers Free account whose 100k requests a
+ * day ran out every evening (another project's collector used 122k), so watchdog, capacity and archive mails
+ * silently failed from ~22:00 to 00:00 UTC. Hosts send the same way: infra/linode/owner-mail.sh.
  */
 export async function notifyOwner(subject: string, text: string, replyTo?: string): Promise<void> {
+  if (env.resendKey() && env.ownerEmail()) {
+    try {
+      await sendPlainEmail(env.ownerEmail(), subject, text, replyTo);
+      return;
+    } catch (e) {
+      console.warn("[owner-notify] Resend failed, trying the mail worker:", e instanceof Error ? e.message : String(e));
+    }
+  }
   const url = env.mailWorkerUrl();
   const token = env.mailWorkerToken();
   if (url && token) {
@@ -21,9 +31,5 @@ export async function notifyOwner(subject: string, text: string, replyTo?: strin
       /* fall through */
     }
   }
-  if (env.resendKey() && env.ownerEmail()) {
-    await sendPlainEmail(env.ownerEmail(), subject, text);
-    return;
-  }
-  console.warn("[owner-notify] no channel configured:", subject);
+  console.warn("[owner-notify] no channel delivered:", subject);
 }

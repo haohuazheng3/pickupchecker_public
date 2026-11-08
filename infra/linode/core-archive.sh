@@ -11,12 +11,7 @@ set -uo pipefail
 P=(sudo -u postgres psql -qX -d pickupchecker)
 [ "$("${P[@]}" -tAc 'select pg_is_in_recovery()' 2>/dev/null)" = "t" ] || { echo "not a standby: nothing to do"; exit 0; }
 val() { sed -n "s/^$1=//p" /opt/pickupchecker/poller.env | head -1 | sed 's/^"\(.*\)"$/\1/'; }
-notify() {
-  local url token; url="$(val MAIL_WORKER_URL)"; token="$(val MAIL_WORKER_TOKEN)"
-  [ -n "$url" ] && [ -n "$token" ] || return 0
-  python3 -c 'import json,sys; print(json.dumps({"subject": sys.argv[1], "text": sys.argv[2]}))' "$1" "$2" |
-    curl -fsS -m 40 -X POST "${url%/}/notify" -H "Authorization: Bearer ${token}" -H "content-type: application/json" --data-binary @- >/dev/null || true
-}
+notify() { /opt/pickupchecker/owner-mail.sh "$1" "$2" || true; }  # Resend first, mail worker fallback
 DIR=/var/backups/pickupchecker-archive
 install -d -o postgres -g postgres -m 700 "$DIR"
 F="$DIR/pickupchecker-core-$(date -u +%F).dump"

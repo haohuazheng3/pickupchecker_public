@@ -24,10 +24,8 @@ fail() {
   log error "poll_log roll-up failed" "$(python3 -c 'import json,sys; print(json.dumps({"step": sys.argv[1], "error": sys.argv[2][-600:]}))' "$1" "$2")"
   echo "FAILED at $1: $2"
   if [ "${NOTIFY:-0}" = 1 ]; then
-    local url token; url="$(val MAIL_WORKER_URL)"; token="$(val MAIL_WORKER_TOKEN)"
-    [ -n "$url" ] && [ -n "$token" ] && python3 -c 'import json,sys; print(json.dumps({"subject": sys.argv[1], "text": sys.argv[2]}))' \
-      "[PickupChecker] poll_log roll-up failed" "$(printf 'The hourly summary of the request log failed at step "%s" on the database host, so no raw rows were deleted (the disk keeps filling until it is fixed).\n\n%s' "$1" "$2")" |
-      curl -fsS -m 40 -X POST "${url%/}/notify" -H "Authorization: Bearer ${token}" -H "content-type: application/json" --data-binary @- >/dev/null || true
+    /opt/pickupchecker/owner-mail.sh "[PickupChecker] poll_log roll-up failed" \
+      "$(printf 'The hourly summary of the request log failed at step "%s" on the database host, so no raw rows were deleted (the disk keeps filling until it is fixed).\n\n%s' "$1" "$2")" || true
   fi
   exit 1
 }

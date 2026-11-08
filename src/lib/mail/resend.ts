@@ -96,8 +96,8 @@ export async function sendAlertEmail(to: string, lines: AlertLine[], watchId: st
   );
 }
 
-export async function sendPlainEmail(to: string, subject: string, text: string): Promise<string> {
-  return withRateLimitRetry(() => client().emails.send({ from: env.alertsFrom(), to, subject, text }));
+export async function sendPlainEmail(to: string, subject: string, text: string, replyTo?: string): Promise<string> {
+  return withRateLimitRetry(() => client().emails.send({ from: env.alertsFrom(), to, subject, text, ...(replyTo ? { replyTo } : {}) }));
 }
 
 type SendResult = { data: { id?: string } | null; error: { name: string; message: string } | null };

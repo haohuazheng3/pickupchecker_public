@@ -14,12 +14,7 @@ P=(sudo -u postgres psql -v ON_ERROR_STOP=1 -qX -d pickupchecker)
 [ "$("${P[@]}" -tAc 'select pg_is_in_recovery()' 2>/dev/null)" = "f" ] || exit 0
 log() { printf "insert into ops_log (source, level, message, data) values ('host', :'lvl', :'msg', :'data'::jsonb);\n" | "${P[@]}" -v lvl="$1" -v msg="$2" -v data="$3" >/dev/null 2>&1 || true; }
 val() { sed -n "s/^$1=//p" /opt/pickupchecker/poller.env | head -1 | sed 's/^"\(.*\)"$/\1/'; }
-notify() {
-  local url token; url="$(val MAIL_WORKER_URL)"; token="$(val MAIL_WORKER_TOKEN)"
-  [ -n "$url" ] && [ -n "$token" ] || return 0
-  python3 -c 'import json,sys; print(json.dumps({"subject": sys.argv[1], "text": sys.argv[2]}))' "$1" "$2" |
-    curl -fsS -m 40 -X POST "${url%/}/notify" -H "Authorization: Bearer ${token}" -H "content-type: application/json" --data-binary @- >/dev/null || true
-}
+notify() { /opt/pickupchecker/owner-mail.sh "$1" "$2" || true; }  # Resend first, mail worker fallback
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 if [ -x "$HERE/poll-rollup.sh" ]; then NOTIFY=1 "$HERE/poll-rollup.sh"; else log error "db maintenance: poll-rollup.sh missing" '{}'; fi
