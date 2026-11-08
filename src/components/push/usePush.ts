@@ -59,6 +59,9 @@ interface TestResponse {
 
 type T = ReturnType<typeof useT>["account"]["push"];
 
+/** Seconds the server waits before an iPhone test: enough to swipe home or lock the phone. */
+export const IOS_TEST_DELAY_SEC = 5;
+
 function describeTest(j: TestResponse, d: T["test"], lang: Lang): string {
   const ok = (j.devices ?? []).filter((x) => x.ok).map((x) => x.device);
   const bad = (j.devices ?? []).filter((x) => !x.ok);
@@ -183,14 +186,22 @@ export function usePush(vapidPublicKey: string): PushState {
   }, [d]);
 
   const sendTest = useCallback(async () => {
-    setBusy(true); setError(null); setNotice(null);
+    // iPhone draws no banner while this app is in front: the server waits IOS_TEST_DELAY_SEC so there is time to
+    // go to the Home Screen or lock the phone, and the result says where to look if no banner showed.
+    const ios = detectPlatform() === "ios";
+    const delaySec = ios ? IOS_TEST_DELAY_SEC : 0;
+    setBusy(true); setError(null); setNotice(delaySec ? fill(d.test.soon, { s: delaySec }) : null);
     try {
-      const res = await fetch("/api/push/test", { method: "POST" });
+      const res = await fetch("/api/push/test", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ delaySec }) });
       const j = (await res.json().catch(() => ({}))) as TestResponse;
       if (!res.ok) throw new Error((j.error ? tErr(j.error) : undefined) ?? d.errors.noTest);
-      setNotice(describeTest(j, d.test, lang));
+      setNotice(describeTest(j, d.test, lang) + (ios && j.sent ? ` ${d.test.iosHint}` : ""));
       if (!j.sent) void evaluate();
-    } catch (e) { setError(message(e, d)); }
+    } catch (e) {
+      // A request cut off while the app sat in the background still reached the server, which sent the test.
+      if (delaySec && e instanceof TypeError) setNotice(d.test.away);
+      else setError(message(e, d));
+    }
     finally { setBusy(false); }
   }, [evaluate, d, lang, tErr]);
 

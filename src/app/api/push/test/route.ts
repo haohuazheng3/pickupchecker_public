@@ -14,13 +14,20 @@ export const dynamic = "force-dynamic";
  * payload naming the device and the send time, so the user can tell which phone a banner landed on
  * and how long it took. Goes through web-push and Apple/Google exactly like a restock alert.
  */
-export async function POST() {
+export async function POST(req: Request) {
   const u = await ensureUser();
   if (!u) return NextResponse.json({ error: "sign in first" }, { status: 401 });
   if (!pushConfigured()) return NextResponse.json({ error: "push is not configured on the server" }, { status: 503 });
   if (!(await rateLimit(`push-test:${u.id}`, 10, 60 * 60 * 1000))) return NextResponse.json({ error: "too many tests — try again in an hour" }, { status: 429 });
   const rows = await enabledSubscriptionsForUser(u.id);
   if (rows.length === 0) return NextResponse.json({ error: "no device has notifications on" }, { status: 400 });
+  // iPhone shows no banner while the Home Screen app is open in front, so the test there waits a few seconds
+  // (testDelaySec) for the person to go to the Home Screen or lock the phone. The wait is on the server: an app in
+  // the background gets no timers, but a request already sent keeps going (FlowGlance 11-07: 28 people pressed the
+  // test 3+ times inside the iPhone app, seeing nothing).
+  const body = (await req.json().catch(() => null)) as { delaySec?: unknown } | null;
+  const delaySec = testDelaySec(body?.delaySec);
+  if (delaySec) await new Promise((r) => setTimeout(r, delaySec * 1000));
   const now = new Date();
   const lang = langOfUser((await userById(u.id))?.locale);
   const results = await Promise.all(
@@ -39,4 +46,10 @@ export async function POST() {
     devices: results,
     errors: results.filter((r) => r.error).map((r) => r.error).slice(0, 3),
   });
+}
+
+/** 0–8 whole seconds; anything else is no wait. */
+function testDelaySec(v: unknown): number {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) ? Math.min(8, Math.max(0, n)) : 0;
 }

@@ -69,7 +69,7 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
   const [refused, setRefused] = useState(0);
   useEffect(() => {
     if (!refused) return;
-    const t = setTimeout(() => setRefused(0), 6000);
+    const t = setTimeout(() => setRefused(0), 9000);
     return () => clearTimeout(t);
   }, [refused]);
   const [justSaved, setJustSaved] = useState(false);
@@ -130,8 +130,12 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
   const change = useCallback((next: AlertSet) => {
     const n = next.phones.length * next.stores.length;
     if (n > max && n > count) {
+      // Already past the plan (a downgrade, or extras saved before paying): "untick something first" was wrong for
+      // them — unticking one and ticking another is still refused — so say how many they have and what it sends.
       setNotice(plan && plan.key !== "free" && plan.key !== "max"
-        ? fill(d.overPlan, { n: num(lang, n), plan: PLANS[plan.key].name, limit: num(lang, plan.limit) })
+        ? count > plan.limit
+          ? fill(d.overPlanHave, { have: num(lang, count), plan: PLANS[plan.key].name, limit: num(lang, plan.limit) })
+          : fill(d.overPlan, { n: num(lang, n), plan: PLANS[plan.key].name, limit: num(lang, plan.limit) })
         : fill(d.overMost, { n: num(lang, n), most: num(lang, MOST) }));
       setRefused((k) => k + 1);
       // Demand past the plan (or the 50 of Max): what decides whether a bigger plan is worth offering.
@@ -182,6 +186,9 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
     } catch (e) { setNotice(e instanceof Error ? e.message : String(e)); }
   };
 
+  // The next plan up, named with what it holds and costs, for the refused-tap toast (none past Max or before a plan).
+  const nextPlan = plan?.key === "plus" ? PLANS.pro : plan?.key === "pro" ? PLANS.max : null;
+  const upgrade = nextPlan ? fill(d.upgradeTo, { plan: nextPlan.name, limit: num(lang, nextPlan.limit), price: num(lang, nextPlan.priceUsd) }) : null;
   const status = mode !== "account" ? null : live.state === "saving" ? <span className="text-ink-3"><span className="spinner" />{` ${d.saving}`}</span>
     : live.state === "saved" ? <span className="text-accent">{d.saved}</span> : live.state === "error" ? <span className="text-bad">{d.notSaved}</span> : null;
   const onCount = plan ? Math.min(count, plan.limit) : 0;
@@ -228,7 +235,14 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
       )}
 
       {notice && refused > 0 && (
-        <div key={refused} role="status" className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-2xl border border-warn/40 bg-bg px-4 py-3 text-sm shadow-lg sm:bottom-6">{notice}</div>
+        // The refused tap is down in the lists, where the inline notice and its button are out of view: the toast
+        // carries the way out too (FlowGlance 11-07: 70 refused taps in a day, people tapping 7–22 times, 2 upgrades).
+        <div key={refused} role="status" className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-2xl border border-warn/40 bg-bg px-4 py-3 text-sm shadow-lg sm:bottom-6">
+          <p>{notice}</p>
+          {upgrade && (variant === "page"
+            ? <button type="button" className="btn btn-primary btn-sm mt-2 w-full" onClick={() => { setRefused(0); openSection("plan"); }}>{upgrade}</button>
+            : <a href="/account#plan" className="btn btn-primary btn-sm mt-2 w-full">{upgrade}</a>)}
+        </div>
       )}
 
       <Section id={inner ? "alert-phones" : "phones"} inner={inner} title={d.phonesTitle} badge={<Count n={set.phones.length} />} summary={phonesText(set.phones, d, lang)} defaultOpen>

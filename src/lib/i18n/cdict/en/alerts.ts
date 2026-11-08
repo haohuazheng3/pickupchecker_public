@@ -42,6 +42,8 @@ export const alerts = {
     off: " · {n} off",
     overPlan: "That makes {n} alerts; {plan} holds {limit}. Upgrade, or untick something first.",
     overMost: "That makes {n} alerts; the largest plan holds {most}. Untick something first.",
+    overPlanHave: "You already have {have} alerts and {plan} sends {limit}. Untick some, or move up a plan.",
+    upgradeTo: "Get {plan} · {limit} alerts · ${price}/mo",
     saving: "Saving",
     saved: "✓ Saved",
     notSaved: "Not saved",
@@ -92,6 +94,8 @@ export const alerts = {
     locating: "Locating",
     nearMe: "Near me",
     nearestYou: "Nearest to you",
+    locatedNow: "Location updated: nearest stores first",
+    locBlocked: "Location is blocked for this site. Allow it in your browser or phone settings, or type a place instead.",
     zipNotFound: "ZIP not found — nearest to that area",
     /** {place}: a ZIP, a store ("Apple Fifth Avenue"), a city or a region. */
     nearestTo: "Nearest to {place}",

@@ -46,6 +46,7 @@ export const chrome = {
     dontTrack: "Do not track me",
   },
   alertBar: { cta: "Alert me" },
+  refresh: { busy: "Updating…", done: "Updated just now" },
   time: { today: "Today {time}", yesterday: "Yesterday {time}" },
   error: {
     title: "This page didn't load",

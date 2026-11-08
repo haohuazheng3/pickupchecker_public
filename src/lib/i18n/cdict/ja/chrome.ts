@@ -47,6 +47,7 @@ export const chrome: CDict["chrome"] = {
     dontTrack: "計測しないでください",
   },
   alertBar: { cta: "入荷通知" },
+  refresh: { busy: "更新中…", done: "更新しました" },
   time: { today: "今日 {time}", yesterday: "昨日 {time}" },
   error: {
     title: "ページを読み込めませんでした",

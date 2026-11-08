@@ -47,6 +47,7 @@ export const chrome: CDict["chrome"] = {
     dontTrack: "Non tracciarmi",
   },
   alertBar: { cta: "Avvisami" },
+  refresh: { busy: "Aggiornamento…", done: "Aggiornato ora" },
   time: { today: "oggi alle {time}", yesterday: "ieri alle {time}" },
   error: {
     title: "Questa pagina non si è caricata",

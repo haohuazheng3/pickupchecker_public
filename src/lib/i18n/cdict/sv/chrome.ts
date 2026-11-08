@@ -47,6 +47,7 @@ export const chrome: CDict["chrome"] = {
     dontTrack: "Spåra mig inte",
   },
   alertBar: { cta: "Bevaka" },
+  refresh: { busy: "Uppdaterar…", done: "Uppdaterad nyss" },
   time: { today: "Idag {time}", yesterday: "Igår {time}" },
   error: {
     title: "Sidan laddades inte",

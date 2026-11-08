@@ -96,12 +96,22 @@ export function StorePicker({ value, onToggle, onPretick, room, owned = [], pref
   const setQ = (v: string) => { setQState(v); onMemory?.({ q: v }); };
   const setState = (v: string) => { setStateState(v); onMemory?.({ state: v }); };
 
-  const locate = () => {
-    if (typeof navigator === "undefined" || !("geolocation" in navigator)) { setLoc("unavailable"); return; }
+  // What the last press of Near me did, said for a few seconds: the list is usually sorted by location already, so a
+  // press that succeeded changed nothing visible, and a blocked one fell back silently to the page's own anchor
+  // (FlowGlance 11-03–11-07: one visitor pressed it 53 times, others 7–12).
+  const [locNote, setLocNote] = useState<"located" | "blocked" | "unavailable" | null>(null);
+  useEffect(() => {
+    if (!locNote) return;
+    const t = window.setTimeout(() => setLocNote(null), locNote === "located" ? 4000 : 10000);
+    return () => window.clearTimeout(t);
+  }, [locNote]);
+  const locate = (pressed = false) => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) { setLoc("unavailable"); if (pressed) setLocNote("unavailable"); return; }
     setLoc("asking");
+    if (pressed) setLocNote(null);
     navigator.geolocation.getCurrentPosition(
-      (pos) => { const h = { lat: pos.coords.latitude, lng: pos.coords.longitude }; rememberHere(h); setHere(h); setLoc("ok"); },
-      (err) => setLoc(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable"),
+      (pos) => { const h = { lat: pos.coords.latitude, lng: pos.coords.longitude }; rememberHere(h); setHere(h); setLoc("ok"); if (pressed) setLocNote("located"); },
+      (err) => { const denied = err.code === err.PERMISSION_DENIED; setLoc(denied ? "denied" : "unavailable"); if (pressed) setLocNote(denied ? "blocked" : "unavailable"); },
       GEO_OPTS,
     );
   };
@@ -112,7 +122,7 @@ export function StorePicker({ value, onToggle, onPretick, room, owned = [], pref
     // Located before on this device (lib/lastPlace.ts): use that, no prompt; Near me asks again.
     const known = recallHere();
     if (known) { const t = window.setTimeout(() => { setHere(known); setLoc("ok"); }, 0); return () => window.clearTimeout(t); }
-    if (!preferred && !seed) { const t = window.setTimeout(locate, 0); return () => window.clearTimeout(t); }
+    if (!preferred && !seed) { const t = window.setTimeout(() => locate(), 0); return () => window.clearTimeout(t); }
     let live = true;
     void navigator.permissions?.query({ name: "geolocation" as PermissionName }).then((st) => { if (live && st.state === "granted") locate(); }).catch(() => undefined);
     return () => { live = false; };
@@ -220,11 +230,13 @@ export function StorePicker({ value, onToggle, onPretick, room, owned = [], pref
       )}
       <div className="grid grid-cols-[1fr_auto] gap-2">
         <input className="input" inputMode="search" placeholder={us ? d.searchUs : states.length > 1 ? fill(d.searchRegion, { noun: regionNoun }) : d.search} value={q} onChange={(e) => setQ(e.target.value)} aria-label={d.find} autoComplete="off" />
-        <button type="button" className="btn btn-ghost" onClick={locate} disabled={loc === "asking"} aria-busy={loc === "asking"}>
+        <button type="button" className="btn btn-ghost" onClick={() => locate(true)} disabled={loc === "asking"} aria-busy={loc === "asking"}>
           {loc === "asking" ? <><span className="spinner" />{` ${d.locating}`}</> : <><span aria-hidden>📍</span>{` ${d.nearMe}`}</>}
         </button>
       </div>
-      <p className="mt-2 min-h-5 text-xs text-ink-3" aria-live="polite">{status}</p>
+      <p className={`mt-2 min-h-5 text-xs ${locNote === "located" ? "font-medium text-accent" : locNote ? "font-medium text-warn" : "text-ink-3"}`} aria-live="polite">
+        {locNote === "located" ? d.locatedNow : locNote === "blocked" ? d.locBlocked : locNote === "unavailable" ? (us ? d.noLocationUs : states.length > 1 ? fill(d.noLocationRegion, { noun: regionNoun }) : d.noLocation) : status}
+      </p>
       {(!anchor || anchor.kind === "state") && !q.trim() && loc !== "asking" && states.length > 1 && (
         <select className="input mt-2" value={state} onChange={(e) => setState(e.target.value)} aria-label={regionNoun[0].toUpperCase() + regionNoun.slice(1)}>
           <option value="">{fill(d.pickRegion, { noun: regionNoun })}</option>
