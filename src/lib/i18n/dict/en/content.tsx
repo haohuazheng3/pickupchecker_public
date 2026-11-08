@@ -251,7 +251,8 @@ export const content = {
     /** "9 in 7 d · 31 in 30 d" (d = days). */
     restocksHint: (week: string, month: string, days: string) => `${week} in 7 d · ${month} in ${days} d`,
     sellOuts: (days: string) => `Sell-outs ${days} d`,
-    stays: (duration: string) => `stays ~${duration}`,
+    /** "stays ~3 min"; fmtDuration's "under a minute" takes no tilde. */
+    stays: (duration: string) => (/^under\b/.test(duration) ? `stays ${duration}` : `stays ~${duration}`),
     noPairs: "no pairs yet",
     lastRestock: "Last restock",
     noneYet: "none yet",

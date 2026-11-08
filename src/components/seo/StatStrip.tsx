@@ -16,7 +16,7 @@ export function StatStrip({ items, className = "", cols = 6 }: { items: Stat[]; 
     <dl className={`grid grid-cols-2 gap-2 ${cols === 4 ? "sm:grid-cols-4" : "sm:grid-cols-3 lg:grid-cols-6"} ${className}`}>
       {items.map((s, i) => (
         <div key={i} className="pane-2 min-w-0 p-3">
-          <dt className="eyebrow truncate text-[0.65rem]">{s.label}</dt>
+          <dt className="eyebrow break-words text-[0.65rem] leading-tight">{s.label}</dt>
           <dd className="mt-1 flex items-center gap-1.5 text-xl font-semibold tabular-nums text-ink">{s.live && <Dot state="ok" live />}<span className="truncate">{s.value}</span></dd>
           {s.hint && <dd className="mt-0.5 truncate text-xs text-ink-3">{s.hint}</dd>}
         </div>
