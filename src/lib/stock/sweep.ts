@@ -2,13 +2,15 @@
  * One sweep = every coverage anchor × every ≤20-part batch, fetched through an egress provider,
  * ingested, notified, logged. Shared by the VPS poller (full mode) and the serverless fallback.
  *
- * The US is swept by ZIP anchors (42 × 2 batches, every 15 s). Other countries are swept store by store
- * (`store=R###`, the country's 40 part numbers in two batches, every INTL_CADENCE_SEC): buildIntlTasks makes
- * that round, and runSweep runs it in mode "intl" — the same fetch → ingest → instant confirm → notify path,
- * but poll_log keeps only its failures (it would otherwise add ~1M rows a day).
+ * The US is swept by ZIP anchors (42 × 2 batches, every 15 s). Other countries are swept by their own anchors
+ * since 2026-11-08 (INTL_COVERAGE: 47 locations × 2 batches = 94 requests for 198 stores, every INTL_CADENCE_SEC;
+ * until then store by store, 398 requests): buildIntlTasks makes that round — anchor requests on each country's
+ * endpoint, plus `store=R###` requests for the stores no anchor returns — and runSweep runs it in mode "intl",
+ * the same fetch → ingest → instant confirm → notify path, but poll_log keeps only its failures (it would
+ * otherwise add ~1M rows a day). stock/intlCoverage.ts watches that every expected store keeps appearing.
  */
 import { randomUUID } from "node:crypto";
-import { COVERAGE, ALL_PART_NUMBERS, STORES, storesOf, partNumbersOf, type CoverageAnchor } from "../apple/catalog";
+import { COVERAGE, INTL_COVERAGE, ALL_PART_NUMBERS, STORES, storesOf, partNumbersOf, type CoverageAnchor } from "../apple/catalog";
 import { INTL_CODES, isCountryCode, type CountryCode } from "../apple/countries";
 import { batchParts, fetchPickup, fetchPickupAtStore, isNoStoreAnswer, type FetchLike, type PickupResponse } from "../apple/client";
 import { db, schema } from "../db";
@@ -47,22 +49,44 @@ export function parsePollCountries(raw: string | undefined): Exclude<CountryCode
   return INTL_CODES.filter((cc) => want.has(cc));
 }
 
+export interface IntlTaskOptions {
+  /** Coverage anchors per country (default INTL_COVERAGE; `{}` = every store on its own, as before 2026-11-08). */
+  anchors?: Partial<Record<CountryCode, CoverageAnchor[]>>;
+  /** Stores to ask on their own as well, whatever the anchors cover (intlCoverage.ts: stores the anchors stopped returning). */
+  direct?: Iterable<string>;
+}
+
 /**
- * One round of the other countries: every store on its own (`store=R###`), its country's part numbers in
- * batches of 20 — 199 stores × 2 = 398 requests for all 18 countries. A store's batches are adjacent, so a
- * store is complete as early as possible within the round.
+ * One round of the other countries: each country's anchors by location (the nearest ≤12 stores each, the
+ * country's 40 part numbers in two batches — 47 × 2 = 94 requests for all 18 countries), then `store=R###`
+ * requests for the stores no anchor of that country lists (Chermside) and for `direct` stores. A task's batches
+ * are adjacent, so a location is complete as early as possible within the round. Without a plan for a country,
+ * every store of it is asked on its own.
  */
-export function buildIntlTasks(countries: CountryCode[]): SweepTask[] {
+export function buildIntlTasks(countries: CountryCode[], opts: IntlTaskOptions = {}): SweepTask[] {
+  const anchors = opts.anchors ?? INTL_COVERAGE;
+  const direct = new Set(opts.direct ?? []);
   const tasks: SweepTask[] = [];
   for (const cc of countries) {
     if (cc === "us") continue;
     const batches = batchParts(partNumbersOf(cc));
+    const plan = anchors[cc] ?? [];
+    const covered = new Set(plan.flatMap((a) => a.covers));
+    for (const anchor of plan) batches.forEach((b, i) => tasks.push({ anchor, batchIndex: i, parts: b, country: cc }));
     for (const s of storesOf(cc)) {
+      if (covered.has(s.storeNumber) && !direct.has(s.storeNumber)) continue;
       const anchor: CoverageAnchor = { anchorStore: s.storeNumber, anchorName: s.name, location: `${cc}:${s.storeNumber}`, covers: [s.storeNumber] };
       batches.forEach((b, i) => tasks.push({ anchor, batchIndex: i, parts: b, country: cc, store: s.storeNumber }));
     }
   }
   return tasks;
+}
+
+/** The stores of `countries` the round is about (what a response may write; what coverage is judged against). */
+export function intlStores(countries: CountryCode[]): Partial<Record<CountryCode, string[]>> {
+  const out: Partial<Record<CountryCode, string[]>> = {};
+  for (const cc of countries) if (cc !== "us") out[cc] = storesOf(cc).map((s) => s.storeNumber);
+  return out;
 }
 
 /**
@@ -173,6 +197,10 @@ export interface SweepSummary {
    * themselves. Absent on US anchor sweeps.
    */
   pickup?: { notOffered: Record<string, { country: string; message: string }>; answered: string[] };
+  /** Stores a location (anchor) request returned, sorted; what intlCoverage.ts judges drift on. */
+  anchorCovered: string[];
+  /** Anchor locations with a request still unanswered after the sweep (their stores are not judged for drift). */
+  failedLocations: string[];
 }
 
 export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
@@ -187,6 +215,8 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
   const known = opts.known ?? new Set(STORES.map((s) => s.storeNumber));
   const logOk = opts.logOk !== false;
   const covered = new Set<string>();
+  const anchorCovered = new Set<string>();
+  const recoveredTasks = new Set<SweepTask>();
   const allTransitions: Transition[] = [];
   const allEventIds: number[] = [];
   let requests = 0, failures = 0, throttled = 0, timeouts = 0, held = 0, confirmed = 0, exhausted = false;
@@ -237,7 +267,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
       else if (ok && task.store) answered.add(task.store);
       const cr = task.country ? byCountry[task.country] : undefined;
       if (!ok) { failures++; if (!retrying) { failed.push(task); if (cr) { cr.failed++; cr.unresolved++; } } }
-      else if (retrying) { recovered++; if (cr) cr.unresolved--; }
+      else if (retrying) { recovered++; recoveredTasks.add(task); if (cr) cr.unresolved--; }
       if (status === 541 || status === 429 || status === 403) { throttled++; if (cr) cr.throttled++; }
       if (logOk || !ok) logRows.push({
         at: new Date(), sweepId: id, egress: slot.label, anchor: task.anchor.location, batch: task.batchIndex,
@@ -250,7 +280,7 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
         try {
           const ingest = () => ingestStores(res.stores, id, new Date(), known);
           const r = await (intl ? intlIngestGate(ingest) : ingest());
-          for (const s of res.stores) if (known.has(s.storeNumber)) covered.add(s.storeNumber);
+          for (const s of res.stores) if (known.has(s.storeNumber)) { covered.add(s.storeNumber); if (!task.store) anchorCovered.add(s.storeNumber); }
           allTransitions.push(...r.transitions);
           allEventIds.push(...r.eventIds);
           held += r.held;
@@ -292,6 +322,9 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
     await Promise.all(Array.from({ length: Math.min(concurrency, retryable.length) }, worker));
   }
   const unresolved = failed.length - recovered + notAttempted;
+  // Anchor locations left without an answer: failed and not recovered by the retry pass, or never attempted.
+  const failedLocations = new Set<string>();
+  for (const t of [...failed, ...(exhausted ? tasks.slice(cursor) : [])]) if (!t.store && !recoveredTasks.has(t)) failedLocations.add(t.anchor.location);
   // Give in-flight alerts a moment to land in this sweep's numbers; stragglers finish in the background.
   await Promise.race([Promise.allSettled(notifyJobs), new Promise((r) => setTimeout(r, 5000))]);
 
@@ -309,6 +342,8 @@ export async function runSweep(opts: SweepOptions): Promise<SweepSummary> {
     id, requests, failures, recovered, unresolved, tasks: tasks.length, throttled, timeouts, storesCovered: covered.size, transitions: allTransitions.length + confirmed, held, confirmed, notified, durationMs: finished.getTime() - started.getTime(), exhausted,
     ...(Object.keys(byCountry).length ? { byCountry } : {}),
     ...(tasks.some((t) => t.store) ? { pickup: { notOffered, answered: [...answered].sort() } } : {}),
+    anchorCovered: [...anchorCovered].sort(),
+    failedLocations: [...failedLocations].sort(),
   };
 }
 

@@ -1,0 +1,598 @@
+{
+ "ca": [
+  {
+   "anchorStore": "R447",
+   "anchorName": "Mapleview Centre",
+   "location": "L7S 2J8",
+   "covers": [
+    "R120",
+    "R121",
+    "R208",
+    "R333",
+    "R350",
+    "R429",
+    "R447",
+    "R464",
+    "R489",
+    "R515"
+   ]
+  },
+  {
+   "anchorStore": "R512",
+   "anchorName": "DIX30",
+   "location": "J4Y 0L3",
+   "covers": [
+    "R207",
+    "R248",
+    "R332",
+    "R392",
+    "R412",
+    "R490",
+    "R512"
+   ]
+  },
+  {
+   "anchorStore": "R460",
+   "anchorName": "Metrotown",
+   "location": "V5H 4J2",
+   "covers": [
+    "R280",
+    "R421",
+    "R460",
+    "R488",
+    "R601"
+   ]
+  },
+  {
+   "anchorStore": "R209",
+   "anchorName": "Chinook Centre",
+   "location": "T2H 0K8",
+   "covers": [
+    "R209",
+    "R301"
+   ]
+  },
+  {
+   "anchorStore": "R411",
+   "anchorName": "Southgate Centre",
+   "location": "T6H 4M6",
+   "covers": [
+    "R273",
+    "R411"
+   ]
+  },
+  {
+   "anchorStore": "R369",
+   "anchorName": "Polo Park",
+   "location": "R3G 0W4",
+   "covers": [
+    "R369"
+   ]
+  },
+  {
+   "anchorStore": "R514",
+   "anchorName": "Halifax Shopping Centre",
+   "location": "B3L 2H8",
+   "covers": [
+    "R514"
+   ]
+  }
+ ],
+ "uk": [
+  {
+   "anchorStore": "R176",
+   "anchorName": "The Oracle",
+   "location": "RG1 2AG",
+   "covers": [
+    "R092",
+    "R163",
+    "R176",
+    "R226",
+    "R227",
+    "R245",
+    "R269",
+    "R329",
+    "R410",
+    "R482",
+    "R527",
+    "R762"
+   ]
+  },
+  {
+   "anchorStore": "R328",
+   "anchorName": "Edinburgh",
+   "location": "EH2 2AN",
+   "covers": [
+    "R135",
+    "R136",
+    "R153",
+    "R215",
+    "R239",
+    "R313",
+    "R328",
+    "R340",
+    "R341",
+    "R363",
+    "R372",
+    "R423"
+   ]
+  },
+  {
+   "anchorStore": "R334",
+   "anchorName": "Cardiff",
+   "location": "CF10 2EL",
+   "covers": [
+    "R118",
+    "R174",
+    "R176",
+    "R255",
+    "R269",
+    "R279",
+    "R308",
+    "R334",
+    "R335",
+    "R393",
+    "R482",
+    "R545"
+   ]
+  },
+  {
+   "anchorStore": "R244",
+   "anchorName": "Churchill Square",
+   "location": "BN1 2TE",
+   "covers": [
+    "R092",
+    "R113",
+    "R226",
+    "R227",
+    "R242",
+    "R244",
+    "R245",
+    "R329",
+    "R410",
+    "R482",
+    "R496",
+    "R762"
+   ]
+  },
+  {
+   "anchorStore": "R391",
+   "anchorName": "Norwich",
+   "location": "NR2 1SU",
+   "covers": [
+    "R092",
+    "R113",
+    "R163",
+    "R242",
+    "R245",
+    "R269",
+    "R270",
+    "R329",
+    "R391",
+    "R410",
+    "R527",
+    "R762"
+   ]
+  }
+ ],
+ "au": [
+  {
+   "anchorStore": "R254",
+   "anchorName": "Bondi",
+   "location": "2022",
+   "covers": [
+    "R238",
+    "R253",
+    "R254",
+    "R344",
+    "R385",
+    "R440",
+    "R483",
+    "R523",
+    "R606"
+   ]
+  },
+  {
+   "anchorStore": "R180",
+   "anchorName": "Chadstone",
+   "location": "3148",
+   "covers": [
+    "R180",
+    "R342",
+    "R343",
+    "R504",
+    "R530"
+   ]
+  },
+  {
+   "anchorStore": "R466",
+   "anchorName": "Brisbane",
+   "location": "4000",
+   "covers": [
+    "R351",
+    "R466",
+    "R509"
+   ]
+  },
+  {
+   "anchorStore": "R508",
+   "anchorName": "Booragoon",
+   "location": "6154",
+   "covers": [
+    "R386",
+    "R508"
+   ]
+  },
+  {
+   "anchorStore": "R405",
+   "anchorName": "Rundle Place",
+   "location": "5000",
+   "covers": [
+    "R405"
+   ]
+  }
+ ],
+ "de": [
+  {
+   "anchorStore": "R455",
+   "anchorName": "Hannover",
+   "location": "30159",
+   "covers": [
+    "R331",
+    "R358",
+    "R366",
+    "R396",
+    "R403",
+    "R443",
+    "R455",
+    "R559"
+   ]
+  },
+  {
+   "anchorStore": "R519",
+   "anchorName": "Sindelfingen",
+   "location": "71065",
+   "covers": [
+    "R045",
+    "R352",
+    "R431",
+    "R434",
+    "R519",
+    "R521"
+   ]
+  },
+  {
+   "anchorStore": "R358",
+   "anchorName": "Kurfürstendamm",
+   "location": "10719",
+   "covers": [
+    "R358",
+    "R430",
+    "R443",
+    "R455"
+   ]
+  },
+  {
+   "anchorStore": "R352",
+   "anchorName": "Große Bockenheimer Straße",
+   "location": "60313",
+   "covers": [
+    "R331",
+    "R352",
+    "R403",
+    "R434",
+    "R519",
+    "R520",
+    "R559"
+   ]
+  }
+ ],
+ "fr": [
+  {
+   "anchorStore": "R438",
+   "anchorName": "Carré Sénart",
+   "location": "77127",
+   "covers": [
+    "R178",
+    "R277",
+    "R315",
+    "R374",
+    "R376",
+    "R425",
+    "R438",
+    "R522",
+    "R536",
+    "R566",
+    "R675"
+   ]
+  },
+  {
+   "anchorStore": "R477",
+   "anchorName": "Aix-en-Provence",
+   "location": "13100",
+   "covers": [
+    "R357",
+    "R367",
+    "R395",
+    "R477"
+   ]
+  },
+  {
+   "anchorStore": "R522",
+   "anchorName": "La Toison d’Or",
+   "location": "21000",
+   "covers": [
+    "R373",
+    "R394",
+    "R425",
+    "R438",
+    "R469",
+    "R522"
+   ]
+  },
+  {
+   "anchorStore": "R424",
+   "anchorName": "Sainte-Catherine",
+   "location": "33000",
+   "covers": [
+    "R424"
+   ]
+  },
+  {
+   "anchorStore": "R470",
+   "anchorName": "Atlantis",
+   "location": "44811",
+   "covers": [
+    "R470"
+   ]
+  }
+ ],
+ "it": [
+  {
+   "anchorStore": "R547",
+   "anchorName": "il Leone",
+   "location": "25017",
+   "covers": [
+    "R278",
+    "R365",
+    "R418",
+    "R427",
+    "R441",
+    "R442",
+    "R449",
+    "R547",
+    "R564",
+    "R602",
+    "R625",
+    "R667"
+   ]
+  },
+  {
+   "anchorStore": "R453",
+   "anchorName": "Campania",
+   "location": "81025",
+   "covers": [
+    "R381",
+    "R382",
+    "R453",
+    "R562"
+   ]
+  },
+  {
+   "anchorStore": "R454",
+   "anchorName": "Centro Sicilia",
+   "location": "95045",
+   "covers": [
+    "R454"
+   ]
+  }
+ ],
+ "es": [
+  {
+   "anchorStore": "R397",
+   "anchorName": "Xanadú",
+   "location": "28939",
+   "covers": [
+    "R397",
+    "R435",
+    "R436",
+    "R450",
+    "R538",
+    "R624"
+   ]
+  },
+  {
+   "anchorStore": "R419",
+   "anchorName": "Valencia",
+   "location": "46004",
+   "covers": [
+    "R377",
+    "R419",
+    "R507"
+   ]
+  },
+  {
+   "anchorStore": "R406",
+   "anchorName": "La Maquinista",
+   "location": "08030",
+   "covers": [
+    "R368",
+    "R406"
+   ]
+  },
+  {
+   "anchorStore": "R468",
+   "anchorName": "La Cañada",
+   "location": "29600",
+   "covers": [
+    "R468"
+   ]
+  }
+ ],
+ "jp": [
+  {
+   "anchorStore": "R710",
+   "anchorName": "Kawasaki",
+   "location": "212-0013",
+   "covers": [
+    "R079",
+    "R119",
+    "R128",
+    "R224",
+    "R710",
+    "R718"
+   ]
+  },
+  {
+   "anchorStore": "R005",
+   "anchorName": "Nagoya Sakae",
+   "location": "460-0008",
+   "covers": [
+    "R005",
+    "R091",
+    "R711",
+    "R768"
+   ]
+  },
+  {
+   "anchorStore": "R048",
+   "anchorName": "Fukuoka",
+   "location": "810-0001",
+   "covers": [
+    "R048"
+   ]
+  }
+ ],
+ "kr": [
+  {
+   "anchorStore": "R770",
+   "anchorName": "Hanam",
+   "location": "12942",
+   "covers": [
+    "R691",
+    "R692",
+    "R738",
+    "R747",
+    "R751",
+    "R764",
+    "R770"
+   ]
+  }
+ ],
+ "hk": [
+  {
+   "anchorStore": "R409",
+   "anchorName": "Causeway Bay",
+   "location": "Causeway Bay",
+   "covers": [
+    "R409",
+    "R428",
+    "R485",
+    "R499",
+    "R610",
+    "R673"
+   ]
+  }
+ ],
+ "sg": [
+  {
+   "anchorStore": "R736",
+   "anchorName": "Jewel Changi Airport",
+   "location": "819666",
+   "covers": [
+    "R633",
+    "R669",
+    "R736"
+   ]
+  }
+ ],
+ "ae": [
+  {
+   "anchorStore": "R706",
+   "anchorName": "Al Maryah Island",
+   "location": "Abu Dhabi",
+   "covers": [
+    "R595",
+    "R596",
+    "R597",
+    "R706",
+    "R785"
+   ]
+  }
+ ],
+ "ch": [
+  {
+   "anchorStore": "R439",
+   "anchorName": "Freie Strasse",
+   "location": "4001",
+   "covers": [
+    "R159",
+    "R275",
+    "R309",
+    "R439"
+   ]
+  }
+ ],
+ "nl": [
+  {
+   "anchorStore": "R408",
+   "anchorName": "Amsterdam",
+   "location": "1017 PS",
+   "covers": [
+    "R408",
+    "R539",
+    "R540"
+   ]
+  }
+ ],
+ "se": [
+  {
+   "anchorStore": "R626",
+   "anchorName": "Mall of Scandinavia",
+   "location": "169 79",
+   "covers": [
+    "R505",
+    "R626"
+   ]
+  },
+  {
+   "anchorStore": "R503",
+   "anchorName": "Emporia",
+   "location": "215 32",
+   "covers": [
+    "R503"
+   ]
+  }
+ ],
+ "tw": [
+  {
+   "anchorStore": "R713",
+   "anchorName": "Taipei 101",
+   "location": "110",
+   "covers": [
+    "R694",
+    "R713"
+   ]
+  }
+ ],
+ "at": [
+  {
+   "anchorStore": "R687",
+   "anchorName": "Kärntner Straße",
+   "location": "1010",
+   "covers": [
+    "R687"
+   ]
+  }
+ ],
+ "be": [
+  {
+   "anchorStore": "R486",
+   "anchorName": "Brussels",
+   "location": "1050",
+   "covers": [
+    "R486"
+   ]
+  }
+ ]
+}

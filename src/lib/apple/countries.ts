@@ -45,7 +45,7 @@ export interface Country {
   taxNote: string;
   /** Default IANA zone for country-level copy; each store carries its own. */
   timeZone: string;
-  /** How often the public sweep asks each store: the US by anchors, other countries store by store; both every 15 s. */
+  /** How often the public sweep asks each store: the US by its 42 anchors, other countries by theirs (INTL_COVERAGE, since 2026-11-08); both every 15 s. */
   cadenceSec: number;
 }
 

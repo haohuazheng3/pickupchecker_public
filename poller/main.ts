@@ -50,8 +50,10 @@ import os from "node:os";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { Agent, fetch as undiciFetch } from "undici";
-import { buildIntlTasks, buildTasks, nextCountryBackoff, parsePollCountries, readState, runSweep, singleIdentityEgress, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
+import { buildIntlTasks, buildTasks, intlStores, nextCountryBackoff, parsePollCountries, readState, runSweep, singleIdentityEgress, writeHeartbeat, writeState, type Egress } from "../src/lib/stock/sweep";
 import { NOT_OFFERED_KEY, nextNotOffered, notOfferedDue, persistNotOffered, restoreNotOffered, type NotOfferedState } from "../src/lib/stock/notOffered";
+import { DIRECT_AFTER_MISSES, INTL_COVERAGE_KEY, coverageStep, directStores, excusedStores, persistCoverage, restoreCoverage, uncoveredByPlan, type CoverageState } from "../src/lib/stock/intlCoverage";
+import { INTL_COVERAGE } from "../src/lib/apple/catalog";
 import { fallbackOrder } from "../src/lib/stock/fallback";
 import { loadFastTargets, runFastRound, targetsForDuties } from "../src/lib/stock/fastlane";
 import { expireStale } from "../src/lib/stock/ingest";
@@ -285,6 +287,12 @@ const intlStats = {
   stopped: false,
   /** Stores Apple offers no pickup lookups for (asked every 30 min instead of every round). */
   notOffered: [] as string[],
+  /** Anchor locations in the round (INTL_COVERAGE); 0 = every store on its own. */
+  anchors: 0,
+  /** Stores no anchor of the plan lists: asked store by store from the start (Chermside). */
+  planUncovered: [] as string[],
+  /** Stores asked store by store because their anchors stopped returning them (intlCoverage.ts). */
+  direct: [] as string[],
 };
 /** When the intl loop last finished a round (or decided to rest): the STUCK watchdog reads it. */
 let intlProgress = Date.now();
@@ -301,16 +309,34 @@ const intlRestartTimes: number[] = [];
 const INTL_STUCK_MS = Math.max(STUCK_MS, Math.ceil(buildIntlTasks(POLL_COUNTRIES).length / Math.max(1, INTL_CONCURRENCY)) * INTL_TIMEOUT_MS * 1.5 + 60_000);
 
 /**
- * Every INTL_CADENCE_SEC: every store of POLL_COUNTRIES on its own, through the sweep engine in mode "intl"
- * (fetch, ingest, instant confirm, alerts; failed requests retried once from a fresh address; poll_log keeps
- * failures only). Pauses while the US sweep is in degraded mode, and for 60 s after a round that was mostly 541s;
- * a single country whose round mostly failed rests on its own (nextCountryBackoff). `generation` ends a loop the
- * stuck watchdog has replaced.
+ * Every INTL_CADENCE_SEC: the anchors of POLL_COUNTRIES (INTL_COVERAGE, each returning the nearest ≤12 stores)
+ * plus the stores no anchor returns on their own, through the sweep engine in mode "intl" (fetch, ingest, instant
+ * confirm, alerts; failed requests retried once from a fresh address; poll_log keeps failures only). Pauses while
+ * the US sweep is in degraded mode, and for 60 s after a round that was mostly 541s; a single country whose round
+ * mostly failed rests on its own (nextCountryBackoff). After every round, intlCoverage.ts compares the stores the
+ * anchors returned with the plan: a store missing twice in a row (while its anchors answered) is asked store by
+ * store from then on and the owner is told once. `generation` ends a loop the stuck watchdog has replaced.
  */
 async function intlLoop(egress: Egress, active: () => boolean, generation: number) {
-  const tasks = buildIntlTasks(POLL_COUNTRIES);
-  const known = new Set(tasks.map((t) => t.store!));
-  intlStats.tasks = tasks.length; intlStats.stores = known.size;
+  const universe = intlStores(POLL_COUNTRIES);
+  const known = new Set(Object.values(universe).flat());
+  const planGaps = uncoveredByPlan(universe, INTL_COVERAGE);
+  const planGapSet = new Set(Object.values(planGaps).flat());
+  intlStats.planUncovered = [...planGapSet].sort();
+  let coverage: CoverageState = {};
+  try {
+    coverage = restoreCoverage((await readState(INTL_COVERAGE_KEY))?.value, known);
+  } catch (e) {
+    console.warn(`[intl] could not read ${INTL_COVERAGE_KEY}: ${errorMessage(e)}`);
+  }
+  let tasks = buildIntlTasks(POLL_COUNTRIES, { direct: directStores(coverage) });
+  const refreshTasks = () => {
+    tasks = buildIntlTasks(POLL_COUNTRIES, { direct: directStores(coverage) });
+    intlStats.tasks = tasks.length; intlStats.stores = known.size;
+    intlStats.anchors = new Set(tasks.filter((t) => !t.store).map((t) => t.anchor.location)).size;
+    intlStats.direct = directStores(coverage);
+  };
+  refreshTasks();
   let backoffUntil = 0, lastErrorLog = 0;
   /** Per-country rest (nextCountryBackoff); a country absent here is asked every round. */
   const countryRest = new Map<string, { level: number; until: number }>();
@@ -324,7 +350,7 @@ async function intlLoop(egress: Egress, active: () => boolean, generation: numbe
     console.warn(`[intl] could not read ${NOT_OFFERED_KEY}: ${errorMessage(e)}`);
   }
   intlStats.notOffered = Object.keys(persistNotOffered(noPickup).stores).sort();
-  console.log(`[intl] start countries=${POLL_COUNTRIES.join(",")} stores=${known.size} requests/round=${tasks.length} cadence=${INTL_CADENCE_SEC}s concurrency=${INTL_CONCURRENCY}${generation ? ` (restart ${generation})` : ""}`);
+  console.log(`[intl] start countries=${POLL_COUNTRIES.join(",")} stores=${known.size} anchors=${intlStats.anchors} direct=${intlStats.planUncovered.length + intlStats.direct.length} requests/round=${tasks.length} cadence=${INTL_CADENCE_SEC}s concurrency=${INTL_CONCURRENCY}${generation ? ` (restart ${generation})` : ""}`);
   while (generation === intlGeneration) {
     const t0 = Date.now();
     try {
@@ -332,7 +358,7 @@ async function intlLoop(egress: Egress, active: () => boolean, generation: numbe
       const now = Date.now();
       const resting = new Set([...countryRest].filter(([, r]) => r.until > now).map(([cc]) => cc));
       intlStats.pausedCountries = Object.fromEntries([...countryRest].filter(([cc]) => resting.has(cc)).map(([cc, r]) => [cc, new Date(r.until).toISOString()]));
-      const round = tasks.filter((t) => !resting.has(t.country!) && notOfferedDue(noPickup, t.store!, now));
+      const round = tasks.filter((t) => !resting.has(t.country!) && (!t.store || notOfferedDue(noPickup, t.store, now)));
       if (!intlStats.paused && round.length) {
         const r = await runSweep({ egress, tasks: round, concurrency: INTL_CONCURRENCY, mode: "intl", host: HOST, known, timeoutMs: INTL_TIMEOUT_MS, logOk: false });
         if (generation !== intlGeneration) break; // abandoned while it ran (a stuck round came back late)
@@ -340,6 +366,24 @@ async function intlLoop(egress: Egress, active: () => boolean, generation: numbe
         intlStats.throttled += r.throttled; intlStats.timeouts += r.timeouts; intlStats.transitions += r.transitions; intlStats.confirmed += r.confirmed; intlStats.held += r.held; intlStats.notified += r.notified.sent;
         intlStats.lastAt = new Date().toISOString(); intlStats.lastDurationMs = r.durationMs; intlStats.lastSweepId = r.id; intlStats.lastStoresCovered = r.storesCovered;
         if (r.transitions || r.unresolved || r.throttled) console.log(`[intl ${r.id.slice(0, 8)}] req=${r.requests} fail=${r.failures} recovered=${r.recovered} unresolved=${r.unresolved} 541=${r.throttled} stores=${r.storesCovered} trans=${r.transitions} confirmed=${r.confirmed} ${r.durationMs}ms`);
+        // Coverage: did the anchors return every store the plan says they do? (Stores whose anchors did not answer,
+        // resting countries and the stores the plan never covers are not judged.)
+        if (intlStats.anchors) {
+          const expected = Object.entries(universe).flatMap(([cc, list]) => (resting.has(cc) ? [] : list!.filter((s) => !planGapSet.has(s)).map((store) => ({ store, country: cc }))));
+          const step = coverageStep(coverage, { expected, anchorCovered: r.anchorCovered, excused: excusedStores(INTL_COVERAGE, r.failedLocations), now: new Date() });
+          coverage = step.state;
+          if (step.newlyDirect.length || step.back.length) {
+            refreshTasks();
+            for (const s of step.newlyDirect) console.warn(`[intl] ${s} missing from its anchors' answers ${coverage[s]?.misses ?? 0} rounds in a row — asked store by store from now on`);
+            for (const s of step.back) console.log(`[intl] ${s} back in its anchors' answers — store-by-store request dropped`);
+            await logOps("poller", step.newlyDirect.length ? "warn" : "info", `anchor coverage changed: ${step.newlyDirect.length ? `now direct: ${step.newlyDirect.join(", ")}` : ""}${step.newlyDirect.length && step.back.length ? "; " : ""}${step.back.length ? `back under anchors: ${step.back.join(", ")}` : ""}`, { host: HOST, direct: intlStats.direct, sweepId: r.id }).catch(() => undefined);
+          }
+          if (step.newlyDirect.length || step.back.length || step.report.length) await writeState(INTL_COVERAGE_KEY, persistCoverage(coverage)).catch((e) => console.warn(`[intl] could not save ${INTL_COVERAGE_KEY}: ${errorMessage(e)}`));
+          if (step.report.length) {
+            await notifyOwner(`[PickupChecker] ${step.report.length} store${step.report.length > 1 ? "s" : ""} dropped out of the anchor answers (other countries)`,
+              `Host ${HOST}: Apple's answers for the coverage anchors no longer include ${step.report.map((s) => `${s} (${coverage[s]?.country})`).join(", ")} — missing ${DIRECT_AFTER_MISSES} rounds in a row while the anchors themselves answered. Each is now asked store by store every round, so nothing goes stale; stock pages and alerts are unaffected.\n\nIf this persists, rebuild data/apple/intl-coverage-plan.json on a host with the IPv6 range: node scripts/intl-coverage.mjs (docs/architecture.md, 海外锚点轮询).`).catch(() => undefined);
+          }
+        }
         if (r.pickup) {
           const step = nextNotOffered(noPickup, r.pickup, new Date());
           noPickup = step.state;

@@ -13,6 +13,7 @@
  * only trustworthy through priceFor / itemFor, since one part number can be sold in several countries).
  */
 import coverageJson from "../../../data/apple/coverage-plan.json";
+import intlCoverageJson from "../../../data/apple/intl-coverage-plan.json";
 import { INTL_CODES, type CountryCode } from "./countries";
 import { createCatalog, intlStoreFrom, type CatalogItem, type CoverageAnchor, type Store } from "./catalog-core";
 import { CATALOG, STORES } from "./catalog-us";
@@ -42,5 +43,13 @@ export const {
   statePath, hasStatePage, isOneStoreState, cityPath, isOneStoreCity, placeTarget,
 } = WORLD;
 
-/** The US sweep's coverage anchors (42 ZIPs; other countries are polled store by store). */
+/** The US sweep's coverage anchors (42 ZIPs). */
 export const COVERAGE: CoverageAnchor[] = coverageJson as CoverageAnchor[];
+/**
+ * The other countries' coverage anchors (2026-11-08: 47 locations cover 198 stores, 94 requests a round instead of
+ * 398 store-by-store). Built from Apple's real answers — every store was asked as a location and the stores it
+ * returned recorded (scripts/intl-coverage.mjs) — because the radius Apple searches differs by country (the UK
+ * fills 12 stores, Germany or Japan answer ~200 km). A store no anchor returns (Chermside, where Apple offers no
+ * pickup lookup) is still asked store by store; see stock/intlCoverage.ts for how drift is caught at run time.
+ */
+export const INTL_COVERAGE: Partial<Record<CountryCode, CoverageAnchor[]>> = intlCoverageJson as Partial<Record<CountryCode, CoverageAnchor[]>>;

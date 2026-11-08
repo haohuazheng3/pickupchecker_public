@@ -212,10 +212,11 @@ describe("fast lane targets for other countries", () => {
   });
 });
 
-describe("the per-store round of the other countries", () => {
+describe("the store-by-store round of the other countries (the shape before anchors, still used for stores no anchor returns)", () => {
   it("asks every store on its own, its country's 40 parts in two batches", () => {
-    const tasks = buildIntlTasks([...INTL_CODES]);
+    const tasks = buildIntlTasks([...INTL_CODES], { anchors: {} });
     expect(tasks).toHaveLength(199 * 2);
+    expect(buildIntlTasks([...INTL_CODES])).toHaveLength(94 + 2); // 2026-11-08: 47 anchors × 2 batches + Chermside on its own
     for (const t of tasks) {
       expect(t.store).toBe(t.anchor.anchorStore);
       expect(countryOfStore(t.store!)).toBe(t.country);
@@ -227,6 +228,7 @@ describe("the per-store round of the other countries", () => {
     expect(uk.map((t) => t.batchIndex)).toEqual([0, 1]);
     expect(new Set(uk.flatMap((t) => t.parts))).toEqual(new Set(partNumbersOf("uk")));
     expect(buildIntlTasks(["us"])).toEqual([]);
+    expect(buildIntlTasks(["us"], { anchors: {} })).toEqual([]);
     expect(buildTasks()).toHaveLength(84); // the US anchor sweep is untouched
   });
   it("POLL_COUNTRIES is opt-in: unset or empty = none, \"all\" = every other country, a list = those (US and junk ignored)", () => {

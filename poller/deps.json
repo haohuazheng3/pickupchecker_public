@@ -21,6 +21,7 @@
   "data/apple/fr/stores.json",
   "data/apple/hk/catalog.json",
   "data/apple/hk/stores.json",
+  "data/apple/intl-coverage-plan.json",
   "data/apple/it/catalog.json",
   "data/apple/it/stores.json",
   "data/apple/jp/catalog.json",
@@ -77,6 +78,7 @@
   "src/lib/stock/fallback.ts",
   "src/lib/stock/fastlane.ts",
   "src/lib/stock/ingest.ts",
+  "src/lib/stock/intlCoverage.ts",
   "src/lib/stock/notOffered.ts",
   "src/lib/stock/notify.ts",
   "src/lib/stock/sweep.ts"

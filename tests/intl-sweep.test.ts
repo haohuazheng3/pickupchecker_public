@@ -1,6 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { INTL_COVERAGE } from "@/lib/apple/catalog";
 
-/* The sweep engine in mode "intl", with the database and Apple faked (same fakes as tests/fallback.test.ts). */
+/* The sweep engine in mode "intl", with the database and Apple faked (same fakes as tests/fallback.test.ts).
+ * These cases use the store-by-store shape (`anchors: {}`), which the round still uses for stores no anchor returns;
+ * the anchor shape is covered in tests/intl-coverage.test.ts. */
 const inserted: { table: string; rows: unknown }[] = [];
 vi.mock("@/lib/db", () => {
   const chain = { onConflictDoNothing: async () => undefined, then: (r: (v: unknown) => void) => r(undefined) };
@@ -31,7 +34,7 @@ describe("runSweep — the other countries' per-store round", () => {
 
   it("asks each store on its own country's endpoint, retries a failure, and logs only failures", async () => {
     const { runSweep, buildIntlTasks } = await import("@/lib/stock/sweep");
-    const tasks = buildIntlTasks(["uk"]).slice(0, 4); // two stores × two batches
+    const tasks = buildIntlTasks(["uk"], { anchors: {} }).slice(0, 4); // two stores × two batches
     const stores = [...new Set(tasks.map((t) => t.store!))];
     const urls: string[] = [];
     let failedOnce = false, n = 0;
@@ -82,7 +85,7 @@ describe("runSweep — the other countries' per-store round", () => {
 
   it("a one-store answer without that store is a failure: logged, retried, counted per country", async () => {
     const { runSweep, buildIntlTasks } = await import("@/lib/stock/sweep");
-    const tasks = buildIntlTasks(["ca"]).slice(0, 6); // three stores × two batches
+    const tasks = buildIntlTasks(["ca"], { anchors: {} }).slice(0, 6); // three stores × two batches
     const stores = [...new Set(tasks.map((t) => t.store!))];
     let missing = 0;
     const egress = { name: "t", async acquire() { return { label: "t", release() {}, fetch: async (url: string) => {
@@ -104,7 +107,7 @@ describe("runSweep — the other countries' per-store round", () => {
 
   it("Apple's \"no store associated with this search\" is an answer, not a failure: not retried, logged or counted", async () => {
     const { runSweep, buildIntlTasks } = await import("@/lib/stock/sweep");
-    const all = buildIntlTasks(["au"]);
+    const all = buildIntlTasks(["au"], { anchors: {} });
     const tasks = all.filter((t) => t.store === "R384" || t.store === all[0].store); // Chermside + one more, two batches each
     const other = all[0].store!;
     const asked: string[] = [];
@@ -127,9 +130,9 @@ describe("runSweep — the other countries' per-store round", () => {
 
   it("a country whose round mostly failed is not retried (an outage), the others are; one error per message per round", async () => {
     const { runSweep, buildIntlTasks } = await import("@/lib/stock/sweep");
-    const tasks = [...buildIntlTasks(["sg"]), ...buildIntlTasks(["hk"])]; // SG 3 stores, HK 6 stores
-    const sg = new Set(buildIntlTasks(["sg"]).map((t) => t.store!));
-    const hk = buildIntlTasks(["hk"]).map((t) => t.store!);
+    const tasks = [...buildIntlTasks(["sg"], { anchors: {} }), ...buildIntlTasks(["hk"], { anchors: {} })]; // SG 3 stores, HK 6 stores
+    const sg = new Set(buildIntlTasks(["sg"], { anchors: {} }).map((t) => t.store!));
+    const hk = buildIntlTasks(["hk"], { anchors: {} }).map((t) => t.store!);
     let hkFailedOnce = false;
     const asked: string[] = [];
     const egress = { name: "t", async acquire() { return { label: "t", release() {}, fetch: async (url: string) => {
@@ -150,7 +153,7 @@ describe("runSweep — the other countries' per-store round", () => {
 
   it("the instant confirm of other countries uses the round's timeout and a shared bound; the US passes neither", async () => {
     const { runSweep, buildIntlTasks, buildTasks } = await import("@/lib/stock/sweep");
-    const tasks = buildIntlTasks(["uk"]).slice(0, 1);
+    const tasks = buildIntlTasks(["uk"], { anchors: {} }).slice(0, 1);
     const store = tasks[0].store!;
     nextPending.push([{ storeNumber: store, partNumber: tasks[0].parts[0], status: "available" }]);
     const egress = { name: "t", async acquire() { return { label: "t", release() {}, fetch: async () => ({ status: 200, text: async () => body(store) }) }; } };
@@ -164,5 +167,32 @@ describe("runSweep — the other countries' per-store round", () => {
     expect(confirmCalls).toHaveLength(2);
     expect(confirmCalls[1].timeoutMs).toBeUndefined();
     expect(confirmCalls[1].gate).toBeUndefined();
+  });
+
+  it("anchor mode: writes only known stores, reports anchorCovered from location answers and failedLocations", async () => {
+    const { runSweep, buildIntlTasks } = await import("@/lib/stock/sweep");
+    const plan = INTL_COVERAGE.hk!; // one anchor, six stores
+    const tasks = buildIntlTasks(["hk"]);
+    expect(tasks.filter((t) => !t.store)).toHaveLength(2);
+    const stores = plan[0].covers;
+    const known = new Set(stores);
+    const asked: string[] = [];
+    let n = 0;
+    const egress = { name: "t", async acquire() { return { label: "t", release() {}, fetch: async (url: string) => {
+      const u = new URL(url); asked.push(u.search);
+      expect(u.pathname).toBe("/hk/shop/retail/pickup-message");
+      expect(u.searchParams.get("location")).toBe(plan[0].location);
+      // The second batch fails; with one of two tasks failed the country is at the "outage" share, so no retry pass.
+      // The first answers with the six stores plus a stranger (not known: never written, never counted).
+      if (u.searchParams.get("parts.0") === tasks[1].parts[0]) { n++; return { status: 503, text: async () => "" }; }
+      return { status: 200, text: async () => JSON.stringify({ head: { status: "200" }, body: { stores: [...stores, "R999"].map((s) => ({ storeNumber: s, storeName: s, city: "", state: "", partsAvailability: {} })) } }) };
+    } }; } };
+    const r = await runSweep({ egress, tasks, concurrency: 2, mode: "intl", host: "test", known, logOk: false, timeoutMs: 6000 });
+    expect(n).toBe(1);
+    expect(r.anchorCovered).toEqual([...stores].sort());
+    expect(r.storesCovered).toBe(stores.length);
+    expect(r.failedLocations).toEqual([plan[0].location]);
+    expect(r.byCountry).toEqual({ hk: { tasks: 2, failed: 1, unresolved: 1, throttled: 0 } });
+    expect(r.pickup).toBeUndefined();
   });
 });

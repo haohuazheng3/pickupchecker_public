@@ -11,6 +11,7 @@
 # HOST_LABEL (default linode-1) names the host in heartbeats and sweeps. HOLD=1 provisions a second host whose
 # poller stays stopped until it has been configured (infra/linode/standby.sh): it must never start polling the
 # US next to the primary with a guessed configuration.
+# NO_RANGE=1 requests no routed IPv6 range (one is moved over later).
 # Optional: SSH_PUBKEY="ssh-ed25519 AAAA…" to be able to log in as root; REPO (default
 # haohuazheng3/pickupchecker_private). Needs `gh auth` (or GH_TOKEN) to register the read-only deploy key.
 # LINODE_ID=<id> rebuilds that existing Linode in place (keeps its IPv4 and the attached IPv6 range)
@@ -71,6 +72,9 @@ echo "linode $ID: ipv4=$IPV4 slaac=$SLAAC region=$REGION type=$TYPE"
 # back to /64. New accounts get ONE range by default ("your limit will be exceeded" → support ticket).
 RANGE=$(api "$API/networking/ipv6/ranges" | python3 -c 'import json,sys; t=sys.argv[1]; print(next((r["range"]+"/"+str(r["prefix"]) for r in json.load(sys.stdin)["data"] if r.get("route_target")==t), ""))' "${SLAAC%%/*}")
 [ -n "$RANGE" ] && echo "ipv6 range already attached: $RANGE"
+# NO_RANGE=1: ask for none — the range is moved over later from another host (linode-4, 2026-11-08: the account
+# allows two /56 ranges and the owner moves linode-2's to it once the roles are split).
+if [ "${NO_RANGE:-0}" = 1 ] && [ -z "$RANGE" ]; then RANGE="none (NO_RANGE=1)"; echo "NO_RANGE=1: no IPv6 range requested"; fi
 for plen in "$PLEN" 64; do
   [ -n "$RANGE" ] && break
   r=$(curl -sS -X POST "$API/networking/ipv6/ranges" -H "Authorization: Bearer $LINODE_API_TOKEN" -H "Content-Type: application/json" \
