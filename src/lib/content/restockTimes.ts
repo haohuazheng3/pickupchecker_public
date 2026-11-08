@@ -12,6 +12,7 @@ import { db, hasDatabase, schema } from "../db";
 import { PART_INDEX, citySlug, hasStatePage, partNumbersFor, statePath, stateSlug, statesWithStores, storeByNumber, storePath, storeTimeZone, storesOf, type Store } from "../apple/catalog";
 import { COUNTRIES, type CountryCode } from "../apple/countries";
 import { countryScope } from "../stock/queries";
+import { intlRestockTimesPath } from "./restockPlaces";
 import { recordError, errorMessage } from "../errors";
 import { PATTERN_MIN, PATTERN_MIN_DAYS, TRACKING_SINCE_INTL, TRACKING_SINCE_US, WEEKDAY_MIN_SPAN, hourLabel, localHourDay } from "./siteFacts";
 
@@ -301,12 +302,14 @@ export async function duoRestockTimesAt(cc: CountryCode, stores: Store[]): Promi
 }
 
 /**
- * The restock-times page of a US place: /iphone-duo-restock-times/{state} for a state with a page of its own,
+ * The restock-times page of a place: /iphone-duo-restock-times/{state} for a state with a page of its own,
  * /iphone-duo-restock-times/{state}/{city} for a two-plus-store city; a one-store city or state has no page of its
- * own and answers with its store's page (the proxy 308s there too), a one-city state with its city's page.
+ * own and answers with its store's page (the proxy 308s there too), a one-city state with its city's page. Other
+ * countries follow their /stores rules under /{cc}/iphone-duo-restock-times/… (restockPlaces.ts), a place that is the
+ * whole country answering with the country's page.
  */
 export function restockTimesPath(stateName: string, city?: string, cc: CountryCode = "us"): string {
-  if (cc !== "us") return `/${cc}/iphone-duo-restock-times`;
+  if (cc !== "us") return intlRestockTimesPath(cc, stateName, city);
   if (city) {
     const here = storesOf(cc).filter((s) => s.state === stateName && s.city === city);
     return here.length === 1 ? storePath(here[0]) : `/iphone-duo-restock-times/${stateSlug(stateName)}/${citySlug(city)}`;

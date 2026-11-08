@@ -22,7 +22,7 @@ import { includedRate, taxName } from "@/content/country-tax";
 import { num, list, stamp, weekdays, price as priceIn, distance, fitTitleW } from "@/lib/i18n/format";
 import { appleStoreLabel, cityLabel, colorLabel, countryLabel, regionLabel, storeLabel } from "@/lib/i18n/places";
 import type { Dict } from "../en";
-import type { RestockTimesMeta, RestockTimesView } from "../en/views";
+import type { RestockTimesMeta, RestockTimesPlace, RestockTimesView } from "../en/views";
 import { content } from "./content";
 
 type RT = Dict["views"]["restockTimes"];
@@ -160,6 +160,10 @@ const rangeLabel = (from: number, to: number) => `${from}〜${to}時`;
 const weekdayName = (d: number) => weekdays(L)[d];
 const storeJa = (s: Store) => appleStoreLabel(s, L);
 const rtRegion = (x: { us: boolean; c: Country }) => (x.us ? "州" : noun(x.c));
+/** 国名、または地域・都市ページではその場所の名前（「東京」）。後ろに「の」「で」「では」が続く。 */
+const rtPlace = (x: { c: Country; place?: RestockTimesPlace }) => (x.place ? x.place.name : country(x.c));
+/** 「場所別」の単位：国ページは地域の呼び名、地域ページは都市、都市ページは店舗。 */
+const rtUnit = (x: { us: boolean; c: Country; place?: RestockTimesPlace }) => (x.place ? (x.place.kind === "region" ? "都市" : "店舗") : rtRegion(x));
 const zero = "検証できる入荷がまだ記録されていません。";
 
 /** 英語の時刻（「10 AM」）と曜日（「Tuesday」）で届いた peak を日本語に。 */
@@ -352,33 +356,35 @@ export const views: Dict["views"] = {
       store: storeJa,
       storeWithPlace: (s: Store) => `${storeJa(s)}（${cityLabel(s.country ?? "us", s.city, L)}）`,
     },
-    title: (c: Country) => `iPhone Duoの再入荷はいつ？${country(c)}のアップルストアの入荷時間`,
+    title: (c: Country, place?: RestockTimesPlace) => `iPhone Duoの再入荷はいつ？${place?.name ?? country(c)}のアップルストアの入荷時間`,
     metaDescription: (x: RestockTimesMeta) => {
       const { c, t, w, pattern } = x;
-      const w0 = country(c);
-      const region = c.cc === "us" ? "州" : c.regionNoun ? noun(c) : "店舗";
+      const w0 = rtPlace(x);
+      const region = x.place ? (x.place.kind === "region" ? "都市" : null) : c.cc === "us" ? "州" : c.regionNoun ? noun(c) : "店舗";
+      /** 「時間帯・日・県・店舗・構成」。都市ページでは日と店舗の間に単位を入れない。 */
+      const by = region ? `${region}・店舗` : "店舗";
       const since = dateLabel(t.since, false);
       return t.n > 0 && pattern
         ? fitTitleW([
-          `${w0}のアップルストアで${since}以降に確認したiPhone Duoの入荷は${N(t.n)}回。${rtPct(w.share)}が現地時間${rangeLabel(w.from, w.to)}に集中${t.sellout ? `、${rtPct(t.sellout.within2min)}は2分以内に完売` : ""}。時間帯・日・${region}・店舗・構成別の表。`,
-          `${w0}のアップルストアで${since}以降のiPhone Duo入荷${N(t.n)}回、${rtPct(w.share)}が現地時間${rangeLabel(w.from, w.to)}。時間帯・日・${region}・構成別の表。`,
-          `${w0}のiPhone Duo入荷時間：${since}以降の${N(t.n)}回を時間帯・日・${region}・構成別に。`,
+          `${w0}のアップルストアで${since}以降に確認したiPhone Duoの入荷は${N(t.n)}回。${rtPct(w.share)}が現地時間${rangeLabel(w.from, w.to)}に集中${t.sellout ? `、${rtPct(t.sellout.within2min)}は2分以内に完売` : ""}。時間帯・日・${by}・構成別の表。`,
+          `${w0}のアップルストアで${since}以降のiPhone Duo入荷${N(t.n)}回、${rtPct(w.share)}が現地時間${rangeLabel(w.from, w.to)}。時間帯・日・${region ?? "店舗"}・構成別の表。`,
+          `${w0}のiPhone Duo入荷時間：${since}以降の${N(t.n)}回を時間帯・日・${region ?? "店舗"}・構成別に。`,
         ], 158)
         : t.n > 0
           ? fitTitleW([
-            `${since}以降、${w0}のアップルストアで確認したiPhone Duoの入荷${N(t.n)}回を、${SPEED.checkSec}秒ごとのチェックから集計：現地の時間帯別、日別、${region}・店舗・構成別、それぞれの在庫時間も。`,
-            `${w0}のiPhone Duo入荷時間：${since}以降の確認済み入荷${N(t.n)}回を時間帯・日・${region}・構成別に。`,
+            `${since}以降、${w0}のアップルストアで確認したiPhone Duoの入荷${N(t.n)}回を、${SPEED.checkSec}秒ごとのチェックから集計：現地の時間帯別、日別、${by}・構成別、それぞれの在庫時間も。`,
+            `${w0}のiPhone Duo入荷時間：${since}以降の確認済み入荷${N(t.n)}回を時間帯・日・${region ?? "店舗"}・構成別に。`,
           ], 158)
           : `${w0}のアップルストアにiPhone Duoが入荷するのはいつか。PickupCheckerが${longDate(t.since)}から${SPEED.checkSec}秒ごとに続けているチェックをもとに、時間帯・日・店舗・構成別にまとめます。`;
     },
     h1: (x: RestockTimesView) => x.t.unknown
-      ? `${country(x.c)}でiPhone Duoが再入荷するのはいつ？`
+      ? `${rtPlace(x)}でiPhone Duoが再入荷するのはいつ？`
       : x.t.n > 0
-        ? `${country(x.c)}でiPhone Duoの再入荷は続いている？ はい。入荷する時間帯はこちら`
-        : `${country(x.c)}でiPhone Duoの再入荷は始まった？ 私たちのチェックではまだ。見ているのはここです`,
+        ? `${rtPlace(x)}でiPhone Duoの再入荷は続いている？ はい。入荷する時間帯はこちら`
+        : `${rtPlace(x)}でiPhone Duoの再入荷は始まった？ 私たちのチェックではまだ。見ているのはここです`,
     intro: (x: RestockTimesView) => {
       const { t, tracked, pattern, w } = x;
-      const where = country(x.c);
+      const where = rtPlace(x);
       return t.unknown ? (
         <>入荷履歴をいま読み込めませんでした。{where}の店舗は引き続き{SPEED.checkSec}秒ごとにチェックしており、次に読み込んだときに数値が表示されます。</>
       ) : t.n > 0 ? (
@@ -417,7 +423,7 @@ export const views: Dict["views"] = {
     nav: (x: RestockTimesView): Record<string, string> => ({
       "time-of-day": "時間帯",
       "day-by-day": "日別",
-      where: `${rtRegion(x)}別`,
+      where: `${rtUnit(x)}別`,
       configuration: "構成",
       "how-long": "在庫の持続時間",
       unavailable: "なぜ受け取り不可？",
@@ -425,18 +431,18 @@ export const views: Dict["views"] = {
       method: "数え方",
     }),
     h2: (x: RestockTimesView): Record<string, string> => ({
-      "time-of-day": `${country(x.c)}でiPhone Duoが入荷するのは何時ごろ？`,
-      "day-by-day": `${country(x.c)}でiPhone Duoが入荷したのはどの日？`,
-      where: `${country(x.c)}でiPhone Duoの入荷が多いアップルストアは？`,
-      configuration: `${country(x.c)}で入荷が多いiPhone Duoの構成は？`,
-      "how-long": `${country(x.c)}では、iPhone Duoの入荷はどれくらい持つ？`,
+      "time-of-day": `${rtPlace(x)}でiPhone Duoが入荷するのは何時ごろ？`,
+      "day-by-day": `${rtPlace(x)}でiPhone Duoが入荷したのはどの日？`,
+      where: `${rtPlace(x)}でiPhone Duoの入荷が多いアップルストアは？`,
+      configuration: `${rtPlace(x)}で入荷が多いiPhone Duoの構成は？`,
+      "how-long": `${rtPlace(x)}では、iPhone Duoの入荷はどれくらい持つ？`,
       unavailable: "なぜどのアップルストアも「受け取り不可」なの？",
       reddit: "iPhone Duoの入荷についてRedditで言われていることと、データが示すこと",
       method: "PickupCheckerはどうやって入荷を数えている？",
     }),
     faq: (x: RestockTimesView): Faq[] => {
       const { t, w, pattern, sell, us, weekend, tracked } = x;
-      const where = country(x.c);
+      const where = rtPlace(x);
       const window = rangeLabel(w.from, w.to);
       return [
         { q: `${where}でiPhone Duoが再入荷するのはいつ？`, a: t.n > 0 && pattern
@@ -461,9 +467,9 @@ export const views: Dict["views"] = {
       reports: (tracker: string) => `${tracker}：発売週のiPhone Duo入荷報告（各サイト自身の観測。区別して表示し、集計には含めません）`,
     },
     ld: (x: RestockTimesView) => ({
-      datasetName: `${country(x.c)}のアップルストアにおけるiPhone Duoの入荷時間`,
-      description: `${x.t.since}以降、${country(x.c)}のアップルストアで確認したiPhone Duoの店頭受け取りの入荷をすべて、店舗・構成・時刻とともに記録したデータ。PickupCheckerの${SPEED.checkSec}秒ごとのチェックに基づき、現地の時間帯・日・${rtRegion(x)}・店舗・構成別に集計しています。`,
-      spatial: `${country(x.c)}のアップルストア`,
+      datasetName: `${rtPlace(x)}のアップルストアにおけるiPhone Duoの入荷時間`,
+      description: `${x.t.since}以降、${rtPlace(x)}のアップルストアで確認したiPhone Duoの店頭受け取りの入荷をすべて、店舗・構成・時刻とともに記録したデータ。PickupCheckerの${SPEED.checkSec}秒ごとのチェックに基づき、現地の時間帯・日・${x.place?.kind === "city" ? "" : `${rtUnit(x)}・`}店舗・構成別に集計しています。`,
+      spatial: `${rtPlace(x)}のアップルストア`,
       measured: ["入荷時刻（店舗の現地時間）", "アップルストア", "iPhone Duoの容量とカラー", "完売までの秒数"],
       size: `入荷${N(x.t.n)}回、${N(x.t.stores)}店舗`,
     }),
@@ -481,7 +487,7 @@ export const views: Dict["views"] = {
       { text: <>一度にまとまった10回の入荷は1回の出来事で、習慣ではありません</>, no: true },
       { text: <>日数が増えるにつれ、このページは自動で書き換わります</>, step: true },
     ],
-    hourCaption: (x: RestockTimesView) => `${country(x.c)}のiPhone Duoの入荷：店舗の現地時間別、${dateLabel(x.t.since, false)}から今日まで（${N(x.t.n)}回）`,
+    hourCaption: (x: RestockTimesView) => `${rtPlace(x)}のiPhone Duoの入荷：店舗の現地時間別、${dateLabel(x.t.since, false)}から今日まで（${N(x.t.n)}回）`,
     hourHead: ["現地時間", "入荷", "割合"],
     morningKeys: (x: RestockTimesView): Point[] => [
       { text: <>朝に集中するのは<b className="text-ink">開店とは関係ありません</b>{x.us ? "：米国のアップルストアの多くは10時開店です" : ""}</> },
@@ -489,7 +495,7 @@ export const views: Dict["views"] = {
       { text: <>自分で見るなら：平日の朝の<b className="text-ink">{rangeLabel(x.w.from, x.w.to)}</b></>, step: true },
       { text: <>誰も再読み込みしていない<b className="text-ink">残りの22時間</b>は、<Link href={x.alert}>入荷通知</Link>に任せましょう</>, step: true },
     ],
-    storeChartKeys: (x: RestockTimesView): Point[] => [{ text: <>各店舗のページには、その店舗の時間帯のグラフがあります（<Link href={x.storesHref}>{x.us ? "州別のアップルストア" : `${country(x.c)}の店舗`}</Link>）。周りより1時間早く入荷する店舗は、知っておく価値があります</>, step: true }],
+    storeChartKeys: (x: RestockTimesView): Point[] => [{ text: <>各店舗のページには、その店舗の時間帯のグラフがあります（<Link href={x.storesHref}>{x.us ? "州別のアップルストア" : `${rtPlace(x)}の店舗`}</Link>）。周りより1時間早く入荷する店舗は、知っておく価値があります</>, step: true }],
 
     // ---- 日別
     dayLead: (x: RestockTimesView) => {
@@ -499,7 +505,7 @@ export const views: Dict["views"] = {
       ) : t.n > 0 ? (
         <b>{t.days === tracked ? `計測した${N(t.days)}日すべて` : `${longDate(t.since)}以降の${N(tracked)}日中${N(t.days)}日`}で、1回以上の入荷を確認しました{t.peakWeekday != null ? `。最も多い曜日は${weekdayName(t.peakWeekday)}です` : ""}。</b>
       ) : (
-        <b>{longDate(t.since)}以降、{country(x.c)}で確認された入荷はありません。</b>
+        <b>{longDate(t.since)}以降、{rtPlace(x)}で確認された入荷はありません。</b>
       );
     },
     daysTracked: "入荷があった日 / 計測した日",
@@ -507,7 +513,7 @@ export const views: Dict["views"] = {
     busiestDayNone: "最多の日",
     drop: (x: RestockTimesView, drop: { at: string; restocks: number }) => `30分以内に入荷した店舗数：${zoneStamp(drop.at, x.c)}（${N(drop.restocks)}構成）。外から見えた一斉の放出`,
     weekend: (x: RestockTimesView) => `土日の入荷（${N(x.weekend)}回）`,
-    dayCaption: (x: RestockTimesView) => `${country(x.c)}のiPhone Duoの入荷（日別）${x.t.reports.length ? "。「報告」の行は、私たちの計測開始前の日について他サイトが公開した観測で、時系列の参考としてのみ表示しています" : ""}`,
+    dayCaption: (x: RestockTimesView) => `${rtPlace(x)}のiPhone Duoの入荷（日別）${x.t.reports.length ? "。「報告」の行は、私たちの計測開始前の日について他サイトが公開した観測で、時系列の参考としてのみ表示しています" : ""}`,
     dayHead: { date: "日付", restocks: "入荷", stores: "店舗", busiest: "最多の時間帯", source: "出典" },
     soFar: " · ここまで",
     reportedBy: (names: string[]) => <>{names.join(" / ")}の報告</>,
@@ -516,20 +522,20 @@ export const views: Dict["views"] = {
       { text: <><b className="text-ink">{dateLabel(resumed)}</b>：店頭受け取りの予約が再開{x.us ? "（MacRumors）" : ""}</> },
       x.t.reports.length
         ? { text: <><b className="text-ink">報告</b>の行：{x.reportNames.join("・")}による発売週の観測。集計には含めません</> }
-        : { text: <>{country(x.c)}の全店舗の記録は<b className="text-ink">{longDate(x.t.since)}</b>から</> },
+        : { text: <>{rtPlace(x)}の全店舗の記録は<b className="text-ink">{longDate(x.t.since)}</b>から</> },
       ...(x.t.n > 0 && x.t.peakWeekday == null ? [{ text: <>最も多い曜日は、データが<b className="text-ink">{WEEKDAY_MIN_SPAN}日分</b>そろってから示します（現在{N(x.tracked)}日分）</>, no: true }] : []),
       { text: <><b className="text-ink">店舗</b>の列に注目：同じ入荷回数でも、店舗数が多い日のほうがチャンスは大きい</>, step: true },
     ],
 
     // ---- 場所
     whereLead: (x: RestockTimesView, hit: { name: string; restocks: number; stores: number; storesTotal: number }[], total: number) => (
-      <b>{hit[0].name}：{dateLabel(x.t.since, false)}以降、{N(hit[0].storesTotal)}店舗中{N(hit[0].stores)}店舗で{N(hit[0].restocks)}回の入荷{hit[1] ? <>、次いで{hit[1].name}（{N(hit[1].restocks)}回）</> : null}{hit[2] ? <>、{hit[2].name}（{N(hit[2].restocks)}回）</> : null}。{N(total)}{rtRegion(x)}のうち{N(hit.length)}で入荷があり{total - hit.length > 0 ? `、残る${N(total - hit.length)}はまだです` : "、すべてで入荷を確認しました"}。</b>
+      <b>{hit[0].name}：{dateLabel(x.t.since, false)}以降、{N(hit[0].storesTotal)}店舗中{N(hit[0].stores)}店舗で{N(hit[0].restocks)}回の入荷{hit[1] ? <>、次いで{hit[1].name}（{N(hit[1].restocks)}回）</> : null}{hit[2] ? <>、{hit[2].name}（{N(hit[2].restocks)}回）</> : null}。{N(total)}{rtUnit(x)}のうち{N(hit.length)}で入荷があり{total - hit.length > 0 ? `、残る${N(total - hit.length)}はまだです` : "、すべてで入荷を確認しました"}。</b>
     ),
-    whereNone: (x: RestockTimesView) => <b>{country(x.c)}で入荷が確認された{rtRegion(x)}はまだありません。最初の入荷から表が埋まります。</b>,
-    regionCaption: (x: RestockTimesView) => `${country(x.c)}の${rtRegion(x)}別・iPhone Duoの確認済み入荷（${dateLabel(x.t.since, false)}〜今日）`,
-    regionHead: (x: RestockTimesView) => [rtRegion(x), "入荷", "入荷した店舗", "最新の入荷（現地時間）"],
+    whereNone: (x: RestockTimesView) => <b>{rtPlace(x)}で入荷が確認された{rtUnit(x)}はまだありません。最初の入荷から表が埋まります。</b>,
+    regionCaption: (x: RestockTimesView) => `${rtPlace(x)}の${rtUnit(x)}別・iPhone Duoの確認済み入荷（${dateLabel(x.t.since, false)}〜今日）`,
+    regionHead: (x: RestockTimesView) => [rtUnit(x), "入荷", "入荷した店舗", "最新の入荷（現地時間）"],
     ofN: (a: number, b: number) => <>{N(b)}店舗中{N(a)}</>,
-    storesCaption: (x: RestockTimesView) => `${country(x.c)}でiPhone Duoの入荷が多い店舗（${dateLabel(x.t.since, false)}〜今日）`,
+    storesCaption: (x: RestockTimesView) => `${rtPlace(x)}でiPhone Duoの入荷が多い店舗（${dateLabel(x.t.since, false)}〜今日）`,
     storesHead: ["店舗", "入荷", "日数", "多い時間帯", "最新（現地時間）"],
     swaps: (x: RestockTimesView) => [
       { no: "入荷回数が最も多い店舗（場所は問わない）", yes: `${x.pattern ? `${hourLabel(x.w.from)}ごろ` : "朝"}、1時間以内で行ける2〜3店舗`, why: "行けない店舗の入荷は、入荷ではありません。いちばん多い店舗でも、1日のうち数分以外は受け取り不可です。" },
@@ -546,8 +552,8 @@ export const views: Dict["views"] = {
     restocksOf: (a: string) => `${a}の入荷`,
     byStorage: "容量別",
     byColour: "カラー別",
-    configNone: (x: RestockTimesView) => <b>{country(x.c)}で入荷が確認された構成はまだありません。最初の入荷が入る行として、{N(x.configs)}つの構成を並べています。</b>,
-    configCaption: (x: RestockTimesView) => `${country(x.c)}のiPhone Duo、構成別の確認済み入荷（${dateLabel(x.t.since, false)}〜今日）`,
+    configNone: (x: RestockTimesView) => <b>{rtPlace(x)}で入荷が確認された構成はまだありません。最初の入荷が入る行として、{N(x.configs)}つの構成を並べています。</b>,
+    configCaption: (x: RestockTimesView) => `${rtPlace(x)}のiPhone Duo、構成別の確認済み入荷（${dateLabel(x.t.since, false)}〜今日）`,
     configHead: ["構成", "入荷", "割合", "最新の入荷（現地時間）"],
     configKeys: (x: RestockTimesView): Point[] => [
       { text: <>構成の選び方は、<b className="text-ink">店舗の選び方より重要</b>です</> },
@@ -559,13 +565,13 @@ export const views: Dict["views"] = {
     ],
 
     // ---- 持続時間
-    howLongLead: (x: RestockTimesView, sell: SelloutFacts) => <b>{country(x.c)}で完売した入荷{N(sell.n)}回のうち半数は{N(sell.medianSec)}秒以内に消え、{rtPct(sell.within2min)}が2分以内、{rtPct(sell.within20min)}が20分以内でした。</b>,
+    howLongLead: (x: RestockTimesView, sell: SelloutFacts) => <b>{rtPlace(x)}で完売した入荷{N(sell.n)}回のうち半数は{N(sell.medianSec)}秒以内に消え、{rtPct(sell.within2min)}が2分以内、{rtPct(sell.within20min)}が20分以内でした。</b>,
     secUnit: "秒",
     medianListing: "通常の在庫時間（出てから消えるまで、中央値）",
     within2: "2分以内に完売",
     within20: "20分以内に完売",
     fastest: "計測した最速の完売",
-    howLongNone: (x: RestockTimesView) => <b>{country(x.c)}で完売した入荷は、まだ測定できるほどありません。数値は10回から示します。全体像は米国版ページにあります。</b>,
+    howLongNone: (x: RestockTimesView) => <b>{rtPlace(x)}で完売した入荷は、まだ測定できるほどありません。数値は10回から示します。全体像は米国版ページにあります。</b>,
     howLongKeys: (x: RestockTimesView): Point[] => [
       { text: <>2分の窓をつかむのは<b className="text-ink">入荷通知</b>です。apple.comの再読み込みではありません</> },
       { text: <>このページのほかの数字は、すべてこの数字で説明がつきます</> },
@@ -574,16 +580,16 @@ export const views: Dict["views"] = {
     measured: "各数値は、在庫を最初に確認したチェックから、なくなったことを確認したチェックまでの時間です。上限値なので、実際の在庫時間はこれより短くなります。",
 
     // ---- 受け取り不可
-    unavailableLead: (x: RestockTimesView) => <b>入荷は「状態」ではなく一瞬の出来事だからです。{x.one ? "1店舗" : `${N(x.stores)}店舗`} × {N(x.configs)}構成＝{country(x.c)}で在庫になりうるのは{N(x.pairs)}通り。そしていま、iPhone Duoの在庫がある店舗は{N(x.duoNow)}店舗です。</b>,
+    unavailableLead: (x: RestockTimesView) => <b>入荷は「状態」ではなく一瞬の出来事だからです。{x.one ? "1店舗" : `${N(x.stores)}店舗`} × {N(x.configs)}構成＝{rtPlace(x)}で在庫になりうるのは{N(x.pairs)}通り。そしていま、iPhone Duoの在庫がある店舗は{N(x.duoNow)}店舗です。</b>,
     pairs: "在庫になりうる店舗×構成の組み合わせ",
     listingNow: "いまiPhone Duoを受け取りできる店舗",
     goneIn2: "2分以内に消えた入荷の割合",
     last24: "過去24時間の確認済み入荷",
     unavailableKeys: (x: RestockTimesView, today: number): Point[] => [
       x.recent.restocks > 0
-        ? { text: <>過去24時間：{country(x.c)}の{N(x.recent.stores)}店舗で<b className="text-ink">確認済みの入荷{N(x.recent.restocks)}回</b></> }
+        ? { text: <>過去24時間：{rtPlace(x)}の{N(x.recent.stores)}店舗で<b className="text-ink">確認済みの入荷{N(x.recent.restocks)}回</b></> }
         : today > 0
-          ? { text: <>今日：{country(x.c)}で<b className="text-ink">確認済みの入荷{N(today)}回</b></> }
+          ? { text: <>今日：{rtPlace(x)}で<b className="text-ink">確認済みの入荷{N(today)}回</b></> }
           : { text: <>実際にあった入荷は、上の日別の表で確認できます</> },
       { text: <>どれもapple.comに表示されたのは<b className="text-ink">1〜2分</b>だけ</> },
       { text: <>4日目でも14日目でも「どこも受け取り不可」は、Appleが販売をやめたという意味では<b className="text-ink">ありません</b></>, no: true },
@@ -591,7 +597,7 @@ export const views: Dict["views"] = {
     unavailableLinks: { explained: "「受け取り不可」の意味（英語）", howToGet: "iPhone Duoを手に入れる方法（英語）" },
 
     // ---- Reddit
-    redditLead: (x: RestockTimesView) => <b><a href="https://www.reddit.com/r/applestore/" target="_blank" rel="noopener nofollow">r/applestore</a>や<a href="https://www.reddit.com/r/iphone/" target="_blank" rel="noopener nofollow">r/iphone</a>の経験則の多くは誠実ですが、1店舗だけの話で、1日で古くなります。よく見る4つの主張を、{country(x.c)}で確認した{N(x.t.n)}回の入荷と照らし合わせました。</b>,
+    redditLead: (x: RestockTimesView) => <b><a href="https://www.reddit.com/r/applestore/" target="_blank" rel="noopener nofollow">r/applestore</a>や<a href="https://www.reddit.com/r/iphone/" target="_blank" rel="noopener nofollow">r/iphone</a>の経験則の多くは誠実ですが、1店舗だけの話で、1日で古くなります。よく見る4つの主張を、{rtPlace(x)}で確認した{N(x.t.n)}回の入荷と照らし合わせました。</b>,
     redditCaption: "iPhone Duoの入荷に関するRedditのよくある主張を、PickupCheckerの確認済み入荷で検証",
     redditHead: ["主張", "データが示すこと"],
     claims: (x: RestockTimesView): { claim: string; answer: ReactNode }[] => {
@@ -611,7 +617,7 @@ export const views: Dict["views"] = {
     // ---- 数え方
     methodLead: <b>入荷として数えるのは、apple.comが、それまで掲載していなかった構成をある店舗で店頭受け取り可能と掲載し、それを2回のチェックが一致して確認したときです。</b>,
     methodKeys: (x: RestockTimesView): Point[] => [
-      { text: <>{x.one ? `${country(x.c)}のアップルストア` : `${country(x.c)}の全アップルストア`}を<b className="text-ink">{SPEED.checkSec}秒ごと</b>、通知の設定された店舗は<b className="text-ink">{SPEED.fastSec}秒ごと</b>にチェック</> },
+      { text: <>{x.one ? `${rtPlace(x)}のアップルストア` : `${rtPlace(x)}の全アップルストア`}を<b className="text-ink">{SPEED.checkSec}秒ごと</b>、通知の設定された店舗は<b className="text-ink">{SPEED.fastSec}秒ごと</b>にチェック</> },
       { text: <>他サイトの公表値は<b className="text-ink">{others}</b>。比べるのは公表された数字だけです</> },
       { text: <>最初の「在庫あり」は<b className="text-ink">約1秒後</b>にもう一度確かめてから数えます</> },
       { text: <>消えた在庫は<b className="text-ink">次のチェック</b>で確定</> },
@@ -621,7 +627,7 @@ export const views: Dict["views"] = {
       { text: <>約5分ごとに更新。<Link href={x.logHref}>入荷履歴</Link>そのものはライブです</>, step: true },
     ],
     quote: "このページの数値は、リンクを添えていただければ自由に引用できます。PickupCheckerはAppleと提携していない独立したサービスで、誰でもapple.comで見られる受け取り在庫を、はるかに高い頻度で読み取っています。",
-    alertIn: (x: RestockTimesView) => <>{x.one ? "" : `${country(x.c)}で`}iPhone Duoの入荷通知を設定</>,
+    alertIn: (x: RestockTimesView) => <>{x.one ? "" : `${rtPlace(x)}で`}iPhone Duoの入荷通知を設定</>,
 
     // ---- 関連、FAQ、出典
     related: "iPhone Duoのほかの疑問",
@@ -635,6 +641,12 @@ export const views: Dict["views"] = {
       unavailable: "「受け取り不可」の意味",
     },
     otherCountries: ((us: boolean) => (us ? "ほかの国の同じページ" : "ほかの国・地域")) as unknown as RT["otherCountries"],
+    place: {
+      byCity: "都市別",
+      storesLive: (x: RestockTimesView) => `${rtPlace(x)}のアップルストア（リアルタイム在庫）`,
+      countryPage: (c: Country) => `${country(c)}のiPhone Duo入荷時間`,
+      sourcesWhere: (x: RestockTimesView) => `${rtPlace(x)}のアップルストア全${N(x.stores)}店舗`,
+    },
     faqTitle: "よくある質問",
   },
 };

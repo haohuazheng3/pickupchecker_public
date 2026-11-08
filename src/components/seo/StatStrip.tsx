@@ -29,7 +29,7 @@ export function StatStrip({ items, className = "", cols = 6 }: { items: Stat[]; 
  * The standard strip for a place or a model: stores, cities, stock now per model, restocks 24 h / 7 d / 30 d,
  * sell-outs, median time available and the last restock.
  */
-export function PlaceStatStrip({ stores, cities, stockNow, stats, storeMode = false, model }: {
+export function PlaceStatStrip({ stores, cities, stockNow, stats, storeMode = false, model, scoped }: {
   stores: number;
   cities?: number;
   /** Stores with stock per model (place pages) or configurations available per model (store pages). */
@@ -39,6 +39,8 @@ export function PlaceStatStrip({ stores, cities, stockNow, stats, storeMode = fa
   storeMode?: boolean;
   /** Model page: show just this model's stock. */
   model?: ModelKey;
+  /** The restock / sell-out / last-restock tiles count one model only (its short name, "Duo"): the label says so. */
+  scoped?: string;
 }) {
   const d = t().content.statStrip;
   const lang = pageLocale().lang;
@@ -51,11 +53,12 @@ export function PlaceStatStrip({ stores, cities, stockNow, stats, storeMode = fa
     items.push({ label: d.stores, value: v(stores), hint: cities != null ? countIn(lang, cities, d.nCities) : d.tracked });
     for (const m of MODELS) items.push({ label: d.modelNow(bidi(m.short, lang)), value: v(stockNow[m.key]), hint: storeMode ? d.configsInStock : countIn(lang, stockNow[m.key], d.storesWithStock), live: stockNow[m.key] > 0 });
   }
-  items.push({ label: d.restocks24h, value: v(stats.day), hint: d.restocksHint(s(stats.week), s(stats.month), s(stats.days)) });
-  items.push({ label: d.sellOuts(s(stats.days)), value: v(stats.soldouts), hint: stats.medianMs != null ? d.stays(fmtDuration(stats.medianMs, lang)) : d.noPairs });
+  const sc = (label: string) => (scoped ? d.scoped(label, bidi(scoped, lang)) : label);
+  items.push({ label: sc(d.restocks24h), value: v(stats.day), hint: d.restocksHint(s(stats.week), s(stats.month), s(stats.days)) });
+  items.push({ label: sc(d.sellOuts(s(stats.days))), value: v(stats.soldouts), hint: stats.medianMs != null ? d.stays(fmtDuration(stats.medianMs, lang)) : d.noPairs });
   const lr = stats.lastRestock;
   const lrStore = lr ? STORE_INDEX.get(lr.storeNumber) : undefined;
   const lrItem = lr ? PART_INDEX.get(lr.partNumber) : undefined;
-  items.push({ label: d.lastRestock, value: lr ? <LiveAgo iso={lr.at} /> : d.noneYet, hint: lr && lrItem ? `${lrItem.storage} ${colorLabel(lrItem.color, lang)}${lrStore && !storeMode ? ` · ${storeLabel(lrStore, lang)}` : ""}` : d.inLastDays(s(stats.days)) });
+  items.push({ label: sc(d.lastRestock), value: lr ? <LiveAgo iso={lr.at} /> : d.noneYet, hint: lr && lrItem ? `${lrItem.storage} ${colorLabel(lrItem.color, lang)}${lrStore && !storeMode ? ` · ${storeLabel(lrStore, lang)}` : ""}` : d.inLastDays(s(stats.days)) });
   return <StatStrip items={items} />;
 }

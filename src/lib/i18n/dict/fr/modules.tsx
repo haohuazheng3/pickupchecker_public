@@ -10,6 +10,11 @@ const n = (v: number) => num("fr", v);
 const restocks = (v: number) => plural("fr", v, { one: "# retour en stock", other: "# retours en stock" });
 const soldouts = (v: number) => plural("fr", v, { one: "# rupture", other: "# ruptures" });
 
+const cfgs = (v: number) => plural("fr", v, { one: "# configuration", other: "# configurations" });
+const alertes = (v: number) => plural("fr", v, { one: "# alerte", other: "# alertes" });
+/** « dans le Michigan » tel quel pour un magasin ; sinon « pour les 12 Apple Store dans le Michigan ». */
+const frWhere = (o: { one: boolean; stores: number; label: string }) => (o.one ? o.label : o.stores === 1 ? `pour l’Apple Store ${o.label}` : `pour les ${n(o.stores)} Apple Store ${o.label}`);
+
 export const modules: Dict["modules"] = {
   daily: {
     empty: (label, days) => `Aucun retour en stock ni rupture enregistré ${label} sur les ${days} derniers jours : le graphique se remplit dès le premier.`,
@@ -192,5 +197,53 @@ export const modules: Dict["modules"] = {
     more: (k) => `+${n(k)}`,
     seen: (ago) => <>Vu {ago}</>,
     loading: "Chargement du stock",
+  },
+  duoNow: {
+    eyebrow: (label) => `iPhone Duo ${label} en ce moment`,
+    notNow: (o) => (o.n === 1
+      ? <><b className="text-ink">Pas en stock au {o.stamp}</b> : l’Apple Store {o.label} ne propose aucun iPhone Duo en retrait.</>
+      : <><b className="text-ink">Pas en stock au {o.stamp}</b> : aucun des {n(o.n)} Apple Store {o.label} ne propose d’iPhone Duo en retrait.</>),
+    notNowOne: (o) => <><b className="text-ink">Pas en stock au {o.stamp}</b> : {o.name} ne propose aucune configuration d’iPhone Duo en retrait.</>,
+    inStock: (o) => <><b className="text-ink">En stock au {o.stamp}</b> : {n(o.k)} Apple Store sur {n(o.n)} {o.label} {o.k > 1 ? "proposent" : "propose"} un iPhone Duo en retrait — {o.list}.</>,
+    inStockOne: (o) => <><b className="text-ink">En stock au {o.stamp}</b> : {o.name} propose {cfgs(o.k)} d’iPhone Duo sur {n(o.total)} en retrait — {o.list}.</>,
+    storeItem: (store, configs, ago) => <>{store} ({cfgs(configs)}{ago ? `, vu ${ago}` : ""})</>,
+    configItem: (config, ago) => <>{config}{ago ? ` (vue ${ago})` : ""}</>,
+    lastIn: (o) => <>Dernier passage en stock : <b className="text-ink">{o.config}</b>{o.store != null && <> chez {o.store}</>}, {o.when}{o.lasted ? <> ({o.lasted})</> : null}.</>,
+    neverYet: (label, since) => `Aucun retour en stock d’iPhone Duo confirmé ${label} depuis le début du suivi, le ${since}.`,
+    others: (o) => (o.one
+      ? `L’iPhone 18 Pro est disponible ici dans ${n(o.pro)} configurations sur ${n(o.configs)}, le 18 Pro Max dans ${n(o.max)}.`
+      : `L’iPhone 18 Pro est disponible dans ${n(o.pro)} de ces magasins, le 18 Pro Max dans ${n(o.max)}.`),
+    updated: (stamp) => `Mis à jour : ${stamp}`,
+    checked: (note) => `vérifié ${note}`,
+    since: (date) => `données depuis le ${date}`,
+    method: "un retour en stock ne compte que si deux vérifications concordent ; les premières détections sont exclues",
+    tShare: (range) => `des retours en stock dans la tranche ${range}`,
+    tBusiest: (count) => `heure la plus active · ${restocks(count)}`,
+    tHalf: "la moitié épuisée en moins de",
+    tSince: (date) => `retours en stock confirmés depuis le ${date}`,
+    tToday: "aujourd’hui, jusqu’ici",
+    mostOften: (config, k, total) => `le plus souvent ${config} (${n(k)} sur ${n(total)})`,
+    /** Le nom des fuseaux américains n’est utile qu’en anglais : ici, toujours « heure locale ». */
+    zone: (tz: string | null): string => {
+      void tz;
+      return "heure locale";
+    },
+    summary: (o) =>
+      `${o.pct} des ${restocks(o.n)} d’iPhone Duo confirmés par PickupChecker ${frWhere(o)} depuis le ${o.since} ont eu lieu dans la tranche ${o.range}, ${o.zone} ; l’heure la plus active a été ${o.busiest} (${restocks(o.busiestN)}).${o.median ? ` La moitié a été épuisée en moins de ${o.median}.` : ""}${o.config ? ` La configuration revenue le plus souvent est ${o.config} (${n(o.k)} sur ${n(o.n)}).` : ""}`,
+    tooFew: (o) => `${restocks(o.n)} d’iPhone Duo ${o.n > 1 ? "confirmés" : "confirmé"} ${frWhere(o)} depuis le ${o.since} : trop peu pour indiquer une heure habituelle ; chacun est listé ci-dessous.`,
+    hourByHour: "Heure par heure, magasin par magasin →",
+    lastThree: (k, label) => (k === 1 ? `Le dernier retour en stock d’iPhone Duo ${label}` : `Les ${n(k)} derniers retours en stock d’iPhone Duo ${label}`),
+    secs: (v) => `${n(v)} s`,
+    mins: (v) => `${n(v)} min`,
+    listedRange: (low, high) => `en stock ${low}–${high}`,
+    listedAbout: (x) => `en stock environ ${x}`,
+    stillListed: (x) => `toujours en stock (${x})`,
+    ago: (x) => `il y a ${x}`,
+    alerts: (o) => (o.one
+      ? `Sur les ${n(o.days)} derniers jours, PickupChecker a envoyé ${alertes(o.sent)} à ses membres pour des retours en stock d’iPhone Duo ${o.label}.`
+      : `Sur les ${n(o.days)} derniers jours, PickupChecker a envoyé ${alertes(o.sent)} à ses membres pour des retours en stock d’iPhone Duo dans ${n(o.stores)} Apple Store sur ${n(o.total)} ${o.label}.`),
+    alertMe: (label) => `M’alerter ${label}`,
+    unknown: "Le rythme des retours en stock est momentanément illisible ; le stock en direct de cette page n’est pas touché.",
+    allModels: (o) => `Les trois iPhone : ${restocks(o.n)} en ${n(o.days)} jours${o.peak ? `, surtout vers ${o.peak}` : ""}.`,
   },
 };

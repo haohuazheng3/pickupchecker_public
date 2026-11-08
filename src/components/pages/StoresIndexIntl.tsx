@@ -13,6 +13,7 @@ import { treeOf } from "@/lib/seo/tree";
 import { Faq } from "@/components/seo/Faq";
 import { DailyBars } from "@/components/restocks/DailyBars";
 import { RestockClock } from "@/components/restocks/RestockClock";
+import { DuoNow } from "@/components/restocks/DuoNow";
 import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { ModelStoreMatrix } from "@/components/stores/ModelStoreMatrix";
 import { Figure } from "@/components/content/Figure";
@@ -61,7 +62,7 @@ async function IntlStoresIndex({ c }: { c: Country }) {
   const countQ = { a: V.countAnswer(stores.length, P.spreadPhrase(cc), tops) };
   const questions = [
     V.duoNow(c, stores.length, duoStores),
-    ...V.faq({ kind: "state", place: where, stores, stockNow: d.stockNow, stats: d.pstats, peak: peakOf(d.stats, lang) }),
+    ...V.faq({ kind: "state", place: where, stores, stockNow: d.stockNow, stats: d.pstats, peak: peakOf(d.duoClock, lang) }),
     P.taxFaq(cc, where),
   ];
   const facts = emptyFacts(cc);
@@ -77,10 +78,11 @@ async function IntlStoresIndex({ c }: { c: Country }) {
       {/* The answer sentence first, on its own; a native intro may carry a second paragraph ("\n\n"). */}
       {intro.split("\n\n").map((para, i) => <p key={i} className={`${i ? "mt-2" : "mt-3"} max-w-3xl text-lg leading-relaxed text-ink-2`}><Inline text={para} facts={facts} /></p>)}
       <div className="mt-6 flex flex-wrap gap-2"><Link href={`${mapPath(cc)}?model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">{C.liveMap}</Link><Link href={restocksPath(cc)} className="btn btn-ghost btn-sm">{C.restockLog}</Link><Link href={alert} className="btn btn-primary btn-sm">{C.alertMe}</Link></div>
+      <div className="mt-5"><DuoNow d={d.now} label={C.inCountry(c)} name={where} stores={stores} country={cc} restockTimesHref={`${prefixOf(cc)}/iphone-duo-restock-times`} alertHref={alert} /></div>
       <AlertPanelFor href={alert} summary={V.panel(c)} country={cc} />
 
       <div className="mt-6"><ModelPlaceCards place={treeOf(cc).root} stockNow={d.stockNow} of={stores.length} unit={C.storesWithIt} /></div>
-      <div className="mt-3"><PlaceStatStrip stores={stores.length} cities={cities.length} stockNow={d.stockNow} stats={d.pstats} /></div>
+      <div className="mt-3"><PlaceStatStrip stores={stores.length} cities={cities.length} stockNow={d.stockNow} stats={d.duo!} scoped="Duo" /></div>
       <section className="mt-6" aria-label={V.matrixLabel}>
         <h2 className="text-xl font-semibold">{V.matrixH2(c)}</h2>
         <p className="mt-1 text-sm text-ink-3">{V.matrixHint}</p>
@@ -131,7 +133,8 @@ async function IntlStoresIndex({ c }: { c: Country }) {
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">{V.whenRestock(c)}</h2>
-          <div className="mt-3"><RestockClock stats={d.stats} label={C.inCountry(c)} reports={d.reports} /></div>
+          <div className="mt-3"><RestockClock stats={d.duoClock} label={C.inCountry(c)} reports={d.duoReports} /></div>
+          <p className="mt-2 text-xs text-ink-3">{D.modules.duoNow.allModels({ n: d.pstats.month, days: d.pstats.days, peak: peakOf(d.stats, lang)?.hour ?? null })}</p>
         </section>
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">{V.howFast(c)}</h2>

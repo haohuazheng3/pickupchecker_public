@@ -10,6 +10,13 @@ const CHECK_NOTE = "ogni 15 s, 5 s con un avviso";
 /** "il martedì" / "la domenica" from a weekday name. */
 const ilDay = (d: string) => (/^domenic/i.test(d) ? `la ${d}` : `il ${d}`);
 
+/** "dal 3 novembre" / "dall'8 novembre". */
+const dal = (d: string) => (/^(8|11\b|1\b)/.test(d) ? `dall'${d}` : `dal ${d}`);
+/** "Il 58%" / "L'80%" / "L'11%". */
+const ilPct = (p: string) => (/^(8|11\D|1\D)/.test(p) ? `L'${p}` : `Il ${p}`);
+/** The label as is for one store; otherwise "nei 12 Apple Store in Italia". */
+const itWhere = (o: { one: boolean; stores: number; label: string }) => (o.one ? o.label : o.stores === 1 ? `nell'Apple Store ${o.label}` : `${dei(o.stores).replace(/^d/, "n")} Apple Store ${o.label}`);
+
 export const modules: Dict["modules"] = {
   daily: {
     empty: (label: string, days: number) => `Nessun rifornimento o esaurimento registrato ${label} negli ultimi ${N(days)} giorni: il grafico si riempie dal primo.`,
@@ -194,5 +201,53 @@ export const modules: Dict["modules"] = {
     more: (n: number) => `+${N(n)}`,
     seen: (ago: ReactNode) => <>Visto {ago}</>,
     loading: "Caricamento disponibilità",
+  },
+  duoNow: {
+    eyebrow: (label) => `iPhone Duo ${label} in questo momento`,
+    notNow: (o) => (o.n === 1
+      ? <><b className="text-ink">Non disponibile al {o.stamp}</b>: l&apos;Apple Store {o.label} non ha iPhone Duo disponibili per il ritiro.</>
+      : <><b className="text-ink">Non disponibile al {o.stamp}</b>: nessuno {dei(o.n)} Apple Store {o.label} ha un iPhone Duo disponibile per il ritiro.</>),
+    notNowOne: (o) => <><b className="text-ink">Non disponibile al {o.stamp}</b>: {o.name} non ha nessuna configurazione di iPhone Duo disponibile per il ritiro.</>,
+    inStock: (o) => <><b className="text-ink">Disponibile al {o.stamp}</b>: {N(o.k)} Apple Store su {N(o.n)} {o.label} {o.k === 1 ? "ha" : "hanno"} un iPhone Duo disponibile per il ritiro — {o.list}.</>,
+    inStockOne: (o) => <><b className="text-ink">Disponibile al {o.stamp}</b>: {o.name} ha {pl(o.k, "configurazione", "configurazioni")} di iPhone Duo su {N(o.total)} {o.k === 1 ? "disponibile" : "disponibili"} per il ritiro — {o.list}.</>,
+    storeItem: (store, configs, ago) => <>{store} ({pl(configs, "configurazione", "configurazioni")}{ago ? `, vista ${ago}` : ""})</>,
+    configItem: (config, ago) => <>{config}{ago ? ` (vista ${ago})` : ""}</>,
+    lastIn: (o) => <>Ultima disponibilità: <b className="text-ink">{o.config}</b>{o.store != null && <> da {o.store}</>}, {o.when}{o.lasted ? <> ({o.lasted})</> : null}.</>,
+    neverYet: (label, since) => `Nessun rifornimento di iPhone Duo confermato ${label} da quando è iniziato il monitoraggio (${since}).`,
+    others: (o) => (o.one
+      ? `L'iPhone 18 Pro è disponibile qui in ${N(o.pro)} configurazioni su ${N(o.configs)}, il 18 Pro Max in ${N(o.max)}.`
+      : `L'iPhone 18 Pro è disponibile in ${N(o.pro)} di questi negozi, il 18 Pro Max in ${N(o.max)}.`),
+    updated: (stamp) => `Aggiornato al ${stamp}`,
+    checked: (note) => `controllato ${note}`,
+    since: (date) => `dati ${dal(date)}`,
+    method: "un rifornimento conta solo quando due controlli concordano; i primi avvistamenti sono esclusi",
+    tShare: (range) => `dei rifornimenti nella fascia ${range}`,
+    tBusiest: (count) => `ora più intensa · ${pl(count, "rifornimento", "rifornimenti")}`,
+    tHalf: "metà esaurita entro",
+    tSince: (date) => `rifornimenti confermati ${dal(date)}`,
+    tToday: "oggi, finora",
+    mostOften: (config, k, total) => `più spesso ${config} (${N(k)} su ${N(total)})`,
+    /** I nomi dei fusi orari statunitensi servono solo in inglese: qui sempre "ora locale". */
+    zone: (tz: string | null): string => {
+      void tz;
+      return "ora locale";
+    },
+    summary: (o) =>
+      `${ilPct(o.pct)} ${dei(o.n)} rifornimenti di iPhone Duo confermati da PickupChecker ${itWhere(o)} ${dal(o.since)} è avvenuto nella fascia ${o.range}, ${o.zone}; l'ora più intensa è stata ${o.busiest} (${pl(o.busiestN, "rifornimento", "rifornimenti")}).${o.median ? ` La metà è andata esaurita entro ${o.median}.` : ""}${o.config ? ` La configurazione tornata disponibile più spesso è ${o.config} (${N(o.k)} su ${N(o.n)}).` : ""}`,
+    tooFew: (o) => `${pl(o.n, "rifornimento", "rifornimenti")} di iPhone Duo ${o.n === 1 ? "confermato" : "confermati"} ${itWhere(o)} ${dal(o.since)}: troppo pochi per indicare un orario abituale; sono tutti elencati qui sotto.`,
+    hourByHour: "Ora per ora, negozio per negozio →",
+    lastThree: (k, label) => (k === 1 ? `L'ultimo rifornimento di iPhone Duo ${label}` : `Gli ultimi ${N(k)} rifornimenti di iPhone Duo ${label}`),
+    secs: (v) => `${N(v)} s`,
+    mins: (v) => `${N(v)} min`,
+    listedRange: (low, high) => `disponibile ${low}–${high}`,
+    listedAbout: (x) => `disponibile circa ${x}`,
+    stillListed: (x) => `ancora disponibile (${x})`,
+    ago: (x) => `${x} fa`,
+    alerts: (o) => (o.one
+      ? `Negli ultimi ${N(o.days)} giorni PickupChecker ha inviato ${pl(o.sent, "avviso", "avvisi")} ai membri per rifornimenti di iPhone Duo ${o.label}.`
+      : `Negli ultimi ${N(o.days)} giorni PickupChecker ha inviato ${pl(o.sent, "avviso", "avvisi")} ai membri per rifornimenti di iPhone Duo in ${N(o.stores)} Apple Store su ${N(o.total)} ${o.label}.`),
+    alertMe: (label) => `Avvisami ${label}`,
+    unknown: "L'andamento dei rifornimenti non è disponibile in questo momento; la disponibilità in tempo reale di questa pagina non ne risente.",
+    allModels: (o) => `Tutti e tre gli iPhone: ${pl(o.n, "rifornimento", "rifornimenti")} in ${N(o.days)} giorni${o.peak ? `, soprattutto verso ${o.peak}` : ""}.`,
   },
 };

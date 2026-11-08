@@ -191,6 +191,7 @@ export const content: Dict["content"] = {
     configsInStock: "有貨款式",
     storesWithStock: f({ other: "間有貨" }),
     restocks24h: "24 小時補貨",
+    scoped: (label: string, model: string) => `${label} · ${model}`,
     restocksHint: (week: string, month: string, days: string) => `7 日 ${week} 次 · ${days} 日 ${month} 次`,
     sellOuts: (days: string) => `${days} 日售罄`,
     stays: (duration: string) => `上架約 ${duration}`,

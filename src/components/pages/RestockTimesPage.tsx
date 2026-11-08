@@ -4,6 +4,10 @@
  * shown the way a reader scans it: tiles, tables by local hour, day, region, store and configuration, keyword lines,
  * swap cards and folded notes. Every number is PickupChecker's own confirmed observation (lib/content/restockTimes.ts);
  * other trackers' launch-week reports appear as their own, labelled rows and are never counted.
+ *
+ * With a `scope` the same page answers for one region or city of a country other than the US
+ * (/{cc}/iphone-duo-restock-times/{region}[/{city}], restockPlaces.ts): every number is counted over the place's
+ * stores, every sentence names the place, and the "where" section lists its cities and stores.
  */
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
@@ -16,9 +20,10 @@ import { RichFaq, SourceList } from "@/components/content/RichFaq";
 import { Chips, Measured, Points, Stat, StatGrid, Swap, type Point } from "@/components/ui/Viz";
 import { emptyFacts } from "@/lib/content/facts";
 import type { Faq, Source } from "@/lib/content/types";
-import { catalogFor, storeByNumber, storePath, storesOf } from "@/lib/apple/catalog";
+import { catalogFor, storeByNumber, storePath, storeTimeZone, storesOf, type Store } from "@/lib/apple/catalog";
 import { ALL_CODES, COUNTRIES, prefixOf, type Country } from "@/lib/apple/countries";
-import { DUO_LAUNCH_DAY, DUO_PICKUP_RESUMED, busiestWindow, duoRestockTimes, hourShare, type DayRow } from "@/lib/content/restockTimes";
+import { DUO_LAUNCH_DAY, DUO_PICKUP_RESUMED, busiestWindow, duoRestockTimes, duoRestockTimesAt, hourShare, type DayRow } from "@/lib/content/restockTimes";
+import { restockPlacePages, restockPlaceTarget } from "@/lib/content/restockPlaces";
 import { recentByConfig } from "@/lib/stock/recent";
 import { storesWithStockNow } from "@/lib/stock/queries";
 import { alertHref } from "@/lib/seo/enrich";
@@ -26,9 +31,9 @@ import { REPORT_SOURCES } from "@/lib/restockReports";
 import { englishLocale, pathInLocale, type Lang, type Locale } from "@/lib/i18n/locales";
 import { dict } from "@/lib/i18n/dict";
 import { pageLocale, t as dictT } from "@/lib/i18n/server";
-import { colorLabel, configLabel, countryLabel, regionLabel } from "@/lib/i18n/places";
-import type { RestockTimesView } from "@/lib/i18n/dict/en/views";
-import { hreflangFor } from "./shared";
+import { cityLabel, colorLabel, configLabel, countryLabel, regionLabel } from "@/lib/i18n/places";
+import type { RestockTimesPlace, RestockTimesView } from "@/lib/i18n/dict/en/views";
+import { alternatesIn, hreflangFor } from "./shared";
 import { restockPlaces } from "./PlaceRestockTimesPage";
 import { CHECK_NOTE } from "@/lib/plans";
 
@@ -36,18 +41,65 @@ const SITE = "https://pickupchecker.com";
 /** "Nov 5, 2026, 10:12 AM EST": the visible "updated" stamp, in the country's reference zone. */
 const UPDATED = (tz: string) => new Intl.DateTimeFormat("en-US", { timeZone: tz, month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
 
-const load = cache(async (cc: Country["cc"]) => Promise.all([duoRestockTimes(cc), storesWithStockNow(undefined, cc), recentByConfig({ country: cc })]));
+/** One region or city of a country other than the US that has a restock-times page of its own (restockPlaces.ts). */
+export interface RestockTimesScope {
+  kind: "region" | "city";
+  /** English data names. */
+  region: string;
+  regionSlug: string;
+  city?: string;
+  citySlug?: string;
+  stores: Store[];
+  /** /{cc}/iphone-duo-restock-times/{region}[/{city}] (English form), and the place's live /stores page. */
+  path: string;
+  storesPath: string;
+}
+
+/** The scope of /{cc}/iphone-duo-restock-times/{region}[/{city}]; null when the place has no page of its own. */
+export function restockTimesScope(cc: Country["cc"], regionSlug: string, citySlug?: string): RestockTimesScope | null {
+  if (cc === "us") return null;
+  const r = restockPlaceTarget(cc, regionSlug, citySlug);
+  if (!r || !("page" in r)) return null;
+  const p = r.page;
+  return { kind: p.level, region: p.region, regionSlug, city: p.city, citySlug, stores: p.stores, path: p.path, storesPath: p.storesPath };
+}
+
+/** The scope as the dictionary sees it: the place's name in the page's language and its links. */
+function placeOf(cc: Country["cc"], scope: RestockTimesScope, lang: Lang): RestockTimesPlace {
+  const name = scope.kind === "city" ? cityLabel(cc, scope.city!, lang) : regionLabel(cc, scope.region, lang);
+  const parent = scope.kind === "city" ? restockPlaceTarget(cc, scope.regionSlug) : null;
+  return { kind: scope.kind, name, inName: `in ${name}`, storesHref: scope.storesPath, parentHref: parent && "page" in parent ? parent.page.path : null };
+}
+
+/** `key`: null = the whole country; the place's store numbers joined by commas = one place (a stable cache key). */
+const load = cache(async (cc: Country["cc"], key: string | null) => {
+  if (!key) return Promise.all([duoRestockTimes(cc), storesWithStockNow(undefined, cc), recentByConfig({ country: cc })]);
+  const numbers = key.split(",");
+  const stores = numbers.map((n) => storeByNumber(n)).filter((s): s is Store => Boolean(s));
+  return Promise.all([duoRestockTimesAt(cc, stores), storesWithStockNow(numbers, cc), recentByConfig({ storeNumbers: numbers, country: cc })]);
+});
+const keyOf = (scope?: RestockTimesScope | null) => (scope ? scope.stores.map((s) => s.storeNumber).sort().join(",") : null);
 
 export const RESTOCK_TIMES_TITLE_US = "When Does Apple Restock the iPhone Duo? Times by Hour & Day";
 
-export function restockTimesTitle(c: Country, lang: Lang = "en"): string {
-  return c.cc === "us" ? RESTOCK_TIMES_TITLE_US : dict(lang).views.restockTimes.title(c);
+export function restockTimesTitle(c: Country, lang: Lang = "en", place?: RestockTimesPlace): string {
+  return c.cc === "us" ? RESTOCK_TIMES_TITLE_US : dict(lang).views.restockTimes.title(c, place);
 }
 
-export async function restockTimesMetadata(c: Country, loc: Locale = englishLocale(c.cc)): Promise<Metadata> {
-  const [t] = await load(c.cc);
-  const title = restockTimesTitle(c, loc.lang);
-  const description = dict(loc.lang).views.restockTimes.metaDescription({ c, t, w: busiestWindow(t.byHour), pattern: t.peakHour != null });
+export async function restockTimesMetadata(c: Country, loc: Locale = englishLocale(c.cc), scope?: RestockTimesScope | null): Promise<Metadata> {
+  const [t] = await load(c.cc, keyOf(scope));
+  const place = scope ? placeOf(c.cc, scope, loc.lang) : undefined;
+  const title = restockTimesTitle(c, loc.lang, place);
+  const description = dict(loc.lang).views.restockTimes.metaDescription({ c, t, w: busiestWindow(t.byHour), pattern: t.peakHour != null, place });
+  if (scope) {
+    const alternates = alternatesIn(scope.path, loc);
+    return {
+      title: { absolute: `${title} · PickupChecker` },
+      description,
+      alternates,
+      openGraph: { type: "article", siteName: "PickupChecker", title, description, url: alternates.canonical },
+    };
+  }
   const path = `${prefixOf(c.cc)}/iphone-duo-restock-times`;
   const url = loc.native ? pathInLocale(path, loc) : path;
   return {
@@ -84,7 +136,7 @@ function ChipLinks({ items }: { items: { href: string; label: string }[] }) {
   return <div className="my-3 flex flex-wrap gap-1.5">{items.map((l) => <Link key={l.href} href={l.href} className="chip chip-sm no-underline!">{l.label}</Link>)}</div>;
 }
 
-export async function RestockTimesPage({ country: c }: { country: Country }) {
+export async function RestockTimesPage({ country: c, scope }: { country: Country; scope?: RestockTimesScope | null }) {
   const cc = c.cc;
   const us = cc === "us";
   const loc = pageLocale();
@@ -92,8 +144,9 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
   const V = dictT().views.restockTimes;
   const C = dictT().views.common;
   const F = V.fmt;
-  const [t, stockNow, recent] = await load(cc);
-  const stores = storesOf(cc);
+  const [t, stockNow, recent] = await load(cc, keyOf(scope));
+  const stores = scope ? scope.stores : storesOf(cc);
+  const place = scope ? placeOf(cc, scope, lang) : undefined;
   const one = stores.length === 1;
   const facts = emptyFacts(cc);
   const items = catalogFor("duo", cc);
@@ -104,22 +157,27 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
   const today = t.today;
   const latestStore = t.latest ? storeByNumber(t.latest.storeNumber) : undefined;
   const stamp = (iso: string, storeNumber: string) => F.local(iso, storeByNumber(storeNumber) ?? stores[0]);
-  const alert = alertHref({ model: "duo", country: cc });
+  const alert = scope ? alertHref({ model: "duo", state: scope.regionSlug, city: scope.citySlug, country: cc }) : alertHref({ model: "duo", country: cc });
   const logHref = us ? "/restocks" : `${prefixOf(cc)}/restocks`;
-  const storesHref = us ? "/stores" : (prefixOf(cc) || "/");
-  const url = loc.native ? pathInLocale(`${prefixOf(cc)}/iphone-duo-restock-times`, loc) : `${prefixOf(cc)}/iphone-duo-restock-times`;
-  const title = restockTimesTitle(c, lang);
+  const storesHref = scope ? scope.storesPath : us ? "/stores" : (prefixOf(cc) || "/");
+  const countryPath = `${prefixOf(cc)}/iphone-duo-restock-times`;
+  const enPath = scope ? scope.path : countryPath;
+  const url = loc.native ? pathInLocale(enPath, loc) : enPath;
+  const title = restockTimesTitle(c, lang, place);
   const region = (name: string) => regionLabel(cc, name, lang);
+  const city = (name: string) => cityLabel(cc, name, lang);
 
   /** Days from the first tracked one to today, restocks or not (spanDays counts only days between the first and last restock). */
   const tracked = Math.max(t.daily.length, t.days, 1);
   const hours = t.byHour.map((count, hour) => ({ hour, count })).filter((h) => h.count > 0);
   const topHours = [...hours].sort((a, b) => b.count - a.count).slice(0, 3);
   const busiestDay = t.daily.reduce<DayRow | null>((a, d) => (d.restocks > (a?.restocks ?? 0) ? d : a), null);
-  const regions = t.byRegion;
+  // A region page breaks down by its cities, a city page by its stores (below), a country by its regions.
+  const regions = scope?.kind === "region" ? t.byCity : t.byRegion;
+  const unitName = scope?.kind === "region" ? city : region;
   const regionsHit = regions.filter((r) => r.restocks > 0);
   const topRegions = regionsHit.slice(0, 12);
-  const topStores = t.topStores.slice(0, 8).map((r) => ({ ...r, store: storeByNumber(r.storeNumber) })).filter((r) => r.store);
+  const topStores = t.topStores.slice(0, scope ? t.topStores.length : 8).map((r) => ({ ...r, store: storeByNumber(r.storeNumber) })).filter((r) => r.store);
   const parts = t.byPart;
   const topPart = parts[0];
   const lastPart = parts.length ? parts[parts.length - 1] : undefined;
@@ -138,6 +196,7 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
   const x: RestockTimesView = {
     c, t, w, pattern, us, one, tracked, stores: stores.length, duoNow, weekend, sell,
     recent: { restocks: recent.restocks, stores: recent.stores }, configs: items.length, pairs, storageRatio, reportNames, alert, logHref, storesHref,
+    ...(place ? { place } : {}),
   };
 
   const NAV = V.nav(x), H2 = V.h2(x);
@@ -171,8 +230,24 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
   };
 
   const short = (k: Country["cc"]) => (lang === "en" ? COUNTRIES[k].short : countryLabel(k, lang));
-  const crumbs: Crumb[] = us ? [{ href: "/", label: "PickupChecker" }, { label: V.crumb }] : [{ href: prefixOf(cc), label: short(cc) }, { label: V.crumb }];
+  const crumbs: Crumb[] = us
+    ? [{ href: "/", label: "PickupChecker" }, { label: V.crumb }]
+    : scope
+      ? [
+        { href: prefixOf(cc), label: short(cc) },
+        { href: countryPath, label: V.crumb },
+        ...(scope.kind === "city"
+          ? [...(place!.parentHref ? [{ href: place!.parentHref, label: region(scope.region) }] : []), { label: place!.name }]
+          : [{ label: place!.name }]),
+      ]
+      : [{ href: prefixOf(cc), label: short(cc) }, { label: V.crumb }];
   const otherCountries = ALL_CODES.filter((k) => k !== cc).map((k) => ({ href: `${prefixOf(k)}/iphone-duo-restock-times`, label: short(k) }));
+  // The country's place pages ("When does the iPhone Duo restock in Greater London?"), the page itself left out.
+  const placePages = us ? { regions: [], cities: [] } : restockPlacePages(cc);
+  const regionLinks = placePages.regions.filter((p) => p.path !== enPath).map((p) => ({ href: p.path, label: region(p.region), meta: String(p.stores.length) }));
+  const cityLinks = placePages.cities.filter((p) => p.path !== enPath).map((p) => ({ href: p.path, label: city(p.city!), meta: String(p.stores.length) }));
+  /** "By county" as the country page says it, whatever page this is. */
+  const byRegion = V.nav({ ...x, place: undefined }).where;
 
   /** The hero tiles: restocks, the window (or the days), stock now, today (or the weekday). */
   const heroTiles: ReactNode[] = t.n > 0 && !t.unknown
@@ -199,7 +274,7 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
         {V.intro(x)}
       </p>
       {/* The visible date an answer engine quotes next to the numbers (docs/research.md §8.3): English pages only. */}
-      {lang === "en" && <p className="mt-2 text-sm text-ink-3">Updated {UPDATED(c.timeZone).format(new Date(t.at))} · data since {F.longDate(t.since)} · {stores.length} Apple {one ? "Store" : "Stores"} · checked {CHECK_NOTE}</p>}
+      {lang === "en" && <p className="mt-2 text-sm text-ink-3">Updated {UPDATED(scope ? storeTimeZone(stores[0]) : c.timeZone).format(new Date(t.at))} · data since {F.longDate(t.since)} · {stores.length} Apple {one ? "Store" : "Stores"} · checked {CHECK_NOTE}</p>}
       {heroTiles.length > 0 && <StatGrid cols={4} className="mt-6">{heroTiles}</StatGrid>}
       {!t.unknown && t.n > 0 && (
         <Points className="mt-4" items={V.heroPoints(x, t.latest && latestStore && today && today.restocks > 0 ? { config: cfg(t.latest.partNumber), store: latestStore, at: t.latest.at } : null)} />
@@ -296,16 +371,18 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
         {!one && (
           <section id="where" className="scroll-mt-24">
             <h2>{h2Of("where")}</h2>
-            {regionsHit.length > 0 ? (
-              <p>{V.whereLead(x, regionsHit.map((r) => ({ ...r, name: region(r.name) })), regions.length)}</p>
+            {scope?.kind === "city" ? (
+              t.topStores.length === 0 && <p>{V.whereNone(x)}</p>
+            ) : regionsHit.length > 0 ? (
+              <p>{V.whereLead(x, regionsHit.map((r) => ({ ...r, name: unitName(r.name) })), regions.length)}</p>
             ) : (
               <p>{V.whereNone(x)}</p>
             )}
-            {topRegions.length > 0 && (
+            {scope?.kind !== "city" && topRegions.length > 0 && (
               <Table caption={V.regionCaption(x)} head={V.regionHead(x)}>
                 {topRegions.map((r) => (
                   <tr key={r.slug} className="border-b border-line">
-                    <th scope="row" className={rowTh}><Link href={r.path} className="hover:underline">{region(r.name)}</Link></th>
+                    <th scope="row" className={rowTh}><Link href={r.path} className="hover:underline">{unitName(r.name)}</Link></th>
                     <td className={td}>{F.n(r.restocks)}</td>
                     <td className={td}>{V.ofN(r.stores, r.storesTotal)}</td>
                     <td className="py-2 pe-3 align-top">{r.lastAt && r.lastStore ? <>{stamp(r.lastAt, r.lastStore)} · {storeByNumber(r.lastStore) ? <Link href={storePath(storeByNumber(r.lastStore)!)} className="hover:underline">{F.store(storeByNumber(r.lastStore)!)}</Link> : r.lastStore}</> : "–"}</td>
@@ -437,14 +514,23 @@ export async function RestockTimesPage({ country: c }: { country: Country }) {
           { href: "/iphone-duo-near-me", label: V.questions.nearMe },
           { href: "/apple-store-pickup-availability-explained", label: V.questions.unavailable },
         ]} />
-        <LinkRow title={V.otherCountries(us)} links={otherCountries} />
+        {scope && <LinkRow title={place!.name} links={[
+          { href: scope.storesPath, label: V.place.storesLive(x) },
+          // A city's region, when the region has a page: "When does Apple restock the iPhone Duo in Greater London?"
+          ...(place!.parentHref ? [{ href: place!.parentHref, label: restockTimesTitle(c, lang, placeOf(cc, { ...scope, kind: "region", city: undefined, citySlug: undefined }, lang)) }] : []),
+          { href: countryPath, label: V.place.countryPage(c) },
+          { href: alert, label: V.setUpAlert },
+        ]} />}
+        {!us && <LinkRow title={byRegion} links={regionLinks} />}
+        {!us && <LinkRow title={V.place.byCity} links={cityLinks} />}
+        {!scope && <LinkRow title={V.otherCountries(us)} links={otherCountries} />}
         {/* The US page hands down to its states and cities: "When does the iPhone Duo restock in Los Angeles?" (docs/research.md §8.3 B). */}
         {us && <LinkRow title="By state" links={restockPlaces().states.map((p) => ({ href: p.href, label: p.label, meta: String(p.stores.length) }))} />}
         {us && <LinkRow title="By city" links={restockPlaces().cities.map((p) => ({ href: p.href, label: `${p.label}, ${p.stateCode}`, meta: String(p.stores.length) }))} />}
       </RelatedBlock>
 
       <div className="mt-10"><RichFaq items={faq} facts={facts} title={V.faqTitle} /></div>
-      <div className="mt-8"><SourceList sources={sources} facts={facts} where={C.sourcesWhere(stores.length, c)} since={F.longDate(t.since)} /></div>
+      <div className="mt-8"><SourceList sources={sources} facts={facts} where={scope ? V.place.sourcesWhere(x) : C.sourcesWhere(stores.length, c)} since={F.longDate(t.since)} /></div>
     </div>
   );
 }

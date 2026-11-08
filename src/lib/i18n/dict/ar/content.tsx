@@ -176,6 +176,7 @@ export const content: Dict["content"] = {
     configsInStock: "خيارات متوفرة",
     storesWithStock: forms({ one: "متجر فيه مخزون", two: "متجران فيهما مخزون", few: "متاجر فيها مخزون", many: "متجرًا فيه مخزون", other: "متجر فيه مخزون" }),
     restocks24h: "التوفر · 24 ساعة",
+    scoped: (label: string, model: string) => `${label} · ${model}`,
     restocksHint: (week: string, month: string, days: string) => `${week} في 7 أيام · ${month} في ${daysOf(days)}`,
     sellOuts: (days: string) => `النفاد · ${daysOf(days)}`,
     stays: (duration: string) => `يبقى ~${duration}`,

@@ -84,3 +84,32 @@ describe("the state and city restock-times pages (/iphone-duo-restock-times/{sta
     expect(publicRouteCheck(`/iphone-duo-restock-times/${state}/${city}`)).toEqual({ redirect: storePath(store) });
   });
 });
+
+describe("other countries' region and city restock-times pages (/{cc}/iphone-duo-restock-times/{region}[/{city}])", () => {
+  it("lets the place pages through, in English and in the native versions", () => {
+    expect(publicRouteCheck("/uk/iphone-duo-restock-times/greater-london")).toBeNull();
+    expect(publicRouteCheck("/uk/iphone-duo-restock-times/greater-london/london")).toBeNull();
+    expect(publicRouteCheck("/ca/iphone-duo-restock-times/ontario/toronto")).toBeNull();
+    expect(publicRouteCheck("/jp/iphone-duo-restock-times/tokyo/tokyo")).toBeNull();
+    expect(publicRouteCheck("/ja-jp/iphone-duo-restock-times/tokyo/tokyo")).toBeNull();
+    expect(publicRouteCheck("/fr-ca/iphone-duo-restock-times/ontario")).toBeNull();
+    expect(publicRouteCheck("/de-de/iphone-duo-restock-times/bavaria/munich")).toBeNull();
+  });
+  it("308s a place without a page of its own, kept in its language version", () => {
+    // Tokyo prefecture is one city: its city's page. Glasgow's region likewise.
+    expect(publicRouteCheck("/jp/iphone-duo-restock-times/tokyo")).toEqual({ redirect: "/jp/iphone-duo-restock-times/tokyo/tokyo" });
+    expect(publicRouteCheck("/ja-jp/iphone-duo-restock-times/tokyo")).toEqual({ redirect: "/ja-jp/iphone-duo-restock-times/tokyo/tokyo" });
+    expect(publicRouteCheck("/uk/iphone-duo-restock-times/glasgow", "?x=1")).toEqual({ redirect: "/uk/iphone-duo-restock-times/glasgow/glasgow?x=1" });
+    // Singapore and Hong Kong: the region is the country, so the country's page.
+    const sg = publicRouteCheck("/sg/stores/singapore");
+    expect(sg && "redirect" in sg).toBe(true);
+    expect(publicRouteCheck("/sg/iphone-duo-restock-times/singapore")).toEqual({ redirect: "/sg/iphone-duo-restock-times" });
+    expect(publicRouteCheck("/sg/iphone-duo-restock-times/singapore/singapore")).toEqual({ redirect: "/sg/iphone-duo-restock-times" });
+  });
+  it("answers 404 for a wrong region, city or an extra segment", () => {
+    expect(publicRouteCheck("/uk/iphone-duo-restock-times/atlantis")).toEqual({ notFound: true });
+    expect(publicRouteCheck("/uk/iphone-duo-restock-times/greater-london/nowhere")).toEqual({ notFound: true });
+    expect(publicRouteCheck("/uk/iphone-duo-restock-times/greater-london/london/extra")).toEqual({ notFound: true });
+    expect(publicRouteCheck("/ja-jp/iphone-duo-restock-times/atlantis")).toEqual({ notFound: true });
+  });
+});

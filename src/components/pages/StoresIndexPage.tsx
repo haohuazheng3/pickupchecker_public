@@ -7,10 +7,14 @@
 import type { Metadata } from "next";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { cache } from "react";
-import { citiesWithStores, cityPath, statePath, statesWithStores, storesOf, DEFAULT_MODEL, MODELS } from "@/lib/apple/catalog";
+import { citiesWithStores, cityPath, statePath, statesWithStores, storesOf, partNumbersFor, DEFAULT_MODEL, MODELS } from "@/lib/apple/catalog";
 import { prefixOf, type Country } from "@/lib/apple/countries";
 import { alertHref, faq, peakOf, itemListJsonLd } from "@/lib/seo/enrich";
-import { storesWithStockNow, storesStock, placeStats, restockStats, restockReportStats } from "@/lib/stock/queries";
+import { storesWithStockNow, storesStock, placeStats, restockStats, restockReportStats, stockByStore } from "@/lib/stock/queries";
+import { duoRestockTimes } from "@/lib/content/restockTimes";
+import { alertsSentAt, duoNowFrom, stockFromRows } from "@/lib/content/duoNow";
+import { DuoNow } from "@/components/restocks/DuoNow";
+import { t as dictT } from "@/lib/i18n/server";
 import { BrowseModels, BrowsePopular } from "@/components/seo/Browse";
 import { LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -48,17 +52,25 @@ export const loadIndex = cache(async (cc: Country["cc"]) => {
   const stores = storesOf(cc);
   const tz = cc === "us" ? "America/New_York" : treeOf(cc).root.tz;
   const numbers = stores.map((s) => s.storeNumber);
-  const [stockNow, pstats, stats, stock, duo, max, reports, sell] = await Promise.all([
+  const [stockNow, pstats, stats, stock, duo, max, reports, sell, duoClock, duoReports, duoSell, times, duoRows, alerts] = await Promise.all([
     storesWithStockNow(undefined, cc),
     placeStats({ tz, country: cc }),
     restockStats(numbers, tz, 30),
     cc === "us" ? Promise.resolve(new Map()) : storesStock(numbers),
-    cc === "us" ? Promise.resolve(null) : placeStats({ model: "duo", tz, country: cc }),
+    placeStats({ model: "duo", tz, country: cc }),
     cc === "us" ? Promise.resolve(null) : placeStats({ model: "18-pro-max", tz, country: cc }),
     restockReportStats(numbers, tz, 30, undefined, undefined, cc),
     sellouts({ country: cc }),
+    // iPhone Duo only for the opening block and the clock (2026-11-08, see RegionPage).
+    restockStats(numbers, tz, 30, "duo", undefined, cc),
+    restockReportStats(numbers, tz, 30, "duo", undefined, cc),
+    sellouts({ country: cc, parts: partNumbersFor("duo", [], [], cc) }),
+    duoRestockTimes(cc),
+    cc === "us" ? stockByStore("duo", {}, cc) : Promise.resolve(null),
+    alertsSentAt(numbers),
   ]);
-  return { stockNow, pstats, stats, stock, duo, max, reports, sell };
+  const now = duoNowFrom({ stores, stock: duoRows ? stockFromRows(duoRows) : stock, others: duoRows ? { pro: stockNow["18-pro"], max: stockNow["18-pro-max"] } : undefined, times, sell: duoSell, alerts, configsTotal: 8 });
+  return { stockNow, pstats, stats, stock, duo, max, reports, sell, duoClock, duoReports, now };
 });
 
 export async function storesIndexMetadata(c: Country, loc: Locale = englishLocale(c.cc)): Promise<Metadata> {
@@ -83,7 +95,7 @@ export async function StoresIndexPage({ country: c }: { country: Country }) {
   // Four questions; "how many Apple Stores" has its own section above, so it is not repeated here.
   const hub = hubFaq();
   const duoNow = { q: "Which Apple Stores have the iPhone Duo right now?", a: d.stockNow.duo === 0 ? `None of the ${STORES.length} at the last check. The iPhone Duo stock page and the map update the moment one lists it, and an alert tells you first.` : `${d.stockNow.duo} of the ${STORES.length} at the last check. The iPhone Duo stock page names each store and configuration, updated every 15 seconds.` };
-  const questions = [duoNow, ...faq({ kind: "state", place: "the US", stores: STORES, stockNow: d.stockNow, stats: d.pstats, peak: peakOf(d.stats) }).filter((q) => !q.q.startsWith("How many Apple Stores are there") && !q.q.startsWith("Which Apple Stores in")), hub.taxFree];
+  const questions = [duoNow, ...faq({ kind: "state", place: "the US", stores: STORES, stockNow: d.stockNow, stats: d.pstats, peak: peakOf(d.duoClock) }).filter((q) => !q.q.startsWith("How many Apple Stores are there") && !q.q.startsWith("Which Apple Stores in")), hub.taxFree];
   const top = [...states].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, 10);
   const thin = states.filter((s) => s.count <= 2).map((s) => s.name);
   return (
@@ -92,9 +104,10 @@ export async function StoresIndexPage({ country: c }: { country: Country }) {
       <h1 className="display text-3xl sm:text-5xl">{hubTitle(c)}</h1>
       <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2">There are <b className="text-ink">{STORES.length} Apple Stores</b> in the US, in {cities.length} cities across {states.length - 1} states and Washington, D.C. Right now <b className="text-ink">{d.stockNow.duo}</b> of them list an iPhone Duo for pickup, <b className="text-ink">{d.stockNow["18-pro-max"]}</b> the iPhone 18 Pro Max and <b className="text-ink">{d.stockNow["18-pro"]}</b> the 18 Pro. Pick your state; the three with no sales tax are marked.</p>
       <div className="mt-6 flex flex-wrap gap-2"><Link href={`/map?model=${DEFAULT_MODEL}`} className="btn btn-ghost btn-sm">Live map</Link><Link href="/restocks" className="btn btn-ghost btn-sm">Restock log</Link><Link href={alert} className="btn btn-primary btn-sm">Alert me</Link></div>
+      <div className="mt-5"><DuoNow d={d.now} label="in the US" name="the US" stores={STORES} country="us" restockTimesHref="/iphone-duo-restock-times" alertHref={alert} /></div>
 
       <div className="mt-6"><ModelPlaceCards place={US_PLACE} stockNow={d.stockNow} of={STORES.length} unit="stores with it" /></div>
-      <div className="mt-3"><PlaceStatStrip stores={STORES.length} cities={cities.length} stockNow={d.stockNow} stats={d.pstats} /></div>
+      <div className="mt-3"><PlaceStatStrip stores={STORES.length} cities={cities.length} stockNow={d.stockNow} stats={d.duo!} scoped="Duo" /></div>
 
       <section className="mt-10 max-w-3xl" aria-labelledby="how-many">
         <h2 id="how-many" className="text-2xl font-semibold">How many Apple Stores are there in the US?</h2>
@@ -128,7 +141,8 @@ export async function StoresIndexPage({ country: c }: { country: Country }) {
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">When do stores restock?</h2>
-          <div className="mt-3"><RestockClock stats={d.stats} label="across the US" reports={d.reports} /></div>
+          <div className="mt-3"><RestockClock stats={d.duoClock} label="across the US" reports={d.duoReports} /></div>
+          <p className="mt-2 text-xs text-ink-3">{dictT().modules.duoNow.allModels({ n: d.pstats.month, days: d.pstats.days, peak: peakOf(d.stats)?.hour ?? null })}</p>
         </section>
         <section className="pane p-5">
           <h2 className="text-xl font-semibold">How fast do restocks sell out across the US?</h2>

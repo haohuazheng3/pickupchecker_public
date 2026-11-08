@@ -3,6 +3,7 @@ import { countryFromPrefix, type CountryCode } from "@/lib/apple/countries";
 import { nativeLocale, pathInLocale } from "@/lib/i18n/locales";
 import { productBySlug, productFor, productPath, resolvePlace } from "./products";
 import { treeOf } from "./tree";
+import { restockPlaceTarget } from "@/lib/content/restockPlaces";
 /** The old blog had one thin post; its topic lives on the 18 Pro stock page. Everything else under /blog goes home. */
 const RETIRED: Record<string, string> = { "/blog/how-to-find-iphone-18-pro-in-stock-near-you": "/stock/iphone-18-pro" };
 /**
@@ -174,6 +175,13 @@ function countryRouteCheck(cc: CountryCode, rest: string[], search: string): { n
     return null;
   }
   if ((head === "restocks" || head === "map" || COUNTRY_QUESTION_PAGES.has(head)) && tail.length === 0) return null;
+  // /{cc}/iphone-duo-restock-times/{region}[/{city}]: the /stores rules (restockPlaces.ts), so a wrong slug is a real 404
+  // and a place without a page of its own a real 308 (to its store, its city's page or the country's page).
+  if (head === "iphone-duo-restock-times" && (tail.length === 1 || tail.length === 2)) {
+    const r = restockPlaceTarget(cc, tail[0], tail[1]);
+    if (!r) return { notFound: true };
+    return "page" in r ? null : { redirect: r.redirect + search };
+  }
   if (head && RETIRED_COUNTRY.has(head) && tail.length === 0) return { redirect: `/${cc}/iphone-duo-restock-times` };
   return { notFound: true };
 }

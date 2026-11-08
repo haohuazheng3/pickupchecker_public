@@ -187,6 +187,7 @@ export const content: Dict["content"] = {
     configsInStock: "在庫のある構成",
     storesWithStock: f({ other: "在庫のある店舗" }),
     restocks24h: "24時間の入荷",
+    scoped: (label: string, model: string) => `${label} · ${model}`,
     restocksHint: (week: string, month: string, days: string) => `7日間で${week}回 · ${days}日間で${month}回`,
     sellOuts: (days: string) => `${days}日間の完売`,
     stays: (duration: string) => `在庫は約${duration}`,

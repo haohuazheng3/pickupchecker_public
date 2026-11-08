@@ -7,9 +7,9 @@
 import type { Metadata } from "next";
 import { bidi } from "@/lib/i18n/format";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
-import { MODELS, modelByKey, STORE_INDEX, appleFamilyUrl, storesOf, placeTarget, mapPath, restocksPath, type ModelKey } from "@/lib/apple/catalog";
+import { MODELS, modelByKey, STORE_INDEX, appleFamilyUrl, storesOf, catalogFor, partNumbersFor, placeTarget, mapPath, restocksPath, type ModelKey } from "@/lib/apple/catalog";
 import { prefixOf, type Country } from "@/lib/apple/countries";
-import { restockFeed, restockCounts, stockByStore } from "@/lib/stock/queries";
+import { restockFeed, restockCounts, stockByStore, storesWithStockNow } from "@/lib/stock/queries";
 import { HomeAlertSetup } from "@/components/alerts/AlertSetup";
 import { buildPhoneCatalog } from "@/components/alerts/catalog";
 import { wizardStartFrom } from "@/lib/wizardStart";
@@ -42,6 +42,8 @@ import { dict } from "@/lib/i18n/dict";
 import { pageLocale, t } from "@/lib/i18n/server";
 import { namesFor } from "@/lib/i18n/names";
 import { duoRestockTimes } from "@/lib/content/restockTimes";
+import { alertsSentAt, duoNowFrom, stockFromRows } from "@/lib/content/duoNow";
+import { DuoNow } from "@/components/restocks/DuoNow";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -70,7 +72,9 @@ export async function HomePage({ country: c, searchParams: sp }: { country: Coun
   const model: ModelKey = start.initialModel;
   const startSignIn = sp.signin === "1";
   const next = typeof sp.next === "string" ? sp.next : undefined;
-  const [facts, sell, recent] = await Promise.all([getFacts(), sellouts({ country: "us" }), recentByConfig({ country: "us" })]);
+  const usStores = storesOf("us");
+  const [facts, sell, recent, rt, duoRows, alerts, duoSell, stockNowAll] = await Promise.all([getFacts(), sellouts({ country: "us" }), recentByConfig({ country: "us" }), duoRestockTimes("us"), stockByStore("duo", {}, "us"), alertsSentAt(usStores.map((s) => s.storeNumber)), sellouts({ country: "us", parts: partNumbersFor("duo") }), storesWithStockNow(undefined, "us")]);
+  const now = duoNowFrom({ stores: usStores, stock: stockFromRows(duoRows), others: { pro: stockNowAll["18-pro"], max: stockNowAll["18-pro-max"] }, times: rt, sell: duoSell, alerts, configsTotal: 8 });
   const sections = HOME_TITLES.h2.map((h) => ({ id: slugId(h.keyword), h2: h.title, ...HOME_SECTIONS[h.keyword] }));
   const ld = {
     "@context": "https://schema.org",
@@ -88,6 +92,9 @@ export async function HomePage({ country: c, searchParams: sp }: { country: Coun
         <h1 className="display mt-3 text-3xl sm:text-5xl">{HOME_TITLES.main.h1}</h1>
         <p className="mt-2 max-w-3xl text-ink-2"><Inline text={HOME_INTRO} facts={facts} /></p>
       </section>
+
+      {/* The conclusion first (lib/content/duoNow.ts): in stock or not as of now, the last time it was, the US pattern, the last three. */}
+      <div className="mt-5"><DuoNow d={now} label="in the US" name="the US" stores={usStores} country="us" restockTimesHref="/iphone-duo-restock-times" alertHref={alertHref({ model: "duo" })} /></div>
 
       <section className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
         <div className="min-w-0">
@@ -185,9 +192,10 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
   const model: ModelKey = start.model ?? "duo";
   const startSignIn = sp.signin === "1";
   const next = typeof sp.next === "string" ? sp.next : undefined;
-  const [facts0, sell, recent, rt] = await Promise.all([getFacts(cc), sellouts({ country: cc }), recentByConfig({ country: cc }), duoRestockTimes(cc)]);
-  const facts = lang === "en" ? facts0 : { ...facts0, lang };
   const stores = storesOf(cc);
+  const [facts0, sell, recent, rt, duoRows, alerts, duoSell, stockNowAll] = await Promise.all([getFacts(cc), sellouts({ country: cc }), recentByConfig({ country: cc }), duoRestockTimes(cc), stockByStore("duo", {}, cc), alertsSentAt(stores.map((s) => s.storeNumber)), sellouts({ country: cc, parts: partNumbersFor("duo", [], [], cc) }), storesWithStockNow(undefined, cc)]);
+  const facts = lang === "en" ? facts0 : { ...facts0, lang };
+  const now = duoNowFrom({ stores, stock: stockFromRows(duoRows), others: { pro: stockNowAll["18-pro"], max: stockNowAll["18-pro-max"] }, times: rt, sell: duoSell, alerts, configsTotal: catalogFor("duo", cc).length });
   const n = stores.length;
   const index = placeTarget(cc);
   const p = prefixOf(cc);
@@ -220,6 +228,9 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
         <h1 className="display mt-3 text-3xl sm:text-5xl">{P.homeH1(cc)}</h1>
         <p className="mt-2 max-w-3xl text-ink-2"><Inline text={P.homeIntro(cc)} facts={facts} /></p>
       </section>
+
+      {/* The conclusion first (lib/content/duoNow.ts). */}
+      <div className="mt-5"><DuoNow d={now} label={P.home.last24Label(cc)} name={lang === "en" ? c.name : N.country()} stores={stores} country={cc} restockTimesHref={rtPath} alertHref={alertHref({ model: "duo", country: cc })} /></div>
 
       <section className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
         <div className="min-w-0"><Board model={model} c={c} /></div>

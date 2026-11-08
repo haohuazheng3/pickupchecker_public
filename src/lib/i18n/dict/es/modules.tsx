@@ -12,6 +12,12 @@ const CHECK_NOTE = "cada 15 s; 5 s con alerta";
 /** "las 9:00" / "la 1:00". */
 const las = (hour: string) => (/^1:/.test(hour) ? `la ${hour}` : `las ${hour}`);
 
+const alertas = (x: number) => `${n(x)} ${x === 1 ? "alerta" : "alertas"}`;
+/** "en Madrid" → "de Madrid" after "los 12 Apple Store". */
+const de = (label: string) => label.replace(/^en /, "de ");
+/** The label as is for one store; otherwise "en los 12 Apple Store de Madrid". */
+const esWhere = (o: { one: boolean; stores: number; label: string }) => (o.one ? o.label : o.stores === 1 ? `en el Apple Store ${de(o.label)}` : `en los ${n(o.stores)} Apple Store ${de(o.label)}`);
+
 export const modules: Dict["modules"] = {
   daily: {
     empty: (label: string, days: number) => `No se ha registrado ninguna reposición ni agotamiento ${label} en los últimos ${n(days)} días: el gráfico se rellena desde el primero.`,
@@ -196,5 +202,53 @@ export const modules: Dict["modules"] = {
     more: (k: number) => `+${n(k)}`,
     seen: (ago: ReactNode) => <>Visto {ago}</>,
     loading: "Cargando stock",
+  },
+  duoNow: {
+    eyebrow: (label) => `iPhone Duo ${label} ahora mismo`,
+    notNow: (o) => (o.n === 1
+      ? <><b className="text-ink">Sin stock a fecha de {o.stamp}</b>: el Apple Store {de(o.label)} no tiene ningún iPhone Duo disponible para recoger.</>
+      : <><b className="text-ink">Sin stock a fecha de {o.stamp}</b>: ninguno de los {n(o.n)} Apple Store {de(o.label)} tiene un iPhone Duo disponible para recoger.</>),
+    notNowOne: (o) => <><b className="text-ink">Sin stock a fecha de {o.stamp}</b>: {o.name} no tiene ninguna configuración del iPhone Duo disponible para recoger.</>,
+    inStock: (o) => <><b className="text-ink">En stock a fecha de {o.stamp}</b>: {n(o.k)} de {n(o.n)} Apple Store {o.label} {v(o.k, "tiene", "tienen")} un iPhone Duo disponible para recoger — {o.list}.</>,
+    inStockOne: (o) => <><b className="text-ink">En stock a fecha de {o.stamp}</b>: {o.name} tiene {n(o.k)} de {configs(o.total)} del iPhone Duo {v(o.k, "disponible", "disponibles")} para recoger — {o.list}.</>,
+    storeItem: (store, cfgs, ago) => <>{store} ({configs(cfgs)}{ago ? `, visto ${ago}` : ""})</>,
+    configItem: (config, ago) => <>{config}{ago ? ` (vista ${ago})` : ""}</>,
+    lastIn: (o) => <>Último en stock: <b className="text-ink">{o.config}</b>{o.store != null && <> en {o.store}</>}, el {o.when}{o.lasted ? <> ({o.lasted})</> : null}.</>,
+    neverYet: (label, since) => `Ninguna reposición del iPhone Duo confirmada ${label} desde que empezó el seguimiento, el ${since}.`,
+    others: (o) => (o.one
+      ? `El iPhone 18 Pro está disponible aquí en ${n(o.pro)} de ${configs(o.configs)}; el 18 Pro Max, en ${n(o.max)}.`
+      : `El iPhone 18 Pro está en ${n(o.pro)} de esas tiendas; el 18 Pro Max, en ${n(o.max)}.`),
+    updated: (stamp) => `Actualizado: ${stamp}`,
+    checked: (note) => `comprobado ${note}`,
+    since: (date) => `datos desde el ${date}`,
+    method: "una reposición solo cuenta cuando dos comprobaciones coinciden; las primeras detecciones no cuentan",
+    tShare: (range) => `de las reposiciones en la franja ${range}`,
+    tBusiest: (count) => `hora con más · ${reposiciones(count)}`,
+    tHalf: "la mitad se agota en menos de",
+    tSince: (date) => `reposiciones confirmadas desde el ${date}`,
+    tToday: "hoy, hasta ahora",
+    mostOften: (config, k, total) => `sobre todo ${config} (${n(k)} de ${n(total)})`,
+    /** Los nombres de las zonas horarias de EE. UU. solo sirven en inglés: aquí siempre "hora local". */
+    zone: (tz: string | null): string => {
+      void tz;
+      return "hora local";
+    },
+    summary: (o) =>
+      `El ${o.pct} de las ${reposiciones(o.n)} del iPhone Duo que PickupChecker ha confirmado ${esWhere(o)} desde el ${o.since} se produjo en la franja ${o.range}, ${o.zone}; la hora con más fue ${o.busiest} (${reposiciones(o.busiestN)}).${o.median ? ` La mitad se agotó en menos de ${o.median}.` : ""}${o.config ? ` La configuración que más veces volvió fue ${o.config} (${n(o.k)} de ${n(o.n)}).` : ""}`,
+    tooFew: (o) => `${reposiciones(o.n)} del iPhone Duo ${v(o.n, "confirmada", "confirmadas")} ${esWhere(o)} desde el ${o.since}: todavía son pocas para indicar una hora habitual; abajo aparecen todas.`,
+    hourByHour: "Hora a hora, tienda por tienda →",
+    lastThree: (k, label) => (k === 1 ? `La última reposición del iPhone Duo ${label}` : `Las últimas ${n(k)} reposiciones del iPhone Duo ${label}`),
+    secs: (x) => `${n(x)} s`,
+    mins: (x) => `${n(x)} min`,
+    listedRange: (low, high) => `disponible ${low}–${high}`,
+    listedAbout: (x) => `disponible unos ${x}`,
+    stillListed: (x) => `sigue disponible (${x})`,
+    ago: (x) => `hace ${x}`,
+    alerts: (o) => (o.one
+      ? `En los últimos ${n(o.days)} días, PickupChecker envió ${alertas(o.sent)} a sus miembros por reposiciones del iPhone Duo ${o.label}.`
+      : `En los últimos ${n(o.days)} días, PickupChecker envió ${alertas(o.sent)} a sus miembros por reposiciones del iPhone Duo en ${n(o.stores)} de ${n(o.total)} Apple Store ${de(o.label)}.`),
+    alertMe: (label) => `Avísame ${label}`,
+    unknown: "Ahora mismo no hemos podido leer el patrón de reposiciones; el stock en directo de esta página no se ve afectado.",
+    allModels: (o) => `Los tres iPhone: ${reposiciones(o.n)} en ${dias(o.days)}${o.peak ? `, sobre todo hacia ${o.peak}` : ""}.`,
   },
 };

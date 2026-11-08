@@ -18,7 +18,7 @@ import { childPlaces, configGrid, facetsFor, indexStock, lastChecked, nearestWit
 import { productJsonLdFor } from "@/lib/seo/productCopy";
 import { priceRange } from "@/lib/seo/countryCopy";
 import { alertHref, distText } from "@/lib/seo/enrich";
-import { modelStock, placeStats, restockFeed, restockStats, restockReportStats } from "@/lib/stock/queries";
+import { storesStock, modelStock, placeStats, restockFeed, restockStats, restockReportStats } from "@/lib/stock/queries";
 import { Breadcrumbs, LinkRow, RelatedBlock } from "@/components/seo/Related";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { StatStrip, type Stat } from "@/components/seo/StatStrip";
@@ -26,6 +26,9 @@ import { Faq } from "@/components/seo/Faq";
 import { PlaceCountList, ProductGrid, ProductNav, ProductStoreList, StatusCard } from "@/components/seo/ProductParts";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
+import { DuoNow } from "@/components/restocks/DuoNow";
+import { alertsSentAt, duoNowFrom } from "@/lib/content/duoNow";
+import { duoRestockTimes, duoRestockTimesAt, restockTimesPath } from "@/lib/content/restockTimes";
 import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { sellouts } from "@/lib/stock/sellouts";
 import { DailyBars } from "@/components/restocks/DailyBars";
@@ -64,7 +67,10 @@ const load = cache(async (cc: Country["cc"], slug: string, path: string) => {
   if (!place) return null;
   if ("redirect" in place) return { kind: "redirect" as const, to: productPath(product, { segments: place.redirect, country: product.country }) };
   const numbers = place.stores.map((s) => s.storeNumber);
-  const [duo, pro, max, stats, clock, feed, reports, sell] = await Promise.all([
+  // The iPhone Duo model page of a place opens with the conclusion block (lib/content/duoNow.ts); it needs the
+  // place's live stock per store, its restock times since tracking began and the alerts sent.
+  const duoPage = product.model === "duo" && product.kind === "model";
+  const [duo, pro, max, stats, clock, feed, reports, sell, stock, times, alerts] = await Promise.all([
     modelStock("duo", cc),
     modelStock("18-pro", cc),
     modelStock("18-pro-max", cc),
@@ -73,15 +79,19 @@ const load = cache(async (cc: Country["cc"], slug: string, path: string) => {
     restockFeed({ parts: product.parts, storeNumbers: numbers, kind: "all", limit: 8, country: cc }),
     restockReportStats(numbers, place.tz, 30, undefined, product.parts, cc),
     sellouts({ storeNumbers: numbers, parts: product.parts, country: cc }),
+    duoPage ? storesStock(numbers) : Promise.resolve(new Map<string, never>()),
+    duoPage ? (place.level === "country" ? duoRestockTimes(cc) : duoRestockTimesAt(cc, place.stores)) : Promise.resolve(null),
+    duoPage ? alertsSentAt(numbers) : Promise.resolve(null),
   ]);
   const ix = indexStock({ duo, "18-pro": pro, "18-pro-max": max });
+  const now = duoPage && times ? duoNowFrom({ stores: place.stores, stock, times, sell, alerts, configsTotal: product.parts.length }) : null;
   const lines = storeLines(ix, product, place.stores);
   const inStock = lines.filter((l) => l.available.length > 0).length;
   // Index scope (seo.md §10, §12): the national page of a model (US: also a storage size or a color). Every
   // place-level product page and every exact configuration is noindex, follow: the /stores page of that place
   // is the one indexed page for "iPhone Duo in <place>", which keeps near-duplicates out of the index.
   const indexable = isIndexedProductPage(product, place);
-  return { kind: "page" as const, product, place, ix, lines, inStock, stats, clock, feed, reports, indexable, sell };
+  return { kind: "page" as const, product, place, ix, lines, inStock, stats, clock, feed, reports, indexable, sell, now };
 });
 
 /** Another country's model page binds its own titles (seo.md §12). */
@@ -148,7 +158,7 @@ export async function ProductPage({ country: c, params: p }: { country: Country;
   const V = D.views.product;
   const C = D.views.common;
   const inLoc = (path: string) => (loc.native ? pathInLocale(path, loc) : path);
-  const { product, place, ix, lines, inStock, stats, clock, feed, reports, sell } = d;
+  const { product, place, ix, lines, inStock, stats, clock, feed, reports, sell, now } = d;
   const top = place.level === "country";
   const atStore = place.level === "store";
   const line = lines[0];
@@ -222,6 +232,11 @@ export async function ProductPage({ country: c, params: p }: { country: Country;
         <Link href={placePagePath(place)} className="btn btn-ghost btn-sm max-w-full truncate">{top ? (us ? "All stores" : V.allStoresIn(c)) : atStore ? V.everyIphoneHere : V.everyIphone(where)}</Link>
       </div>
       <AlertPanelFor href={placeAlert(product, place)} summary={V.panel(product.name, top ? (us ? null : inCountry) : where)} country={c.cc} />
+      {now && (
+        <div className="mt-5"><DuoNow d={now} label={label} name={placeName(place, lang)} one={atStore} stores={place.stores} country={c.cc}
+          restockTimesHref={us ? (top ? "/iphone-duo-restock-times" : place.level === "store" ? null : restockTimesPath(place.state!, place.level === "city" ? place.city! : undefined)) : `${prefixOf(c.cc)}/iphone-duo-restock-times`}
+          alertHref={placeAlert(product, place)} /></div>
+      )}
 
       {us && top && <div className="mt-5 max-w-3xl"><QuickCheckServer model={product.model} product={product} /></div>}
 

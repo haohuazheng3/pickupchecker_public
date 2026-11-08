@@ -185,6 +185,7 @@ export const content: Dict["content"] = {
     configsInStock: "재고 있는 구성",
     storesWithStock: f({ other: "재고 있는 매장" }),
     restocks24h: "24시간 재입고",
+    scoped: (label: string, model: string) => `${label} · ${model}`,
     restocksHint: (week: string, month: string, days: string) => `7일 ${week} · ${days}일 ${month}`,
     sellOuts: (days: string) => `${days}일 품절`,
     stays: (duration: string) => `~${duration} 유지`,

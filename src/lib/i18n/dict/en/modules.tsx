@@ -12,6 +12,8 @@ import type { ReactNode } from "react";
 import { CHECK_NOTE } from "@/lib/plans";
 
 const s = (n: number) => (n === 1 ? "" : "s");
+/** Thousands grouped ("3,891"): the DuoNow block's numbers are quoted, so they read as prose, not as raw counters. */
+const nn = (n: number) => n.toLocaleString("en-US");
 
 export const modules = {
   /** DailyBars: 30 days of restocks (bars) and sell-outs (stacked under them). */
@@ -244,5 +246,68 @@ export const modules = {
     more: (n: number) => `+${n}`,
     seen: (ago: ReactNode) => <>Seen {ago}</>,
     loading: "Loading stock",
+  },
+
+  /**
+   * DuoNow: the conclusion block a place page opens with (state, city, store, country, Duo product page). Written so
+   * an answer engine can lift it whole: a time-stamped verdict, the last time it was in stock, four numbers since
+   * tracking began, one quotable paragraph, the last three restocks with how long each lasted. `label` is the place
+   * phrase ("in Michigan", "in the UK", "at Apple Somerset"); `name` the bare place or store name.
+   */
+  duoNow: {
+    eyebrow: (label: string) => `iPhone Duo ${label} right now`,
+    /** Verdict sentences. `stamp` is "Nov 8, 4:22 AM EST"; `list` the in-stock stores (storeItem), joined. */
+    notNow: (o: { stamp: string; n: number; label: string }) => <><b className="text-ink">Not in stock as of {o.stamp}</b>: none of the {nn(o.n)} Apple Store{s(o.n)} {o.label} lists an iPhone Duo for pickup.</>,
+    notNowOne: (o: { stamp: string; name: string }) => <><b className="text-ink">Not in stock as of {o.stamp}</b>: {o.name} lists no iPhone Duo configuration for pickup.</>,
+    inStock: (o: { stamp: string; k: number; n: number; label: string; list: ReactNode }) => <><b className="text-ink">In stock as of {o.stamp}</b>: {nn(o.k)} of the {nn(o.n)} Apple Store{s(o.n)} {o.label} list{o.k === 1 ? "s" : ""} an iPhone Duo for pickup — {o.list}.</>,
+    inStockOne: (o: { stamp: string; k: number; total: number; name: string; list: ReactNode }) => <><b className="text-ink">In stock as of {o.stamp}</b>: {o.name} lists {o.k} of {o.total} iPhone Duo configuration{s(o.total)} for pickup — {o.list}.</>,
+    /** One in-stock store in the list: its link, how many configurations, and since when ("listed 40 s ago"). */
+    storeItem: (store: ReactNode, configs: number, ago: string | null) => <>{store} ({configs} configuration{s(configs)}{ago ? `, listed ${ago}` : ""})</>,
+    /** One in-stock configuration on a store page. */
+    configItem: (config: string, ago: string | null) => <>{config}{ago ? ` (listed ${ago})` : ""}</>,
+    /** `lasted`: "listed 5–7 min" / "still listed" / null when unknown. */
+    lastIn: (o: { config: string; store: ReactNode | null; when: string; lasted: string | null }) => <>Last in stock: <b className="text-ink">{o.config}</b>{o.store != null && <> at {o.store}</>}, {o.when}{o.lasted ? <> ({o.lasted})</> : null}.</>,
+    neverYet: (label: string, since: string) => `No confirmed iPhone Duo restock ${label} since tracking began on ${since}.`,
+    /** The other two models in one clause. Place: stores with any configuration; store: configurations here. */
+    others: (o: { pro: number; max: number; one: boolean; configs: number }) => (o.one ? `The iPhone 18 Pro is listed in ${o.pro} of ${o.configs} configurations here, the 18 Pro Max in ${o.max}.` : `The iPhone 18 Pro is at ${o.pro} of them, the 18 Pro Max at ${o.max}.`),
+    /** The dated line under the verdict. `checked` is CHECK_NOTE ("every 15 s, 5 s with an alert"). */
+    updated: (stamp: string) => `Updated ${stamp}`,
+    checked: (note: string) => `checked ${note}`,
+    since: (date: string) => `data since ${date}`,
+    method: "a restock counts only when two checks agree; first sightings are excluded",
+    /* Tiles */
+    tShare: (range: string) => `of restocks between ${range}`,
+    tBusiest: (count: number) => `busiest hour · ${nn(count)} restock${s(count)}`,
+    tHalf: "half sold out within",
+    tSince: (date: string) => `confirmed restocks since ${date}`,
+    tToday: "today, so far",
+    mostOften: (config: string, k: number, n: number) => `most often ${config} (${nn(k)} of ${nn(n)})`,
+    /** "Eastern time" for a US zone the sentences can name, else "store local time". */
+    zone: (tz: string | null): string => {
+      const w: Record<string, string> = { "America/New_York": "Eastern", "America/Detroit": "Eastern", "America/Kentucky/Louisville": "Eastern", "America/Indiana/Indianapolis": "Eastern", "America/Chicago": "Central", "America/Denver": "Mountain", "America/Boise": "Mountain", "America/Phoenix": "Arizona", "America/Los_Angeles": "Pacific", "America/Anchorage": "Alaska", "Pacific/Honolulu": "Hawaii", "America/Puerto_Rico": "Atlantic" };
+      return tz && w[tz] ? `${w[tz]} time` : "store local time";
+    },
+    /** The quotable paragraph. `pct` "58%", `range` "9–11 AM", `busiest` "9–10 AM", `median` "about 95 seconds", `config` "256GB Night Sky". */
+    summary: (o: { pct: string; n: number; stores: number; label: string; since: string; range: string; zone: string; busiest: string; busiestN: number; median: string | null; config: string | null; k: number; one: boolean }) =>
+      `${o.pct} of the ${nn(o.n)} iPhone Duo restock${s(o.n)} PickupChecker confirmed ${o.one ? o.label : `at the ${nn(o.stores)} Apple Store${s(o.stores)} ${o.label}`} since ${o.since} landed between ${o.range.replace("–", " and ")} ${o.zone}; the busiest hour was ${o.busiest} (${nn(o.busiestN)}).${o.median ? ` Half sold out within ${o.median}.` : ""}${o.config ? ` The ${o.config} came back most (${nn(o.k)} of ${nn(o.n)}).` : ""}`,
+    tooFew: (o: { n: number; label: string; since: string; one: boolean; stores: number }) => `${nn(o.n)} confirmed iPhone Duo restock${s(o.n)} ${o.one ? o.label : `at the ${nn(o.stores)} Apple Store${s(o.stores)} ${o.label}`} since ${o.since} — too few to state a usual hour yet; each one is listed below.`,
+    hourByHour: "Hour by hour, every store →",
+    lastThree: (n: number, label: string) => (n === 1 ? `The last iPhone Duo restock ${label}` : `The last ${n} iPhone Duo restocks ${label}`),
+    /** Lifetimes: "listed 5–7 min", "listed about 2 min", "still listed (12 min)". */
+    secs: (n: number) => `${n} s`,
+    mins: (n: number) => `${n} min`,
+    listedRange: (low: string, high: string) => `listed ${low}–${high}`,
+    listedAbout: (x: string) => `listed about ${x}`,
+    stillListed: (x: string) => `still listed (${x})`,
+    /** "listed 40 s ago" / "listed 12 min ago". */
+    ago: (x: string) => `${x} ago`,
+    /** Alerts sent (counts only). */
+    alerts: (o: { sent: number; stores: number; total: number; days: number; label: string; one: boolean }) => (o.one
+      ? `In the last ${o.days} days PickupChecker sent ${nn(o.sent)} alert${s(o.sent)} to members for iPhone Duo restocks ${o.label}.`
+      : `In the last ${o.days} days PickupChecker sent ${nn(o.sent)} alert${s(o.sent)} to members for iPhone Duo restocks at ${nn(o.stores)} of the ${nn(o.total)} Apple Store${s(o.total)} ${o.label}.`),
+    alertMe: (label: string) => `Alert me ${label}`,
+    unknown: "The restock pattern could not be read just now; live stock on this page is unaffected.",
+    /** Under the Duo-only clock: the other models in one line ("All three iPhones: 456 restocks in 30 days, most around 4 PM"). */
+    allModels: (o: { n: number; days: number; peak: string | null }) => `All three iPhones: ${nn(o.n)} restock${s(o.n)} in ${o.days} days${o.peak ? `, most around ${o.peak}` : ""}.`,
   },
 };

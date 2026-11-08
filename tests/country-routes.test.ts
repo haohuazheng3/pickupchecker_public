@@ -98,7 +98,9 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
   it("counts per country (home + index + region/city pages + stores + 3 models + log + map + restock times)", () => {
     const counts = Object.fromEntries(INTL_CODES.map((cc) => [cc, per[cc].length]));
     // 2026-11-08: two of the four decision pages were retired (shortage, channels), so every country has two URLs fewer.
-    expect(counts).toEqual({ ca: 46, uk: 58, au: 35, de: 33, fr: 35, it: 32, es: 25, jp: 23, kr: 18, hk: 16, sg: 13, ae: 18, ch: 15, nl: 14, se: 13, tw: 12, at: 10, be: 10 });
+    // 2026-11-08: + the restock-times pages of each region and two-plus-store city with a /stores page of its own
+    // (ca 8, uk 9, au 4, de 7, fr 5, it 5, es 3, jp 2, kr 1, ae 3, ch 1, nl 1; none where the country is one place).
+    expect(counts).toEqual({ ca: 54, uk: 67, au: 39, de: 40, fr: 40, it: 37, es: 28, jp: 25, kr: 19, hk: 16, sg: 13, ae: 21, ch: 16, nl: 15, se: 13, tw: 12, at: 10, be: 10 });
     for (const cc of INTL_CODES) for (const slug of ["iphone-duo-restock-times", "which-iphone-duo-restocks-most", "iphone-duo-stock-api"]) expect(per[cc]).toContain(`${base}/${cc}/${slug}`);
   });
   it("lists no URL the proxy would redirect or reject, and every store", () => {

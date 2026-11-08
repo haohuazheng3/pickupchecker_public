@@ -20,7 +20,7 @@ import { SPEED } from "@/lib/plans";
 import { distance, stamp, weekdays } from "@/lib/i18n/format";
 import { cityLabel, regionLabel } from "@/lib/i18n/places";
 import type { Dict } from "../en";
-import type { RestockTimesMeta, RestockTimesView } from "../en/views";
+import type { RestockTimesMeta, RestockTimesPlace, RestockTimesView } from "../en/views";
 import { SV, apple, between, cap, color, dur, fit, klock, kr, land, n, noun, pl, prod, range, share, taxNote, words } from "./util";
 
 /* ---------------------------------------------------------------- helpers */
@@ -35,6 +35,11 @@ const zoneStamp = (iso: string, c: Country) => stamp(SV, iso, c.timeZone, true);
 const rtRegion = (x: { us: boolean; c: Country }) => (x.us ? "delstat" : noun(x.c));
 const rtRegions = (x: { us: boolean; c: Country }) => (x.us ? "delstater" : noun(x.c, true));
 const rtYet = (x: RestockTimesMeta) => (x.t.n > 0 ? "" : " ännu");
+/** "i Sverige", or the place of a place page: "i Stockholms län", "i Stockholm". */
+const rtIn = (x: { c: Country; place?: RestockTimesPlace }) => (x.place ? `i ${x.place.name}` : `i ${land(x.c.cc)}`);
+/** What the "where" section breaks a page down by: the country's regions, a region's cities, a city's stores. */
+const rtUnit = (x: { us: boolean; c: Country; place?: RestockTimesPlace }) => (x.place ? (x.place.kind === "region" ? "stad" : "butik") : rtRegion(x));
+const rtUnits = (x: { us: boolean; c: Country; place?: RestockTimesPlace }) => (x.place ? (x.place.kind === "region" ? "städer" : "butiker") : rtRegions(x));
 /** "Ingen"/"Inget" before a region word (område, departement and emirat are neuter). */
 const none = (word: string) => (/^(område|departement|emirat)/.test(word) ? "Inget" : "Ingen");
 const restocksN = (k: number) => pl(k, "påfyllning", "påfyllningar");
@@ -327,32 +332,35 @@ export const views: Dict["views"] = {
       store: (s: Store) => apple(s),
       storeWithPlace: (s: Store) => `${apple(s)} (${cityLabel(s.country, s.city, SV)})`,
     },
-    title: (c: Country) => `När fyller Apple på iPhone Duo ${inLand(c)}?`,
+    title: (c: Country, place?: RestockTimesPlace) => `När fyller Apple på iPhone Duo ${place ? `i ${place.name}` : inLand(c)}?`,
     metaDescription: (x: RestockTimesMeta) => {
       const { c, t, w, pattern } = x;
-      const region = c.cc === "us" ? "delstat" : c.regionNoun ? noun(c) : "butik";
+      const region = x.place ? (x.place.kind === "region" ? "stad" : null) : c.cc === "us" ? "delstat" : c.regionNoun ? noun(c) : "butik";
       const since = dateLabel(t.since, false);
+      const where = rtIn(x);
+      /** "timme, dag, län, butik och konfiguration"; a city page has no unit between day and store. */
+      const by = region ? `${region}, butik` : "butik";
       return t.n > 0 && pattern
         ? fit([
-          `${restocksN(t.n)} av iPhone Duo i Apple Store-butiker ${inLand(c)} sedan ${since}: ${share(w.share)} ${between(w.from, w.to)} lokal tid${t.sellout ? `, ${share(t.sellout.within2min)} borta inom 2 minuter` : ""}. Tabeller per timme, dag, ${region}, butik och konfiguration.`,
-          `${restocksN(t.n)} av iPhone Duo i Apple Store-butiker ${inLand(c)} sedan ${since}: ${share(w.share)} ${between(w.from, w.to)} lokal tid. Tabeller per timme, dag, ${region} och konfiguration.`,
-          `När iPhone Duo fylls på ${inLand(c)}: ${restocksN(t.n)} sedan ${since}, per timme, dag, ${region} och konfiguration.`,
+          `${restocksN(t.n)} av iPhone Duo i Apple Store-butiker ${where} sedan ${since}: ${share(w.share)} ${between(w.from, w.to)} lokal tid${t.sellout ? `, ${share(t.sellout.within2min)} borta inom 2 minuter` : ""}. Tabeller per timme, dag, ${by} och konfiguration.`,
+          `${restocksN(t.n)} av iPhone Duo i Apple Store-butiker ${where} sedan ${since}: ${share(w.share)} ${between(w.from, w.to)} lokal tid. Tabeller per timme, dag, ${region ?? "butik"} och konfiguration.`,
+          `När iPhone Duo fylls på ${where}: ${restocksN(t.n)} sedan ${since}, per timme, dag, ${region ?? "butik"} och konfiguration.`,
         ], 158)
         : t.n > 0
           ? fit([
-            `${confirmedN(t.n)} av iPhone Duo i Apple Store-butiker ${inLand(c)} sedan ${since}, från kontroller var ${SPEED.checkSec}:e sekund: per lokal timme, dag för dag, per ${region}, butik och konfiguration, och hur länge varje varade.`,
-            `När iPhone Duo fylls på ${inLand(c)}: ${confirmedN(t.n)} sedan ${since}, per timme, dag, ${region} och konfiguration.`,
+            `${confirmedN(t.n)} av iPhone Duo i Apple Store-butiker ${where} sedan ${since}, från kontroller var ${SPEED.checkSec}:e sekund: per lokal timme, dag för dag, per ${by} och konfiguration, och hur länge varje varade.`,
+            `När iPhone Duo fylls på ${where}: ${confirmedN(t.n)} sedan ${since}, per timme, dag, ${region ?? "butik"} och konfiguration.`,
           ], 158)
-          : fit([`När Apple Store-butikerna ${inLand(c)} fyller på iPhone Duo, enligt våra egna kontroller var ${SPEED.checkSec}:e sekund sedan ${dateLabel(t.since, false)}: timme för timme, dag för dag och per butik.`, `När iPhone Duo fylls på ${inLand(c)}: kontroller var ${SPEED.checkSec}:e sekund sedan ${dateLabel(t.since, false)}, timme för timme och per butik.`], 158);
+          : fit([`När Apple Store-butikerna ${where} fyller på iPhone Duo, enligt våra egna kontroller var ${SPEED.checkSec}:e sekund sedan ${dateLabel(t.since, false)}: timme för timme, dag för dag och per butik.`, `När iPhone Duo fylls på ${where}: kontroller var ${SPEED.checkSec}:e sekund sedan ${dateLabel(t.since, false)}, timme för timme och per butik.`], 158);
     },
     h1: (x: RestockTimesView) => x.t.unknown
-      ? `När fyller Apple på iPhone Duo ${inLand(x.c)}?`
+      ? `När fyller Apple på iPhone Duo ${rtIn(x)}?`
       : x.t.n > 0
-        ? `Fyller Apple fortfarande på iPhone Duo ${inLand(x.c)}? Ja – här är när, timme för timme`
-        : `Fyller Apple på iPhone Duo ${inLand(x.c)}? Inte än enligt våra kontroller – det här bevakar vi`,
+        ? `Fyller Apple fortfarande på iPhone Duo ${rtIn(x)}? Ja – här är när, timme för timme`
+        : `Fyller Apple på iPhone Duo ${rtIn(x)}? Inte än enligt våra kontroller – det här bevakar vi`,
     intro: (x: RestockTimesView) => {
       const { t, one, tracked, pattern, w } = x;
-      const where = inLand(x.c);
+      const where = rtIn(x);
       return t.unknown ? (
         <>Vår påfyllningslogg gick inte att läsa just nu; butikerna {where} kollas fortfarande var {SPEED.checkSec}:e sekund, och sidan kommer tillbaka med sina siffror vid nästa laddning.</>
       ) : t.n > 0 ? (
@@ -391,7 +399,7 @@ export const views: Dict["views"] = {
     nav: (x: RestockTimesView): Record<string, string> => ({
       "time-of-day": "Tid på dygnet",
       "day-by-day": "Dag för dag",
-      where: `Per ${rtRegion(x)}`,
+      where: `Per ${rtUnit(x)}`,
       configuration: "Konfiguration",
       "how-long": "Hur länge den finns kvar",
       unavailable: "Varför ”inte tillgänglig”",
@@ -399,18 +407,18 @@ export const views: Dict["views"] = {
       method: "Så räknar vi",
     }),
     h2: (x: RestockTimesView): Record<string, string> => ({
-      "time-of-day": `Vilken tid på dygnet fylls iPhone Duo på ${inLand(x.c)}?`,
-      "day-by-day": `Vilka dagar har Apple fyllt på iPhone Duo ${inLand(x.c)}?`,
-      where: `Vilka Apple Store-butiker fyller på iPhone Duo oftast ${inLand(x.c)}?`,
-      configuration: `Vilken konfiguration av iPhone Duo fylls på oftast ${inLand(x.c)}?`,
-      "how-long": `Hur länge varar en påfyllning av iPhone Duo ${inLand(x.c)}?`,
+      "time-of-day": `Vilken tid på dygnet fylls iPhone Duo på ${rtIn(x)}?`,
+      "day-by-day": `Vilka dagar har Apple fyllt på iPhone Duo ${rtIn(x)}?`,
+      where: `Vilka Apple Store-butiker fyller på iPhone Duo oftast ${rtIn(x)}?`,
+      configuration: `Vilken konfiguration av iPhone Duo fylls på oftast ${rtIn(x)}?`,
+      "how-long": `Hur länge varar en påfyllning av iPhone Duo ${rtIn(x)}?`,
       unavailable: "Varför säger alla Apple Store ”inte tillgänglig”?",
       reddit: "Vad Reddit säger om påfyllningar av iPhone Duo – och vad datan säger",
       method: "Hur räknar PickupChecker en påfyllning?",
     }),
     faq: (x: RestockTimesView): Faq[] => {
       const { t, w, pattern, sell, us, weekend, tracked } = x;
-      const where = inLand(x.c);
+      const where = rtIn(x);
       const window = between(w.from, w.to);
       return [
         { q: `När fyller Apple på iPhone Duo ${where}?`, a: t.n > 0 && pattern
@@ -435,9 +443,9 @@ export const views: Dict["views"] = {
       reports: (tracker: string) => `${tracker}: rapporter om påfyllningar av iPhone Duo under lanseringsveckan (deras observationer, visas separat, räknas aldrig)`,
     },
     ld: (x: RestockTimesView) => ({
-      datasetName: `Påfyllningstider för iPhone Duo i Apple Store-butiker ${inLand(x.c)}`,
-      description: `Varje bekräftad påfyllning av iPhone Duo för hämtning i butik i Apple Store-butikerna ${inLand(x.c)} sedan ${x.t.since}, med butik, konfiguration och tid, från PickupCheckers kontroller var ${SPEED.checkSec}:e sekund; sammanställt per lokal timme, dag, ${rtRegion(x)}, butik och konfiguration.`,
-      spatial: `Apple Store-butiker ${inLand(x.c)}`,
+      datasetName: `Påfyllningstider för iPhone Duo i Apple Store-butiker ${rtIn(x)}`,
+      description: `Varje bekräftad påfyllning av iPhone Duo för hämtning i butik i Apple Store-butikerna ${rtIn(x)} sedan ${x.t.since}, med butik, konfiguration och tid, från PickupCheckers kontroller var ${SPEED.checkSec}:e sekund; sammanställt per lokal timme, dag, ${x.place?.kind === "city" ? "" : `${rtUnit(x)}, `}butik och konfiguration.`,
+      spatial: `Apple Store-butiker ${rtIn(x)}`,
       measured: ["tid för påfyllning (butikens lokala tid)", "Apple Store", "lagring och färg för iPhone Duo", "sekunder tills den var slutsåld"],
       size: `${restocksN(x.t.n)} i ${storesN(x.t.stores)}`,
     }),
@@ -455,7 +463,7 @@ export const views: Dict["views"] = {
       { text: <>Tio påfyllningar i en enda våg = en händelse, inte en vana</>, no: true },
       { text: <>Sidan skriver om sig själv allt eftersom dagarna blir fler</>, step: true },
     ],
-    hourCaption: (x: RestockTimesView) => `Påfyllningar av iPhone Duo ${inLand(x.c)} per lokal timme i butiken, ${dateLabel(x.t.since, false)} till idag (${restocksN(x.t.n)})`,
+    hourCaption: (x: RestockTimesView) => `Påfyllningar av iPhone Duo ${rtIn(x)} per lokal timme i butiken, ${dateLabel(x.t.since, false)} till idag (${restocksN(x.t.n)})`,
     hourHead: ["Lokal timme", "Påfyllningar", "Andel"],
     morningKeys: (x: RestockTimesView): Point[] => [
       { text: <>Morgontoppen är <b className="text-ink">inte när dörrarna öppnar</b>{x.us ? ": de flesta Apple Store i USA öppnar kl. 10" : ""}</> },
@@ -463,7 +471,7 @@ export const views: Dict["views"] = {
       { text: <>Kollar du själv: håll koll <b className="text-ink">{range(x.w.from, x.w.to)}</b> på vardagar</>, step: true },
       { text: <>Låt en <Link href={x.alert}>bevakning</Link> ta <b className="text-ink">de andra 22 timmarna</b>, som ingen sitter och uppdaterar</>, step: true },
     ],
-    storeChartKeys: (x: RestockTimesView): Point[] => [{ text: <>Varje butikssida har sitt eget diagram, i sin egen tidszon (<Link href={x.storesHref}>{x.us ? "Apple Store per delstat" : `butikerna ${inLand(x.c)}`}</Link>): en butik som fyller på kl. 8 där andra fyller på kl. 9 är värd att känna till</>, step: true }],
+    storeChartKeys: (x: RestockTimesView): Point[] => [{ text: <>Varje butikssida har sitt eget diagram, i sin egen tidszon (<Link href={x.storesHref}>{x.us ? "Apple Store per delstat" : `butikerna ${rtIn(x)}`}</Link>): en butik som fyller på kl. 8 där andra fyller på kl. 9 är värd att känna till</>, step: true }],
 
     // ---- day by day
     dayLead: (x: RestockTimesView) => {
@@ -473,7 +481,7 @@ export const views: Dict["views"] = {
       ) : t.n > 0 ? (
         <b>{t.days === tracked ? `Varje dag vi har bevakat, ${t.days} av ${t.days},` : `${t.days} av de ${tracked} dagarna sedan ${longDate(t.since)}`} hade minst en bekräftad påfyllning{t.peakWeekday != null ? `, och ${WD[t.peakWeekday]} har varit den vanligaste veckodagen` : ""}.</b>
       ) : (
-        <b>Ingen bekräftad påfyllning {inLand(x.c)} sedan {longDate(t.since)}.</b>
+        <b>Ingen bekräftad påfyllning {rtIn(x)} sedan {longDate(t.since)}.</b>
       );
     },
     daysTracked: "bevakade dagar med minst en påfyllning",
@@ -481,7 +489,7 @@ export const views: Dict["views"] = {
     busiestDayNone: "dagen med flest",
     drop: (x: RestockTimesView, drop: { at: string; restocks: number }) => `butiker fyllde på inom samma halvtimme, ${zoneStamp(drop.at, x.c)} (${pl(drop.restocks, "konfiguration", "konfigurationer")}): en nationell påfyllning sedd utifrån`,
     weekend: (x: RestockTimesView) => `på en lördag eller söndag (${restocksN(x.weekend)})`,
-    dayCaption: (x: RestockTimesView) => `Påfyllningar av iPhone Duo ${inLand(x.c)}, dag för dag${x.t.reports.length ? "; raderna märkta ”rapporterad” är andra bevakningstjänsters publicerade observationer för dagarna innan vår egen bevakning startade, och visas bara för tidslinjen" : ""}`,
+    dayCaption: (x: RestockTimesView) => `Påfyllningar av iPhone Duo ${rtIn(x)}, dag för dag${x.t.reports.length ? "; raderna märkta ”rapporterad” är andra bevakningstjänsters publicerade observationer för dagarna innan vår egen bevakning startade, och visas bara för tidslinjen" : ""}`,
     dayHead: { date: "Datum", restocks: "Påfyllningar", stores: "Butiker", busiest: "Vanligaste timmen", source: "Källa" },
     soFar: " · hittills",
     reportedBy: (names: string[]) => <>rapporterad av {names.join(" / ")}</>,
@@ -490,20 +498,20 @@ export const views: Dict["views"] = {
       { text: <><b className="text-ink">{dateLabel(resumed)}</b>: bokning för hämtning öppnade igen{x.us ? " (MacRumors)" : ""}</> },
       x.t.reports.length
         ? { text: <>Rader märkta <b className="text-ink">rapporterad</b>: observationer från {words(x.reportNames)} under lanseringsveckan, räknas aldrig</> }
-        : { text: <>Vår logg över varje butik {inLand(x.c)} börjar <b className="text-ink">{longDate(x.t.since)}</b></> },
+        : { text: <>Vår logg över varje butik {rtIn(x)} börjar <b className="text-ink">{longDate(x.t.since)}</b></> },
       ...(x.t.n > 0 && x.t.peakWeekday == null ? [{ text: <>Vanligaste veckodagen: anges när datan sträcker sig över <b className="text-ink">{WEEKDAY_MIN_SPAN} dagar</b> (vår täcker {x.tracked})</>, no: true }] : []),
       { text: <>Titta på kolumnen <b className="text-ink">butiker</b>: lika många påfyllningar i fler butiker är en bättre dag för dig</>, step: true },
     ],
 
     // ---- where
     whereLead: (x: RestockTimesView, hit: { name: string; restocks: number; stores: number; storesTotal: number }[], total: number) => (
-      <b>{hit[0].name}: {restocksN(hit[0].restocks)} {hit[0].storesTotal === 1 ? "i sin enda butik" : `i ${hit[0].stores} av sina ${hit[0].storesTotal} butiker`} sedan {dateLabel(x.t.since, false)}{hit[1] ? <>, därefter {hit[1].name} ({n(hit[1].restocks)})</> : null}{hit[2] ? <> och {hit[2].name} ({n(hit[2].restocks)})</> : null}; {hit.length} av {total} {rtRegions(x)} har haft minst en påfyllning{total - hit.length > 0 ? ` och ${total - hit.length} ingen än` : ""}.</b>
+      <b>{hit[0].name}: {restocksN(hit[0].restocks)} {hit[0].storesTotal === 1 ? "i sin enda butik" : `i ${hit[0].stores} av sina ${hit[0].storesTotal} butiker`} sedan {dateLabel(x.t.since, false)}{hit[1] ? <>, därefter {hit[1].name} ({n(hit[1].restocks)})</> : null}{hit[2] ? <> och {hit[2].name} ({n(hit[2].restocks)})</> : null}; {hit.length} av {total} {rtUnits(x)} har haft minst en påfyllning{total - hit.length > 0 ? ` och ${total - hit.length} ingen än` : ""}.</b>
     ),
-    whereNone: (x: RestockTimesView) => <b>{none(rtRegion(x))} {rtRegion(x)} {inLand(x.c)} har en bekräftad påfyllning än; tabellen fylls i från den första.</b>,
-    regionCaption: (x: RestockTimesView) => `Bekräftade påfyllningar av iPhone Duo per ${rtRegion(x)} ${inLand(x.c)}, ${dateLabel(x.t.since, false)} till idag`,
-    regionHead: (x: RestockTimesView) => [cap(rtRegion(x)), "Påfyllningar", "Butiker med påfyllning", "Senaste påfyllning (lokal tid)"],
+    whereNone: (x: RestockTimesView) => <b>{none(rtUnit(x))} {rtUnit(x)} {rtIn(x)} har en bekräftad påfyllning än; tabellen fylls i från den första.</b>,
+    regionCaption: (x: RestockTimesView) => `Bekräftade påfyllningar av iPhone Duo per ${rtUnit(x)} ${rtIn(x)}, ${dateLabel(x.t.since, false)} till idag`,
+    regionHead: (x: RestockTimesView) => [cap(rtUnit(x)), "Påfyllningar", "Butiker med påfyllning", "Senaste påfyllning (lokal tid)"],
     ofN: (a: number, b: number) => <>{a} av {b}</>,
-    storesCaption: (x: RestockTimesView) => `Butikerna med flest påfyllningar av iPhone Duo ${inLand(x.c)}, ${dateLabel(x.t.since, false)} till idag`,
+    storesCaption: (x: RestockTimesView) => `Butikerna med flest påfyllningar av iPhone Duo ${rtIn(x)}, ${dateLabel(x.t.since, false)} till idag`,
     storesHead: ["Butik", "Påfyllningar", "Dagar", "Oftast runt", "Senast (lokal tid)"],
     swaps: (x: RestockTimesView) => [
       { no: "Butiken med flest påfyllningar, var den än ligger", yes: `Två eller tre butiker du hinner till inom en timme runt ${x.pattern ? klock(x.w.from) : "morgonen"}`, why: "En påfyllning du inte hinner till är ingen påfyllning; även den mest aktiva butiken visar ”inte tillgänglig” nästan hela dagen." },
@@ -520,8 +528,8 @@ export const views: Dict["views"] = {
     restocksOf: (a: string) => `påfyllningar av ${a}`,
     byStorage: "per lagring",
     byColour: "per färg",
-    configNone: (x: RestockTimesView) => <b>Ingen konfiguration {inLand(x.c)} har en bekräftad påfyllning{rtYet(x)}; alla åtta konfigurationerna listas så att den första påfyllningen har en rad att hamna på.</b>,
-    configCaption: (x: RestockTimesView) => `Bekräftade påfyllningar av iPhone Duo ${inLand(x.c)} per konfiguration, ${dateLabel(x.t.since, false)} till idag`,
+    configNone: (x: RestockTimesView) => <b>Ingen konfiguration {rtIn(x)} har en bekräftad påfyllning{rtYet(x)}; alla åtta konfigurationerna listas så att den första påfyllningen har en rad att hamna på.</b>,
+    configCaption: (x: RestockTimesView) => `Bekräftade påfyllningar av iPhone Duo ${rtIn(x)} per konfiguration, ${dateLabel(x.t.since, false)} till idag`,
     configHead: ["Konfiguration", "Påfyllningar", "Andel", "Senaste påfyllning (lokal tid)"],
     configKeys: (x: RestockTimesView): Point[] => [
       { text: <>Valet av konfiguration betyder <b className="text-ink">mer än valet av butik</b></> },
@@ -533,13 +541,13 @@ export const views: Dict["views"] = {
     ],
 
     // ---- how long
-    howLongLead: (x: RestockTimesView, sell: SelloutFacts) => <b>Hälften av de {n(sell.n)} slutsålda påfyllningarna {inLand(x.c)} var borta inom {sell.medianSec} sekunder; {share(sell.within2min)} inom 2 minuter och {share(sell.within20min)} inom 20.</b>,
+    howLongLead: (x: RestockTimesView, sell: SelloutFacts) => <b>Hälften av de {n(sell.n)} slutsålda påfyllningarna {rtIn(x)} var borta inom {sell.medianSec} sekunder; {share(sell.within2min)} inom 2 minuter och {share(sell.within20min)} inom 20.</b>,
     secUnit: "s",
     medianListing: "typisk tid i lager, från listad till borta (median)",
     within2: "borta inom 2 minuter",
     within20: "borta inom 20 minuter",
     fastest: "snabbast uppmätta tid till slutsåld",
-    howLongNone: (x: RestockTimesView) => <b>För få slutsålda påfyllningar {inLand(x.c)} för att mäta{rtYet(x)}; vi anger de här siffrorna från tio, och sidan för USA har hela bilden.</b>,
+    howLongNone: (x: RestockTimesView) => <b>För få slutsålda påfyllningar {rtIn(x)} för att mäta{rtYet(x)}; vi anger de här siffrorna från tio, och sidan för USA har hela bilden.</b>,
     howLongKeys: (x: RestockTimesView): Point[] => [
       { text: <>Ett tvåminutersfönster fångas av en <b className="text-ink">bevakning</b>, inte genom att uppdatera apple.com</> },
       { text: <>Det här är siffran som förklarar allt annat på sidan</> },
@@ -548,16 +556,16 @@ export const views: Dict["views"] = {
     measured: "Varje siffra är tiden från kontrollen som först såg konfigurationen listad till kontrollen som såg den borta, så den är en övre gräns; de verkliga tiderna är kortare.",
 
     // ---- unavailable
-    unavailableLead: (x: RestockTimesView) => <b>För att en påfyllning är ett ögonblick, inte ett tillstånd: {x.one ? "en butik" : `${n(x.stores)} butiker`} × {x.configs} konfigurationer = {n(x.pairs)} saker som kan finnas i lager {inLand(x.c)}, och just nu har {x.duoNow === 1 ? "1 butik" : `${x.duoNow} butiker`} någon iPhone Duo.</b>,
+    unavailableLead: (x: RestockTimesView) => <b>För att en påfyllning är ett ögonblick, inte ett tillstånd: {x.one ? "en butik" : `${n(x.stores)} butiker`} × {x.configs} konfigurationer = {n(x.pairs)} saker som kan finnas i lager {rtIn(x)}, och just nu har {x.duoNow === 1 ? "1 butik" : `${x.duoNow} butiker`} någon iPhone Duo.</b>,
     pairs: "kombinationer av butik × konfiguration som kan finnas i lager",
     listingNow: "har en iPhone Duo att hämta just nu",
     goneIn2: "av påfyllningarna borta inom två minuter",
     last24: "bekräftade påfyllningar de senaste 24 timmarna",
     unavailableKeys: (x: RestockTimesView, today: number): Point[] => [
       x.recent.restocks > 0
-        ? { text: <>Senaste 24 timmarna: <b className="text-ink">{confirmedN(x.recent.restocks)}</b> i {storesN(x.recent.stores)} {inLand(x.c)}</> }
+        ? { text: <>Senaste 24 timmarna: <b className="text-ink">{confirmedN(x.recent.restocks)}</b> i {storesN(x.recent.stores)} {rtIn(x)}</> }
         : today > 0
-          ? { text: <>Idag: <b className="text-ink">{confirmedN(today)}</b> {inLand(x.c)}</> }
+          ? { text: <>Idag: <b className="text-ink">{confirmedN(today)}</b> {rtIn(x)}</> }
           : { text: <>Tabellen dag för dag ovan visar påfyllningarna som faktiskt skedde</> },
       { text: <>Var och en syns på apple.com i <b className="text-ink">en minut eller två</b></> },
       { text: <>”Inte tillgänglig överallt” dag fyra, eller dag fjorton, betyder <b className="text-ink">inte</b> att Apple har slutat</>, no: true },
@@ -565,7 +573,7 @@ export const views: Dict["views"] = {
     unavailableLinks: { explained: "Vad ”inte tillgänglig för hämtning” betyder (på engelska)", howToGet: "Så får du tag på en iPhone Duo (på engelska)" },
 
     // ---- reddit
-    redditLead: (x: RestockTimesView) => <b>Det mesta av folkvisdomen i <a href="https://www.reddit.com/r/applestore/" target="_blank" rel="noopener nofollow">r/applestore</a> och <a href="https://www.reddit.com/r/iphone/" target="_blank" rel="noopener nofollow">r/iphone</a> är uppriktigt menat, bygger på en enda butik och är inaktuellt inom ett dygn; här är de fyra påståenden vi ser oftast, mot {n(x.t.n)} bekräftade påfyllningar {inLand(x.c)}.</b>,
+    redditLead: (x: RestockTimesView) => <b>Det mesta av folkvisdomen i <a href="https://www.reddit.com/r/applestore/" target="_blank" rel="noopener nofollow">r/applestore</a> och <a href="https://www.reddit.com/r/iphone/" target="_blank" rel="noopener nofollow">r/iphone</a> är uppriktigt menat, bygger på en enda butik och är inaktuellt inom ett dygn; här är de fyra påståenden vi ser oftast, mot {n(x.t.n)} bekräftade påfyllningar {rtIn(x)}.</b>,
     redditCaption: "Vanliga påståenden på Reddit om påfyllningar av iPhone Duo, jämförda med PickupCheckers bekräftade påfyllningar",
     redditHead: ["Påståendet", "Vad datan säger"],
     claims: (x: RestockTimesView): { claim: string; answer: ReactNode }[] => {
@@ -585,7 +593,7 @@ export const views: Dict["views"] = {
     // ---- method
     methodLead: <b>En påfyllning räknas när apple.com listar en konfiguration för hämtning i butik i en butik där den inte var listad, bekräftat av två kontroller som stämmer överens.</b>,
     methodKeys: (x: RestockTimesView): Point[] => [
-      { text: <>{x.one ? "Apple Store-butiken" : "Varje Apple Store"} {inLand(x.c)} var <b className="text-ink">{SPEED.checkSec}:e sekund</b>; butikerna med bevakning var <b className="text-ink">{SPEED.fastSec}:e</b></> },
+      { text: <>{x.one ? "Apple Store-butiken" : "Varje Apple Store"} {rtIn(x)} var <b className="text-ink">{SPEED.checkSec}:e sekund</b>; butikerna med bevakning var <b className="text-ink">{SPEED.fastSec}:e</b></> },
       { text: <>Andra bevakningstjänster uppger <b className="text-ink">från 8 sekunder till 15 minuter</b>; vi jämför bara publicerade siffror</> },
       { text: <>Ett första ”tillgänglig” kontrolleras igen <b className="text-ink">ungefär en sekund senare</b> innan det räknas</> },
       { text: <>Något som försvinner bekräftas vid <b className="text-ink">nästa varv</b></> },
@@ -595,7 +603,7 @@ export const views: Dict["views"] = {
       { text: <>Uppdateras ungefär var femte minut; <Link href={x.logHref}>påfyllningsloggen</Link> är live</>, step: true },
     ],
     quote: "Citera gärna siffrorna med en länk till den här sidan; PickupChecker är fristående, inte knutet till Apple, och läser samma tillgänglighet för hämtning som vem som helst kan se på apple.com – bara mycket oftare.",
-    alertIn: (x: RestockTimesView) => <>Bevaka iPhone Duo{x.one ? "" : ` ${inLand(x.c)}`}</>,
+    alertIn: (x: RestockTimesView) => <>Bevaka iPhone Duo{x.one ? "" : ` ${rtIn(x)}`}</>,
 
     // ---- related, FAQ, sources
     related: "De andra frågorna om iPhone Duo",
@@ -609,6 +617,13 @@ export const views: Dict["views"] = {
       unavailable: "Vad ”inte tillgänglig” betyder",
     },
     otherCountries: ((us: boolean) => (us ? "Samma sida för andra länder" : "Andra länder")) as unknown as Dict["views"]["restockTimes"]["otherCountries"],
+    /** Place pages of another country (a region or city), and the country page's rows that lead to them. */
+    place: {
+      byCity: "Per stad",
+      storesLive: (x: RestockTimesView) => `Apple Store-butiker ${rtIn(x)}, live`,
+      countryPage: (c: Country) => `Påfyllningstider för iPhone Duo ${inLand(c)}`,
+      sourcesWhere: (x: RestockTimesView) => `${x.stores === 1 ? "Apple Store-butiken" : `alla ${n(x.stores)} Apple Store-butiker`} ${rtIn(x)}`,
+    },
     faqTitle: "Frågor",
   },
 };

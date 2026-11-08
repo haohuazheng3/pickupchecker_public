@@ -246,6 +246,8 @@ export const content = {
     configsInStock: "configs in stock",
     storesWithStock: f({ one: "store with stock", other: "stores with stock" }),
     restocks24h: "Restocks 24 h",
+    /** A tile scoped to one model: "Restocks 24 h · Duo". */
+    scoped: (label: string, model: string) => `${label} · ${model}`,
     /** "9 in 7 d · 31 in 30 d" (d = days). */
     restocksHint: (week: string, month: string, days: string) => `${week} in 7 d · ${month} in ${days} d`,
     sellOuts: (days: string) => `Sell-outs ${days} d`,

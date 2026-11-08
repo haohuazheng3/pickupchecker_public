@@ -4,6 +4,7 @@ import { INTL_CODES, prefixOf, type CountryCode } from "@/lib/apple/countries";
 import { latestEventPerStore } from "@/lib/stock/queries";
 import { PRODUCTS, US, productPath, isIndexedProductPage } from "@/lib/seo/products";
 import { NATIVE_LOCALES, pathInLocale } from "@/lib/i18n/locales";
+import { restockPlacePages } from "@/lib/content/restockPlaces";
 
 /** Regenerated hourly: lastModified of a store/city/state page is its latest real availability event when one is known. */
 export const revalidate = 3600;
@@ -13,7 +14,8 @@ type Entry = MetadataRoute.Sitemap[number];
 /**
  * Another country's indexable pages (seo.md §12): its home, its store index (unless it collapses into the only
  * store), every region and city page that is its place's page (placeTarget), every store, the three model
- * pages, the restock log and the map. Nothing that redirects or is noindex.
+ * pages, the restock log, the map, the restock-times page and its region and city versions. Nothing that redirects
+ * or is noindex.
  */
 export function countryEntries(cc: Exclude<CountryCode, "us">, base: string, now: Date, latestOf: (storeNumbers: string[]) => Date): Entry[] {
   const p = prefixOf(cc);
@@ -34,6 +36,9 @@ export function countryEntries(cc: Exclude<CountryCode, "us">, base: string, now
   out.push({ url: `${base}${mapPath(cc)}`, lastModified: now, changeFrequency: "hourly", priority: 0.5 });
   // The country's restock-times question page (seo.md §13): its numbers change with every restock.
   out.push({ url: `${base}${p}/iphone-duo-restock-times`, lastModified: latestOf(stores.map((s) => s.storeNumber)), changeFrequency: "hourly", priority: 0.7 });
+  // …and its regions' and cities' own versions, one per place with a /stores page of its own (restockPlaces.ts).
+  const places = restockPlacePages(cc);
+  for (const pl of [...places.regions, ...places.cities]) out.push({ url: `${base}${pl.path}`, lastModified: latestOf(pl.stores.map((s) => s.storeNumber)), changeFrequency: "hourly", priority: 0.65 });
   // The decision pages (seo.md §16): which configuration and the API (the shortage and channels pages were retired 2026-11-08).
   for (const slug of ["which-iphone-duo-restocks-most", "iphone-duo-stock-api"]) {
     out.push({ url: `${base}${p}/${slug}`, lastModified: latestOf(stores.map((s) => s.storeNumber)), changeFrequency: "hourly", priority: 0.7 });

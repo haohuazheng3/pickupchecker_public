@@ -194,4 +194,49 @@ export const modules: Dict["modules"] = {
     seen: (ago: ReactNode) => <>شوهد {ago}</>,
     loading: "جارٍ تحميل المخزون",
   },
+
+  duoNow: {
+    eyebrow: (label: string) => `iPhone Duo ${label} الآن`,
+    /** جمل الحكم. `stamp` الوقت المحلي منسّقًا؛ `list` المتاجر المتوفرة (storeItem). */
+    notNow: (o: { stamp: string; n: number; label: string }) => <><b className="text-ink">غير متوفر حتى {o.stamp}</b>: {o.n === 1 ? `لا يعرض متجر Apple ${o.label} أي iPhone Duo للاستلام.` : `لا يعرض أيٌّ من ${theStoresG(o.n)} ${o.label} أي iPhone Duo للاستلام.`}</>,
+    notNowOne: (o: { stamp: string; name: string }) => <><b className="text-ink">غير متوفر حتى {o.stamp}</b>: لا يعرض {o.name} أي خيار من iPhone Duo للاستلام.</>,
+    inStock: (o: { stamp: string; k: number; n: number; label: string; list: ReactNode }) => <><b className="text-ink">متوفر حتى {o.stamp}</b>: يعرض {N(o.k)} من {theStoresG(o.n)} {o.label} iPhone Duo للاستلام: {o.list}.</>,
+    inStockOne: (o: { stamp: string; k: number; total: number; name: string; list: ReactNode }) => <><b className="text-ink">متوفر حتى {o.stamp}</b>: يعرض {o.name} {N(o.k)} من {count(o.total, CONFIGS)} من iPhone Duo للاستلام: {o.list}.</>,
+    /** متجر متوفر في القائمة: رابطه وعدد الخيارات ومنذ متى. */
+    storeItem: (store: ReactNode, configs: number, ago: string | null) => <>{store} ({count(configs, CONFIGS)}{ago ? `، معروض ${ago}` : ""})</>,
+    configItem: (config: string, ago: string | null) => <>{config}{ago ? ` (معروض ${ago})` : ""}</>,
+    lastIn: (o: { config: string; store: ReactNode | null; when: string; lasted: string | null }) => <>آخر توفر: <b className="text-ink">{o.config}</b>{o.store != null && <> في {o.store}</>}، {o.when}{o.lasted ? <> ({o.lasted})</> : null}.</>,
+    neverYet: (label: string, since: string) => `لا توفر مؤكدًا لـ iPhone Duo ${label} منذ بدء المتابعة في ${since}.`,
+    others: (o: { pro: number; max: number; one: boolean; configs: number }) => (o.one ? `يتوفر iPhone 18 Pro هنا في ${N(o.pro)} من ${count(o.configs, CONFIGS)}، و18 Pro Max في ${N(o.max)}.` : `يتوفر iPhone 18 Pro في ${N(o.pro)} منها، و18 Pro Max في ${N(o.max)}.`),
+    updated: (stamp: string) => `آخر تحديث ${stamp}`,
+    checked: (note: string) => `الفحص ${note}`,
+    since: (date: string) => `البيانات منذ ${date}`,
+    method: "لا يُحتسب التوفر إلا حين يتفق فحصان؛ ولا تُحتسب أول مرة نرى فيها المتجر",
+    /* Tiles */
+    tShare: (range: string) => `من حالات التوفر في الفترة ${range}`,
+    tBusiest: (n: number) => `أكثر ساعة توفرًا · ${count(n, TIMES)}`,
+    tHalf: "نفد نصفها خلال",
+    tSince: (date: string) => `توفر مؤكد منذ ${date}`,
+    tToday: "اليوم حتى الآن",
+    mostOften: (config: string, k: number, total: number) => `الأكثر: ${config} (${N(k)} من ${N(total)})`,
+    /** الصفحات العربية تقول دائمًا «بالتوقيت المحلي»؛ أسماء المناطق الزمنية الأمريكية للإنجليزية فقط. */
+    zone: (tz: string | null): string => { void tz; return "بالتوقيت المحلي"; },
+    summary: (o: { pct: string; n: number; stores: number; label: string; since: string; range: string; zone: string; busiest: string; busiestN: number; median: string | null; config: string | null; k: number; one: boolean }) =>
+      `${o.pct} من حالات توفر iPhone Duo التي أكّدها PickupChecker ${o.one ? o.label : `في ${theStoresG(o.stores)} ${o.label}`} منذ ${o.since}، وعددها ${N(o.n)}، وقعت في الفترة ${o.range} ${o.zone}؛ وكانت أكثر ساعة توفرًا ${o.busiest} (${count(o.busiestN, TIMES)}).${o.median ? ` ونفد نصفها خلال ${o.median}.` : ""}${o.config ? ` وكان ${o.config} الأكثر عودة (${N(o.k)} من ${N(o.n)}).` : ""}`,
+    tooFew: (o: { n: number; label: string; since: string; one: boolean; stores: number }) => `توفر iPhone Duo ${count(o.n, TIMES)} بشكل مؤكد ${o.one ? o.label : `في ${theStoresG(o.stores)} ${o.label}`} منذ ${o.since}؛ وهذا أقل من أن نحدد ساعة معتادة بعد، وكل حالة مدرجة أدناه.`,
+    hourByHour: "ساعة بساعة، كل متجر ←",
+    lastThree: (k: number, label: string) => (k === 1 ? `آخر توفر لـ iPhone Duo ${label}` : `آخر ${N(k)} حالات توفر لـ iPhone Duo ${label}`),
+    secs: (x: number) => `${N(x)} ث`,
+    mins: (x: number) => `${N(x)} د`,
+    listedRange: (low: string, high: string) => `عُرض ${low}–${high}`,
+    listedAbout: (x: string) => `عُرض نحو ${x}`,
+    stillListed: (x: string) => `ما زال معروضًا (${x})`,
+    ago: (x: string) => `منذ ${x}`,
+    alerts: (o: { sent: number; stores: number; total: number; days: number; label: string; one: boolean }) => (o.one
+      ? `خلال آخر ${count(o.days, DAYS)} أرسل PickupChecker إلى الأعضاء ${N(o.sent)} تنبيه توفر لـ iPhone Duo ${o.label}.`
+      : `خلال آخر ${count(o.days, DAYS)} أرسل PickupChecker إلى الأعضاء ${N(o.sent)} تنبيه توفر لـ iPhone Duo في ${N(o.stores)} من ${theStoresG(o.total)} ${o.label}.`),
+    alertMe: (label: string) => `نبّهني ${label}`,
+    unknown: "تعذّرت قراءة نمط التوفر الآن؛ المخزون المباشر في هذه الصفحة لم يتأثر.",
+    allModels: (o: { n: number; days: number; peak: string | null }) => `أجهزة iPhone الثلاثة: توفرت ${count(o.n, TIMES)} خلال ${count(o.days, DAYS)}${o.peak ? `، وأغلبها نحو ${o.peak}` : ""}.`,
+  },
 };

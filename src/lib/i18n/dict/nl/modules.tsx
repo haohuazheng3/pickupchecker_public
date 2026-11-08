@@ -200,4 +200,49 @@ export const modules: Dict["modules"] = {
     seen: (ago: ReactNode) => <>Gezien {ago}</>,
     loading: "Voorraad laden",
   },
+
+  duoNow: {
+    eyebrow: (label: string) => `iPhone Duo ${label} nu`,
+    /** Verdict sentences. `stamp` is the local time stamp; `list` the in-stock stores (storeItem), joined. */
+    notNow: (o: { stamp: string; n: number; label: string }) => <><b className="text-ink">Niet op voorraad, stand van {o.stamp}</b>: {o.n === 1 ? `de Apple Store ${o.label} heeft geen iPhone Duo om af te halen.` : `geen van de ${n$(o.n)} Apple Stores ${o.label} heeft een iPhone Duo om af te halen.`}</>,
+    notNowOne: (o: { stamp: string; name: string }) => <><b className="text-ink">Niet op voorraad, stand van {o.stamp}</b>: {o.name} heeft geen enkele iPhone Duo-configuratie om af te halen.</>,
+    inStock: (o: { stamp: string; k: number; n: number; label: string; list: ReactNode }) => <><b className="text-ink">Op voorraad, stand van {o.stamp}</b>: {n$(o.k)} van de {n$(o.n)} Apple Store{o.n === 1 ? "" : "s"} {o.label} {o.k === 1 ? "heeft" : "hebben"} een iPhone Duo om af te halen — {o.list}.</>,
+    inStockOne: (o: { stamp: string; k: number; total: number; name: string; list: ReactNode }) => <><b className="text-ink">Op voorraad, stand van {o.stamp}</b>: {o.name} heeft {n$(o.k)} van {cnt(o.total, "iPhone Duo-configuratie", "iPhone Duo-configuraties")} om af te halen — {o.list}.</>,
+    /** One in-stock store in the list: its link, how many configurations, and since when. */
+    storeItem: (store: ReactNode, configs: number, ago: string | null) => <>{store} ({cnt(configs, "configuratie", "configuraties")}{ago ? `, verschenen ${ago}` : ""})</>,
+    configItem: (config: string, ago: string | null) => <>{config}{ago ? ` (verschenen ${ago})` : ""}</>,
+    lastIn: (o: { config: string; store: ReactNode | null; when: string; lasted: string | null }) => <>Laatst op voorraad: <b className="text-ink">{o.config}</b>{o.store != null && <> bij {o.store}</>}, {o.when}{o.lasted ? <> ({o.lasted})</> : null}.</>,
+    neverYet: (label: string, since: string) => `Geen bevestigde iPhone Duo-aanvulling ${label} sinds we op ${since} begonnen te volgen.`,
+    others: (o: { pro: number; max: number; one: boolean; configs: number }) => (o.one ? `De iPhone 18 Pro is hier in ${n$(o.pro)} van de ${n$(o.configs)} configuraties op voorraad, de 18 Pro Max in ${n$(o.max)}.` : `De iPhone 18 Pro is in ${n$(o.pro)} daarvan op voorraad, de 18 Pro Max in ${n$(o.max)}.`),
+    updated: (stamp: string) => `Bijgewerkt ${stamp}`,
+    checked: (note: string) => `gecontroleerd ${note}`,
+    since: (date: string) => `gegevens sinds ${date}`,
+    method: "een aanvulling telt alleen als twee checks het eens zijn; de eerste keer dat we iets zien telt niet",
+    /* Tiles */
+    tShare: (range: string) => `van de aanvullingen tussen ${range}`,
+    tBusiest: (count: number) => `drukste uur · ${cnt(count, "aanvulling", "aanvullingen")}`,
+    tHalf: "helft uitverkocht binnen",
+    tSince: (date: string) => `bevestigde aanvullingen sinds ${date}`,
+    tToday: "vandaag, tot nu toe",
+    mostOften: (config: string, k: number, total: number) => `het vaakst ${config} (${n$(k)} van ${n$(total)})`,
+    /** Dutch pages always say "lokale tijd"; US zone names are only for English. */
+    zone: (tz: string | null): string => { void tz; return "lokale tijd"; },
+    summary: (o: { pct: string; n: number; stores: number; label: string; since: string; range: string; zone: string; busiest: string; busiestN: number; median: string | null; config: string | null; k: number; one: boolean }) =>
+      `${o.pct} van de ${cnt(o.n, "iPhone Duo-aanvulling", "iPhone Duo-aanvullingen")} die PickupChecker sinds ${o.since} ${o.one ? o.label : o.stores === 1 ? `in de Apple Store ${o.label}` : `in de ${n$(o.stores)} Apple Stores ${o.label}`} bevestigde, viel tussen ${o.range} ${o.zone}; het drukste uur was ${o.busiest} (${n$(o.busiestN)}).${o.median ? ` De helft was binnen ${o.median} uitverkocht.` : ""}${o.config ? ` De ${o.config} kwam het vaakst terug (${n$(o.k)} van ${n$(o.n)}).` : ""}`,
+    tooFew: (o: { n: number; label: string; since: string; one: boolean; stores: number }) => `${cnt(o.n, "bevestigde iPhone Duo-aanvulling", "bevestigde iPhone Duo-aanvullingen")} ${o.one ? o.label : o.stores === 1 ? `in de Apple Store ${o.label}` : `in de ${n$(o.stores)} Apple Stores ${o.label}`} sinds ${o.since} — te weinig om al een vast uur te noemen; ze staan hieronder allemaal.`,
+    hourByHour: "Per uur, elke winkel →",
+    lastThree: (k: number, label: string) => (k === 1 ? `De laatste iPhone Duo-aanvulling ${label}` : `De laatste ${n$(k)} iPhone Duo-aanvullingen ${label}`),
+    secs: (x: number) => `${n$(x)} s`,
+    mins: (x: number) => `${n$(x)} min`,
+    listedRange: (low: string, high: string) => `${low}–${high} beschikbaar`,
+    listedAbout: (x: string) => `ongeveer ${x} beschikbaar`,
+    stillListed: (x: string) => `nog beschikbaar (${x})`,
+    ago: (x: string) => `${x} geleden`,
+    alerts: (o: { sent: number; stores: number; total: number; days: number; label: string; one: boolean }) => (o.one
+      ? `In de afgelopen ${n$(o.days)} dagen stuurde PickupChecker leden ${cnt(o.sent, "alert", "alerts")} voor iPhone Duo-aanvullingen ${o.label}.`
+      : `In de afgelopen ${n$(o.days)} dagen stuurde PickupChecker leden ${cnt(o.sent, "alert", "alerts")} voor iPhone Duo-aanvullingen in ${n$(o.stores)} van de ${n$(o.total)} Apple Store${o.total === 1 ? "" : "s"} ${o.label}.`),
+    alertMe: (label: string) => `Waarschuw me ${label}`,
+    unknown: "Het aanvulpatroon kon nu niet worden gelezen; de live voorraad op deze pagina werkt gewoon.",
+    allModels: (o: { n: number; days: number; peak: string | null }) => `Alle drie de iPhones: ${cnt(o.n, "aanvulling", "aanvullingen")} in ${n$(o.days)} dagen${o.peak ? `, de meeste rond ${o.peak}` : ""}.`,
+  },
 };

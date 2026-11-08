@@ -192,4 +192,49 @@ export const modules: Dict["modules"] = {
     seen: (ago: ReactNode) => <>Sedd {ago}</>,
     loading: "Laddar lager",
   },
+
+  duoNow: {
+    eyebrow: (label: string) => `iPhone Duo ${label} just nu`,
+    /** Verdict sentences. `stamp` is the local time stamp; `list` the in-stock stores (storeItem), joined. */
+    notNow: (o: { stamp: string; n: number; label: string }) => <><b className="text-ink">Inte i lager, per {o.stamp}</b>: {o.n === 1 ? `Apple Store-butiken ${o.label} har ingen iPhone Duo för hämtning.` : `ingen av de ${n(o.n)} Apple Store-butikerna ${o.label} har någon iPhone Duo för hämtning.`}</>,
+    notNowOne: (o: { stamp: string; name: string }) => <><b className="text-ink">Inte i lager, per {o.stamp}</b>: {o.name} har ingen iPhone Duo-konfiguration för hämtning.</>,
+    inStock: (o: { stamp: string; k: number; n: number; label: string; list: ReactNode }) => <><b className="text-ink">I lager, per {o.stamp}</b>: {n(o.k)} av {o.n === 1 ? "1 Apple Store-butik" : `${n(o.n)} Apple Store-butiker`} {o.label} har iPhone Duo för hämtning – {o.list}.</>,
+    inStockOne: (o: { stamp: string; k: number; total: number; name: string; list: ReactNode }) => <><b className="text-ink">I lager, per {o.stamp}</b>: {o.name} har {n(o.k)} av {pl(o.total, "iPhone Duo-konfiguration", "iPhone Duo-konfigurationer")} för hämtning – {o.list}.</>,
+    /** One in-stock store in the list: its link, how many configurations, and since when. */
+    storeItem: (store: ReactNode, configs: number, ago: string | null) => <>{store} ({pl(configs, "konfiguration", "konfigurationer")}{ago ? `, upplagd ${ago}` : ""})</>,
+    configItem: (config: string, ago: string | null) => <>{config}{ago ? ` (upplagd ${ago})` : ""}</>,
+    lastIn: (o: { config: string; store: ReactNode | null; when: string; lasted: string | null }) => <>Senast i lager: <b className="text-ink">{o.config}</b>{o.store != null && <> på {o.store}</>}, {o.when}{o.lasted ? <> ({o.lasted})</> : null}.</>,
+    neverYet: (label: string, since: string) => `Ingen bekräftad påfyllning av iPhone Duo ${label} sedan bevakningen började ${since}.`,
+    others: (o: { pro: number; max: number; one: boolean; configs: number }) => (o.one ? `iPhone 18 Pro finns här i ${n(o.pro)} av ${n(o.configs)} konfigurationer, 18 Pro Max i ${n(o.max)}.` : `iPhone 18 Pro finns i ${n(o.pro)} av dem, 18 Pro Max i ${n(o.max)}.`),
+    updated: (stamp: string) => `Uppdaterad ${stamp}`,
+    checked: (note: string) => `kontrolleras ${note}`,
+    since: (date: string) => `data sedan ${date}`,
+    method: "en påfyllning räknas bara när två kontroller stämmer överens; första observationer räknas inte",
+    /* Tiles */
+    tShare: (range: string) => `av påfyllningarna ${range}`,
+    tBusiest: (count: number) => `timmen med flest · ${pl(count, "påfyllning", "påfyllningar")}`,
+    tHalf: "hälften slutsålda inom",
+    tSince: (date: string) => `bekräftade påfyllningar sedan ${date}`,
+    tToday: "i dag hittills",
+    mostOften: (config: string, k: number, total: number) => `oftast ${config} (${n(k)} av ${n(total)})`,
+    /** Swedish pages always say "lokal tid"; US zone names are only for English. */
+    zone: (tz: string | null): string => { void tz; return "lokal tid"; },
+    summary: (o: { pct: string; n: number; stores: number; label: string; since: string; range: string; zone: string; busiest: string; busiestN: number; median: string | null; config: string | null; k: number; one: boolean }) =>
+      `${o.pct} av de ${n(o.n)} ${o.n === 1 ? "påfyllningen" : "påfyllningarna"} av iPhone Duo som PickupChecker har bekräftat ${o.one ? o.label : o.stores === 1 ? `i Apple Store-butiken ${o.label}` : `i de ${n(o.stores)} Apple Store-butikerna ${o.label}`} sedan ${o.since} kom ${o.range} ${o.zone}; flest kom ${o.busiest} (${n(o.busiestN)}).${o.median ? ` Hälften var slutsålda inom ${o.median}.` : ""}${o.config ? ` ${o.config} kom tillbaka oftast (${n(o.k)} av ${n(o.n)}).` : ""}`,
+    tooFew: (o: { n: number; label: string; since: string; one: boolean; stores: number }) => `${pl(o.n, "bekräftad påfyllning", "bekräftade påfyllningar")} av iPhone Duo ${o.one ? o.label : o.stores === 1 ? `i Apple Store-butiken ${o.label}` : `i de ${n(o.stores)} Apple Store-butikerna ${o.label}`} sedan ${o.since} – för få för att ange en vanlig tid ännu; alla listas nedan.`,
+    hourByHour: "Timme för timme, varje butik →",
+    lastThree: (k: number, label: string) => (k === 1 ? `Den senaste påfyllningen av iPhone Duo ${label}` : `De senaste ${n(k)} påfyllningarna av iPhone Duo ${label}`),
+    secs: (x: number) => `${n(x)} s`,
+    mins: (x: number) => `${n(x)} min`,
+    listedRange: (low: string, high: string) => `ute ${low}–${high}`,
+    listedAbout: (x: string) => `ute cirka ${x}`,
+    stillListed: (x: string) => `fortfarande ute (${x})`,
+    ago: (x: string) => `för ${x} sedan`,
+    alerts: (o: { sent: number; stores: number; total: number; days: number; label: string; one: boolean }) => (o.one
+      ? `De senaste ${n(o.days)} dagarna skickade PickupChecker ${pl(o.sent, "bevakningsnotis", "bevakningsnotiser")} till medlemmar om påfyllningar av iPhone Duo ${o.label}.`
+      : `De senaste ${n(o.days)} dagarna skickade PickupChecker ${pl(o.sent, "bevakningsnotis", "bevakningsnotiser")} till medlemmar om påfyllningar av iPhone Duo i ${n(o.stores)} av ${o.total === 1 ? "1 Apple Store-butik" : `${n(o.total)} Apple Store-butiker`} ${o.label}.`),
+    alertMe: (label: string) => `Bevaka ${label}`,
+    unknown: "Påfyllningsmönstret gick inte att läsa just nu; lagret live på sidan påverkas inte.",
+    allModels: (o: { n: number; days: number; peak: string | null }) => `Alla tre iPhone-modeller: ${pl(o.n, "påfyllning", "påfyllningar")} på ${n(o.days)} dagar${o.peak ? `, flest runt ${o.peak}` : ""}.`,
+  },
 };

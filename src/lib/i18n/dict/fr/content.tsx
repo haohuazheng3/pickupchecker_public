@@ -174,6 +174,7 @@ export const content: Dict["content"] = {
     configsInStock: "config. en stock",
     storesWithStock: f({ one: "magasin avec du stock", other: "magasins avec du stock" }),
     restocks24h: "Retours en stock 24 h",
+    scoped: (label, model) => `${label} · ${model}`,
     restocksHint: (week, month, days) => `${week} sur 7 j · ${month} sur ${days} j`,
     sellOuts: (days) => `Ruptures ${days} j`,
     stays: (duration) => `reste ~${duration}`,
