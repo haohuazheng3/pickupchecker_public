@@ -92,6 +92,7 @@ export const modules: Dict["modules"] = {
     none: (label: string, days: number) => `최근 ${n(days)}일 동안 ${label}에서 품절까지 간 재입고가 아직 없어요.`,
     whatDuo: "iPhone Duo",
     whatAll: "전체 iPhone",
+    definition: "표시 시간은 Apple 픽업 페이지가 그 구성을 픽업 가능으로 보여 준 시간으로, 저희의 두 번의 확인 사이로 정해져요. 팔린 대수나 얼마나 서둘러야 하는지를 뜻하지는 않아요.",
     tileHalf: (what: string) => <>절반 품절까지 · {what}</>,
     tileWithin30: "30초 안에 품절",
     tileWithin60: "1분 안에 품절",
@@ -206,20 +207,43 @@ export const modules: Dict["modules"] = {
     lastIn: (o: { config: string; store: ReactNode | null; when: string; lasted: string | null }) => <>마지막 재고: <b className="text-ink">{o.config}</b>{o.store != null && <>, {o.store}</>}, {o.when}{o.lasted ? <> ({o.lasted})</> : null}.</>,
     neverYet: (label: string, since: string) => `${since} 추적을 시작한 뒤로 ${label}에서 확인된 iPhone Duo 재입고는 아직 없어요.`,
     others: (o: { pro: number; max: number; one: boolean; configs: number }) => (o.one ? `이 매장에서 iPhone 18 Pro는 구성 ${n(o.configs)}개 중 ${n(o.pro)}개, 18 Pro Max는 ${n(o.max)}개를 픽업할 수 있어요.` : `iPhone 18 Pro는 그중 ${n(o.pro)}곳, 18 Pro Max는 ${n(o.max)}곳에 재고가 있어요.`),
-    updated: (stamp: string) => `${stamp} 업데이트`,
-    checked: () => "15초마다 확인, 알림 매장은 5초마다",
-    since: (date: string) => `${date}부터의 데이터`,
-    method: "두 번의 확인이 일치할 때만 재입고로 세고, 처음 확인한 순간은 제외",
+    evidence: (o) => (o.one
+      ? (o.fresh > 0
+        ? <>{o.stamp} 기준: 최근 1분 안에 {o.name}의 응답을 받았어요.</>
+        : <>{o.stamp} 기준: 최근 1분 동안 {o.name}의 응답이 없어요. 상태를 알 수 없어 품절로 세지 않아요.</>)
+      : <>{o.stamp} 기준: 매장 {n(o.total)}곳 중 {n(o.fresh)}곳이 최근 1분 안에 응답했어요.{o.stale > 0 ? ` 최신 응답이 없는 ${n(o.stale)}곳은 상태를 알 수 없어 품절로 세지 않아요.` : ""}</>),
+    evidenceNone: (o) => (o.one
+      ? `아직 ${o.name}의 응답을 받지 못했어요. 상태를 알 수 없어 품절로 세지 않아요.`
+      : `아직 매장 ${n(o.total)}곳 중 응답한 곳이 없어요. 상태를 알 수 없어 품절로 세지 않아요.`),
+    howCounted: (o) => {
+      const base = "재입고는 두 번의 응답이 일치할 때만 세요(처음 확인한 순간은 제외). 표시 시간은 그 구성이 아직 보이던 마지막 확인과 더 이상 보이지 않은 첫 확인 사이로 정해져요. 확인 주기는 알림 매장 5초, 전체 매장 15초로 계획돼 있어요.";
+      const lanes = [
+        o.fast && `알림 매장 간격 중앙값 ${o.fast.p50}(p95 ${o.fast.p95}, ${n(o.fast.n)}회${o.fast.slow ? ", 계획보다 느림" : ""})`,
+        o.round && `전체 매장 한 바퀴 ${o.round.p50}(p95 ${o.round.p95}, ${n(o.round.n)}바퀴${o.round.slow ? ", 계획보다 느림" : ""})`,
+      ].filter(Boolean);
+      if (lanes.length === 0 || !o.win) return base;
+      const win = o.win.days ? `최근 ${n(o.win.days)}일` : `최근 ${n(o.win.hours ?? 1)}시간`;
+      return `${base} ${win} 실측: ${lanes.join(", ")}.`;
+    },
+    howLink: "측정 방법 →",
+    sec: (v) => `${v}초`,
+    technique: "PickupChecker는 Apple Store마다 Apple의 매장 픽업 재고를 조회해요. 회원 알림이 있는 매장은 5초마다, 모든 매장은 15초마다예요. 재입고는 두 번의 응답이 일치할 때만 세고(처음 확인한 순간은 제외), 표시 시간은 그 구성이 아직 보이던 마지막 확인과 더 이상 보이지 않은 첫 확인 사이로 정해져요.",
     tShare: (range: string) => `재입고 중 ${range} 사이 비율`,
     tBusiest: (count: number) => `가장 많은 시간대 · ${n(count)}회`,
-    tHalf: "절반이 품절되기까지",
+    tHalf: "표시 시간 중앙값",
     tSince: (date: string) => `${date} 이후 확인된 재입고`,
     tToday: "오늘 지금까지",
     mostOften: (config: string, k: number, total: number) => `가장 많은 구성 ${config} (${n(total)}회 중 ${n(k)}회)`,
     zone: (tz: string | null): string => (void tz, "현지 시간"),
-    summary: (o: { pct: string; n: number; stores: number; label: string; since: string; range: string; zone: string; busiest: string; busiestN: number; median: string | null; config: string | null; k: number; one: boolean }) =>
-      `PickupChecker가 ${o.since} 이후 ${o.one ? o.label : `${o.label} Apple Store ${n(o.stores)}곳`}에서 확인한 iPhone Duo 재입고 ${n(o.n)}회 중 ${o.pct}가 ${o.zone} ${o.range} 사이였어요. 가장 많은 시간대는 ${o.busiest}(${n(o.busiestN)}회)였어요.${o.median ? ` 절반은 ${o.median} 안에 품절됐어요.` : ""}${o.config ? ` 가장 자주 재입고된 구성은 ${o.config}(${n(o.n)}회 중 ${n(o.k)}회)예요.` : ""}`,
-    tooFew: (o: { n: number; label: string; since: string; one: boolean; stores: number }) => `${o.since} 이후 ${o.one ? o.label : `${o.label} Apple Store ${n(o.stores)}곳`}에서 확인된 iPhone Duo 재입고는 ${n(o.n)}회예요. 아직 평소 시간대를 말하기엔 적어서 아래에 하나씩 적었어요.`,
+    factsTitle: (label) => `핵심 정리: ${label} iPhone Duo`,
+    fN: (o) => <>PickupChecker는 {o.since} 이후 {o.one ? o.label : `${o.label} Apple Store ${n(o.stores)}곳`}에서 iPhone Duo 재입고를 <b className="text-ink">{n(o.n)}회</b> 확인했어요. 재입고가 있었던 날은 {n(o.days)}일이에요.</>,
+    fShare: (o) => <>{o.since} 이후 {o.label}의 iPhone Duo 재입고 {n(o.n)}회 중 <b className="text-ink">{o.pct}</b>가 {o.zone} {o.range} 사이였어요. 가장 많은 시간대는 {o.busiest}({n(o.busiestN)}회)였어요.</>,
+    fTooFew: (o) => `${o.label}에서 확인된 iPhone Duo 재입고는 ${n(o.days)}일 동안 ${n(o.n)}회예요. 평소 시간대를 말하기엔 아직 적어요. PickupChecker는 서로 다른 ${n(o.minDays)}일에 걸쳐 ${n(o.min)}회 이상 쌓인 뒤에 시간대를 알려 드려요.`,
+    fMedian: (o) => <>{o.label}의 iPhone Duo가 Apple 픽업 페이지에 표시된 시간의 중앙값은 <b className="text-ink">약 {o.median}</b>({o.since} 이후 측정한 {n(o.n)}회)예요.</>,
+    fTop: (o) => <>{o.label}에서 가장 자주 재입고된 iPhone Duo 구성은 <b className="text-ink">{o.config}</b>({o.since} 이후 {n(o.n)}회 중 {n(o.k)}회, {o.pct})예요.</>,
+    fToday: (o) => (o.n > 0
+      ? <>오늘({o.date}, 현지 시간) 지금까지 PickupChecker가 {o.label}에서 확인한 iPhone Duo 재입고는 <b className="text-ink">{n(o.n)}회</b>예요.</>
+      : <>오늘({o.date}, 현지 시간)은 {o.label}에서 확인된 iPhone Duo 재입고가 아직 없어요.</>),
     hourByHour: "시간대별, 모든 매장 →",
     lastThree: (k: number, label: string) => (k === 1 ? `${label} 마지막 iPhone Duo 재입고` : `${label} 최근 iPhone Duo 재입고 ${n(k)}회`),
     secs: (x: number) => `${n(x)}초`,

@@ -78,15 +78,15 @@ const configs: D["configs"] = {
     const st = d.byStorage, co = d.byColor;
     const last = st[st.length - 1];
     const storage = st.length > 1
-      ? `カラーより容量で差がつきます：${last.restocks > 0 ? `${st[0].key}の入荷は${last.key}の${ratio(st[0].restocks, last.restocks)}` : `${st[0].key}が入荷の${pct(st[0].share)}を占める一方、${last.key}は一度も入荷していません`}${co.length > 1 ? `。一方、${x.colour(co[0].key)}と${x.colour(co[1].key)}の差はわずか${N(Math.abs(Math.round((co[0].share - co[1].share) * 100)))}ポイントです` : ""}。`
+      ? `入荷回数はカラーより容量で大きく分かれます：${last.restocks > 0 ? `${st[0].key}の入荷は${last.key}の${ratio(st[0].restocks, last.restocks)}` : `${st[0].key}が入荷の${pct(st[0].share)}を占める一方、${last.key}は一度も入荷していません`}${co.length > 1 ? `。一方、${x.colour(co[0].key)}と${x.colour(co[1].key)}の差はわずか${N(Math.abs(Math.round((co[0].share - co[1].share) * 100)))}ポイントです` : ""}。`
       : "";
-    return `${inJa(x.c)}いちばん手に入れやすいiPhone Duoは${x.cfg(e)}です。PickupCheckerが${longDate(d.since)}以降に${storesPhrase(x)}で確認した入荷${N(d.n)}回のうち${N(e.restocks)}回がこの構成で、${N(e.stores)}店舗に入荷し、在庫時間の合計は${hours(e.exposureSec)}${e.lifetimes ? `、完売までの中央値は${secs(e.lifetimes.medianSec)}` : ""}。${h ? `最も難しいのは${x.cfg(h)}で、入荷${N(h.restocks)}回、在庫時間の合計は${hours(h.exposureSec)}。` : ""}${storage}`;
+    return `${inJa(x.c)}在庫時間の合計がいちばん長いiPhone Duoの構成は${x.cfg(e)}です。PickupCheckerが${longDate(d.since)}以降に${storesPhrase(x)}で確認した入荷${N(d.n)}回のうち${N(e.restocks)}回がこの構成で、${N(e.stores)}店舗に入荷し、在庫時間の合計は${hours(e.exposureSec)}${e.lifetimes ? `、1回あたりの中央値は${secs(e.lifetimes.medianSec)}` : ""}。${h ? `最も短いのは${x.cfg(h)}で、入荷${N(h.restocks)}回、在庫時間の合計は${hours(h.exposureSec)}。` : ""}${storage}どれを実際に買えるかは誰にも言えません。測れるのは過去の受け取り枠で、このページが並べているのはそれです。`;
   },
   updated: (x: ConfigsView, stamp: string) => `${stamp}更新 · データは${longDate(x.d.since)}から · アップルストア${N(x.stores)}店舗 · 全店舗を${SPEED.checkSec}秒ごと、通知を設定した店舗は${SPEED.fastSec}秒ごとにチェック`,
-  nav: { easiest: "いま狙いやすい構成", storage: "容量", colour: "カラー", shelf: "買える猶予", week: "今週の変化", alerts: "通知する構成", method: "数え方" },
+  nav: { easiest: "在庫時間が最長", storage: "容量", colour: "カラー", shelf: "買える猶予", week: "今週の変化", alerts: "通知する構成", method: "数え方" },
   h2: (x: ConfigsView) => ({
-    easiest: `${inJa(x.c)}いま、いちばん手に入れやすいiPhone Duoの構成は？`,
-    storage: "容量によって確率は変わる？",
+    easiest: `${inJa(x.c)}在庫時間の合計がいちばん長いiPhone Duoの構成は？`,
+    storage: "容量によって入荷の頻度は変わる？",
     colour: x.d.byColor.length > 1 ? `${x.colour(x.d.byColor[0].key)}と${x.colour(x.d.byColor[1].key)}：よく入荷するのはどちら？` : "よく入荷するカラーはどれ？",
     shelf: "買うまでの猶予が最も長い構成は？",
     week: "この7日間で何が変わった？",
@@ -102,7 +102,7 @@ const configs: D["configs"] = {
   },
   easiestLead: (x: ConfigsView) => {
     const e = x.d.easiest!;
-    return `${x.cfg(e)}が、重要な2つの指標で勝っています。最も多く入荷し（${N(e.restocks)}回、全体の${pct(e.restocks / x.d.n)}）、在庫時間の合計も最長（${hours(e.exposureSec)}）——これはアプリを開いて予約するためにあった時間です。${e.nowStores > 0 ? `いまこの瞬間、${N(e.nowStores)}店舗が掲載しています。` : "いまこの瞬間に掲載している店舗はありません。次の入荷は数秒以内にここに表示されます。"}`;
+    return `${x.cfg(e)}が、測定できる2つの指標でともに首位です。最も多く入荷し（${N(e.restocks)}回、全体の${pct(e.restocks / x.d.n)}）、在庫時間の合計も最長（${hours(e.exposureSec)}）——受け取りを予約できた時間の合計です。${e.nowStores > 0 ? `いまこの瞬間、${N(e.nowStores)}店舗が掲載しています。` : "いまこの瞬間に掲載している店舗はありません。次の入荷は数秒以内にここに表示されます。"}`;
   },
   easiestKeys: (x: ConfigsView) => {
     const { d } = x;
@@ -137,7 +137,7 @@ const configs: D["configs"] = {
     const co = x.d.byColor;
     if (co.length < 2 || !x.d.n) return "カラーの比較は、入荷が入ってからです。";
     const gap = Math.abs(Math.round((co[0].share - co[1].share) * 100));
-    return `${x.colour(co[0].key)}ですが、差はわずかです。入荷の${pct(co[0].share)}に対し、${x.colour(co[1].key)}は${pct(co[1].share)}で、${N(gap)}ポイントの差${co[0].medianSec && co[1].medianSec ? `。在庫時間の中央値はそれぞれ${secs(co[0].medianSec)}と${secs(co[1].medianSec)}` : ""}。カラーが確率に与える影響は容量より小さいので、希望の容量を両方のカラーで通知すれば、チャンスはほぼ2倍になります。`;
+    return `${x.colour(co[0].key)}ですが、差はわずかです。入荷の${pct(co[0].share)}に対し、${x.colour(co[1].key)}は${pct(co[1].share)}で、${N(gap)}ポイントの差${co[0].medianSec && co[1].medianSec ? `。在庫時間の中央値はそれぞれ${secs(co[0].medianSec)}と${secs(co[1].medianSec)}` : ""}。カラーによる入荷回数の差は容量より小さめです。2つ目のカラーも通知すれば、そのカラーの受け取り枠が加わります：${co[1].restocks > 0 ? `${inJa(x.c)}${longDate(x.d.since)}以降、${x.colour(co[1].key)}は入荷${N(co[1].restocks)}回・在庫時間${hours(co[1].exposureSec)}で、${x.colour(co[0].key)}の${N(co[0].restocks)}回・${hours(co[0].exposureSec)}に上乗せされます（全容量の合計）` : `${inJa(x.c)}${longDate(x.d.since)}以降、${x.colour(co[1].key)}の入荷はまだないため、これまでのところ上乗せはありません`}。`;
   },
   colourKeys: (x: ConfigsView) => x.d.byColor.map((g) => `${x.colour(g.key)}：入荷${N(g.restocks)}回・${N(g.stores)}店舗、在庫時間の合計${hours(g.exposureSec)}${g.nowStores ? `、いま${N(g.nowStores)}店舗が掲載中` : ""}。`),
   shelfLead: (x: ConfigsView) => {
@@ -149,8 +149,9 @@ const configs: D["configs"] = {
   shelfCaption: "構成ごとの在庫時間（入荷 → 次に完売を確認したチェック）",
   shelfHead: ["構成", "完売を確認した入荷", "中央値", "2分以内に完売", "20分以内に完売", "最速"],
   shelfKeys: (x: ConfigsView) => [
-    `プッシュ通知は、入荷を確認してから約${SPEED.alertSec}秒後に届きます。掲載時間の中央値は${x.d.lifetimes ? secs(x.d.lifetimes.medianSec) : "約1分"}なので、Apple StoreアプリでDuoを開き、カードを登録しておけば、ほとんどの入荷に間に合います。`,
+    `入荷の半分は${x.d.lifetimes ? secs(x.d.lifetimes.medianSec) : "約1分"}以内に消えました。通知は入荷を確認してから約${SPEED.alertSec}秒後に送信します。残りの時間で間に合うかは、端末と、事前に整えた購入手続き次第です。`,
     `この時間は上限値です。完売は次のチェック——最長${SPEED.checkSec}秒後、通知を設定した店舗では${SPEED.fastSec}秒後——で確認されるためです。`,
+    "ここでいう「完売」は、Appleの受け取りページがその店舗でその構成を表示しなくなったことです。何台だったかは、Appleは公表していません。",
   ],
   weekLead: (x: ConfigsView) => {
     const rows = [...x.d.byPart].sort((a, b) => b.last7 - a.last7);
@@ -169,10 +170,10 @@ const configs: D["configs"] = {
   },
   alertsKeys: (x: ConfigsView) => [
     `通知は店舗×構成ごとに1件なので、3店舗×3構成なら${N(9)}件です。`,
-    `通知を設定した店舗は${SPEED.fastSec}秒ごとにチェックし、入荷を確認してからプッシュします。通知が届くのはその約${SPEED.alertSec}秒後です。`,
+    `通知を設定した店舗は${SPEED.fastSec}秒ごとにチェックし、入荷を確認してからプッシュします。通知を送信するのはその約${SPEED.alertSec}秒後で、スマートフォンに表示されるまでの時間は端末と通信環境によるため、計測していません。`,
     `${x.one ? "" : "店舗は入荷回数ではなく、距離で選びましょう。"}いちばん忙しい店舗は、いちばん多くの人が見ている店舗でもあります。`,
   ],
-  methodLead: "入荷とは、ある店舗である構成が「完売」から「在庫あり」に変わることで、2回の一致したチェックで確認したものだけを数えます。計測の空白のあとに初めて見えた在庫は数えません。在庫時間は入荷から、再び完売を示した最初のチェックまでなので、上限値です。「在庫時間の合計」はその構成のすべての入荷の時間を足したもので、買えるチャンスがどれだけあったかを示す最も単純な尺度です。",
+  methodLead: "入荷とは、ある店舗である構成が「完売」から「在庫あり」に変わることで、2回の一致したチェックで確認したものだけを数えます。計測の空白のあとに初めて見えた在庫は数えません。在庫時間は入荷から、再び完売を示した最初のチェックまでなので、上限値です。「在庫時間の合計」はその構成のすべての入荷の時間を足したもので、受け取りを予約できた時間の長さを示す最も単純な尺度です。過去の掲載の記録であって、購入できる確率でも販売台数でもありません（Appleはどちらも公表していません）。",
   methodKeys: (x: ConfigsView) => [
     `出典：${storesPhrase(x)}について、Apple自身の店頭受け取り在庫を${longDate(x.d.since)}から店舗ごとに${SPEED.checkSec}秒ごと（通知を設定した店舗は${SPEED.fastSec}秒ごと）に読み取っています。`,
     "いま掲載中の店舗と最新の入荷時刻はライブ。それ以外は5分以内に再計算されます。",
@@ -182,7 +183,7 @@ const configs: D["configs"] = {
     const { d } = x;
     const e = d.easiest, h = d.hardest, co = d.byColor;
     return [
-      { q: `${inJa(x.c)}いちばん手に入れやすいiPhone Duoは？`, a: e ? `${x.cfg(e)}です。${longDate(d.since)}以降、アップルストア${N(e.stores)}店舗で確認した入荷${N(e.restocks)}回、在庫時間の合計${hours(e.exposureSec)}は、どの構成よりも多い数字です。${h ? `最も難しいのは${x.cfg(h)}で、入荷は${N(h.restocks)}回です。` : ""}` : `${inJa(x.c)}確認した入荷がまだ少なく、判断できません。入荷が入り次第、このページで全構成を順位づけします。` },
+      { q: `${inJa(x.c)}いちばん手に入れやすいiPhone Duoは？`, a: e ? `どれが手に入るかは、誰にも言えません。Appleは割り当て数も、何人が狙っているかも公表していないからです。測れるのは過去の受け取り枠です。${longDate(d.since)}以降、${storesPhrase(x)}で確認した入荷${N(d.n)}回のうち、掲載時間の合計がいちばん長かったのは${x.cfg(e)}（入荷${N(e.restocks)}回・${N(e.stores)}店舗で計${hours(e.exposureSec)}）${h ? `、いちばん短かったのは${x.cfg(h)}（入荷${N(h.restocks)}回で計${hours(h.exposureSec)}）` : ""}です。これは過去の掲載の記録で、あなたが買えるかどうかの予測ではありません。色や店舗を一つ足すとどれだけ枠が増えるかは、通知設定の「受け取り枠がいちばん増えるのは？」で確認できます。` : `${inJa(x.c)}確認した入荷がまだ少なく、判断できません。入荷が入り次第、このページで全構成を順位づけします。` },
       { q: co.length > 1 ? `${x.colour(co[1].key)}は${x.colour(co[0].key)}より見つけにくい？` : "一方のカラーは、もう一方より見つけにくい？", a: co.length > 1 && d.n ? `わずかに。${x.colour(co[0].key)}が入荷の${pct(co[0].share)}、${x.colour(co[1].key)}が${pct(co[1].share)}でした。容量による差のほうがはるかに大きいので、まず容量を決め、そのカラー両方に通知を設定してください。` : "カラーの比較は、入荷が入ってからです。" },
       { q: `1TBや2TBのiPhone Duoは${inJa(x.c)}入荷することがある？`, a: (() => { const big = d.byPart.filter((r) => /^(1|2)TB$/.test(r.storage)); const bn = big.reduce((a, r) => a + r.restocks, 0); const maxStores = big.some((r) => r.stores) ? `最多でも${N(Math.max(...big.map((r) => r.stores)))}店舗` : "店舗数はゼロ"; return bn ? `あります、ただしまれです。1TBと2TBの入荷は${N(d.n)}回中${N(bn)}回（${pct(bn / d.n)}）で、${maxStores}です。出ると長く掲載される（欲しい人が少ない）ので、鳴る頻度は低くても通知1件を割く価値があります。` : `私たちのデータには、まだありません。${longDate(d.since)}以降、${inJa(x.c)}1TB・2TBの確認済み入荷はありません。`; })() },
       { q: "通知は1つの構成に絞る？ 複数に設定する？", a: `複数の構成を、少数の店舗に。上位3構成が${inJa(x.c)}入荷の${d.n ? pct(d.byPart.slice(0, 3).reduce((a, r) => a + r.restocks, 0) / d.n) : "大半"}を占めています。近くの3店舗×3構成で9件になり、Plusプランに収まります。4件目に、本当に欲しい構成を加えてください。` },
@@ -286,7 +287,7 @@ const supply: D["supply"] = {
   },
   easierKeys: (x: SupplyView) => [
     "ここで「緩和」がどう見えるか：在庫時間の中央値が20分を超え、多くの店舗が同時に掲載し、apple.comの配送予定が1週間以内になる。",
-    `それまでは、買う手段はやはり入荷通知です。入荷を確認してから約${SPEED.alertSec}秒後にプッシュするので、掲載時間の中央値に十分収まります。`,
+    `それまでは、買う手段はやはり入荷通知です。入荷を確認してから約${SPEED.alertSec}秒後にプッシュ通知を送信するので、掲載時間の中央値に十分収まります。`,
     x.d.lifetimes ? `${inJa(x.c)}累計：完売を確認した入荷${N(x.d.lifetimes.n)}回、中央値${secs(x.d.lifetimes.medianSec)}、${pct(x.d.lifetimes.within2min)}が2分以内に完売。` : "累計の在庫時間は、完売した入荷が10回に達すると表示します。",
   ],
   storesLead: (x: SupplyView) => {
@@ -310,7 +311,7 @@ const supply: D["supply"] = {
   christmasLead: (x: SupplyView) => {
     const w = x.d.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
-    return `通知をオンにしたまま、配送の注文も入れておく——どちらか一方ではなく、両方です。いまのペース（${perDay >= 1 ? `${inJa(x.c)}1日あたり約${N(Math.round(perDay))}回の入荷` : `${inJa(x.c)}1日1回未満の入荷`}${w.medianSec ? `、1回あたり中央値${secs(w.medianSec)}の掲載` : ""}）なら、近くで見ている店舗にも数日以内に順番が回り、確認済みの入荷は見つけてから約${SPEED.alertSec}秒でスマートフォンに届きます。ほかで上乗せ価格を払う意味があるのは、待つこと自体が上乗せ分より高くつく場合だけです。販売チャネルの比較ページで、それを正直に秤にかけています。`;
+    return `通知をオンにしたまま、配送の注文も入れておく——どちらか一方ではなく、両方です。いまのペース（${perDay >= 1 ? `${inJa(x.c)}1日あたり約${N(Math.round(perDay))}回の入荷` : `${inJa(x.c)}1日1回未満の入荷`}${w.medianSec ? `、1回あたり中央値${secs(w.medianSec)}の掲載` : ""}）なら、近くで見ている店舗にも数日以内に順番が回り、確認済みの入荷は見つけてから約${SPEED.alertSec}秒で通知を送信します。ほかで上乗せ価格を払う意味があるのは、待つこと自体が上乗せ分より高くつく場合だけです。販売チャネルの比較ページで、それを正直に秤にかけています。`;
   },
   christmasKeys: () => [
     "まずapple.comで配送を注文する：順番を確保でき、店頭受け取りが取れたらキャンセルできます。",
@@ -339,7 +340,7 @@ const supply: D["supply"] = {
       { q: `Appleは${inJa(x.c)}まだiPhone Duoを入荷している？`, a: d.n ? `はい。直近7日間に${inJa(x.c)}アップルストア${N(w.stores)}店舗で確認済みの入荷${N(w.restocks)}回、${longDate(d.since)}以降は${N(d.n)}回です。最新の入荷は${d.sinceLastHours != null && d.sinceLastHours < 1 ? "1時間以内" : d.sinceLastHours != null ? `${N(d.sinceLastHours)}時間前` : "まだ記録されていません"}。` : `${longDate(d.since)}の計測開始以降、${inJa(x.c)}確認済みの入荷はまだありません。最初の入荷から5分以内に、このページが更新されます。` },
       { q: `${inJa(x.c)}iPhone Duoの品薄は改善している？`, a: d.trend === "insufficient" ? `判断するには、まだ早すぎます。前週との最初の完全な比較は${longDate(d.comparableFrom)}に出ます。見るべき数字は2つ——週あたりの入荷回数と在庫の秒数。両方が上がれば緩和です。` : `今週の入荷は${trendJa(d)}（${signed(d.change!)}）${w.medianSec ? `で、1回の入荷は中央値${secs(w.medianSec)}掲載されました` : ""}。緩和とは入荷の増加と在庫時間の延びが同時に起きることで、いまのところ${d.trend === "up" && w.medianSec && d.prev7.medianSec && w.medianSec > d.prev7.medianSec ? "両方とも良い方向に動いています" : "その一部しか起きていません"}。` },
       { q: "iPhone Duoが楽に買えるようになるのはいつ？", a: "Apple以外には誰にも言えず、PickupCheckerも予測はしません。見るべき順序は：週あたりの入荷が2〜3週間増え続け、在庫時間の中央値が20分を超え、そして多くの店舗が同時に掲載し、apple.comの配送予定が1週間以内になる。" },
-      { q: "待つより、上乗せ価格で買うべき？", a: `待つことが上乗せ分より高くつく場合だけです。いまのペースなら近くで見ている店舗にも数日以内に順番が回り、確認済みの入荷から約${SPEED.alertSec}秒で通知が届きます。転売品には返品期間がなく、いつものリスクもつきます。販売チャネルの比較ページで秤にかけています。` },
+      { q: "待つより、上乗せ価格で買うべき？", a: `待つことが上乗せ分より高くつく場合だけです。いまのペースなら近くで見ている店舗にも数日以内に順番が回り、確認済みの入荷から約${SPEED.alertSec}秒で通知を送信します。転売品には返品期間がなく、いつものリスクもつきます。販売チャネルの比較ページで秤にかけています。` },
       { q: "年末商戦で確率は変わる？", a: "12月に向けて需要は高まる一方、納品のリズムは変わらないので、在庫時間は延びるより縮む傾向です。配送の注文を保険として持ち、受け取りは通知に任せ、不要になったほうをキャンセルしてください。" },
     ];
   },
@@ -397,7 +398,7 @@ const channels: D["channels"] = {
   compareRows: (x: ChannelsView) => {
     const r = x.ch;
     return [
-      { channel: "アップルストアの店頭受け取り", known: `${longDate(x.sup.since)}以降、確認済みの入荷${N(x.sup.n)}回。全入荷・全店舗を時刻つきで。`, watch: `ここで入荷通知（確認から約${SPEED.alertSec}秒後）、またはApple Storeアプリの受け取り店舗の選択画面。`, catch: "掲載は約1分。アプリを開き、カードを登録しておく必要があります。" },
+      { channel: "アップルストアの店頭受け取り", known: `${longDate(x.sup.since)}以降、確認済みの入荷${N(x.sup.n)}回。全入荷・全店舗を時刻つきで。`, watch: `ここで入荷通知（確認から約${SPEED.alertSec}秒後に送信）、またはApple Storeアプリの受け取り店舗の選択画面。`, catch: "掲載は約1分。アプリを開き、カードを登録しておく必要があります。" },
       { channel: "apple.comの配送", known: "Appleは購入手続きで配送予定を表示。日々動き、在庫数ではありません。", watch: "注文を入れる。注文ページの予定日は、Appleの出荷に合わせて更新されます。", catch: "分ではなく週の単位——ただし、順番は確保されます。" },
       { channel: `キャリア（${listJa(r.carriers)}）`, known: "独自の割り当て。オンライン在庫は構成ごとに「在庫あり／入荷待ち」で表示。履歴もデータ配信もなし。", watch: "各社のアプリと店舗検索。店舗への電話も有効です。", catch: lockJa(x, "料金プラン、分割払い、開通の条件がつき、在庫は店舗ごとに異なります。") },
       { channel: `量販店（${listJa(r.retailers)}）`, known: "独自の割り当て。発売直後の製品はオンライン限定が多く、商品ページに構成ごとに表示。", watch: "商品ページとアプリ。入荷メールを出す店もあります。", catch: "割り当てはAppleより小さく、やはり数分で売り切れます。" },
@@ -432,7 +433,7 @@ const channels: D["channels"] = {
   resaleLead: (x: ChannelsView) => {
     const w = x.sup.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
-    return `ほとんどの場合、いいえ。上乗せ価格と、それで買える「待たない時間」を秤にかけてください。${ofJa(x.c)}アップルストアは今週${perDay >= 1 ? `1日あたり約${N(Math.round(perDay))}回` : "1日1回未満"}入荷し、確認済みの入荷から約${SPEED.alertSec}秒で通知が届くので、近くで見ている店舗はたいてい数日以内に順番が来ます。対して${listJa(x.ch.resale)}にはメーカーの購入記録がなく、${x.ch.returnDays ? `${returnPhrase(x.ch.returnDays)}もなく` : x.ch.returnDays === 0 ? "不良品の交換も受けられず" : "返品期間もいっさいなく"}、いつものリスク——アクティベーションロック、箱のすり替え、「未開封」の返品——がつきます。`;
+    return `ほとんどの場合、いいえ。上乗せ価格と、それで買える「待たない時間」を秤にかけてください。${ofJa(x.c)}アップルストアは今週${perDay >= 1 ? `1日あたり約${N(Math.round(perDay))}回` : "1日1回未満"}入荷し、確認済みの入荷から約${SPEED.alertSec}秒で通知を送信するので、近くで見ている店舗はたいてい数日以内に順番が来ます。対して${listJa(x.ch.resale)}にはメーカーの購入記録がなく、${x.ch.returnDays ? `${returnPhrase(x.ch.returnDays)}もなく` : x.ch.returnDays === 0 ? "不良品の交換も受けられず" : "返品期間もいっさいなく"}、いつものリスク——アクティベーションロック、箱のすり替え、「未開封」の返品——がつきます。`;
   },
   resaleKeys: () => [
     "それでも転売で買うなら：対面で受け取り、電源を入れ、「設定 → 一般 → 情報」でシリアル番号を確認し、支払う前にサインインする。",
@@ -537,11 +538,11 @@ const api: D["api"] = {
     "互換性を壊す変更は新しいバージョンパス（/api/v2）で行います。v1ではフィールドは追加されるだけで、改名はしません。",
     "プロジェクト名と連絡先を書いたUser-Agentを設定してください。礼儀正しいスクリプトをブロックしたことは、一度もありません。",
   ],
-  scriptLead: (x: ApiView) => `ダッシュボード、Discordボット、スプレッドシート、研究が目的なら、スクリプトを書いてください——APIはそのためにあります。実際にiPhone Duoを買いたいなら、スクリプトは遅いほうの道具です。入荷に気づくのは次のポーリング、最長30秒後で、そこからあなたに伝えなければなりません。私たちのプッシュ通知は同じ店舗を${SPEED.fastSec}秒ごとに読み、入荷を確認し、その約${SPEED.alertSec}秒後にスマートフォンに届きます——${x.storesNow !== undefined ? "約1分という掲載時間の中央値の内側です" : "掲載時間の中央値の内側です"}。多くの人は両方使っています。買うには通知、見るにはAPI。`,
+  scriptLead: (x: ApiView) => `ダッシュボード、Discordボット、スプレッドシート、研究が目的なら、スクリプトを書いてください——APIはそのためにあります。実際にiPhone Duoを買いたいなら、スクリプトは遅いほうの道具です。入荷に気づくのは次のポーリング、最長30秒後で、そこからあなたに伝えなければなりません。私たちのプッシュ通知は同じ店舗を${SPEED.fastSec}秒ごとに読み、入荷を確認し、その約${SPEED.alertSec}秒後に送信されます——${x.storesNow !== undefined ? "約1分という掲載時間の中央値の内側です" : "掲載時間の中央値の内側です"}。多くの人は両方使っています。買うには通知、見るにはAPI。`,
   scriptCaption: "ポーリングするスクリプトと、プッシュ通知の比較",
   scriptHead: ["", "このAPIを使うあなたのスクリプト", "PickupCheckerの通知"],
   scriptRows: () => [
-    { k: "入荷に気づくまで", a: "最長30秒（キャッシュ）＋あなたの間隔", b: `約${SPEED.alertSec}秒` },
+    { k: "入荷に気づくまで", a: "最長30秒（キャッシュ）＋あなたの間隔", b: `チェックで見つけてから約${SPEED.alertSec}秒で通知を送信` },
     { k: "スマートフォンに届く手段", a: "自分で作るもの（メール、ボット、SMS）", b: "ホーム画面アプリの通知" },
     { k: "見張る店舗", a: "全店舗、毎回", b: `選んだ店舗を${SPEED.fastSec}秒ごと、全店舗を${SPEED.checkSec}秒ごと` },
     { k: "費用", a: "無料", b: "通知はプラン制。このサイトを読むのは無料" },
@@ -558,7 +559,7 @@ const api: D["api"] = {
     { q: "Appleに公式の在庫APIはある？", a: "公開されたものはありません。apple.comの受け取りページは店舗×構成ごとに読めるので、このサイトはそれを手間をかけて（ローテーション、確認、タイムゾーン）行っています。ここのAPIは、その作業をJSONとして公開したものです。" },
     { q: "データはどのくらい新しい？", a: `各店舗を${SPEED.checkSec}秒ごと（通知を設定した店舗は${SPEED.fastSec}秒ごと）にチェックし、APIの応答は30秒キャッシュされるので、数値は最大でも約45秒前のものです。正確な時刻はlast_checked_atが教えます。` },
     { q: "商用製品で使える？", a: "使えます。条件は出典表示：データを表示する場所に、pickupchecker.comへのリンク付きで「Source: PickupChecker」を示すこと、そしてポーリング間隔を30秒以上にすること。キーは不要です。" },
-    { q: "スクリプトのほうが、通知より早くiPhone Duoを手に入れられる？", a: `いいえ。スクリプトが入荷に気づくのは次のポーリング、最長30秒後です。通知は入荷を確認し、見つけてから約${SPEED.alertSec}秒でスマートフォンに届きます。見るにはスクリプト、買うには通知を。` },
+    { q: "スクリプトのほうが、通知より早くiPhone Duoを手に入れられる？", a: `いいえ。スクリプトが入荷に気づくのは次のポーリング、最長30秒後です。通知は入荷を確認し、見つけてから約${SPEED.alertSec}秒で送信されます。見るにはスクリプト、買うには通知を。` },
   ],
   sources: { pickup: "Apple：店頭受け取り（英語）", method: "PickupChecker：チェックの仕組み（英語）", log: "PickupChecker：入荷履歴" },
   ld: (x: ApiView) => ({

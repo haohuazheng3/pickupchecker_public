@@ -62,6 +62,24 @@ export const alerts: CDict["alerts"] = {
     myAlerts: "Mes alertes",
   },
 
+  windows: {
+    title: "Qu’est-ce qui ajoute le plus de créneaux de retrait ?",
+    had: "Votre sélection : {windows} sur {days}",
+    windowsN: { one: "# créneau de retrait", other: "# créneaux de retrait" } as Forms,
+    daysN: { one: "# jour", other: "# jours" } as Forms,
+    best: " · {gain} avec {what}",
+    noGain: " · aucun changement à proximité n’en aurait ajouté",
+    gainN: { one: "+# créneau", other: "+# créneaux" } as Forms,
+    tooFew: "Trop peu de créneaux de retrait sur {days} pour comparer ({n} comptés)",
+    counting: "Calcul des créneaux de retrait passés…",
+    listed: "En ligne {time} au total, les créneaux simultanés comptés une seule fois.",
+    storeAt: "{store} · ≈{dist}",
+    cost: { one: "+# alerte", other: "+# alertes" } as Forms,
+    addButton: "Ajouter",
+    add: "Ajouter {what}",
+    note: "Disponibilités passées sur la page de retrait d’Apple, ni une prévision ni une chance d’achat. Un créneau va d’un retour en stock jusqu’à la rupture (ou jusqu’à maintenant).",
+  },
+
   matrix: {
     model: "Modèle",
     configs: "Configurations {model}",

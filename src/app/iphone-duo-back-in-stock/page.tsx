@@ -21,7 +21,7 @@ import { getFacts } from "@/lib/content/facts";
 import type { Faq, Source } from "@/lib/content/types";
 import { PART_INDEX, STORES, appleName, catalogFor, cityLine, statePath, statesWithStores, storeByNumber, storePath, storeTimeZone, storesOf, type CatalogItem, type Store } from "@/lib/apple/catalog";
 import { COUNTRIES, INTL_CODES, prefixOf } from "@/lib/apple/countries";
-import { CHECK_NOTE, OTHER_TRACKERS, PLANS, SPEED } from "@/lib/plans";
+import { CHECK_NOTE, PLANS, SPEED } from "@/lib/plans";
 import { TRACKING_SINCE_INTL, TRACKING_SINCE_US, WEEKDAYS, hourLabel, localHourDay, localStamp, siteFacts } from "@/lib/content/siteFacts";
 import { busiestWindow, duoRestockTimes, rangeLabel } from "@/lib/content/restockTimes";
 import { medianBand } from "@/lib/stock/sellouts";
@@ -43,7 +43,7 @@ const DAY_MS = 86400_000;
 const FEED_PAGE = 200;
 const FEED_PAGES = 5;
 /** The one price sentence, in the body and in a FAQ answer, word for word. */
-const PRICE_SENTENCE = `Alerts from $${PLANS.plus.priceUsd}/month: the stores you pick are checked every ${SPEED.fastSec} s, with a push about ${SPEED.alertSec} s after a restock is confirmed.`;
+const PRICE_SENTENCE = `Alerts from $${PLANS.plus.priceUsd}/month: the stores you pick are checked every ${SPEED.fastSec} s, with a push sent about ${SPEED.alertSec} s after a restock is confirmed.`;
 
 const n = (x: number) => x.toLocaleString("en-US");
 /** Whole-percent shares; a share under half a percent reads "<1%", never a misleading "0%". */
@@ -513,7 +513,7 @@ export default async function DuoBackInStock() {
           )}
           <p>&ldquo;Back in stock&rdquo; is an event measured in seconds, not a state you can browse to. The phone is bought out faster than it arrives, so <b className="text-ink">unavailable is the normal reading</b> and available is the exception that lasts about {band ?? "a minute"}. That is why this page shows the latest confirmed restocks rather than only the live count: the count tells you about this minute, the log tells you how often the minute comes.</p>
           <ol className="my-4 grid gap-3 sm:grid-cols-2">
-            <Swap no="Reload apple.com every few minutes" yes={<>Be told within about {SPEED.alertSec} seconds of a confirmed restock</>} why={band ? `A listing that lasts about ${band} is usually gone between two reloads.` : "A listing that lasts seconds is usually gone between two reloads."} />
+            <Swap no="Reload apple.com every few minutes" yes={<>Get a push sent about {SPEED.alertSec} seconds after a confirmed restock</>} why={band ? `A listing that lasts about ${band} is usually gone between two reloads.` : "A listing that lasts seconds is usually gone between two reloads."} />
             <Swap no="Hunt for the store that is 'back in stock' right now" yes="Stage checkout, then wait for the push" why="The people who get the phone did their setup before the alert came: signed in, Apple Pay ready, the buy page open." />
           </ol>
           <Keys items={[
@@ -551,7 +551,7 @@ export default async function DuoBackInStock() {
         {/* ---------------------------------------------------------------- alerts */}
         <section id="alerts" className="scroll-mt-24">
           <h2>{h2Of("alerts")}</h2>
-          <p><b>{PRICE_SENTENCE}</b> That interval is the shortest any iPhone stock tracker publishes that we know of (the others publish {OTHER_TRACKERS}), and against a listing that lasts about {band ?? "a minute"} it is the difference between a push you can act on and a notification about a phone that is already gone.</p>
+          <p><b>{PRICE_SENTENCE}</b> Store Stock Checker also states 5 seconds and the other trackers state up to 15 minutes (<Link href="/iphone-stock-tracker-comparison">compared</Link>, with our measured intervals on the <Link href="/service-report">service report</Link>), and against a listing that lasts about {band ?? "a minute"} it is the difference between a push you can act on and a notification about a phone that is already gone.</p>
           <StepStrip className="my-4 lg:grid-cols-3!" steps={[
             { title: "Pick the store and configuration", hint: <>one alert = one Apple Store × one storage and color; two or three stores you can reach by 9 AM beat ten you cannot</> },
             { title: "Install the Home Screen app", hint: <>on iPhone, add PickupChecker from Safari and allow notifications once; alerts arrive as push notifications, or by email while no device is set up</> },

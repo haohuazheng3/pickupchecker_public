@@ -100,6 +100,7 @@ export const modules: Dict["modules"] = {
     none: (label: string, days: number) => `Nessun rifornimento ${label} si è ancora esaurito negli ultimi ${N(days)} giorni.`,
     whatDuo: "iPhone Duo",
     whatAll: "tutti gli iPhone",
+    definition: "La durata di disponibilità è il tempo in cui la pagina di ritiro di Apple ha mostrato la configurazione come disponibile, delimitato da due nostri controlli; non indica quanti telefoni sono stati venduti né quanto devi essere veloce.",
     tileHalf: (what: string) => <>metà esaurita entro · {what}</>,
     tileWithin30: "esauriti entro 30 s",
     tileWithin60: "esauriti entro 1 min",
@@ -217,13 +218,30 @@ export const modules: Dict["modules"] = {
     others: (o) => (o.one
       ? `L'iPhone 18 Pro è disponibile qui in ${N(o.pro)} configurazioni su ${N(o.configs)}, il 18 Pro Max in ${N(o.max)}.`
       : `L'iPhone 18 Pro è disponibile in ${N(o.pro)} di questi negozi, il 18 Pro Max in ${N(o.max)}.`),
-    updated: (stamp) => `Aggiornato al ${stamp}`,
-    checked: (note) => `controllato ${note}`,
-    since: (date) => `dati ${dal(date)}`,
-    method: "un rifornimento conta solo quando due controlli concordano; i primi avvistamenti sono esclusi",
+    evidence: (o) => (o.one
+      ? (o.fresh > 0
+        ? <>Al {o.stamp}: {o.name} ha risposto al nostro controllo nell&apos;ultimo minuto.</>
+        : <>Al {o.stamp}: nessuna risposta da {o.name} nell&apos;ultimo minuto — stato sconosciuto, non contato come esaurito.</>)
+      : <>Al {o.stamp}: {pl(o.fresh, "negozio", "negozi")} su {N(o.total)} {o.fresh === 1 ? "ha" : "hanno"} risposto nell&apos;ultimo minuto{o.stale > 0 ? `; ${N(o.stale)} senza una risposta recente — stato sconosciuto, non ${o.stale === 1 ? "contato come esaurito" : "contati come esauriti"}` : ""}.</>),
+    evidenceNone: (o) => (o.one
+      ? `${o.name} non ha ancora risposto a nessun controllo — stato sconosciuto, non contato come esaurito.`
+      : `Nessuno ${dei(o.total)} negozi ha ancora risposto a un controllo — stato sconosciuto, nulla viene contato come esaurito.`),
+    howCounted: (o) => {
+      const base = "Un rifornimento conta solo dopo due risposte concordi (i primi avvistamenti sono esclusi); la durata di disponibilità è compresa tra l'ultimo controllo che vedeva ancora la configurazione e il primo che non la vedeva più. I controlli sono previsti ogni 5 s nei negozi con un avviso e ogni 15 s in tutti i negozi";
+      const lanes = [
+        o.fast && `${o.fast.p50} di mediana nei negozi con un avviso (p95 ${o.fast.p95}, ${N(o.fast.n)} intervalli${o.fast.slow ? "; più lento del previsto" : ""})`,
+        o.round && `${o.round.p50} per giro completo (p95 ${o.round.p95}, ${N(o.round.n)} giri${o.round.slow ? "; più lento del previsto" : ""})`,
+      ].filter(Boolean);
+      if (lanes.length === 0 || !o.win) return `${base}.`;
+      const win = o.win.days ? `negli ultimi ${N(o.win.days)} giorni` : o.win.hours && o.win.hours > 1 ? `nelle ultime ${N(o.win.hours)} ore` : "nell'ultima ora";
+      return `${base}; misurato ${win}: ${lanes.join(" e ")}.`;
+    },
+    howLink: "Come misuriamo →",
+    sec: (v) => `${v} s`,
+    technique: "PickupChecker interroga la disponibilità per il ritiro in negozio di Apple per ogni Apple Store: ogni 5 secondi nei negozi con avvisi dei membri e ogni 15 secondi in tutti i negozi. Un rifornimento conta solo dopo due risposte concordi (primi avvistamenti esclusi); la durata di disponibilità è compresa tra l'ultimo controllo che vedeva ancora la configurazione e il primo che non la vedeva più.",
     tShare: (range) => `dei rifornimenti nella fascia ${range}`,
     tBusiest: (count) => `ora più intensa · ${pl(count, "rifornimento", "rifornimenti")}`,
-    tHalf: "metà esaurita entro",
+    tHalf: "durata mediana di disponibilità",
     tSince: (date) => `rifornimenti confermati ${dal(date)}`,
     tToday: "oggi, finora",
     mostOften: (config, k, total) => `più spesso ${config} (${N(k)} su ${N(total)})`,
@@ -232,9 +250,15 @@ export const modules: Dict["modules"] = {
       void tz;
       return "ora locale";
     },
-    summary: (o) =>
-      `${ilPct(o.pct)} ${dei(o.n)} rifornimenti di iPhone Duo confermati da PickupChecker ${itWhere(o)} ${dal(o.since)} è avvenuto nella fascia ${o.range}, ${o.zone}; l'ora più intensa è stata ${o.busiest} (${pl(o.busiestN, "rifornimento", "rifornimenti")}).${o.median ? ` La metà è andata esaurita entro ${o.median}.` : ""}${o.config ? ` La configurazione tornata disponibile più spesso è ${o.config} (${N(o.k)} su ${N(o.n)}).` : ""}`,
-    tooFew: (o) => `${pl(o.n, "rifornimento", "rifornimenti")} di iPhone Duo ${o.n === 1 ? "confermato" : "confermati"} ${itWhere(o)} ${dal(o.since)}: troppo pochi per indicare un orario abituale; sono tutti elencati qui sotto.`,
+    factsTitle: (label) => `Dati chiave: iPhone Duo ${label}`,
+    fN: (o) => <>PickupChecker ha confermato <b className="text-ink">{N(o.n)}</b> {o.n === 1 ? "rifornimento" : "rifornimenti"} di iPhone Duo {itWhere(o)} {dal(o.since)}, in {o.days === 1 ? "un solo giorno" : `${N(o.days)} giorni diversi`}.</>,
+    fShare: (o) => <>{ilPct(o.pct).slice(0, -o.pct.length)}<b className="text-ink">{o.pct}</b> {dei(o.n)} rifornimenti di iPhone Duo {o.label} {dal(o.since)} è avvenuto nella fascia {o.range}, {o.zone}; l&apos;ora più intensa è stata {o.busiest} ({pl(o.busiestN, "rifornimento", "rifornimenti")}).</>,
+    fTooFew: (o) => `${pl(o.n, "rifornimento", "rifornimenti")} di iPhone Duo ${o.n === 1 ? "confermato" : "confermati"} ${o.label} in ${pl(o.days, "giorno", "giorni")}: ${o.n === 1 ? "troppo poco" : "troppo pochi"} per indicare un orario abituale; PickupChecker aspetta ${N(o.min)} rifornimenti in ${N(o.minDays)} giorni diversi.`,
+    fMedian: (o) => <>In mediana un iPhone Duo {o.label} è rimasto <b className="text-ink">circa {o.median}</b> sulla pagina di ritiro di Apple ({N(o.n)} disponibilità cronometrate {dal(o.since)}).</>,
+    fTop: (o) => <>La configurazione di iPhone Duo rifornita più spesso {o.label} è <b className="text-ink">{o.config}</b>: {N(o.k)} rifornimenti su {N(o.n)} ({o.pct}) {dal(o.since)}.</>,
+    fToday: (o) => (o.n > 0
+      ? <>Oggi ({o.date}, ora locale) PickupChecker ha confermato finora <b className="text-ink">{N(o.n)}</b> {o.n === 1 ? "rifornimento" : "rifornimenti"} di iPhone Duo {o.label}.</>
+      : <>Oggi ({o.date}, ora locale) PickupChecker non ha ancora confermato nessun rifornimento di iPhone Duo {o.label}.</>),
     hourByHour: "Ora per ora, negozio per negozio →",
     lastThree: (k, label) => (k === 1 ? `L'ultimo rifornimento di iPhone Duo ${label}` : `Gli ultimi ${N(k)} rifornimenti di iPhone Duo ${label}`),
     secs: (v) => `${N(v)} s`,

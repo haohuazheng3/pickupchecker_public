@@ -124,8 +124,11 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
     const placePages = statesWithStores().filter((s) => hasStatePage(s.name)).length + citiesWithStores().filter((c) => c.stores.length > 1).length;
     expect(placePages).toBe(58);
     // …plus the three decision pages of seo.md §16 (the fourth, which-iphone-duo-restocks-most, is one of the eight).
-    expect(us).toHaveLength(356 + 8 + 3 + 3 + placePages + 1 - 3); // + the dated research report; − the US pages retired 2026-11-08 (how-to-get, shortage, channels; five-second-checks was the other dated report)
+    // …plus the two proof pages of 2026-11-09 (the live service report and the dated tracker comparison).
+    expect(us).toHaveLength(356 + 8 + 3 + 3 + placePages + 1 - 3 + 2); // + the dated research report; − the US pages retired 2026-11-08 (how-to-get, shortage, channels; five-second-checks was the other dated report)
     expect(us).toContain(`${base}/research/iphone-duo-week-2026-11-07`);
+    expect(us).toContain(`${base}/service-report`);
+    expect(us).toContain(`${base}/iphone-stock-tracker-comparison`);
     for (const p of ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock", "/iphone-duo-back-in-stock", "/iphone-duo-stock-checker", "/where-to-buy-iphone-duo", "/iphone-duo-restock-times/california", "/iphone-duo-restock-times/california/los-angeles", "/iphone-duo-restock-times/hawaii/honolulu"]) expect(us).toContain(`${base}${p}`);
     expect(us).not.toContain(`${base}/iphone-duo-restock-times/hawaii`);
     expect(us).not.toContain(`${base}/iphone-duo-restock-times/delaware`);

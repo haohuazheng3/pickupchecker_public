@@ -228,7 +228,7 @@ export default async function NearMePage() {
           <Steps steps={[
             { title: "Use my location, or type a ZIP", hint: "Ranked in your browser; your location never leaves your device, and a ZIP only selects a small file of ZIP centers by its first three digits." },
             { title: "Read the badge", hint: `"Duo in stock: 3 of ${items.length} configs" lists what the store shows right now; "none right now" is the usual state, sold out.` },
-            { title: "Alert me on two or three reachable stores", hint: `From then on those stores are checked every ${SPEED.fastSec} seconds and your phone hears about a confirmed restock about ${SPEED.alertSec} seconds later.` },
+            { title: "Alert me on two or three reachable stores", hint: `From then on those stores are checked every ${SPEED.fastSec} seconds and the push for a confirmed restock is sent about ${SPEED.alertSec} seconds later.` },
           ]} />
           <ChipLinks items={[
             { href: "/stores", label: "Apple Stores by state" },
@@ -246,7 +246,7 @@ export default async function NearMePage() {
             : "Not necessarily: the right set is the two or three stores you could actually reach on a weekday morning, not the one store with the most restocks."}</b></p>
           <ol className="my-4 grid gap-3 sm:grid-cols-2">
             <Swap no="The store with the most restocks, three hours away" yes="Two or three stores within reach" why="A pickup order is collected at that store, in person, usually the same day." />
-            <Swap no="One alert at one store" yes="The nearest stores × the one configuration you want" why={`Your stores every ${SPEED.fastSec} seconds, a push about ${SPEED.alertSec} seconds after a restock is confirmed.`} />
+            <Swap no="One alert at one store" yes="The nearest stores × the one configuration you want" why={`Your stores every ${SPEED.fastSec} seconds, a push sent about ${SPEED.alertSec} seconds after a restock is confirmed.`} />
           </ol>
           <Keys items={[
             { text: <><b className="text-ink">Distance</b> decides what you can do with an alert</> },

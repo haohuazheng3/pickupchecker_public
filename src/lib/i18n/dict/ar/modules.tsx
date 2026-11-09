@@ -5,7 +5,7 @@
  */
 import type { ReactNode } from "react";
 import type { Dict } from "../en";
-import { CONFIGS, DAYS, SELLOUTS, STORES_G, TIMES, N, count, theStoresG } from "./util";
+import { CONFIGS, DAYS, HOURS, SELLOUTS, STORES_G, TIMES, N, count, theStoresG } from "./util";
 
 const CHECK = "كل 15 ثانية، و5 ثوانٍ مع تنبيه";
 
@@ -92,6 +92,7 @@ export const modules: Dict["modules"] = {
     none: (label: string, days: number) => `لم ينفد أي توفر ${label} خلال آخر ${count(days, DAYS)} بعد.`,
     whatDuo: "iPhone Duo",
     whatAll: "كل أجهزة iPhone",
+    definition: "مدة العرض هي المدة التي أظهرت فيها صفحة الاستلام لدى Apple الخيار متاحًا، محصورة بين فحصين من فحوصنا؛ وهي لا تعني عدد الهواتف المبيعة ولا مدى السرعة المطلوبة منك.",
     tileHalf: (what: string) => <>نصفها نفد خلال · {what}</>,
     tileWithin30: "نفد خلال 30 ثانية",
     tileWithin60: "نفد خلال دقيقة",
@@ -208,22 +209,45 @@ export const modules: Dict["modules"] = {
     lastIn: (o: { config: string; store: ReactNode | null; when: string; lasted: string | null }) => <>آخر توفر: <b className="text-ink">{o.config}</b>{o.store != null && <> في {o.store}</>}، {o.when}{o.lasted ? <> ({o.lasted})</> : null}.</>,
     neverYet: (label: string, since: string) => `لا توفر مؤكدًا لـ iPhone Duo ${label} منذ بدء المتابعة في ${since}.`,
     others: (o: { pro: number; max: number; one: boolean; configs: number }) => (o.one ? `يتوفر iPhone 18 Pro هنا في ${N(o.pro)} من ${count(o.configs, CONFIGS)}، و18 Pro Max في ${N(o.max)}.` : `يتوفر iPhone 18 Pro في ${N(o.pro)} منها، و18 Pro Max في ${N(o.max)}.`),
-    updated: (stamp: string) => `آخر تحديث ${stamp}`,
-    checked: (note: string) => `الفحص ${note}`,
-    since: (date: string) => `البيانات منذ ${date}`,
-    method: "لا يُحتسب التوفر إلا حين يتفق فحصان؛ ولا تُحتسب أول مرة نرى فيها المتجر",
+    evidence: (o) => (o.one
+      ? (o.fresh > 0
+        ? <>حتى {o.stamp}: ردّ {o.name} على فحصنا خلال الدقيقة الأخيرة.</>
+        : <>حتى {o.stamp}: لا رد من {o.name} خلال الدقيقة الأخيرة — الحالة غير معروفة ولا تُحتسب نفادًا.</>)
+      : <>حتى {o.stamp}: ردّ {N(o.fresh)} من أصل {count(o.total, STORES_G)} خلال الدقيقة الأخيرة{o.stale > 0 ? `؛ و${N(o.stale)} بلا رد حديث — حالتها غير معروفة ولا تُحتسب نفادًا` : ""}.</>),
+    evidenceNone: (o) => (o.one
+      ? `لم يردّ ${o.name} على أي فحص بعد — الحالة غير معروفة ولا تُحتسب نفادًا.`
+      : `لم يردّ أيٌّ من ${theStoresG(o.total)} على فحص بعد — الحالة غير معروفة ولا يُحتسب أي منها نفادًا.`),
+    howCounted: (o) => {
+      const base = "لا يُحتسب التوفر إلا بعد إجابتين متطابقتين (ولا تُحتسب أول مرة نرى فيها المتجر)؛ وتنحصر مدة العرض بين آخر فحص كان لا يزال يرى الخيار وأول فحص لم يعد يراه. الفحص مخطط كل 5 ثوانٍ في المتاجر التي عليها تنبيهات وكل 15 ثانية في كل متجر";
+      const lanes = [
+        o.fast && `الوسيط ${o.fast.p50} في المتاجر ذات التنبيهات، و95% من الفواصل لا تتجاوز ${o.fast.p95} (عدد الفواصل: ${N(o.fast.n)}${o.fast.slow ? "؛ أبطأ من المخطط" : ""})`,
+        o.round && `${o.round.p50} لكل جولة كاملة، و95% منها لا تتجاوز ${o.round.p95} (عدد الجولات: ${N(o.round.n)}${o.round.slow ? "؛ أبطأ من المخطط" : ""})`,
+      ].filter(Boolean);
+      if (lanes.length === 0 || !o.win) return `${base}.`;
+      const win = o.win.days ? `آخر ${count(o.win.days, DAYS)}` : `آخر ${count(o.win.hours ?? 1, HOURS)}`;
+      return `${base}؛ وبالقياس خلال ${win}: ${lanes.join("؛ و")}.`;
+    },
+    howLink: "كيف نقيس ←",
+    sec: (v) => `${v} ث`,
+    technique: "يستعلم PickupChecker عن توفر الاستلام من المتجر لدى Apple في كل متجر Apple: كل 5 ثوانٍ في المتاجر التي عليها تنبيهات أعضاء، وكل 15 ثانية في كل متجر. لا يُحتسب التوفر إلا بعد إجابتين متطابقتين (ولا تُحتسب أول مرة نرى فيها المتجر)، وتنحصر مدة العرض بين آخر فحص كان لا يزال يرى الخيار وأول فحص لم يعد يراه.",
     /* Tiles */
     tShare: (range: string) => `من حالات التوفر في الفترة ${range}`,
     tBusiest: (n: number) => `أكثر ساعة توفرًا · ${count(n, TIMES)}`,
-    tHalf: "نفد نصفها خلال",
+    tHalf: "وسيط مدة العرض",
     tSince: (date: string) => `توفر مؤكد منذ ${date}`,
     tToday: "اليوم حتى الآن",
     mostOften: (config: string, k: number, total: number) => `الأكثر: ${config} (${N(k)} من ${N(total)})`,
     /** الصفحات العربية تقول دائمًا «بالتوقيت المحلي»؛ أسماء المناطق الزمنية الأمريكية للإنجليزية فقط. */
     zone: (tz: string | null): string => { void tz; return "بالتوقيت المحلي"; },
-    summary: (o: { pct: string; n: number; stores: number; label: string; since: string; range: string; zone: string; busiest: string; busiestN: number; median: string | null; config: string | null; k: number; one: boolean }) =>
-      `${o.pct} من حالات توفر iPhone Duo التي أكّدها PickupChecker ${o.one ? o.label : `في ${theStoresG(o.stores)} ${o.label}`} منذ ${o.since}، وعددها ${N(o.n)}، وقعت في الفترة ${o.range} ${o.zone}؛ وكانت أكثر ساعة توفرًا ${o.busiest} (${count(o.busiestN, TIMES)}).${o.median ? ` ونفد نصفها خلال ${o.median}.` : ""}${o.config ? ` وكان ${o.config} الأكثر عودة (${N(o.k)} من ${N(o.n)}).` : ""}`,
-    tooFew: (o: { n: number; label: string; since: string; one: boolean; stores: number }) => `توفر iPhone Duo ${count(o.n, TIMES)} بشكل مؤكد ${o.one ? o.label : `في ${theStoresG(o.stores)} ${o.label}`} منذ ${o.since}؛ وهذا أقل من أن نحدد ساعة معتادة بعد، وكل حالة مدرجة أدناه.`,
+    factsTitle: (label) => `أهم الأرقام: iPhone Duo ${label}`,
+    fN: (o) => <>أكّد PickupChecker توفر iPhone Duo <b className="text-ink">{count(o.n, TIMES)}</b> {o.one ? o.label : `في ${theStoresG(o.stores)} ${o.label}`} منذ {o.since}، موزعة على {count(o.days, DAYS)}.</>,
+    fShare: (o) => <><b className="text-ink">{o.pct}</b> من حالات توفر iPhone Duo {o.label} منذ {o.since}، وعددها {N(o.n)}، وقعت في الفترة {o.range} {o.zone}؛ وكانت أكثر ساعة توفرًا {o.busiest} ({count(o.busiestN, TIMES)}).</>,
+    fTooFew: (o) => `توفر iPhone Duo ${o.label} ${count(o.n, TIMES)} بشكل مؤكد خلال ${count(o.days, DAYS)}، وهذا أقل من أن نحدد ساعة معتادة بعد؛ إذ ينتظر PickupChecker ${N(o.min)} حالات توفر في ${count(o.minDays, DAYS)} مختلفة.`,
+    fMedian: (o) => <>بلغ الوسيط لمدة عرض iPhone Duo {o.label} على صفحة الاستلام لدى Apple <b className="text-ink">نحو {o.median}</b> (عدد القياسات منذ {o.since}: {N(o.n)}).</>,
+    fTop: (o) => <>الخيار الأكثر عودة للتوفر من iPhone Duo {o.label} هو <b className="text-ink">{o.config}</b>: {N(o.k)} من أصل {N(o.n)} ({o.pct}) منذ {o.since}.</>,
+    fToday: (o) => (o.n > 0
+      ? <>اليوم ({o.date}، بالتوقيت المحلي) أكّد PickupChecker حتى الآن توفر iPhone Duo <b className="text-ink">{count(o.n, TIMES)}</b> {o.label}.</>
+      : <>اليوم ({o.date}، بالتوقيت المحلي) لم يؤكد PickupChecker أي توفر لـ iPhone Duo {o.label} حتى الآن.</>),
     hourByHour: "ساعة بساعة، كل متجر ←",
     lastThree: (k: number, label: string) => (k === 1 ? `آخر توفر لـ iPhone Duo ${label}` : `آخر ${N(k)} حالات توفر لـ iPhone Duo ${label}`),
     secs: (x: number) => `${N(x)} ث`,

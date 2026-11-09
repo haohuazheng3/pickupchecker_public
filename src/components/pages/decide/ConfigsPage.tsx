@@ -1,7 +1,9 @@
 /**
  * /which-iphone-duo-restocks-most and its country and language versions: "Which iPhone Duo configuration restocks
- * most, and which is easiest to get?" Every configuration ranked by the time it was listed in total, by storage and by
- * colour, with time on the shelf, this week's shift and what to set alerts on. Numbers: lib/content/duoDecide.ts.
+ * most, and which is easiest to get?" answered with what can be measured: every configuration ranked by the time Apple's
+ * pickup page listed it in total, by storage and by colour, with time on the shelf, this week's shift and what to set
+ * alerts on. Past listings, never a chance of buying (the `easiest` id and data field are historical names for "listed
+ * longest"). Numbers: lib/content/duoDecide.ts.
  */
 import type { Metadata } from "next";
 import { cache } from "react";

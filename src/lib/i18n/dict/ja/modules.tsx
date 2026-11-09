@@ -95,6 +95,7 @@ export const modules: Dict["modules"] = {
     none: (label: string, days: number) => `過去${N(days)}日間、${label}で完売した入荷はまだありません。`,
     whatDuo: "iPhone Duo",
     whatAll: "全iPhone",
+    definition: "表示時間とは、Appleの店頭受け取りページがその構成を受け取り可能と表示していた時間で、私たちの2回のチェックの間で決まります。売れた台数や、どれだけ急ぐ必要があるかを示すものではありません。",
     tileHalf: (what: string) => <>半数が完売するまで · {what}</>,
     tileWithin30: "30秒以内に完売",
     tileWithin60: "1分以内に完売",
@@ -209,20 +210,43 @@ export const modules: Dict["modules"] = {
     lastIn: (o: { config: string; store: ReactNode | null; when: string; lasted: string | null }) => <>最後の在庫：<b className="text-ink">{o.config}</b>{o.store != null && <>（{o.store}）</>}、{o.when}{o.lasted ? <>（{o.lasted}）</> : null}。</>,
     neverYet: (label: string, since: string) => `${since}に追跡を始めて以来、${label}で確認済みのiPhone Duo入荷はまだありません。`,
     others: (o: { pro: number; max: number; one: boolean; configs: number }) => (o.one ? `この店舗ではiPhone 18 Proが${N(o.configs)}構成中${N(o.pro)}構成、18 Pro Maxが${N(o.max)}構成で受け取り可能です。` : `iPhone 18 Proはそのうち${N(o.pro)}店舗、18 Pro Maxは${N(o.max)}店舗で受け取り可能です。`),
-    updated: (stamp: string) => `${stamp}更新`,
-    checked: () => "15秒ごとにチェック、通知のある店舗は5秒ごと",
-    since: (date: string) => `${date}からのデータ`,
-    method: "2回のチェックが一致したときだけ入荷として数え、初めて確認したときの在庫は除外",
+    evidence: (o) => (o.one
+      ? (o.fresh > 0
+        ? <>{o.stamp}時点：{o.name}は直近1分以内にチェックに応答しました。</>
+        : <>{o.stamp}時点：{o.name}から直近1分以内の応答がありません。状態は不明で、在庫切れとは数えていません。</>)
+      : <>{o.stamp}時点：{N(o.total)}店舗中{N(o.fresh)}店舗が直近1分以内に応答しました。{o.stale > 0 ? `${N(o.stale)}店舗は最新の応答がなく、状態不明のため在庫切れとは数えていません。` : ""}</>),
+    evidenceNone: (o) => (o.one
+      ? `${o.name}からはまだチェックへの応答がありません。状態は不明で、在庫切れとは数えていません。`
+      : `${N(o.total)}店舗のいずれからも、まだチェックへの応答がありません。状態は不明で、在庫切れとは数えていません。`),
+    howCounted: (o) => {
+      const base = "入荷は2回の応答が一致したときだけ数えます（初めて確認したときの在庫は除外）。表示時間は、その構成がまだ見えていた最後のチェックと、見えなくなった最初のチェックの間で決まります。チェックの予定間隔は、通知のある店舗で5秒、全店舗で15秒です。";
+      const lanes = [
+        o.fast && `通知のある店舗の間隔は中央値${o.fast.p50}（p95 ${o.fast.p95}、${N(o.fast.n)}回${o.fast.slow ? "、予定より遅い" : ""}）`,
+        o.round && `全店舗の1巡は${o.round.p50}（p95 ${o.round.p95}、${N(o.round.n)}巡${o.round.slow ? "、予定より遅い" : ""}）`,
+      ].filter(Boolean);
+      if (lanes.length === 0 || !o.win) return base;
+      const win = o.win.days ? `直近${N(o.win.days)}日間` : `直近${N(o.win.hours ?? 1)}時間`;
+      return `${base}${win}の実測では、${lanes.join("、")}でした。`;
+    },
+    howLink: "計測方法 →",
+    sec: (v) => `${v}秒`,
+    technique: "PickupCheckerは各アップルストアについて、Appleの店頭受け取りの在庫状況を照会しています。会員の通知がある店舗は5秒ごと、全店舗は15秒ごとです。入荷は2回の応答が一致したときだけ数え（初めて確認したときの在庫は除外）、表示時間はその構成がまだ見えていた最後のチェックと、見えなくなった最初のチェックの間で決まります。",
     tShare: (range: string) => `入荷のうち${range}の割合`,
     tBusiest: (count: number) => `最多の時間帯 · ${N(count)}回`,
-    tHalf: "半数が完売するまで",
+    tHalf: "表示時間の中央値",
     tSince: (date: string) => `${date}以降の確認済み入荷`,
     tToday: "今日これまで",
     mostOften: (config: string, k: number, n: number) => `最多は${config}（${N(n)}回中${N(k)}回）`,
     zone: (tz: string | null): string => (void tz, "現地時間"),
-    summary: (o: { pct: string; n: number; stores: number; label: string; since: string; range: string; zone: string; busiest: string; busiestN: number; median: string | null; config: string | null; k: number; one: boolean }) =>
-      `PickupCheckerが${o.since}以降に${o.one ? o.label : `${o.label}のアップルストア${N(o.stores)}店舗`}で確認したiPhone Duoの入荷${N(o.n)}回のうち、${o.pct}は${o.zone}${o.range}の間でした。最も多い時間帯は${o.busiest}（${N(o.busiestN)}回）です。${o.median ? `半数は${o.median}以内に完売しました。` : ""}${o.config ? `最も多く入荷したのは${o.config}（${N(o.n)}回中${N(o.k)}回）です。` : ""}`,
-    tooFew: (o: { n: number; label: string; since: string; one: boolean; stores: number }) => `${o.since}以降、${o.one ? o.label : `${o.label}のアップルストア${N(o.stores)}店舗`}で確認したiPhone Duoの入荷は${N(o.n)}回です。いつもの時間帯を言うにはまだ少ないため、1回ずつ下に載せています。`,
+    factsTitle: (label) => `要点：${label}のiPhone Duo`,
+    fN: (o) => <>PickupCheckerが{o.since}以降に{o.one ? o.label : `${o.label}のアップルストア${N(o.stores)}店舗`}で確認したiPhone Duoの入荷は<b className="text-ink">{N(o.n)}回</b>、入荷があった日は{N(o.days)}日です。</>,
+    fShare: (o) => <>{o.since}以降の{o.label}でのiPhone Duo入荷{N(o.n)}回のうち、<b className="text-ink">{o.pct}</b>は{o.zone}{o.range}の間でした。最も多い時間帯は{o.busiest}（{N(o.busiestN)}回）です。</>,
+    fTooFew: (o) => `${o.label}で確認したiPhone Duoの入荷は${N(o.days)}日間で${N(o.n)}回です。いつもの時間帯を示すにはまだ少なく、PickupCheckerは${N(o.minDays)}日以上で${N(o.min)}回以上そろってから示します。`,
+    fMedian: (o) => <>{o.label}のiPhone DuoがAppleの店頭受け取りページに表示されていた時間の中央値は<b className="text-ink">約{o.median}</b>です（{o.since}以降に計測した{N(o.n)}回）。</>,
+    fTop: (o) => <>{o.label}で最も多く入荷したiPhone Duoの構成は<b className="text-ink">{o.config}</b>で、{o.since}以降の{N(o.n)}回中{N(o.k)}回（{o.pct}）です。</>,
+    fToday: (o) => (o.n > 0
+      ? <>今日（{o.date}、現地時間）はこれまでに、PickupCheckerが{o.label}でiPhone Duoの入荷を<b className="text-ink">{N(o.n)}回</b>確認しています。</>
+      : <>今日（{o.date}、現地時間）は、{o.label}でのiPhone Duoの入荷をまだ確認していません。</>),
     hourByHour: "時間帯別・全店舗 →",
     lastThree: (n: number, label: string) => (n === 1 ? `${label}での直近のiPhone Duo入荷` : `${label}での直近${N(n)}回のiPhone Duo入荷`),
     secs: (n: number) => `${N(n)}秒`,

@@ -98,6 +98,7 @@ export const modules: Dict["modules"] = {
     none: (label: string, days: number) => `${cap(label)} is in de afgelopen ${n$(days)} dagen nog geen aanvulling uitverkocht geraakt.`,
     whatDuo: "iPhone Duo",
     whatAll: "alle iPhones",
+    definition: "De vermeldingsduur is hoe lang Apples afhaalpagina de configuratie als beschikbaar toonde, begrensd door twee van onze checks; het zegt niet hoeveel telefoons er verkocht zijn of hoe snel je moet zijn.",
     tileHalf: (what: string) => <>helft weg binnen · {what}</>,
     tileWithin30: "weg binnen 30 sec.",
     tileWithin60: "weg binnen 1 min.",
@@ -214,22 +215,45 @@ export const modules: Dict["modules"] = {
     lastIn: (o: { config: string; store: ReactNode | null; when: string; lasted: string | null }) => <>Laatst op voorraad: <b className="text-ink">{o.config}</b>{o.store != null && <> bij {o.store}</>}, {o.when}{o.lasted ? <> ({o.lasted})</> : null}.</>,
     neverYet: (label: string, since: string) => `Geen bevestigde iPhone Duo-aanvulling ${label} sinds we op ${since} begonnen te volgen.`,
     others: (o: { pro: number; max: number; one: boolean; configs: number }) => (o.one ? `De iPhone 18 Pro is hier in ${n$(o.pro)} van de ${n$(o.configs)} configuraties op voorraad, de 18 Pro Max in ${n$(o.max)}.` : `De iPhone 18 Pro is in ${n$(o.pro)} daarvan op voorraad, de 18 Pro Max in ${n$(o.max)}.`),
-    updated: (stamp: string) => `Bijgewerkt ${stamp}`,
-    checked: (note: string) => `gecontroleerd ${note}`,
-    since: (date: string) => `gegevens sinds ${date}`,
-    method: "een aanvulling telt alleen als twee checks het eens zijn; de eerste keer dat we iets zien telt niet",
+    evidence: (o) => (o.one
+      ? (o.fresh > 0
+        ? <>Stand van {o.stamp}: {o.name} antwoordde binnen de laatste minuut op onze check.</>
+        : <>Stand van {o.stamp}: geen antwoord van {o.name} in de laatste minuut — onbekend, niet geteld als uitverkocht.</>)
+      : <>Stand van {o.stamp}: {n$(o.fresh)} van de {n$(o.total)} winkels {o.fresh === 1 ? "antwoordde" : "antwoordden"} binnen de laatste minuut{o.stale > 0 ? `; ${n$(o.stale)} zonder actueel antwoord — onbekend, niet geteld als uitverkocht` : ""}.</>),
+    evidenceNone: (o) => (o.one
+      ? `${o.name} heeft nog op geen enkele check geantwoord — onbekend, niet geteld als uitverkocht.`
+      : `Nog geen van de ${n$(o.total)} winkels heeft op een check geantwoord — onbekend, niets wordt als uitverkocht geteld.`),
+    howCounted: (o) => {
+      const base = "Een aanvulling telt pas na twee overeenkomende antwoorden (eerste waarnemingen tellen niet); de vermeldingsduur ligt tussen de laatste check die de configuratie nog zag en de eerste die haar niet meer zag. Checks staan gepland elke 5 sec. bij winkels met een alert en elke 15 sec. bij elke winkel";
+      const lanes = [
+        o.fast && `mediaan ${o.fast.p50} bij winkels met een alert (p95 ${o.fast.p95}, ${n$(o.fast.n)} intervallen${o.fast.slow ? "; trager dan gepland" : ""})`,
+        o.round && `${o.round.p50} per volledige ronde (p95 ${o.round.p95}, ${n$(o.round.n)} rondes${o.round.slow ? "; trager dan gepland" : ""})`,
+      ].filter(Boolean);
+      if (lanes.length === 0 || !o.win) return `${base}.`;
+      const win = o.win.days ? `de afgelopen ${n$(o.win.days)} dagen` : o.win.hours && o.win.hours > 1 ? `de afgelopen ${n$(o.win.hours)} uur` : "het afgelopen uur";
+      return `${base}; gemeten over ${win}: ${lanes.join(" en ")}.`;
+    },
+    howLink: "Zo meten we →",
+    sec: (v) => `${v} sec.`,
+    technique: "PickupChecker vraagt voor elke Apple Store Apples beschikbaarheid voor afhalen op: elke 5 seconden bij winkels met alerts van leden en elke 15 seconden bij elke winkel. Een aanvulling telt pas na twee overeenkomende antwoorden (eerste waarnemingen niet meegerekend); de vermeldingsduur ligt tussen de laatste check die de configuratie nog zag en de eerste die haar niet meer zag.",
     /* Tiles */
     tShare: (range: string) => `van de aanvullingen tussen ${range}`,
     tBusiest: (count: number) => `drukste uur · ${cnt(count, "aanvulling", "aanvullingen")}`,
-    tHalf: "helft uitverkocht binnen",
+    tHalf: "mediane vermeldingsduur",
     tSince: (date: string) => `bevestigde aanvullingen sinds ${date}`,
     tToday: "vandaag, tot nu toe",
     mostOften: (config: string, k: number, total: number) => `het vaakst ${config} (${n$(k)} van ${n$(total)})`,
     /** Dutch pages always say "lokale tijd"; US zone names are only for English. */
     zone: (tz: string | null): string => { void tz; return "lokale tijd"; },
-    summary: (o: { pct: string; n: number; stores: number; label: string; since: string; range: string; zone: string; busiest: string; busiestN: number; median: string | null; config: string | null; k: number; one: boolean }) =>
-      `${o.pct} van de ${cnt(o.n, "iPhone Duo-aanvulling", "iPhone Duo-aanvullingen")} die PickupChecker sinds ${o.since} ${o.one ? o.label : o.stores === 1 ? `in de Apple Store ${o.label}` : `in de ${n$(o.stores)} Apple Stores ${o.label}`} bevestigde, viel tussen ${o.range} ${o.zone}; het drukste uur was ${o.busiest} (${n$(o.busiestN)}).${o.median ? ` De helft was binnen ${o.median} uitverkocht.` : ""}${o.config ? ` De ${o.config} kwam het vaakst terug (${n$(o.k)} van ${n$(o.n)}).` : ""}`,
-    tooFew: (o: { n: number; label: string; since: string; one: boolean; stores: number }) => `${cnt(o.n, "bevestigde iPhone Duo-aanvulling", "bevestigde iPhone Duo-aanvullingen")} ${o.one ? o.label : o.stores === 1 ? `in de Apple Store ${o.label}` : `in de ${n$(o.stores)} Apple Stores ${o.label}`} sinds ${o.since} — te weinig om al een vast uur te noemen; ze staan hieronder allemaal.`,
+    factsTitle: (label) => `Kerncijfers: iPhone Duo ${label}`,
+    fN: (o) => <>PickupChecker heeft sinds {o.since} <b className="text-ink">{n$(o.n)}</b> {o.n === 1 ? "iPhone Duo-aanvulling" : "iPhone Duo-aanvullingen"} {o.one ? o.label : o.stores === 1 ? `in de Apple Store ${o.label}` : `in de ${n$(o.stores)} Apple Stores ${o.label}`} bevestigd, op {o.days === 1 ? "één dag" : `${n$(o.days)} verschillende dagen`}.</>,
+    fShare: (o) => <><b className="text-ink">{o.pct}</b> van de {n$(o.n)} iPhone Duo-aanvullingen {o.label} sinds {o.since} viel tussen {o.range} {o.zone}; het drukste uur was {o.busiest} ({cnt(o.busiestN, "aanvulling", "aanvullingen")}).</>,
+    fTooFew: (o) => `${cnt(o.n, "bevestigde iPhone Duo-aanvulling", "bevestigde iPhone Duo-aanvullingen")} ${o.label} op ${cnt(o.days, "dag", "dagen")} — te weinig om al een vast uur te noemen; PickupChecker wacht op ${n$(o.min)} aanvullingen op ${n$(o.minDays)} verschillende dagen.`,
+    fMedian: (o) => <>De mediane tijd dat een iPhone Duo {o.label} op Apples afhaalpagina stond, is <b className="text-ink">ongeveer {o.median}</b> ({n$(o.n)} gemeten vermeldingen sinds {o.since}).</>,
+    fTop: (o) => <>De vaakst aangevulde iPhone Duo-configuratie {o.label} is de <b className="text-ink">{o.config}</b>: {n$(o.k)} van de {n$(o.n)} aanvullingen ({o.pct}) sinds {o.since}.</>,
+    fToday: (o) => (o.n > 0
+      ? <>Vandaag ({o.date}, lokale tijd) bevestigde PickupChecker tot nu toe <b className="text-ink">{n$(o.n)}</b> {o.n === 1 ? "iPhone Duo-aanvulling" : "iPhone Duo-aanvullingen"} {o.label}.</>
+      : <>Vandaag ({o.date}, lokale tijd) bevestigde PickupChecker nog geen iPhone Duo-aanvulling {o.label}.</>),
     hourByHour: "Per uur, elke winkel →",
     lastThree: (k: number, label: string) => (k === 1 ? `De laatste iPhone Duo-aanvulling ${label}` : `De laatste ${n$(k)} iPhone Duo-aanvullingen ${label}`),
     secs: (x: number) => `${n$(x)} s`,

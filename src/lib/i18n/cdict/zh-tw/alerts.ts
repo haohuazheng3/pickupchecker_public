@@ -63,6 +63,24 @@ export const alerts: CDict["alerts"] = {
     myAlerts: "我的通知",
   },
 
+  windows: {
+    title: "加什麼最能增加取貨時段？",
+    had: "你的選擇：過去 {days}內有 {windows}",
+    windowsN: { other: "# 個取貨時段" } as Forms,
+    daysN: { other: "# 天" } as Forms,
+    best: " · 加 {what}：{gain}",
+    noGain: " · 附近的變更都不會多出時段",
+    gainN: { other: "+# 個時段" } as Forms,
+    tooFew: "過去 {days}的取貨時段太少，無法比較（共 {n} 個）",
+    counting: "正在統計過去的取貨時段…",
+    listed: "總共上架 {time}，同一時間的時段只算一次。",
+    storeAt: "{store} · 約 {dist}",
+    cost: { other: "+# 則通知" } as Forms,
+    addButton: "加入",
+    add: "加入{what}",
+    note: "這是 Apple 取貨頁面過去的上架紀錄，不是預測，也不是買到的機率。一個時段從補貨開始，到售完為止（仍在上架則算到現在）。",
+  },
+
   matrix: {
     model: "機型",
     configs: "{model} 規格",

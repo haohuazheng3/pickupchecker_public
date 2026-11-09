@@ -18,6 +18,7 @@ import { Count, Section, openSection } from "./Section";
 import { PhoneMatrix, phoneName, type PhoneCatalog, type PickerStore } from "./PhoneMatrix";
 import { StoreChooser } from "./StoreChooser";
 import { EmailSignIn } from "./EmailSignIn";
+import { PickupWindows } from "./PickupWindows";
 import { useAlertSet, type PlanInfo } from "./useAlertSet";
 import { useLang, useT } from "@/components/i18n/LangProvider";
 import { Rich } from "@/components/i18n/Rich";
@@ -235,6 +236,8 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
         </div>
         <div className="text-sm" aria-live="polite">{status}</div>
       </div>
+      {/* Past pickup windows for these picks and the change that would have added most (free, folded to one line). */}
+      <PickupWindows set={set} catalog={catalog} names={names} onAddPhone={onPhone} onAddStore={onStore} />
       {(notice || (mode === "account" && live.error)) && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm">
           <span>{notice ?? live.error}</span>

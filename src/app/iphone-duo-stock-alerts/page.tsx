@@ -1,6 +1,7 @@
 /**
  * /iphone-duo-stock-alerts: what an alert is and why the interval matters, shown as tiles, a step strip, tables and
- * swaps. Each H2 is a question with one answer-first sentence; every number is live.
+ * swaps. Each H2 is a question with one answer-first sentence; every number is live. Since 2026-11-09 speed is the plan
+ * next to the measurement (serviceStats) and the tracker table quotes others' own claims with the date read.
  */
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
@@ -21,6 +22,10 @@ import { busiestWindow, duoRestockTimes } from "@/lib/content/restockTimes";
 import { medianBand } from "@/lib/stock/sellouts";
 import { alertHref } from "@/lib/seo/enrich";
 import { Measured, Points, Stat, StatGrid, StepStrip, Swap } from "@/components/ui/Viz";
+import { serviceStats, secs } from "@/lib/content/serviceStats";
+import { count } from "@/lib/content/serviceCopy";
+import { TrackerTableShort } from "@/components/service/TrackerTables";
+import { TRACKERS_READ_LABEL } from "@/lib/content/trackers";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +68,8 @@ function LinkRow({ links, className = "mt-4" }: { links: { label: string; href: 
 }
 
 export default async function DuoStockAlerts() {
-  const [f, facts, rt] = await Promise.all([siteFacts(), getFacts(), duoRestockTimes("us")]);
+  const [f, facts, rt, st] = await Promise.all([siteFacts(), getFacts(), duoRestockTimes("us"), serviceStats()]);
+  const us7 = st.lanes["7d"]["fast-us"], push7 = st.delivery["7d"].push;
   const ds = f.duoSellout; // iPhone Duo restocks of the last 7 days that sold out
   const so = rt.sellout; // every confirmed US Duo restock since tracking began that sold out
   const intl = ALL_STORES.length - STORES.length;
@@ -77,24 +83,16 @@ export default async function DuoStockAlerts() {
   const alertTable: Block = { t: "table", head: ["What one alert is", "Detail"], rows: [
     ["Scope", "one Apple Store × one exact configuration (model, storage, color)"],
     ["Confirmation", "two matching answers from apple.com, about 1 second apart"],
-    ["Delivery", `push about ${SPEED.alertSec} seconds after confirmation; email when no device is set up`],
+    ["Delivery", `push handed to Apple's or Google's push service right after confirmation${push7 ? ` (measured: accepted a median ${secs(push7.p50Sec)} after the first check that saw the restock, last 7 days)` : ""}; email when no device is set up`],
     ["Coverage", `${STORES.length} US Apple Stores, plus ${intl} stores in ${INTL_CODES.length} other countries`],
   ], caption: "The same checks for every plan.", source: "PickupChecker's poller; the two-answer rule is described on [how it works](/how-it-works)" };
-  const compareTable: Block = { t: "table", head: ["Tracker", "Check interval, as published on their own sites, November 2026", "Push delay, as claimed"], rows: [
-    ["PickupChecker", `every ${SPEED.fastSec} seconds for stores with alerts; every ${SPEED.checkSec} seconds for all ${STORES.length} US stores`, `about ${SPEED.alertSec} seconds after a confirmed restock`],
-    ["InStock Radar", "an 8-second interval for stores a paid alert points at; \"every few minutes\" for new models elsewhere", "median 2 seconds (their claim)"],
-    ["Store Stock Checker", "a 15-second check of \"your Apple Stores\", up to 5 stores per plan", "about 2 seconds (their claim)"],
-    ["iPhoneStockChecker.com", "once a minute (as reported)", "not published"],
-    ["ManzanaTracker", "roughly 5-minute checks", "not published"],
-    ["Apple Inventory Check", "a 15-minute cadence", "not published"],
-  ], caption: "Self-published intervals only: we have not measured anyone else's service and will not pretend to.", source: "each tracker's own website, read in November 2026; PickupChecker's figures from its poller" };
 
   const fastLead = ds
     ? `Half within **${ds.medianSec} seconds** over the last 7 days (${n(ds.n)} sold-out Duo restocks, **${pct(ds.within30)}** within 30 s)${so ? `; since ${since}, **${pct(so.within2min)}** of ${n(so.n)} US Duo restocks were gone within 2 minutes` : ""}.`
     : so ? `Within minutes: since ${since}, **${pct(so.within2min)}** of ${n(so.n)} confirmed US iPhone Duo restocks were gone within 2 minutes and ${pct(so.within20min)} within 20, with a median listing of ${so.medianSec} seconds.`
     : "Too early to say: we state sell-out times only once 20 or more confirmed restocks have sold out, and the window does not have them yet.";
-  const howLead = `Your stores are asked every **${SPEED.fastSec} seconds** and every other US Apple Store every ${SPEED.checkSec}; a first "available" is asked again about a second later, and once two answers agree a push reaches your phone about **${SPEED.alertSec} seconds** after the restock.`;
-  const compareLead = `By published check interval, PickupChecker's **${SPEED.fastSec} seconds** is the shortest we know of; the other trackers publish ${OTHER_TRACKERS}, and we compare published numbers only.`;
+  const howLead = `Your stores are asked every **${SPEED.fastSec} seconds** and every other US Apple Store every ${SPEED.checkSec}; a first "available" is asked again about a second later, and once two answers agree the push goes to Apple's or Google's push service${push7 ? `, which accepted it a median **${secs(push7.p50Sec)}** after the first check that saw the restock over the last 7 days` : " within seconds"}.`;
+  const compareLead = `On their own sites, other trackers state check intervals from ${OTHER_TRACKERS}: Store Stock Checker states every ${SPEED.fastSec} seconds, the same as our plan, and InStock Radar an 8-second check for paid stores (read ${TRACKERS_READ_LABEL}). Those are claims; ours is a plan with a measurement next to it${us7 ? `: a median **${secs(us7.p50Sec)}**, p95 ${secs(us7.p95Sec)} in the US over the last 7 days` : ""}.`;
   const setupLead = "Four steps, about two minutes: pick the iPhone, storage and color; tick the stores you can reach; on iPhone add PickupChecker to your Home Screen; **reserve on apple.com from the push**.";
   const costLead = `Browsing is free; alerts are **$${PLANS.plus.priceUsd}** a month for ${PLANS.plus.limit} (${PLANS.plus.name}), $${PLANS.pro.priceUsd} for ${PLANS.pro.limit} (${PLANS.pro.name}) or $${PLANS.max.priceUsd} for ${PLANS.max.limit} (${PLANS.max.name}), one alert being one store × one exact configuration.`;
   const arrivesLead = `Tap it, choose "I'll pick it up" at the store it names and pay with Apple Pay while already signed in: you have **${typical}** in the typical case, and the people who get the phone did their setup before the alert came.`;
@@ -112,7 +110,7 @@ export default async function DuoStockAlerts() {
     { q: "Do alerts work on iPhone without an app from the App Store?", a: `Yes: add PickupChecker to your Home Screen from Safari and allow notifications once, a web app with web push that Apple supports for Home Screen web apps ([Apple Developer](${WEB_PUSH}); [install guide](/install)). Without a device set up, alerts arrive by email from alerts@pickupchecker.com.` },
     { q: "How many alerts do I need?", a: `Usually ${PLANS.plus.limit} or fewer: one configuration at the stores you can reach, two acceptable colors being two alerts per store. ${PLANS.plus.name} covers ${PLANS.plus.limit}, ${PLANS.pro.name} ${PLANS.pro.limit}, ${PLANS.max.name} ${PLANS.max.limit} ([pricing](/pricing)).` },
     { q: "Can PickupChecker reserve the phone for me?", a: "No: it tells you within seconds that a store lists your configuration, and you reserve on apple.com with in-store pickup, where Apple holds it for you. PickupChecker is independent and not affiliated with Apple; it reads the same pickup availability anyone can see on apple.com, just far more often." },
-    { q: `Why every ${SPEED.fastSec} seconds and not every second?`, a: `Because apple.com answers a limited number of requests from one address, and every restock must be confirmed by a second answer about a second later, which asking every second would not shorten and would risk getting no answers at all. At ${SPEED.fastSec} seconds the longest wait between a restock and our first look is ${SPEED.fastSec} seconds${ds ? `, against a median listing of ${ds.medianSec}` : ""}.` },
+    { q: `Why every ${SPEED.fastSec} seconds and not every second?`, a: `Because apple.com answers a limited number of requests from one address, and every restock must be confirmed by a second answer about a second later, which asking every second would not shorten and would risk getting no answers at all. At a ${SPEED.fastSec}-second plan the wait between a restock and our first look is usually about ${SPEED.fastSec} seconds${us7 ? ` (p95 ${secs(us7.p95Sec)} measured in the US over the last 7 days)` : ""}${ds ? `, against a median listing of ${ds.medianSec}` : ""}.` },
     { q: "Does it cover Apple Stores outside the US?", a: `Yes: ${intl} Apple Stores in ${INTL_CODES.length} other countries, tracked since ${longDate(TRACKING_SINCE_INTL)}, with the same ${SPEED.fastSec}-second checks for stores with alerts. Start from a country's page, such as [Canada](/ca), [the UK](/uk), [Australia](/au) or [Japan](/jp).` },
   ];
 
@@ -135,7 +133,7 @@ export default async function DuoStockAlerts() {
           { "@type": "HowToStep", name: "Pick the iPhone, storage and color", text: "One alert is one exact configuration.", url: `${site}${setupHref}` },
           { "@type": "HowToStep", name: "Tick the stores you can reach", text: "Stores are listed nearest first with an estimated drive time." },
           { "@type": "HowToStep", name: "Add PickupChecker to your Home Screen and allow notifications", text: "On iPhone, alerts are web push notifications to the Home Screen app.", url: `${site}/install` },
-          { "@type": "HowToStep", name: "Open apple.com from the push and reserve", text: `About ${SPEED.alertSec} seconds after a confirmed restock the push arrives; choose in-store pickup at the store it names.` },
+          { "@type": "HowToStep", name: "Open apple.com from the push and reserve", text: "Seconds after a restock is confirmed the push goes out; choose in-store pickup at the store it names." },
         ],
       },
     ],
@@ -150,15 +148,15 @@ export default async function DuoStockAlerts() {
         <div>
           <div className="eyebrow mb-4">iPhone Duo · in-stock alerts</div>
           <h1 className="display text-4xl sm:text-6xl">What is the fastest way to get notified when the iPhone Duo is in stock?</h1>
-          <p className="mt-5 max-w-xl text-lg text-ink-2"><b className="text-ink">An automated tracker with push</b>: PickupChecker asks your stores every <b className="text-ink">{SPEED.fastSec} seconds</b>, the fastest published interval of any iPhone stock tracker we know of (the others publish {OTHER_TRACKERS}), and your phone hears about a confirmed restock about <b className="text-ink">{SPEED.alertSec} seconds</b> later.</p>
+          <p className="mt-5 max-w-xl text-lg text-ink-2"><b className="text-ink">An automated tracker with push</b>: PickupChecker asks your stores every <b className="text-ink">{SPEED.fastSec} seconds</b>{us7 ? <> (measured median <b className="text-ink">{secs(us7.p50Sec)}</b> in the US over the last 7 days)</> : null}, and the alert goes to the push service for your phone {push7 ? <>a median <b className="text-ink">{secs(push7.p50Sec)}</b> after the first check that saw the restock</> : "seconds after the restock is confirmed"}.</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link href={setupHref} className="btn btn-primary btn-lg">Set up an iPhone Duo alert</Link>
             <Link href="/how-to-grab-an-iphone-duo-restock" className="btn btn-ghost btn-lg">The 20-second checkout</Link>
           </div>
         </div>
         <StatGrid cols={2}>
-          <Stat value={`${SPEED.fastSec}`} unit="s" label="between checks at the stores your alerts point at" tone="accent" />
-          <Stat value={`~${SPEED.alertSec}`} unit="s" label="confirmed restock to the push on your phone" />
+          <Stat value={us7 ? us7.p50Sec.toFixed(1) : `${SPEED.fastSec}`} unit="s" label={us7 ? <>measured median between checks at the stores your alerts point at · US, 7 days · plan {SPEED.fastSec} s</> : "planned between checks at the stores your alerts point at"} tone="accent" />
+          <Stat value={push7 ? push7.p50Sec.toFixed(1) : "—"} unit={push7 ? "s" : undefined} label={push7 ? <>median, first check that saw a restock → push service accepted the alert · {count(push7.events)} restocks, 7 days</> : "first check → push accepted: on the service report"} />
           <Stat value={ds ? `${ds.medianSec}` : "~60"} unit="s" label={ds ? <>typical Duo listing, listed to gone · last 7 days, {n(ds.n)} restocks</> : "typical Duo listing, listed to gone"} tone="warn" />
           <Stat value={ds ? pct(ds.within30) : "20–30"} unit={ds ? undefined : "s"} label={ds ? "of last week's restocks gone within 30 seconds" : "some restocks are gone this fast"} tone="warn" />
         </StatGrid>
@@ -195,7 +193,7 @@ export default async function DuoStockAlerts() {
             <p className="pane-2 mt-5 p-4 text-sm text-ink-3">The catch-rate tiles appear once 20 or more confirmed iPhone Duo restocks have sold out within the last 7 days; until then we would rather show nothing than a shaky number.</p>
           )}
           <ol className="mt-5 grid gap-3 sm:grid-cols-2">
-            <Swap no="A tracker checking every 5 or 15 minutes" yes={<>A push about {SPEED.alertSec} s after confirmation</>} why={ds ? <>A restock historian, not an alert: it misses <b>{pct(1 - ds.caught.m5)}</b> of Duo restocks outright at 5 minutes and <b>{pct(1 - ds.caught.m15)}</b> at 15.</> : "A restock historian, not an alert: it can tell you a store had stock this morning, which is true and useless."} />
+            <Swap no="A tracker checking every 5 or 15 minutes" yes={<>A push seconds after confirmation</>} why={ds ? <>A restock historian, not an alert: it misses <b>{pct(1 - ds.caught.m5)}</b> of Duo restocks outright at 5 minutes and <b>{pct(1 - ds.caught.m15)}</b> at 15.</> : "A restock historian, not an alert: it can tell you a store had stock this morning, which is true and useless."} />
             <Swap no="Refreshing apple.com by hand" yes={<>Your stores asked every {SPEED.fastSec} seconds</>} why="Checking every few minutes mostly finds nothing; the listing came and went between two reloads." />
           </ol>
           <LinkRow links={[{ label: "Every restock with the seconds it lasted", href: "/iphone-duo-sell-out-times" }]} />
@@ -209,7 +207,7 @@ export default async function DuoStockAlerts() {
               <StepStrip className="lg:grid-cols-2!" steps={[
                 { title: "Check", hint: <>your stores asked for your exact configuration every {SPEED.fastSec} seconds; every other US Apple Store every {SPEED.checkSec}</> },
                 { title: "Confirm", hint: "the first \"available\" is asked again about a second later; a restock counts only when both agree" },
-                { title: "Push", hint: <Inline text={`about ${SPEED.alertSec} seconds after confirmation, to the PickupChecker app on your Home Screen ([install](/install)), naming store and configuration; no device → an email from alerts@pickupchecker.com`} facts={facts} /> },
+                { title: "Push", hint: <Inline text={`handed to the push service right after confirmation${push7 ? ` (accepted a median ${secs(push7.p50Sec)} after the first sighting)` : ""}, for the PickupChecker app on your Home Screen ([install](/install)), naming store and configuration; no device → an email from alerts@pickupchecker.com`} facts={facts} /> },
                 { title: "Once", hint: "one push per restock: nothing while it stays listed, nothing for sell-outs or a store's first sighting" },
               ]} />
               <BlockView b={alertTable} facts={facts} />
@@ -226,7 +224,7 @@ export default async function DuoStockAlerts() {
 
         {/* compare */}
         <Section id="compare" h2="How does it compare with other iPhone stock trackers?" lead={compareLead} facts={facts}>
-          <BlockView b={compareTable} facts={facts} />
+          <TrackerTableShort st={st} />
           {ds && (
             <>
               <div className="eyebrow">Of a median listing&apos;s life ({ds.medianSec} s), burnt before a tracker&apos;s first look</div>
@@ -237,10 +235,11 @@ export default async function DuoStockAlerts() {
             </>
           )}
           <Points className="mt-5" items={[
-            { text: <>The interval is the one number worth comparing: <b className="text-ink">every tracker controls it</b></> },
-            { text: <>&quot;Fastest&quot; without an interval is marketing</>, no: true },
-            { text: <>Ours is <b className="text-ink">{SPEED.fastSec} seconds</b>; hold us to it</>, step: true },
+            { text: <>A stated interval is a claim: <b className="text-ink">ask for the measured one</b>, with its window and sample</> },
+            { text: <>&quot;Fastest&quot; without a same-basis measurement is marketing, ours included</>, no: true },
+            { text: <>Ours: a {SPEED.fastSec}-second plan, measured live on the <Link href="/service-report" className="underline underline-offset-2">service report</Link>; hold us to it</>, step: true },
           ]} />
+          <LinkRow links={[{ label: "iPhone stock trackers compared: intervals, alerts and prices", href: "/iphone-stock-tracker-comparison" }, { label: "PickupChecker's measured check intervals and alert delays", href: "/service-report" }]} />
         </Section>
 
         {/* setup */}
@@ -282,7 +281,7 @@ export default async function DuoStockAlerts() {
           <Points className="mt-5" items={[
             { text: <><b className="text-ink">{PLANS.plus.limit} alerts</b> = one configuration at {PLANS.plus.limit} stores, or two at five: most people in one metro area</> },
             { text: <>{PLANS.pro.name} and {PLANS.max.name}: several colors, several people or a long drive radius</> },
-            { text: <>Every plan: the same {SPEED.fastSec}-second checks and ~{SPEED.alertSec}-second push · live stock and the restock log are free to browse</> },
+            { text: <>Every plan: the same {SPEED.fastSec}-second check plan and the same push path · live stock and the restock log are free to browse</> },
           ]} />
           <LinkRow links={[{ label: "Pricing", href: "/pricing" }]} />
         </Section>

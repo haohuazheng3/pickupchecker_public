@@ -1,5 +1,6 @@
 /**
- * English strings of the four decision pages (seo.md §16): which configuration is easiest to get, is the shortage
+ * English strings of the four decision pages (seo.md §16): which configuration restocks most (the page answers "which
+ * is easiest to get?" with what can be measured: past listing time, never a chance of buying), is the shortage
  * easing, Apple vs carriers vs retailers, and the public API. One answer-first sentence under every question, every
  * number from lib/content/duoDecide.ts (and channels.ts). The type every language follows; sentences take a view object
  * built by the page component, with labels (configuration, colour, store) already in the page's language.
@@ -57,7 +58,7 @@ const trendWord = (d: DuoSupply) => (d.trend === "up" ? "more" : d.trend === "do
 /** "Apple's 14-day return window", "Apple's no-returns policy there (exchanges for defects only)" (Hong Kong), or a neutral phrase. */
 const returnPhrase = (days: number | null) => (days ? `Apple's ${days}-day return window` : days === 0 ? "Apple's no-returns policy there (exchanges for defects only)" : "Apple's return policy");
 
-/* ================================================================== which configuration is easiest to get */
+/* ================================================================== which configuration restocks most (listed longest) */
 const configs = {
   crumb: "Which configuration?",
   /** The US title is fixed (it has been indexed since 2026-11-03); other countries get the question alone. */
@@ -78,13 +79,13 @@ const configs = {
     const e = d.easiest, h = d.hardest;
     if (!e) return `PickupChecker has confirmed ${plural(d.n, "iPhone Duo restock")} at ${storesPhrase(x)} since ${longDate(d.since)} — too few to rank the configurations yet. The table below fills in with every restock; the US page already has the pattern.`;
     const st = d.byStorage, co = d.byColor;
-    return `${x.cfg(e)} is the easiest iPhone Duo to get${where(x.c)}: ${n(e.restocks)} of the ${n(d.n)} restocks PickupChecker confirmed at ${storesPhrase(x)} since ${longDate(d.since)}, at ${plural(e.stores, "store")}, with ${hours(e.exposureSec)} of total listing time${e.lifetimes ? ` and a median ${secs(e.lifetimes.medianSec)} on the shelf` : ""}. ${h ? `${x.cfg(h)} is the hardest: ${plural(h.restocks, "restock")} and ${hours(h.exposureSec)} of listing time.` : ""}${st.length > 1 ? ` Storage decides more than colour: ${st[st.length - 1].restocks > 0 ? `${st[0].key} models restocked ${ratio(st[0].restocks, st[st.length - 1].restocks)} as often as ${st[st.length - 1].key}` : `${st[0].key} models carried ${pct(st[0].share)} of restocks while ${st[st.length - 1].key} has not restocked at all`}${co.length > 1 ? `, while ${x.colour(co[0].key)} led ${x.colour(co[1].key)} by only ${Math.abs(Math.round((co[0].share - co[1].share) * 100))} points` : ""}.` : ""}`;
+    return `${x.cfg(e)} has been listed the longest of any iPhone Duo configuration${where(x.c)}: ${hours(e.exposureSec)} in total over ${n(e.restocks)} of the ${n(d.n)} restocks PickupChecker confirmed at ${storesPhrase(x)} since ${longDate(d.since)}, at ${plural(e.stores, "store")}${e.lifetimes ? `, a median ${secs(e.lifetimes.medianSec)} each` : ""}. ${h ? `${x.cfg(h)} has the least: ${plural(h.restocks, "restock")} and ${hours(h.exposureSec)} of listing time.` : ""}${st.length > 1 ? ` Storage splits the count more than colour: ${st[st.length - 1].restocks > 0 ? `${st[0].key} models restocked ${ratio(st[0].restocks, st[st.length - 1].restocks)} as often as ${st[st.length - 1].key}` : `${st[0].key} models carried ${pct(st[0].share)} of restocks while ${st[st.length - 1].key} has not restocked at all`}${co.length > 1 ? `, while ${x.colour(co[0].key)} led ${x.colour(co[1].key)} by only ${Math.abs(Math.round((co[0].share - co[1].share) * 100))} points` : ""}.` : ""} Nobody can say which one you will manage to buy; past pickup windows are what can be measured, so that is what this page ranks.`;
   },
   updated: (x: ConfigsView, stamp: string) => `Updated ${stamp} · data since ${longDate(x.d.since)} · ${plural(x.stores, "Apple Store")} · checked every ${SPEED.checkSec} s (alert stores every ${SPEED.fastSec} s)`,
-  nav: { easiest: "Easiest now", storage: "Storage", colour: "Colour", shelf: "Time to grab", week: "This week", alerts: "What to watch", method: "How we count" },
+  nav: { easiest: "Listed longest", storage: "Storage", colour: "Colour", shelf: "Time to grab", week: "This week", alerts: "What to watch", method: "How we count" },
   h2: (x: ConfigsView) => ({
-    easiest: `Which iPhone Duo configuration is easiest to get${where(x.c)} right now?`,
-    storage: "Does storage size change the odds?",
+    easiest: `Which iPhone Duo configuration has been listed longest${where(x.c)}?`,
+    storage: "Does storage size change how often it comes back?",
     colour: `${x.d.byColor.length > 1 ? `${x.colour(x.d.byColor[0].key)} or ${x.colour(x.d.byColor[1].key)}` : "Which colour"}: which colour comes back more often?`,
     shelf: "Which configuration gives you the most time to grab it?",
     week: "What changed in the last seven days?",
@@ -100,7 +101,7 @@ const configs = {
   },
   easiestLead: (x: ConfigsView) => {
     const e = x.d.easiest!;
-    return `${x.cfg(e)} wins on both counts that matter: it came back most often (${n(e.restocks)} restocks, ${pct(e.restocks / x.d.n)} of all) and stayed listed longest in total (${hours(e.exposureSec)}), which is the time there was to open the app and reserve one. ${e.nowStores > 0 ? `${plural(e.nowStores, "store")} ${e.nowStores === 1 ? "lists" : "list"} it as you read this.` : "No store lists it as you read this; the next restock shows here within seconds."}`;
+    return `${x.cfg(e)} leads on both counts we can measure: it came back most often (${n(e.restocks)} restocks, ${pct(e.restocks / x.d.n)} of all) and stayed listed longest in total (${hours(e.exposureSec)}), the time in which a pickup could have been reserved. ${e.nowStores > 0 ? `${plural(e.nowStores, "store")} ${e.nowStores === 1 ? "lists" : "list"} it as you read this.` : "No store lists it as you read this; the next restock shows here within seconds."}`;
   },
   easiestKeys: (x: ConfigsView) => {
     const { d } = x;
@@ -135,7 +136,7 @@ const configs = {
     const co = x.d.byColor;
     if (co.length < 2 || !x.d.n) return `Colours are compared once restocks come in.`;
     const gap = Math.abs(Math.round((co[0].share - co[1].share) * 100));
-    return `${x.colour(co[0].key)}, but not by much: ${pct(co[0].share)} of restocks against ${pct(co[1].share)} for ${x.colour(co[1].key)}, a ${gap}-point gap${co[0].medianSec && co[1].medianSec ? `; on the shelf they lasted a median ${secs(co[0].medianSec)} and ${secs(co[1].medianSec)}` : ""}. Colour changes your odds less than storage does, so an alert on both colours of the size you want roughly doubles your chances.`;
+    return `${x.colour(co[0].key)}, but not by much: ${pct(co[0].share)} of restocks against ${pct(co[1].share)} for ${x.colour(co[1].key)}, a ${gap}-point gap${co[0].medianSec && co[1].medianSec ? `; on the shelf they lasted a median ${secs(co[0].medianSec)} and ${secs(co[1].medianSec)}` : ""}. Colour moves the count less than storage does. Watching a second colour adds that colour's pickup windows to yours: ${co[1].restocks > 0 ? `${x.colour(co[1].key)} added ${plural(co[1].restocks, "restock")} and ${hours(co[1].exposureSec)} of listing time${where(x.c)} since ${longDate(x.d.since)}, on top of ${n(co[0].restocks)} and ${hours(co[0].exposureSec)} for ${x.colour(co[0].key)} (all sizes)` : `${x.colour(co[1].key)} has not restocked${where(x.c)} since ${longDate(x.d.since)}, so so far it would have added none`}.`;
   },
   colourKeys: (x: ConfigsView) => x.d.byColor.map((g) => `${x.colour(g.key)}: ${n(g.restocks)} restocks at ${plural(g.stores, "store")}, ${hours(g.exposureSec)} listed in total${g.nowStores ? `, ${plural(g.nowStores, "store")} listing it now` : ""}.`),
   shelfLead: (x: ConfigsView) => {
@@ -147,8 +148,9 @@ const configs = {
   shelfCaption: "Time on the shelf per configuration (restock → next sold-out check)",
   shelfHead: ["Configuration", "Restocks with a known end", "Median", "Gone within 2 min", "Gone within 20 min", "Fastest"],
   shelfKeys: (x: ConfigsView) => [
-    `A push alert lands about ${SPEED.alertSec} s after we confirm a restock; the median listing is ${x.d.lifetimes ? secs(x.d.lifetimes.medianSec) : "about a minute"}, so most restocks are reachable if you have the Apple Store app open to the Duo and your card saved.`,
+    `Half of all restocks were gone within ${x.d.lifetimes ? secs(x.d.lifetimes.medianSec) : "about a minute"}; our alert goes out about ${SPEED.alertSec} s after we confirm one, and what is left of the listing then depends on your phone and on a checkout you have ready.`,
     "The time is an upper bound: we see the sold-out state at the next check, up to 15 s later (5 s at stores with alerts).",
+    "\"Sold out\" here means Apple's pickup page stopped listing the configuration at that store; how many units that was, Apple does not say.",
   ],
   weekLead: (x: ConfigsView) => {
     const rows = [...x.d.byPart].sort((a, b) => b.last7 - a.last7);
@@ -167,10 +169,10 @@ const configs = {
   },
   alertsKeys: (x: ConfigsView) => [
     `Alerts are per store × configuration, so three stores × three configurations is ${plural(9, "alert")}.`,
-    `We check alert stores every ${SPEED.fastSec} s and confirm a restock before pushing; the banner lands about ${SPEED.alertSec} s after.`,
+    `We check alert stores every ${SPEED.fastSec} s and confirm a restock before pushing; the push is sent about ${SPEED.alertSec} s after, and when the banner shows on your phone depends on the phone and its connection, which we do not measure.`,
     `${x.one ? "" : "Pick stores by distance, not by restock count: "}the busiest store is also the one with the most people watching it.`.replace(/^the/, "The"),
   ],
-  methodLead: `A restock is a configuration going from sold out to available at one store, confirmed by two consistent checks; first sightings after a tracking gap are not counted. Time on the shelf runs from the restock to the first check that shows it sold out again, so it is an upper bound. "Listed in total" adds those times up over every restock of the configuration — the simplest measure of how much chance there was to buy one.`,
+  methodLead: `A restock is a configuration going from sold out to available at one store, confirmed by two consistent checks; first sightings after a tracking gap are not counted. Time on the shelf runs from the restock to the first check that shows it sold out again, so it is an upper bound. "Listed in total" adds those times up over every restock of the configuration — the simplest measure of how long a pickup could have been reserved. It is a record of past listings, not a chance of buying one, and not a count of units sold: Apple publishes neither.`,
   methodKeys: (x: ConfigsView) => [
     `Source: Apple's own pickup availability for ${storesPhrase(x)}, read every ${SPEED.checkSec} s per store (${SPEED.fastSec} s at stores with alerts) since ${longDate(x.d.since)}.`,
     "Stores listing it now and last-restock times are live; everything else recomputes within five minutes.",
@@ -180,7 +182,7 @@ const configs = {
     const { d } = x;
     const e = d.easiest, h = d.hardest, co = d.byColor;
     return [
-      { q: `Which iPhone Duo is easiest to get${where(x.c)}?`, a: e ? `${x.cfg(e)}: ${n(e.restocks)} confirmed restocks at ${plural(e.stores, "Apple Store")} since ${longDate(d.since)} and ${hours(e.exposureSec)} of total listing time, more than any other configuration. ${h ? `${x.cfg(h)} is the hardest with ${plural(h.restocks, "restock")}.` : ""}` : `Too few confirmed restocks${where(x.c)} to say yet; this page ranks every configuration as soon as they come in.` },
+      { q: `Which iPhone Duo is easiest to get${where(x.c)}?`, a: e ? `Nobody can tell you which one you will manage to buy: Apple publishes neither its allocations nor how many people are trying. What can be measured is past pickup windows. Since ${longDate(d.since)}, ${x.cfg(e)} was listed the longest in total (${hours(e.exposureSec)} over ${plural(e.restocks, "restock")} at ${plural(e.stores, "Apple Store")})${h ? ` and ${x.cfg(h)} the shortest (${hours(h.exposureSec)} over ${plural(h.restocks, "restock")})` : ""}, out of ${plural(d.n, "confirmed restock")} at ${storesPhrase(x)}. That is a record of past listings, not a forecast for you; to see which change adds the most windows for your own picks — another colour, another store — open "What adds the most pickup windows?" in the alert editor.` : `Too few confirmed restocks${where(x.c)} to say yet; this page ranks every configuration as soon as they come in.` },
       { q: `Is ${co.length > 1 ? x.colour(co[1].key) : "one colour"} harder to find than ${co.length > 1 ? x.colour(co[0].key) : "the other"}?`, a: co.length > 1 && d.n ? `Slightly: ${x.colour(co[0].key)} made up ${pct(co[0].share)} of restocks and ${x.colour(co[1].key)} ${pct(co[1].share)}. The difference between storage sizes is far larger, so choose the size first and set alerts on both colours of it.` : "Colours are compared once restocks come in." },
       { q: `Is the 1TB or 2TB iPhone Duo ever in stock${where(x.c)}?`, a: (() => { const big = d.byPart.filter((r) => /^(1|2)TB$/.test(r.storage)); const bn = big.reduce((a, r) => a + r.restocks, 0); return bn ? `Yes, but rarely: ${plural(bn, "restock")} of the 1TB and 2TB models out of ${n(d.n)} (${pct(bn / d.n)}), at ${new Set(big.flatMap((r) => (r.stores ? [r.partNumber] : []))).size ? plural(Math.max(...big.map((r) => r.stores)), "store") : "no store"} at most. When one appears it stays listed longer (fewer buyers), so an alert on it is worth a slot even though it fires seldom.` : `Not yet in our data${where(x.c)}: no confirmed restock of a 1TB or 2TB model since ${longDate(d.since)}.`; })() },
       { q: "Should I set alerts on one configuration or several?", a: `Several, at few stores: the top three configurations carried ${d.n ? pct(d.byPart.slice(0, 3).reduce((a, r) => a + r.restocks, 0) / d.n) : "most"} of restocks${where(x.c)}. Three configurations at three nearby stores is nine alerts, which fits a Plus plan; add the exact one you want as a fourth.` },
@@ -267,7 +269,7 @@ const supply = {
   },
   easierKeys: (x: SupplyView) => [
     "What \"easing\" will look like here: median shelf time past 20 minutes, most stores listing one at the same time, apple.com delivery estimates inside a week.",
-    `Until then the way to buy one is still an alert: we confirm a restock and push about ${SPEED.alertSec} s later, well inside the median listing.`,
+    `Until then the way to buy one is still an alert: we confirm a restock and send the push about ${SPEED.alertSec} s later, well inside the median listing.`,
     x.d.lifetimes ? `All-time${where(x.c)}: ${n(x.d.lifetimes.n)} restocks with a known end, median ${secs(x.d.lifetimes.medianSec)}, ${pct(x.d.lifetimes.within2min)} gone within 2 minutes.` : "All-time shelf-time figures appear after ten ended restocks.",
   ],
   storesLead: (x: SupplyView) => {
@@ -291,7 +293,7 @@ const supply = {
   christmasLead: (x: SupplyView) => {
     const w = x.d.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
-    return `Keep the alert on and keep a delivery order in the queue — both, not one. At the current pace (${perDay >= 1 ? `about ${Math.round(perDay)} restocks a day${where(x.c)}` : `fewer than one restock a day${where(x.c)}`}${w.medianSec ? `, each listed a median ${secs(w.medianSec)}` : ""}) a watched store near you gets its turn within days, and a confirmed restock reaches your phone about ${SPEED.alertSec} s after we see it. Paying a premium elsewhere only makes sense if the wait itself costs you more than the markup; the channel comparison weighs that honestly.`;
+    return `Keep the alert on and keep a delivery order in the queue — both, not one. At the current pace (${perDay >= 1 ? `about ${Math.round(perDay)} restocks a day${where(x.c)}` : `fewer than one restock a day${where(x.c)}`}${w.medianSec ? `, each listed a median ${secs(w.medianSec)}` : ""}) a watched store near you gets its turn within days, and the push for a confirmed restock is sent about ${SPEED.alertSec} s after we see it. Paying a premium elsewhere only makes sense if the wait itself costs you more than the markup; the channel comparison weighs that honestly.`;
   },
   christmasKeys: () => [
     "Order delivery on apple.com first: it holds your place and can be cancelled when a pickup comes through.",
@@ -320,7 +322,7 @@ const supply = {
       { q: `Is Apple still restocking the iPhone Duo${where(x.c)}?`, a: d.n ? `Yes: ${plural(w.restocks, "confirmed restock")} in the last seven days at ${plural(w.stores, "Apple Store")}${where(x.c)}, ${plural(d.n, "restock")} since ${longDate(d.since)}. The last one was ${d.sinceLastHours != null && d.sinceLastHours < 1 ? "under an hour ago" : d.sinceLastHours != null ? `${d.sinceLastHours} hours ago` : "not yet recorded"}.` : `No confirmed restock yet${where(x.c)} since tracking began on ${longDate(d.since)}; this page updates within five minutes of the first.` },
       { q: `Is the iPhone Duo shortage getting better${where(x.c)}?`, a: d.trend === "insufficient" ? `Too early to say: the first full week-over-week comparison appears on ${longDate(d.comparableFrom)}. Watch two numbers — restocks per week and seconds on the shelf; easing means both rise.` : `${cap(trendWord(d))} restocks this week than last (${signed(d.change!)})${w.medianSec ? `, and a restock lasted a median ${secs(w.medianSec)}` : ""}. Easing means more restocks and longer shelf times together; so far ${d.trend === "up" && w.medianSec && d.prev7.medianSec && w.medianSec > d.prev7.medianSec ? "both are moving the right way" : "only part of that is happening"}.` },
       { q: "When will the iPhone Duo be easy to buy?", a: "No one outside Apple can say, and PickupChecker does not forecast. The sequence to watch: weekly restocks rise for two or three weeks, median shelf time passes 20 minutes, then most stores list one at once and apple.com's delivery estimate drops inside a week." },
-      { q: "Should I pay a markup instead of waiting?", a: `Only if the wait costs you more than the premium: at the current pace a watched nearby store gets its turn within days, and an alert reaches you about ${SPEED.alertSec} s after a confirmed restock. Resale also means no return window and the usual risks; the channel comparison page weighs them.` },
+      { q: "Should I pay a markup instead of waiting?", a: `Only if the wait costs you more than the premium: at the current pace a watched nearby store gets its turn within days, and an alert is sent about ${SPEED.alertSec} s after a confirmed restock. Resale also means no return window and the usual risks; the channel comparison page weighs them.` },
       { q: "Does the holiday season change the odds?", a: "Demand rises into December while deliveries keep their rhythm, so shelf times tend to shorten rather than lengthen. Keep a delivery order as a backstop and let alerts catch the pickup; cancel whichever you do not need." },
     ];
   },
@@ -369,7 +371,7 @@ const channels = {
   compareRows: (x: ChannelsView) => {
     const r = x.ch;
     return [
-      { channel: "Apple Store pickup", known: `${plural(x.sup.n, "confirmed restock")} since ${longDate(x.sup.since)}; every restock, every store, timed.`, watch: `An alert here (about ${SPEED.alertSec} s after confirmation), or the Apple Store app's pickup picker.`, catch: `Listings last about a minute; you need the app open and a card saved.` },
+      { channel: "Apple Store pickup", known: `${plural(x.sup.n, "confirmed restock")} since ${longDate(x.sup.since)}; every restock, every store, timed.`, watch: `An alert here (sent about ${SPEED.alertSec} s after confirmation), or the Apple Store app's pickup picker.`, catch: `Listings last about a minute; you need the app open and a card saved.` },
       { channel: "apple.com delivery", known: "Apple shows a shipping estimate at checkout; it moves daily and is never a stock count.", watch: "Place the order; the estimate on your order page updates as Apple ships.", catch: "Weeks, not minutes — but your place in line is held." },
       { channel: `Carriers (${listWords(r.carriers)})`, known: "Own allocation; online stock shown per configuration as available / backordered. No history, no feed.", watch: "Their apps and store finders; a store call still works.", catch: `${r.carrierLock ?? "Plans, financing and activation rules apply; stock varies by shop."}` },
       { channel: `Retailers (${listWords(r.retailers)})`, known: "Own allocation, often online-only for a launch product; shown per configuration on the product page.", watch: "Their product page and app; a few publish restock emails.", catch: "Allocations are smaller than Apple's and sell out in minutes too." },
@@ -383,7 +385,7 @@ const channels = {
   pickupLead: (x: ChannelsView) => `For speed, pickup: a configuration that appears on the pickup page can be reserved that minute and collected the same day, while a delivery order waits for Apple's estimate. For certainty, delivery: the order holds your place whatever happens on the shelves. ${x.sup.lifetimes ? `Pickup listings${where(x.c)} lasted a median ${secs(x.sup.lifetimes.medianSec)} and ${pct(x.sup.lifetimes.within2min)} were gone within two minutes — which is why the alert exists.` : ""} The right answer is both: order delivery today, set the pickup alert, cancel whichever you do not need.`,
   pickupSwaps: () => [
     { no: "Cancel the delivery order to \"start fresh\"", yes: "Keep it until the pickup is in your hand", why: "Apple does not publish queue positions; a new order simply gets today's estimate, which is rarely earlier than the one you hold." },
-    { no: "Refresh the pickup page by hand", yes: "Let the alert watch it", why: `We check alert stores every ${SPEED.fastSec} s and push about ${SPEED.alertSec} s after confirming; a human refreshing sees most listings after they are gone.` },
+    { no: "Refresh the pickup page by hand", yes: "Let the alert watch it", why: `We check alert stores every ${SPEED.fastSec} s and send the push about ${SPEED.alertSec} s after confirming; a human refreshing sees most listings after they are gone.` },
     { no: "Change the order to pickup at checkout later", yes: "Reserve pickup as a new order when the alert fires", why: "Pickup reservations come from store stock, delivery orders from the warehouse: they are two queues, and the pickup one is the fast one." },
   ],
   pickupKeys: (x: ChannelsView) => [
@@ -404,7 +406,7 @@ const channels = {
   resaleLead: (x: ChannelsView) => {
     const w = x.sup.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
-    return `Rarely. Weigh the markup against the wait it buys: Apple Stores${where(x.c)} restocked ${perDay >= 1 ? `about ${Math.round(perDay)} times a day` : "less than once a day"} this week, and an alert reaches you about ${SPEED.alertSec} s after a confirmed restock, so a watched store near you usually comes through within days. Against that, ${listWords(x.ch.resale)} offer no manufacturer purchase record, ${x.ch.returnDays ? `none of ${returnPhrase(x.ch.returnDays)}` : "no return window at all"}, and the usual risks — an activation-locked device, a swapped box, a "sealed" return.`;
+    return `Rarely. Weigh the markup against the wait it buys: Apple Stores${where(x.c)} restocked ${perDay >= 1 ? `about ${Math.round(perDay)} times a day` : "less than once a day"} this week, and an alert is sent about ${SPEED.alertSec} s after a confirmed restock, so a watched store near you usually comes through within days. Against that, ${listWords(x.ch.resale)} offer no manufacturer purchase record, ${x.ch.returnDays ? `none of ${returnPhrase(x.ch.returnDays)}` : "no return window at all"}, and the usual risks — an activation-locked device, a swapped box, a "sealed" return.`;
   },
   resaleKeys: () => [
     "If you do buy resale: meet in person, power it on, check Settings → General → About for the serial, and sign in before paying.",
@@ -499,11 +501,11 @@ const api = {
     "Breaking changes get a new version path (/api/v2); fields are added, never renamed, under v1.",
     "Please set a User-Agent naming your project and a contact; we have never blocked a polite script.",
   ],
-  scriptLead: (x: ApiView) => `If you want a dashboard, a Discord bot, a spreadsheet or research, write the script — that is what the API is for. If you want to actually buy an iPhone Duo, a script is the slower tool: it sees a restock at its next poll, up to 30 s later, and then has to tell you; our push alert reads the same stores every ${SPEED.fastSec} s, confirms the restock and lands on your phone about ${SPEED.alertSec} s after — ${x.storesNow !== undefined ? "inside the median listing time of about a minute" : "inside the median listing time"}. Many people do both: the alert for buying, the API for watching.`,
+  scriptLead: (x: ApiView) => `If you want a dashboard, a Discord bot, a spreadsheet or research, write the script — that is what the API is for. If you want to actually buy an iPhone Duo, a script is the slower tool: it sees a restock at its next poll, up to 30 s later, and then has to tell you; our push alert reads the same stores every ${SPEED.fastSec} s, confirms the restock and sends the push about ${SPEED.alertSec} s after — ${x.storesNow !== undefined ? "inside the median listing time of about a minute" : "inside the median listing time"}. Many people do both: the alert for buying, the API for watching.`,
   scriptCaption: "A polling script against a push alert",
   scriptHead: ["", "Your script on this API", "PickupChecker alert"],
   scriptRows: () => [
-    { k: "Sees a restock after", a: "up to 30 s (cache) + your interval", b: `about ${SPEED.alertSec} s` },
+    { k: "Sees a restock after", a: "up to 30 s (cache) + your interval", b: `push sent about ${SPEED.alertSec} s after our check sees it` },
     { k: "Reaches your phone", a: "whatever you build (email, bot, SMS)", b: "a notification on the Home Screen app" },
     { k: "Stores watched", a: "all of them, every call", b: `your chosen stores every ${SPEED.fastSec} s, all stores every ${SPEED.checkSec} s` },
     { k: "Costs", a: "free", b: "a plan for the alerts; this site is free to read" },
@@ -520,7 +522,7 @@ const api = {
     { q: "Does Apple have an official stock API?", a: "No public one. apple.com's pickup page can be read per store and configuration, which is what this site does with care (rotation, confirmation, time zones); the API here is that work exposed as JSON." },
     { q: "How current is the data?", a: `Each store is checked every ${SPEED.checkSec} s (every ${SPEED.fastSec} s at stores with alerts) and the API answer is cached 30 s, so a figure is at most about 45 s old; last_checked_at tells you exactly.` },
     { q: "Can I use it in a commercial product?", a: "Yes, with attribution: \"Source: PickupChecker\" linked to pickupchecker.com wherever the data is shown, and a polling interval of 30 s or longer. No key is needed." },
-    { q: "Will a script get me an iPhone Duo faster than an alert?", a: `No: a script sees a restock at its next poll, up to 30 s later; the alert confirms it and reaches your phone about ${SPEED.alertSec} s after we see it. Use the script to watch and the alert to buy.` },
+    { q: "Will a script get me an iPhone Duo faster than an alert?", a: `No: a script sees a restock at its next poll, up to 30 s later; the alert confirms it and is sent about ${SPEED.alertSec} s after we see it. Use the script to watch and the alert to buy.` },
   ],
   sources: { pickup: "Apple – In-store pickup", method: "PickupChecker – how the checks work", log: "PickupChecker – the restock log" },
   ld: (x: ApiView) => ({

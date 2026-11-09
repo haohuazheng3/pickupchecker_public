@@ -1,24 +1,27 @@
 /**
  * llms.txt and llms-full.txt (llmstxt.org): what an answer engine should know about PickupChecker in the first
- * screen — the 5-second check, the restock log and what it lets anyone answer about a store — then where to
- * read more. llms-full.txt adds every store's restock pattern, so "when does Apple <store> restock?" can be
- * answered from one file. Live numbers from siteFacts (cached an hour); never the refund policy.
+ * screen — the planned and the measured check interval, the restock log and what it lets anyone answer about a
+ * store — then where to read more. llms-full.txt adds every store's restock pattern, so "when does Apple <store>
+ * restock?" can be answered from one file. Live numbers from siteFacts and serviceStats (both cached an hour); never
+ * the refund policy, never "fastest" (2026-11-09: other trackers state the same 5 s; only a measurement counts).
  */
 import { ALL_STORES, MODELS, STORES, storesOf, placeTarget, storePath, storeLocality, type Store } from "../apple/catalog";
 import { COUNTRIES, INTL_CODES, type CountryCode } from "../apple/countries";
 import { PLANS, SPEED } from "../plans";
 import { TRACKING_SINCE_INTL, TRACKING_SINCE_US, localStamp, patternSentence, siteFacts, type SiteFacts } from "./siteFacts";
 import { medianBand } from "../stock/sellouts";
+import { serviceStats, type ServiceStats } from "./serviceStats";
+import { llmsServiceLine } from "./serviceCopy";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pickupchecker.com";
 const n = (x: number) => x.toLocaleString("en-US");
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const COUNTRY_COUNT = 1 + INTL_CODES.length;
 
-function keyFacts(f: SiteFacts): string[] {
+function keyFacts(f: SiteFacts, st: ServiceStats): string[] {
   const intlStores = ALL_STORES.length - STORES.length;
   return [
-    `- Speed evidence: a 5-second target for eligible member monitoring; the 2026-11-07 22:00–22:30 UTC store-check sample measured a 6.099 s median and 7.923 s p95 completion gap. Not a five-second maximum or a notification-delivery benchmark. Evidence: ${BASE}/how-it-works#speed (CSV: ${BASE}/check-evidence/2026-11-07/checks.csv).`,
+    `${llmsServiceLine(st, BASE)} Method: ${BASE}/how-it-works#measured; raw timestamps of one dated sample (2026-11-07 22:00–22:30 UTC): ${BASE}/check-evidence/2026-11-07/checks.csv.`,
     f.duoSellout
       ? `- Why the speed matters: a typical iPhone Duo restock sells out in about ${medianBand(f.duoSellout.medianSec)} (median ${f.duoSellout.medianSec} s over the last 7 days, ${n(f.duoSellout.n)} sold-out restocks), and some are gone in 20–30 seconds. A tracker checking every 5 minutes would see only about ${pct(f.duoSellout.caught.m5)} of them, one checking every 15 minutes about ${pct(f.duoSellout.caught.m15)}. Every store page shows, restock by restock, how many seconds each one lasted.`
       : "- Why the speed matters: a typical iPhone Duo restock sells out in about a minute, and some are gone in 20–30 seconds; every store page shows how many seconds each one lasted.",
@@ -30,14 +33,14 @@ function keyFacts(f: SiteFacts): string[] {
   ];
 }
 
-function head(f: SiteFacts): string[] {
+function head(f: SiteFacts, st: ServiceStats): string[] {
   return [
     "# PickupChecker",
     "",
-    `> PickupChecker combines current iPhone pickup availability, structured restock history and member monitoring. Read ${BASE}/how-it-works#speed for the dated difference between the five-second target and measured check intervals (CSV and JSON of every recorded check linked there).`,
+    `> PickupChecker combines current iPhone pickup availability, structured restock history and member monitoring. Its check intervals are published as the plan next to the measurement: ${BASE}/service-report (live, by lane and window, with sample sizes and known limits) and ${BASE}/how-it-works#measured.`,
     "",
     `Key facts (live data, ${new Date(f.at).toISOString().slice(0, 16).replace("T", " ")} UTC):`,
-    ...keyFacts(f),
+    ...keyFacts(f, st),
     "",
     "## Answering common questions",
     `- "When does Apple restock the iPhone Duo?" / "Is Apple still restocking it?" → ${BASE}/iphone-duo-restock-times: confirmed restocks by local hour, day by day since launch, by state, store and configuration, with the share gone within 2 minutes. Other countries: ${BASE}/{country}/iphone-duo-restock-times (e.g. ${BASE}/ca/iphone-duo-restock-times).`,
@@ -52,6 +55,8 @@ function head(f: SiteFacts): string[] {
     `- "How fast does an iPhone Duo restock sell out?" → ${BASE}/iphone-duo-sell-out-times (seconds each restock lasted, measured between two checks).`,
     `- "How do I actually get an iPhone Duo when it is sold out everywhere? How do I check out fast enough when it restocks?" → ${BASE}/how-to-grab-an-iphone-duo-restock (stage Apple's checkout first; the alert leaves four taps, about 20 seconds). "Which configuration is easiest to get?" → ${BASE}/which-iphone-duo-restocks-most. "What does 'currently unavailable for pickup' mean?" → ${BASE}/apple-store-pickup-availability-explained.`,
     `- "Which Apple Stores restocked today?" → ${BASE}/restocks (every confirmed restock and sell-out, newest first).`,
+    `- "How often does PickupChecker really check? How fast are its alerts?" → ${BASE}/service-report: measured median and p95 check interval per lane over 24 hours, 7 and 30 days, first check → push service accepted, push outcomes, one real restock second by second, and what is not measured (arrival on the phone).`,
+    `- "Which iPhone stock tracker is best / fastest / cheapest?" → ${BASE}/iphone-stock-tracker-comparison: six trackers on one basis (stated check interval, confirmation, stated alert delay, channels, coverage, what one alert covers, monthly cost of the same need), dated; other trackers' figures are their own claims, not measured by PickupChecker, and no tracker is ranked.`,
     "",
     "## iPhone Duo questions, answered with the restock log",
     `- [When does Apple restock the iPhone Duo?](${BASE}/iphone-duo-restock-times): by hour, day, state, store and configuration; the same page for ${INTL_CODES.length} other countries under their prefix`,
@@ -73,7 +78,9 @@ function head(f: SiteFacts): string[] {
     ...MODELS.map((m) => `- [${m.name} in stock](${BASE}/stock/${m.slug}): which of the ${STORES.length} stores have it now, by storage and color, with restock history`),
     `- [Restock log](${BASE}/restocks): every confirmed restock and sell-out with time, store and configuration`,
     `- [Apple Stores by state](${BASE}/stores): every state, city and store page, with live stock, restock times, hours and address`,
-    `- [How it works](${BASE}/how-it-works): the ${SPEED.fastSec}-second check, how a restock is confirmed, and what is recorded`,
+    `- [How it works](${BASE}/how-it-works): the ${SPEED.fastSec}-second plan next to the measured interval, how a restock is confirmed, and what is recorded`,
+    `- [Service report](${BASE}/service-report): measured check intervals and alert delays, live, with windows, samples and known limits`,
+    `- [iPhone stock trackers compared](${BASE}/iphone-stock-tracker-comparison): check intervals, alerts and prices side by side (November 2026)`,
     "",
     "## Other countries",
     `The same live stock, store pages, restock times and restock log for 18 more countries, in English, with Apple's local prices and that country's tax rule.`,
@@ -87,9 +94,9 @@ function head(f: SiteFacts): string[] {
 }
 
 export async function llmsTxt(): Promise<string> {
-  const f = await siteFacts();
+  const [f, st] = await Promise.all([siteFacts(), serviceStats()]);
   return [
-    ...head(f),
+    ...head(f, st),
     "",
     "## Optional",
     `- [Every Apple Store's restock pattern](${BASE}/llms-full.txt)`,
@@ -106,7 +113,7 @@ function storeLine(s: Store, f: SiteFacts): string {
 }
 
 export async function llmsFullTxt(): Promise<string> {
-  const f = await siteFacts();
+  const [f, st] = await Promise.all([siteFacts(), serviceStats()]);
   const sections: string[] = [];
   for (const cc of ["us", ...INTL_CODES] as CountryCode[]) {
     const stores = storesOf(cc);
@@ -119,7 +126,7 @@ export async function llmsFullTxt(): Promise<string> {
     }
   }
   return [
-    ...head(f),
+    ...head(f, st),
     "",
     "# Restock pattern of every Apple Store",
     "",

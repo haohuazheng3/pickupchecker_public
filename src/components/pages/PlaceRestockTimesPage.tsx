@@ -26,6 +26,7 @@ import { alertHref, fitTitle, plural } from "@/lib/seo/enrich";
 import { nearbyCities, neighborStates } from "@/lib/seo/links";
 import { CHECK_NOTE, PLANS, SPEED } from "@/lib/plans";
 import { placePhotos } from "@/content/place-photos";
+import { KeyFacts } from "./KeyFacts";
 
 const SITE = "https://pickupchecker.com";
 const APPLE_PICKUP = "https://www.apple.com/shop/shipping-pickup";
@@ -152,6 +153,33 @@ function quotable(place: RestockPlace, t: RestockTimes, zone: string): string {
 }
 
 /**
+ * The "Key facts" list under the lead: five to seven sentences that each stand alone when quoted — the place, the
+ * iPhone Duo, a number, the window and the sample in every one. Hour lines only once a usual hour may be stated
+ * (PATTERN_MIN restocks on PATTERN_MIN_DAYS days), the listing-time line only from ten timed restocks (t.sellout).
+ */
+function keyFacts(place: RestockPlace, t: RestockTimes, zone: { word: string; tz: string }, latest: { config: string; store: Store; at: string } | null, cfg: (p: string) => string): string[] {
+  if (t.unknown || t.n === 0) return [];
+  const where = `in ${place.name}`;
+  const since = dateLabel(t.since, false);
+  const tracked = Math.max(t.daily.length, t.days, 1);
+  const w = busiestWindow(t.byHour);
+  const peak = t.peakHour;
+  const top = t.byPart[0];
+  const sell = t.sellout;
+  return [
+    `PickupChecker has confirmed ${n(t.n)} iPhone Duo ${t.n === 1 ? "restock" : "restocks"} at the ${place.stores.length} Apple Stores ${where} since ${longDate(t.since)}, on ${t.days} of the ${plural(tracked, "day")} tracked.`,
+    peak != null
+      ? `${pct(w.share)} of the ${n(t.n)} iPhone Duo restocks ${where} since ${since} landed between ${rangeLabel(w.from, w.to)} ${zone.word}.`
+      : `PickupChecker names a usual iPhone Duo restock hour ${where} only after ${PATTERN_MIN} restocks on ${PATTERN_MIN_DAYS} different days, which the ${n(t.n)} so far do not meet.`,
+    ...(peak != null ? [`The busiest single hour for iPhone Duo restocks ${where} has been ${rangeLabel(peak, peak + 1)} ${zone.word}, with ${n(t.byHour[peak])} of ${n(t.n)} (${pct(t.byHour[peak] / t.n)}).`] : []),
+    ...(sell ? [`A restocked iPhone Duo ${where} stayed listed on Apple's pickup page for a median ${secs(sell.medianSec)} (${n(sell.n)} timed restocks since ${since}); that is listing time, not units sold.`] : []),
+    ...(top && top.restocks > 0 ? [`The most-restocked iPhone Duo configuration ${where} is ${cfg(top.partNumber)}: ${n(top.restocks)} of ${n(t.n)} restocks since ${since} (${pct(top.restocks / t.n)}).`] : []),
+    ...(latest ? [`The latest confirmed iPhone Duo restock ${where} was ${latest.config} at ${appleName(latest.store)}, ${localStamp(latest.at, latest.store)} local time.`] : []),
+    `As of ${updatedStamp(t.at, zone.tz)}, a restock ${where} counts only after two matching checks of Apple's pickup page, and the first appearance after a gap in tracking is never counted.`,
+  ];
+}
+
+/**
  * The question is the title; "Times by Hour" rides along only while the whole tag (with the " · PickupChecker" suffix,
  * 16 characters) stays within the 65 Bing's URL inspection flags as "title too long". Never truncated: a long place
  * name keeps its full question.
@@ -242,7 +270,7 @@ export async function PlaceRestockTimesPage({ place }: { place: RestockPlace }) 
     { q: `How long does an iPhone Duo restock last in ${place.name}?`, a: sell
       ? `Half of the ${n(sell.n)} timed restocks in ${place.name} were gone within ${secs(sell.medianSec)} (the [median](${WIKI_MEDIAN})); ${pct(sell.within2min)} sold out within 2 minutes and ${pct(sell.within20min)} within 20. Nationally the median is ${us.sellout ? secs(us.sellout.medianSec) : "about a minute"}. Each figure is the time between our check that saw the listing and the check that saw it gone, so it is an upper bound.`
       : `Fewer than 10 restocks in ${place.name} have been timed to a sell-out so far, which is too few for a local figure; nationally half of all iPhone Duo restocks are gone within ${us.sellout ? secs(us.sellout.medianSec) : "about a minute"} ([the sell-out page](/iphone-duo-sell-out-times)).` },
-    { q: `How do I get notified when the iPhone Duo restocks in ${place.name}?`, a: `Set an alert for the ${k === 1 ? "store" : "stores"} you can reach: alerts from $${PLANS.plus.priceUsd}/month, the stores you pick are checked every ${SPEED.fastSec} s, with a push about ${SPEED.alertSec} s after a restock is confirmed. One alert is one store and one exact configuration, so [pick the stores in ${place.name}](${alert}) and the storage and color you would actually buy; [how to set it up](/iphone-duo-stock-alerts), and [how to check out in the time a restock lasts](/how-to-grab-an-iphone-duo-restock).` },
+    { q: `How do I get notified when the iPhone Duo restocks in ${place.name}?`, a: `Set an alert for the ${k === 1 ? "store" : "stores"} you can reach: alerts from $${PLANS.plus.priceUsd}/month, the stores you pick are checked every ${SPEED.fastSec} s, with a push sent about ${SPEED.alertSec} s after a restock is confirmed. One alert is one store and one exact configuration, so [pick the stores in ${place.name}](${alert}) and the storage and color you would actually buy; [how to set it up](/iphone-duo-stock-alerts), and [how to check out in the time a restock lasts](/how-to-grab-an-iphone-duo-restock).` },
   ];
 
   const sources: Source[] = [
@@ -303,10 +331,11 @@ export async function PlaceRestockTimesPage({ place }: { place: RestockPlace }) 
         )}
       </p>
       <p className="mt-2 text-sm text-ink-3">Updated {updatedStamp(t.at, zone.tz)} · data since {longDate(t.since)} · {plural(k, "Apple Store")} · checked {CHECK_NOTE}</p>
+      <KeyFacts title="Key facts" items={keyFacts(place, t, zone, t.latest && latestStore ? { config: cfg(t.latest.partNumber), store: latestStore, at: t.latest.at } : null, cfg)} />
       {heroTiles.length > 0 && <StatGrid cols={4} className="mt-6">{heroTiles}</StatGrid>}
+      {/* The latest restock is a key fact above; the lines under the tiles compare with the country instead. */}
       {!t.unknown && t.n > 0 && (
         <Points className="mt-4" items={[
-          ...(t.latest && latestStore ? [{ text: <>Latest: <b className="text-ink">{cfg(t.latest.partNumber)}</b> at <Link href={storePath(latestStore)} className="underline underline-offset-2">{appleName(latestStore)}</Link>, {localStamp(t.latest.at, latestStore)} local time</> }] : []),
           ...(pattern && us.peakHour != null ? [{ text: <>Nationally: <b className="text-ink">{pct(uw.share)}</b> of {n(us.n)} US restocks between {rangeLabel(uw.from, uw.to)} store local time — {place.name} {Math.abs(w.share - uw.share) < 0.03 ? "matches the US pattern" : w.share > uw.share ? "is more concentrated in its window than the US as a whole" : "is spread wider through the day than the US as a whole"}</> }] : []),
           ...(t.peakWeekday != null ? [{ text: <>Most often on <b className="text-ink">{WEEKDAYS[t.peakWeekday]}s</b></> }] : []),
           { text: <>Apple publishes <b className="text-ink">no restock schedule</b>; these are our own confirmed checks, updated about every five minutes</>, no: true },
@@ -366,7 +395,7 @@ export async function PlaceRestockTimesPage({ place }: { place: RestockPlace }) 
           {pattern && (
             <Keys items={[
               { text: <>Start watching <b className="text-ink">{hourLabel(Math.max(0, w.from - 1))}</b>; most of the day&apos;s restocks have landed by {hourLabel(w.to)}</>, step: true },
-              { text: <>{pct(hourShare(t.byHour, 12, 17))} between noon and 5 PM: afternoons are {hourShare(t.byHour, 12, 17) >= 0.25 ? "a real second chance" : "quieter, not empty"}</> },
+              { text: <>{pct(hourShare(t.byHour, 12, 17))} between noon and 5 PM: afternoons are {hourShare(t.byHour, 12, 17) >= 0.25 ? "a real second window" : "quieter, not empty"}</> },
               { text: <>A restock that lands at {hourLabel(w.from)} is usually gone {sell ? about(sell.medianSec) : "about a minute"} later — the window says when to be ready, not when to look</>, no: true },
             ]} />
           )}
@@ -443,7 +472,7 @@ export async function PlaceRestockTimesPage({ place }: { place: RestockPlace }) 
             ))}
           </Table>
           <ol className="my-4 grid gap-3 sm:grid-cols-2">
-            <Swap no={`Watch only the nearest store in ${place.name}`} yes={`Alert every ${place.name} store you could reach in 20 minutes`} why="Each store restocks on its own; the next one is as likely to be a town over." />
+            <Swap no={`Watch only the nearest store in ${place.name}`} yes={`Alert every ${place.name} store you could reach in 20 minutes`} why={`Each store restocks on its own; the table above shows how ${place.name}'s restocks spread across its stores.`} />
             <Swap no="Drive over when a store 'usually' restocks" yes="Reserve on apple.com the second the alert lands, then drive" why="A pickup reservation holds the phone; walk-in stock for the Duo is rare." />
           </ol>
           <ChipLinks items={[{ href: place.storesHref, label: `Live stock at every store in ${place.name}` }, { href: "/iphone-duo-near-me", label: "iPhone Duo near me" }]} />
@@ -454,7 +483,7 @@ export async function PlaceRestockTimesPage({ place }: { place: RestockPlace }) 
         <section id="configuration" className="scroll-mt-24">
           <h2>{h2Of("configuration")}</h2>
           {topPart && topPart.restocks > 0 ? (
-            <p><b className="text-ink">{cfg(topPart.partNumber)}</b> is the configuration that comes back most in {place.name}: <b className="text-ink">{n(topPart.restocks)} of {n(t.n)} restocks</b> ({pct(topPart.restocks / t.n)}){lastPart && lastPart.partNumber !== topPart.partNumber ? <>, against {plural(lastPart.restocks, "restock")} for {cfg(lastPart.partNumber)}</> : null}. {lastPart && lastPart.restocks > 0 && topPart.restocks / lastPart.restocks >= 2 ? <> It has come back about <b className="text-ink">{Math.round(topPart.restocks / lastPart.restocks)}×</b> as often as the rarest: if you can live with it, your odds in {place.name} are that much better.</> : <> If you can live with the most-restocked configuration, your odds in {place.name} improve.</>}</p>
+            <p><b className="text-ink">{cfg(topPart.partNumber)}</b> is the configuration that comes back most in {place.name}: <b className="text-ink">{n(topPart.restocks)} of {n(t.n)} restocks</b> ({pct(topPart.restocks / t.n)}){lastPart && lastPart.partNumber !== topPart.partNumber ? <>, against {plural(lastPart.restocks, "restock")} for {cfg(lastPart.partNumber)}</> : null}. {lastPart && lastPart.restocks > 0 && topPart.restocks / lastPart.restocks >= 2 ? <> It has come back about <b className="text-ink">{Math.round(topPart.restocks / lastPart.restocks)}×</b> as often as the rarest: that many times the past pickup windows in {place.name}, a record of what was listed rather than a promise of the next one.</> : <> An alert on the most-restocked configuration would have fired most often in {place.name} so far; that is a record of past listings, not a forecast.</>}</p>
           ) : (
             <p>No configuration has a confirmed restock in {place.name} yet; all eight are listed below and fill in by themselves.</p>
           )}
@@ -495,7 +524,7 @@ export async function PlaceRestockTimesPage({ place }: { place: RestockPlace }) 
             { text: <>That is why a page you reload by hand almost always shows &ldquo;unavailable&rdquo;: <Link href="/apple-store-pickup-availability-explained">what the status means</Link></> },
             { text: <>Restock by restock, every store in {place.name}: <Link href="/iphone-duo-sell-out-times">the sell-out times page</Link></>, step: true },
           ]} />
-          {sell && <Measured>Lifetimes are measured between two of PickupChecker&apos;s checks ({SPEED.checkSec} s apart, {SPEED.fastSec} s for stores with alerts), so a restock that lasted 40 seconds may read as 45. Restocks still listed at the time of reading are not in these figures.</Measured>}
+          {sell && <Measured>Lifetimes are measured between two of PickupChecker&apos;s checks ({SPEED.checkSec} s apart, {SPEED.fastSec} s for stores with alerts), so a restock that lasted 40 seconds may read as 45. Restocks still listed at the time of reading are not in these figures. &ldquo;Sold out&rdquo; means Apple&apos;s pickup page stopped listing the configuration at that store; it is not a count of units sold.</Measured>}
         </section>
 
         {/* ---------------------------------------------------------------- right now */}
@@ -517,7 +546,7 @@ export async function PlaceRestockTimesPage({ place }: { place: RestockPlace }) 
         <section id="alerts" className="scroll-mt-24">
           <h2>{h2Of("alerts")}</h2>
           <p>Be ready {pattern ? <>before <b className="text-ink">{hourLabel(w.from)}</b></> : "in the morning"} with Apple&apos;s checkout already staged, and let an alert do the watching: a typical restock in {place.name} is over in {sell ? about(sell.medianSec) : "about a minute"}, which is less time than a reload-and-scroll takes.</p>
-          <p><b className="text-ink">Alerts from ${PLANS.plus.priceUsd}/month:</b> the stores you pick are checked every {SPEED.fastSec} s, with a push about {SPEED.alertSec} s after a restock is confirmed. One alert is one store and one exact configuration; Plus covers {PLANS.plus.limit}, Pro {PLANS.pro.limit}, Max {PLANS.max.limit}.</p>
+          <p><b className="text-ink">Alerts from ${PLANS.plus.priceUsd}/month:</b> the stores you pick are checked every {SPEED.fastSec} s, with a push sent about {SPEED.alertSec} s after a restock is confirmed (arrival on your phone is not measured). One alert is one store and one exact configuration; Plus covers {PLANS.plus.limit}, Pro {PLANS.pro.limit}, Max {PLANS.max.limit}.</p>
           <StepStrip className="my-4" steps={[
             { title: `Pick ${place.name} stores`, hint: "and the storage and color you would buy" },
             { title: "Install the Home Screen app", hint: "iPhone alerts need it" },

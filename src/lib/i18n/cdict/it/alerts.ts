@@ -61,6 +61,24 @@ export const alerts: CDict["alerts"] = {
     myAlerts: "I miei avvisi",
   },
 
+  windows: {
+    title: "Cosa aggiunge più finestre di ritiro?",
+    had: "La tua selezione: {windows} in un periodo di {days}",
+    windowsN: { one: "# finestra di ritiro", other: "# finestre di ritiro" } as Forms,
+    daysN: { one: "# giorno", other: "# giorni" } as Forms,
+    best: " · {gain} con {what}",
+    noGain: " · nessuna modifica vicina ne avrebbe aggiunta una",
+    gainN: { one: "+# finestra", other: "+# finestre" } as Forms,
+    tooFew: "Troppo poche finestre di ritiro in un periodo di {days} per confrontare ({n} contate)",
+    counting: "Conteggio delle finestre di ritiro passate…",
+    listed: "Disponibile per {time} in tutto, finestre contemporanee contate una volta.",
+    storeAt: "{store} · ≈{dist}",
+    cost: { one: "+# avviso", other: "+# avvisi" } as Forms,
+    addButton: "Aggiungi",
+    add: "Aggiungi {what}",
+    note: "Disponibilità passate sulla pagina di ritiro di Apple, non una previsione né una probabilità di acquisto. Una finestra va da un rifornimento fino all’esaurimento (o fino a ora).",
+  },
+
   matrix: {
     model: "Modello",
     configs: "Configurazioni di {model}",

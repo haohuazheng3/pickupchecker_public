@@ -96,6 +96,7 @@ export const modules: Dict["modules"] = {
     none: (label, days) => `Aucun retour en stock ${label} n’a été épuisé sur les ${days} derniers jours pour l’instant.`,
     whatDuo: "iPhone Duo",
     whatAll: "tous les iPhone",
+    definition: "La durée d’affichage est le temps pendant lequel la page de retrait d’Apple a montré la configuration comme disponible, encadré par deux de nos vérifications ; elle n’indique ni le nombre de téléphones vendus ni la vitesse à laquelle vous devez agir.",
     tileHalf: (what) => <>moitié épuisée en · {what}</>,
     tileWithin30: "épuisés en 30 s max",
     tileWithin60: "épuisés en 1 min max",
@@ -213,13 +214,30 @@ export const modules: Dict["modules"] = {
     others: (o) => (o.one
       ? `L’iPhone 18 Pro est disponible ici dans ${n(o.pro)} configurations sur ${n(o.configs)}, le 18 Pro Max dans ${n(o.max)}.`
       : `L’iPhone 18 Pro est disponible dans ${n(o.pro)} de ces magasins, le 18 Pro Max dans ${n(o.max)}.`),
-    updated: (stamp) => `Mis à jour : ${stamp}`,
-    checked: (note) => `vérifié ${note}`,
-    since: (date) => `données depuis le ${date}`,
-    method: "un retour en stock ne compte que si deux vérifications concordent ; les premières détections sont exclues",
+    evidence: (o) => (o.one
+      ? (o.fresh > 0
+        ? <>Au {o.stamp} : {o.name} a répondu à notre vérification dans la dernière minute.</>
+        : <>Au {o.stamp} : aucune réponse de {o.name} dans la dernière minute — statut inconnu, pas compté comme épuisé.</>)
+      : <>Au {o.stamp} : {n(o.fresh)} magasin{o.fresh > 1 ? "s" : ""} sur {n(o.total)} {o.fresh > 1 ? "ont" : "a"} répondu dans la dernière minute{o.stale > 0 ? ` ; ${n(o.stale)} sans réponse récente — statut inconnu, pas ${o.stale > 1 ? "comptés comme épuisés" : "compté comme épuisé"}` : ""}.</>),
+    evidenceNone: (o) => (o.one
+      ? `${o.name} n’a encore répondu à aucune vérification — statut inconnu, pas compté comme épuisé.`
+      : `Aucun des ${n(o.total)} magasins n’a encore répondu à une vérification — statut inconnu, rien n’est compté comme épuisé.`),
+    howCounted: (o) => {
+      const base = "Un retour en stock ne compte qu’après deux réponses concordantes (premières détections exclues) ; la durée d’affichage est encadrée par la dernière vérification qui voyait encore la configuration et la première qui ne la voyait plus. Les vérifications sont prévues toutes les 5 s dans les magasins avec alerte et toutes les 15 s dans chaque magasin";
+      const lanes = [
+        o.fast && `${o.fast.p50} en médiane dans les magasins avec alerte (p95 ${o.fast.p95}, ${n(o.fast.n)} intervalles${o.fast.slow ? " ; plus lent que prévu" : ""})`,
+        o.round && `${o.round.p50} par tour complet (p95 ${o.round.p95}, ${n(o.round.n)} tours${o.round.slow ? " ; plus lent que prévu" : ""})`,
+      ].filter(Boolean);
+      if (lanes.length === 0 || !o.win) return `${base}.`;
+      const win = o.win.days ? `les ${n(o.win.days)} derniers jours` : o.win.hours && o.win.hours > 1 ? `les ${n(o.win.hours)} dernières heures` : "la dernière heure";
+      return `${base} ; mesuré sur ${win} : ${lanes.join(" et ")}.`;
+    },
+    howLink: "Notre méthode de mesure →",
+    sec: (v) => `${v} s`,
+    technique: "PickupChecker interroge la disponibilité en retrait d’Apple pour chaque Apple Store : toutes les 5 secondes pour les magasins suivis par une alerte de membre, toutes les 15 secondes pour chaque magasin. Un retour en stock ne compte qu’après deux réponses concordantes (premières détections exclues) ; la durée d’affichage est encadrée par la dernière vérification qui voyait encore la configuration et la première qui ne la voyait plus.",
     tShare: (range) => `des retours en stock dans la tranche ${range}`,
     tBusiest: (count) => `heure la plus active · ${restocks(count)}`,
-    tHalf: "la moitié épuisée en moins de",
+    tHalf: "durée médiane d’affichage",
     tSince: (date) => `retours en stock confirmés depuis le ${date}`,
     tToday: "aujourd’hui, jusqu’ici",
     mostOften: (config, k, total) => `le plus souvent ${config} (${n(k)} sur ${n(total)})`,
@@ -228,9 +246,15 @@ export const modules: Dict["modules"] = {
       void tz;
       return "heure locale";
     },
-    summary: (o) =>
-      `${o.pct} des ${restocks(o.n)} d’iPhone Duo confirmés par PickupChecker ${frWhere(o)} depuis le ${o.since} ont eu lieu dans la tranche ${o.range}, ${o.zone} ; l’heure la plus active a été ${o.busiest} (${restocks(o.busiestN)}).${o.median ? ` La moitié a été épuisée en moins de ${o.median}.` : ""}${o.config ? ` La configuration revenue le plus souvent est ${o.config} (${n(o.k)} sur ${n(o.n)}).` : ""}`,
-    tooFew: (o) => `${restocks(o.n)} d’iPhone Duo ${o.n > 1 ? "confirmés" : "confirmé"} ${frWhere(o)} depuis le ${o.since} : trop peu pour indiquer une heure habituelle ; chacun est listé ci-dessous.`,
+    factsTitle: (label) => `Chiffres clés : iPhone Duo ${label}`,
+    fN: (o) => <>PickupChecker a confirmé <b className="text-ink">{n(o.n)}</b> {o.n > 1 ? "retours" : "retour"} en stock d’iPhone Duo {frWhere(o)} depuis le {o.since}, sur {o.days === 1 ? "une seule journée" : `${n(o.days)} jours différents`}.</>,
+    fShare: (o) => <><b className="text-ink">{o.pct}</b> des {restocks(o.n)} d’iPhone Duo {o.label} depuis le {o.since} ont eu lieu dans la tranche {o.range}, {o.zone} ; l’heure la plus active a été {o.busiest} ({restocks(o.busiestN)}).</>,
+    fTooFew: (o) => `${restocks(o.n)} d’iPhone Duo ${o.n > 1 ? "confirmés" : "confirmé"} ${o.label} sur ${o.days === 1 ? "une seule journée" : `${n(o.days)} jours`} : trop peu pour indiquer une heure habituelle ; PickupChecker attend ${n(o.min)} retours en stock sur ${n(o.minDays)} jours différents.`,
+    fMedian: (o) => <>La durée médiane d’affichage d’un iPhone Duo {o.label} sur la page de retrait d’Apple est d’<b className="text-ink">environ {o.median}</b> ({n(o.n)} affichages mesurés depuis le {o.since}).</>,
+    fTop: (o) => <>La configuration d’iPhone Duo la plus souvent revenue en stock {o.label} est <b className="text-ink">{o.config}</b> : {n(o.k)} retours sur {n(o.n)} ({o.pct}) depuis le {o.since}.</>,
+    fToday: (o) => (o.n > 0
+      ? <>Aujourd’hui ({o.date}, heure locale), PickupChecker a confirmé jusqu’ici <b className="text-ink">{n(o.n)}</b> {o.n > 1 ? "retours" : "retour"} en stock d’iPhone Duo {o.label}.</>
+      : <>Aujourd’hui ({o.date}, heure locale), PickupChecker n’a encore confirmé aucun retour en stock d’iPhone Duo {o.label}.</>),
     hourByHour: "Heure par heure, magasin par magasin →",
     lastThree: (k, label) => (k === 1 ? `Le dernier retour en stock d’iPhone Duo ${label}` : `Les ${n(k)} derniers retours en stock d’iPhone Duo ${label}`),
     secs: (v) => `${n(v)} s`,

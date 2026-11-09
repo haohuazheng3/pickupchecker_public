@@ -99,8 +99,17 @@ export interface DuoNow {
   share911: number;
   /** Median seconds a restock stayed listed; null under 10 sell-outs. */
   medianSec: number | null;
-  /** Most restocked configuration since tracking began. */
-  topPart: { partNumber: string; restocks: number } | null;
+  /** How many timed listings the median rests on (the sample answer engines ask for next to the number). */
+  medianN: number;
+  /** Most restocked configuration since tracking began, and its share of all restocks here. */
+  topPart: { partNumber: string; restocks: number; share: number } | null;
+  /**
+   * The denominator behind "not in stock": stores whose latest successful check is under FRESH_SEC old, and the rest
+   * (stale, failing or never answered). A page generated a second ago can still rest on an old answer for one store;
+   * readers and answer engines must be able to tell "checked and not listed" from "no recent answer".
+   */
+  fresh: number;
+  stale: number;
   /** Restocks today (each store's local date), so far. */
   today: number;
   alerts: AlertsSent | null;
@@ -123,6 +132,9 @@ export interface DuoNowInput {
   configsTotal: number;
 }
 
+/** A store's latest answer counts as current for this long (three full rounds of the 15-second sweep). */
+export const FRESH_SEC = 60;
+
 const isDuo = (partNumber: string) => { const i = PART_INDEX.get(partNumber); return Boolean(i && modelKeyFor(i.model) === "duo"); };
 
 /** Pure: the block's numbers from what the page already loaded. */
@@ -131,10 +143,11 @@ export function duoNowFrom(i: DuoNowInput): DuoNow {
   const numbers = new Set(i.stores.map((s) => s.storeNumber));
   let checkedAt: string | null = null;
   const inStock: DuoNow["inStock"] = [];
-  let pro = 0, max = 0;
+  let pro = 0, max = 0, fresh = 0;
   for (const s of i.stores) {
     const sum = i.stock.get(s.storeNumber);
     if (!sum) continue;
+    if (sum.lastCheckedAt && now.getTime() - sum.lastCheckedAt.getTime() <= FRESH_SEC * 1000) fresh++;
     if (sum.lastCheckedAt && (!checkedAt || sum.lastCheckedAt.toISOString() > checkedAt)) checkedAt = sum.lastCheckedAt.toISOString();
     const duo = sum.perModel.duo;
     if (duo && duo.available > 0) inStock.push({ storeNumber: s.storeNumber, configs: duo.available, parts: duo.parts });
@@ -176,7 +189,10 @@ export function duoNowFrom(i: DuoNowInput): DuoNow {
     window,
     share911: hourShare(t.byHour, 9, 11),
     medianSec: t.sellout?.medianSec ?? i.sell.byModel.duo?.medianSec ?? null,
-    topPart: t.byPart[0] ? { partNumber: t.byPart[0].partNumber, restocks: t.byPart[0].restocks } : null,
+    medianN: t.sellout ? t.sellout.n : i.sell.byModel.duo?.medianSec != null ? i.sell.byModel.duo.n : 0,
+    topPart: t.byPart[0] ? { partNumber: t.byPart[0].partNumber, restocks: t.byPart[0].restocks, share: t.n > 0 ? t.byPart[0].restocks / t.n : 0 } : null,
+    fresh,
+    stale: i.stores.length - fresh,
     today: t.today?.restocks ?? 0,
     alerts: i.alerts ?? null,
     zones: [...new Set(i.stores.map((s) => storeTimeZone(s)))],

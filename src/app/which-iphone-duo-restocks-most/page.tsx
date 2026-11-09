@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return configsMetadata(US);
 }
 
-/** /which-iphone-duo-restocks-most: which iPhone Duo configuration restocks most and is easiest to get (US). */
+/** /which-iphone-duo-restocks-most: which iPhone Duo configuration restocks most and has been listed longest (US). */
 export default function Page() {
   return <ConfigsPage country={US} />;
 }

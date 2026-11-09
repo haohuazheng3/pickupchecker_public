@@ -43,6 +43,21 @@ while IFS= read -r h; do
   rolled=$((rolled + 1)) rows=$((rows + n))
 done <<< "$hours"
 
+# 1b. Measured check intervals (check_gaps_hourly, migration 0016): every complete hour that still has raw rows and
+#     no interval summary yet. Fast-lane gaps need the raw rows, so this runs before the trim; a failure here is
+#     logged but never blocks the trim (the disk matters more than one hour of interval statistics).
+gap_hours=$("${P[@]}" -tAc "
+  select h from generate_series((select date_trunc('hour', min(at)) from poll_log), date_trunc('hour', now()) - interval '1 hour', interval '1 hour') h
+  where not exists (select 1 from check_gaps_hourly c where c.hour = h)
+    and exists (select 1 from poll_log p where p.at >= h and p.at < h + interval '1 hour')
+  order by h" 2>&1) || { log warn "check_gaps roll-up skipped" "$(python3 -c 'import json,sys; print(json.dumps({"error": sys.argv[1][-600:]}))' "$gap_hours")"; gap_hours=""; }
+gaps=0
+while IFS= read -r h; do
+  [ -n "$h" ] || continue
+  if g=$("${P[@]}" -tAc "select check_gaps_rollup('$h'::timestamptz, '$h'::timestamptz + interval '1 hour')" 2>&1); then gaps=$((gaps + g))
+  else log warn "check_gaps roll-up failed" "$(python3 -c 'import json,sys; print(json.dumps({"hour": sys.argv[1], "error": sys.argv[2][-600:]}))' "$h" "$g")"; break; fi
+done <<< "$gap_hours"
+
 # 2. Trim: older than KEEP_DAYS, and only rows whose hour is in poll_hourly.
 cutoff=$("${P[@]}" -tAc "select now() - interval '$KEEP_DAYS days'" 2>&1) || fail trim-cutoff "$cutoff"
 deleted=0
@@ -59,8 +74,8 @@ if [ "${NO_TRIM:-0}" != 1 ] && [ -n "$cutoff" ]; then
   done
 fi
 
-summary=$("${P[@]}" -tAc "select json_build_object('hours_rolled', $rolled, 'summary_rows', $rows, 'raw_deleted', $deleted, 'cutoff', '${cutoff:-}',
+summary=$("${P[@]}" -tAc "select json_build_object('hours_rolled', $rolled, 'summary_rows', $rows, 'gap_rows', $gaps, 'raw_deleted', $deleted, 'cutoff', '${cutoff:-}',
   'poll_log_bytes', pg_total_relation_size('poll_log'), 'poll_hourly_bytes', pg_total_relation_size('poll_hourly'),
   'disk_free_bytes', $(df -B1 --output=avail /var/lib/postgresql | tail -1 | tr -d ' '))")
-[ "$rolled" -gt 0 ] || [ "$deleted" -gt 0 ] && log info "poll_log rolled up and trimmed" "$summary"
+{ [ "$rolled" -gt 0 ] || [ "$deleted" -gt 0 ] || [ "$gaps" -gt 0 ]; } && log info "poll_log rolled up and trimmed" "$summary"
 echo "$summary"

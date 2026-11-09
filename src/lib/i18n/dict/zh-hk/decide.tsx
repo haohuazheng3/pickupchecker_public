@@ -70,13 +70,13 @@ const configs: DecideDict["configs"] = {
     if (!e) return `自${longYmd(d.since)}起，PickupChecker 在${storesPhrase(x)}確認了 ${n(d.n)} 次 iPhone Duo 補貨——仍然太少，未能為各款排名。下表會隨每次補貨補上；美國版頁面已有可參考的規律。`;
     const st = d.byStorage, co = d.byColor;
     const last = st[st.length - 1];
-    return `${x.cfg(e)}是${inAt(x.c)}最容易買到的 iPhone Duo：自${longYmd(d.since)}起 PickupChecker 在${storesPhrase(x)}確認的 ${n(d.n)} 次補貨中，它佔 ${n(e.restocks)} 次，遍及 ${n(e.stores)} 間分店，累計上架 ${hours(e.exposureSec)}${e.lifetimes ? `，上架時間中位數 ${secs(e.lifetimes.medianSec)}` : ""}。${h ? `最難買到的是 ${x.cfg(h)}：只有 ${n(h.restocks)} 次補貨，累計上架 ${hours(h.exposureSec)}。` : ""}${st.length > 1 ? `容量比顏色重要得多：${last.restocks > 0 ? `${st[0].key} 的補貨次數是 ${last.key} 的 ${ratio(st[0].restocks, last.restocks)}` : `${st[0].key} 佔了 ${pct(st[0].share)} 的補貨，${last.key} 則一次都未補過`}${co.length > 1 ? `；至於顏色，${x.colour(co[0].key)}只比${x.colour(co[1].key)}多 ${n(Math.abs(Math.round((co[0].share - co[1].share) * 100)))} 個百分點` : ""}。` : ""}`;
+    return `${x.cfg(e)}是${inAt(x.c)}累計上架時間最長的 iPhone Duo 配置：自${longYmd(d.since)}起 PickupChecker 在${storesPhrase(x)}確認的 ${n(d.n)} 次補貨中，它佔 ${n(e.restocks)} 次，遍及 ${n(e.stores)} 間分店，累計上架 ${hours(e.exposureSec)}${e.lifetimes ? `，上架時間中位數 ${secs(e.lifetimes.medianSec)}` : ""}。${h ? `上架時間最短的是 ${x.cfg(h)}：只有 ${n(h.restocks)} 次補貨，累計上架 ${hours(h.exposureSec)}。` : ""}${st.length > 1 ? `補貨次數受容量影響遠大於顏色：${last.restocks > 0 ? `${st[0].key} 的補貨次數是 ${last.key} 的 ${ratio(st[0].restocks, last.restocks)}` : `${st[0].key} 佔了 ${pct(st[0].share)} 的補貨，${last.key} 則一次都未補過`}${co.length > 1 ? `；至於顏色，${x.colour(co[0].key)}只比${x.colour(co[1].key)}多 ${n(Math.abs(Math.round((co[0].share - co[1].share) * 100)))} 個百分點` : ""}。` : ""}誰也無法告訴你最終買到哪一款；能量度的是過去的取貨時段，這頁排的就是這個。`;
   },
   updated: (x: ConfigsView, stamp: string) => `更新於 ${stamp} · 數據自${longYmd(x.d.since)}起 · ${n(x.stores)} 間 Apple Store · 每 ${SPEED.checkSec} 秒檢查一次（有提醒的分店每 ${SPEED.fastSec} 秒）`,
-  nav: { easiest: "現時最易買", storage: "容量", colour: "顏色", shelf: "下單時間", week: "本週", alerts: "設哪些提醒", method: "計算方法" },
+  nav: { easiest: "上架最久", storage: "容量", colour: "顏色", shelf: "下單時間", week: "本週", alerts: "設哪些提醒", method: "計算方法" },
   h2: (x: ConfigsView) => ({
-    easiest: `${inAt(x.c)}現時哪款 iPhone Duo 配置最容易買到？`,
-    storage: "容量大小會影響機會嗎？",
+    easiest: `${inAt(x.c)}哪款 iPhone Duo 配置累計上架最久？`,
+    storage: "容量大小會影響補貨次數嗎？",
     colour: `${x.d.byColor.length > 1 ? `${x.colour(x.d.byColor[0].key)}還是${x.colour(x.d.byColor[1].key)}` : "哪種顏色"}：哪種顏色較常補貨？`,
     shelf: "哪款配置給你最多時間下單？",
     week: "過去七日有甚麼變化？",
@@ -92,7 +92,7 @@ const configs: DecideDict["configs"] = {
   },
   easiestLead: (x: ConfigsView) => {
     const e = x.d.easiest!;
-    return `${x.cfg(e)}在兩個最關鍵的指標都領先：補貨最多（${n(e.restocks)} 次，佔全部 ${pct(e.restocks / x.d.n)}），累計上架時間也最長（${hours(e.exposureSec)}）——這就是你打開 App、落單預留的時間。${e.nowStores > 0 ? `你讀到這一句時，有 ${n(e.nowStores)} 間分店正列出有貨。` : "此刻沒有分店列出有貨；下一次補貨幾秒內就會在這裏顯示。"}`;
+    return `${x.cfg(e)}在兩個量度得到的指標都領先：補貨最多（${n(e.restocks)} 次，佔全部 ${pct(e.restocks / x.d.n)}），累計上架時間也最長（${hours(e.exposureSec)}）——即可以預約取貨的時間。${e.nowStores > 0 ? `你讀到這一句時，有 ${n(e.nowStores)} 間分店正列出有貨。` : "此刻沒有分店列出有貨；下一次補貨幾秒內就會在這裏顯示。"}`;
   },
   easiestKeys: (x: ConfigsView) => {
     const { d } = x;
@@ -127,7 +127,7 @@ const configs: DecideDict["configs"] = {
     const co = x.d.byColor;
     if (co.length < 2 || !x.d.n) return "有補貨後才會比較顏色。";
     const gap = Math.abs(Math.round((co[0].share - co[1].share) * 100));
-    return `${x.colour(co[0].key)}，但差距不大：佔 ${pct(co[0].share)} 的補貨，${x.colour(co[1].key)}佔 ${pct(co[1].share)}，只差 ${n(gap)} 個百分點${co[0].medianSec && co[1].medianSec ? `；上架時間中位數分別為 ${secs(co[0].medianSec)} 及 ${secs(co[1].medianSec)}` : ""}。顏色對機會的影響遠小於容量，所以為你想要的容量兩種顏色都設提醒，機會大約翻一倍。`;
+    return `${x.colour(co[0].key)}，但差距不大：佔 ${pct(co[0].share)} 的補貨，${x.colour(co[1].key)}佔 ${pct(co[1].share)}，只差 ${n(gap)} 個百分點${co[0].medianSec && co[1].medianSec ? `；上架時間中位數分別為 ${secs(co[0].medianSec)} 及 ${secs(co[1].medianSec)}` : ""}。顏色對補貨次數的影響遠小於容量。多盯一種顏色，就多了那種顏色的取貨時段：${co[1].restocks > 0 ? `自${longYmd(x.d.since)}起${inAt(x.c)}，${x.colour(co[1].key)}多了 ${n(co[1].restocks)} 次補貨、${hours(co[1].exposureSec)}上架時間，加在${x.colour(co[0].key)}的 ${n(co[0].restocks)} 次、${hours(co[0].exposureSec)}之上（所有容量合計）` : `自${longYmd(x.d.since)}起${inAt(x.c)}，${x.colour(co[1].key)}一次都未補貨，所以至今不會多出任何時段`}。`;
   },
   colourKeys: (x: ConfigsView) => x.d.byColor.map((g) => `${x.colour(g.key)}：${n(g.restocks)} 次補貨，遍及 ${n(g.stores)} 間分店，累計上架 ${hours(g.exposureSec)}${g.nowStores ? `，現時 ${n(g.nowStores)} 間分店有貨` : ""}。`),
   shelfLead: (x: ConfigsView) => {
@@ -139,8 +139,9 @@ const configs: DecideDict["configs"] = {
   shelfCaption: "每款配置的上架時間（補貨 → 下一次顯示售罄的檢查）",
   shelfHead: ["配置", "有明確結束的補貨", "中位數", "2 分鐘內售罄", "20 分鐘內售罄", "最快"],
   shelfKeys: (x: ConfigsView) => [
-    `我們確認補貨後約 ${SPEED.alertSec} 秒，推送就到你手機；上架時間中位數${x.d.lifetimes ? `為 ${secs(x.d.lifetimes.medianSec)}` : "約一分鐘"}，所以只要 Apple Store App 已開到 Duo、付款卡已儲存，大多數補貨都趕得及。`,
+    `一半的補貨在${x.d.lifetimes ? ` ${secs(x.d.lifetimes.medianSec)} ` : "約一分鐘"}內已經沒有了；我們確認補貨後約 ${SPEED.alertSec} 秒發出推送，剩下的時間夠不夠，要看你的手機和是否已預備好結帳。`,
     `這個時間是上限：售罄要等到下一次檢查才看得見，最多相隔 ${SPEED.checkSec} 秒（有提醒的分店 ${SPEED.fastSec} 秒）。`,
+    "這裏的「售罄」是指 Apple 取貨頁面不再在該分店列出該配置；當時有多少部，Apple 不會公布。",
   ],
   weekLead: (x: ConfigsView) => {
     const rows = [...x.d.byPart].sort((a, b) => b.last7 - a.last7);
@@ -159,10 +160,10 @@ const configs: DecideDict["configs"] = {
   },
   alertsKeys: (x: ConfigsView) => [
     "提醒以「分店 × 配置」計，三間分店 × 三款配置就是 9 個提醒。",
-    `有提醒的分店每 ${SPEED.fastSec} 秒檢查一次，確認補貨後才推送；橫幅約 ${SPEED.alertSec} 秒後到你手機。`,
+    `有提醒的分店每 ${SPEED.fastSec} 秒檢查一次，確認補貨後才推送；推送約 ${SPEED.alertSec} 秒後發出，橫幅何時出現在你手機上，視乎手機和網絡，我們沒有量度。`,
     `${x.one ? "" : "分店按距離揀，不要按補貨次數揀："}補貨最多的分店，也是最多人盯着的分店。`,
   ],
-  methodLead: "一次補貨，是指某款配置在一間分店由售罄變為有貨，並經兩次一致的檢查確認；追蹤中斷後的首次出現不計。上架時間由補貨起計，到第一次再顯示售罄的檢查為止，所以是上限。「累計上架」把該款每次補貨的時間加起來——這是衡量「有多少機會買到」最直接的一把尺。",
+  methodLead: "一次補貨，是指某款配置在一間分店由售罄變為有貨，並經兩次一致的檢查確認；追蹤中斷後的首次出現不計。上架時間由補貨起計，到第一次再顯示售罄的檢查為止，所以是上限。「累計上架」把該款每次補貨的時間加起來——這是衡量「可以預約取貨多久」最直接的一把尺。它是過去上架的紀錄，不是買到的機率，也不是售出數量：兩者 Apple 都不公布。",
   methodKeys: (x: ConfigsView) => [
     `來源：Apple 自家的${storesPhrase(x)}取貨現貨，自${longYmd(x.d.since)}起每間分店每 ${SPEED.checkSec} 秒讀取一次（有提醒的分店每 ${SPEED.fastSec} 秒）。`,
     "現時有貨的分店及最近補貨時間是即時的；其餘數字每五分鐘內重新計算。",
@@ -172,7 +173,7 @@ const configs: DecideDict["configs"] = {
     const { d } = x;
     const e = d.easiest, h = d.hardest, co = d.byColor;
     return [
-      { q: `${inAt(x.c)}哪款 iPhone Duo 最容易買到？`, a: e ? `${x.cfg(e)}：自${longYmd(d.since)}起在 ${n(e.stores)} 間 Apple Store 確認補貨 ${n(e.restocks)} 次，累計上架 ${hours(e.exposureSec)}，比任何一款都多。${h ? `最難買到的是 ${x.cfg(h)}，只有 ${n(h.restocks)} 次補貨。` : ""}` : `${inAt(x.c)}已確認的補貨仍然太少，未能下結論；一有補貨，本頁會為每款排名。` },
+      { q: `${inAt(x.c)}哪款 iPhone Duo 最容易買到？`, a: e ? `沒有人能說你會買到哪一款：Apple 不公布配貨量，也不公布有多少人在搶。能量度的是過去的取貨時段。自${longYmd(d.since)}起，在${storesPhrase(x)}確認的 ${n(d.n)} 次補貨中，累計上架最久的是 ${x.cfg(e)}（在 ${n(e.stores)} 間分店補貨 ${n(e.restocks)} 次，共 ${hours(e.exposureSec)}）${h ? `，最短的是 ${x.cfg(h)}（補貨 ${n(h.restocks)} 次，共 ${hours(h.exposureSec)}）` : ""}。這是過去上架的記錄，不是對你能否買到的預測；想知道再加一個顏色或一間分店能多出多少時段，可在提醒設定的「加甚麼最能增加取貨時段？」查看。` : `${inAt(x.c)}已確認的補貨仍然太少，未能下結論；一有補貨，本頁會為每款排名。` },
       { q: `${co.length > 1 ? x.colour(co[1].key) : "其中一種顏色"}是否比${co.length > 1 ? x.colour(co[0].key) : "另一種"}難找？`, a: co.length > 1 && d.n ? `略難：${x.colour(co[0].key)}佔 ${pct(co[0].share)} 的補貨，${x.colour(co[1].key)}佔 ${pct(co[1].share)}。容量之間的差距大得多，所以先揀容量，再為該容量的兩種顏色都設提醒。` : "有補貨後才會比較顏色。" },
       { q: `${inAt(x.c)}1TB 或 2TB 的 iPhone Duo 有過現貨嗎？`, a: (() => { const big = d.byPart.filter((r) => /^(1|2)TB$/.test(r.storage)); const bn = big.reduce((a, r) => a + r.restocks, 0); const most = big.some((r) => r.stores) ? Math.max(...big.map((r) => r.stores)) : 0; return bn ? `有，但很少：${n(d.n)} 次補貨中，1TB 及 2TB 只佔 ${n(bn)} 次（${pct(bn / d.n)}），${most ? `最多出現在 ${n(most)} 間分店` : "沒有分店"}。它們一出現會上架較久（想要的人少），所以即使很少觸發，為它設一個提醒也值得。` : `我們的數據暫未見：自${longYmd(d.since)}起${inAt(x.c)}未確認過任何 1TB 或 2TB 的補貨。`; })() },
       { q: "提醒應該設一款還是幾款？", a: `幾款，但分店要少：補貨最多的三款合計佔了${inAt(x.c)}${d.n ? ` ${pct(d.byPart.slice(0, 3).reduce((a, r) => a + r.restocks, 0) / d.n)} ` : "大部分"}的補貨。三款配置 × 三間附近分店 = 9 個提醒，Plus 方案剛好夠用；再把你真正想要的那一款加作第四個。` },
@@ -268,7 +269,7 @@ const supply: DecideDict["supply"] = {
   },
   easierKeys: (x: SupplyView) => [
     "在這裏「紓緩」會是這樣：上架時間中位數超過 20 分鐘、大部分分店同時有貨、apple.com 的送貨預計縮至一星期內。",
-    `在此之前，買到一部的方法仍然是提醒：我們確認補貨後約 ${SPEED.alertSec} 秒推送，遠在上架中位數之內。`,
+    `在此之前，買到一部的方法仍然是提醒：我們確認補貨後約 ${SPEED.alertSec} 秒發出推送，遠在上架中位數之內。`,
     x.d.lifetimes ? `${inAt(x.c)}至今：${n(x.d.lifetimes.n)} 次有明確結束的補貨，中位數 ${secs(x.d.lifetimes.medianSec)}，${pct(x.d.lifetimes.within2min)} 在 2 分鐘內售罄。` : "有 10 次已結束的補貨後，才會顯示整體的上架時間數字。",
   ],
   storesLead: (x: SupplyView) => {
@@ -292,7 +293,7 @@ const supply: DecideDict["supply"] = {
   christmasLead: (x: SupplyView) => {
     const w = x.d.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
-    return `提醒要開着，apple.com 的送貨訂單也要排着——兩樣都做，不是二揀一。以目前的速度（${perDay >= 1 ? `${inAt(x.c)}每日約 ${n(Math.round(perDay))} 次補貨` : `${inAt(x.c)}每日不足一次補貨`}${w.medianSec ? `，每次上架中位數 ${secs(w.medianSec)}` : ""}），你附近有提醒的分店幾日內就會輪到，而確認補貨後約 ${SPEED.alertSec} 秒，推送就到你手機。到別處付溢價，只有在等候本身比加價更昂貴時才划算；渠道比較頁會老實地幫你衡量。`;
+    return `提醒要開着，apple.com 的送貨訂單也要排着——兩樣都做，不是二揀一。以目前的速度（${perDay >= 1 ? `${inAt(x.c)}每日約 ${n(Math.round(perDay))} 次補貨` : `${inAt(x.c)}每日不足一次補貨`}${w.medianSec ? `，每次上架中位數 ${secs(w.medianSec)}` : ""}），你附近有提醒的分店幾日內就會輪到，而確認補貨後約 ${SPEED.alertSec} 秒，推送就會發出。到別處付溢價，只有在等候本身比加價更昂貴時才划算；渠道比較頁會老實地幫你衡量。`;
   },
   christmasKeys: () => [
     "先在 apple.com 落送貨訂單：它替你排着隊，取貨買到了隨時可以取消。",
@@ -321,7 +322,7 @@ const supply: DecideDict["supply"] = {
       { q: `Apple ${inAt(x.c)}仍在補貨 iPhone Duo 嗎？`, a: d.n ? `仍在：過去七日${inAt(x.c)} ${n(w.stores)} 間 Apple Store 確認補貨 ${n(w.restocks)} 次，自${longYmd(d.since)}起共 ${n(d.n)} 次。上一次是${d.sinceLastHours != null ? `${hoursAgo(d.sinceLastHours)}前` : "暫未記錄"}。` : `自${longYmd(d.since)}開始追蹤以來，${inAt(x.c)}未有已確認的補貨；第一次出現後五分鐘內本頁會更新。` },
       { q: `${ofAt(x.c)}iPhone Duo 缺貨有改善嗎？`, a: d.trend === "insufficient" ? `言之尚早：第一次完整的按週比較要到${longYmd(d.comparableFrom)}才會出現。留意兩個數字——每週補貨次數及上架秒數；兩個都上升才算紓緩。` : `本週補貨${vsLastWeek(d)}（${signed(d.change!)}）${w.medianSec ? `，一次補貨上架中位數 ${secs(w.medianSec)}` : ""}。紓緩是補貨更多兼上架更久；目前${d.trend === "up" && w.medianSec && d.prev7.medianSec && w.medianSec > d.prev7.medianSec ? "兩個數字都朝對的方向走" : "只有其中一部分在發生"}。` },
       { q: "iPhone Duo 幾時才會容易買到？", a: "Apple 以外沒有人說得準，PickupChecker 也不作預測。可以留意的次序：每週補貨連續兩三週上升，上架時間中位數超過 20 分鐘，然後大部分分店同時有貨、apple.com 的送貨預計縮至一星期內。" },
-      { q: "與其等，不如付溢價買？", a: `只有在等候的代價高過溢價時才值得：以目前速度，附近有提醒的分店幾日內就會輪到，確認補貨後約 ${SPEED.alertSec} 秒提醒就到。轉售還代表沒有退貨期，以及一般的風險；渠道比較頁會逐一衡量。` },
+      { q: "與其等，不如付溢價買？", a: `只有在等候的代價高過溢價時才值得：以目前速度，附近有提醒的分店幾日內就會輪到，確認補貨後約 ${SPEED.alertSec} 秒提醒就會發出。轉售還代表沒有退貨期，以及一般的風險；渠道比較頁會逐一衡量。` },
       { q: "聖誕檔期會改變機會嗎？", a: "踏入 12 月需求上升，而到貨維持原有節奏，所以上架時間傾向縮短而非拉長。留一張送貨訂單作後備，讓提醒去搶取貨；哪個不需要就取消哪個。" },
     ];
   },
@@ -372,7 +373,7 @@ const channels: DecideDict["channels"] = {
   compareRows: (x: ChannelsView) => {
     const r = x.ch;
     return [
-      { channel: "Apple Store 取貨", known: `自${longYmd(x.sup.since)}起 ${n(x.sup.n)} 次已確認補貨；每一次、每一間分店都有時間記錄。`, watch: `這裏的提醒（確認後約 ${SPEED.alertSec} 秒），或 Apple Store App 的取貨分店選擇器。`, catch: "上架大約只有一分鐘；App 要開着，付款卡要儲存好。" },
+      { channel: "Apple Store 取貨", known: `自${longYmd(x.sup.since)}起 ${n(x.sup.n)} 次已確認補貨；每一次、每一間分店都有時間記錄。`, watch: `這裏的提醒（確認後約 ${SPEED.alertSec} 秒發出），或 Apple Store App 的取貨分店選擇器。`, catch: "上架大約只有一分鐘；App 要開着，付款卡要儲存好。" },
       { channel: "apple.com 送貨", known: "Apple 在結帳時顯示送貨預計日期；每日變動，從來不是存貨數字。", watch: "先落單；訂單頁的預計日期會隨 Apple 出貨更新。", catch: "以星期計，不是分鐘——但你的位置保得住。" },
       { channel: `電訊商（${lw(r.carriers)}）`, known: "各有配貨；網上按款式顯示有貨／缺貨。沒有歷史，沒有資訊源。", watch: "它們的 App 和門市搜尋；打電話去門市仍然有用。", catch: x.c.cc === "hk" ? lockZh(x) : "要受月費計劃、分期及啟用條款約束；存貨因門市而異。" },
       { channel: `零售商（${lw(r.retailers)}）`, known: "各有配貨，新機往往只在網上賣；產品頁按款式顯示。", watch: "它們的產品頁和 App；少數會發補貨電郵。", catch: "配貨比 Apple 少，同樣幾分鐘內售罄。" },
@@ -407,7 +408,7 @@ const channels: DecideDict["channels"] = {
   resaleLead: (x: ChannelsView) => {
     const w = x.sup.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
-    return `很少值得。把溢價和它買回來的時間放在一起衡量：本週${ofAt(x.c)}Apple Store ${perDay >= 1 ? `每日補貨約 ${n(Math.round(perDay))} 次` : "每日補貨不足一次"}，確認補貨後約 ${SPEED.alertSec} 秒提醒就到你手機，所以你附近有提醒的分店通常幾日內就會輪到。相對地，${lw(x.ch.resale)} 沒有原廠購買記錄，${x.ch.returnDays ? `沒有${returnPhrase(x.ch.returnDays)}` : "完全沒有退貨期"}，還有一般的風險——被啟用鎖鎖住的機、換過的盒、「未開封」的退貨。`;
+    return `很少值得。把溢價和它買回來的時間放在一起衡量：本週${ofAt(x.c)}Apple Store ${perDay >= 1 ? `每日補貨約 ${n(Math.round(perDay))} 次` : "每日補貨不足一次"}，確認補貨後約 ${SPEED.alertSec} 秒提醒就會發出，所以你附近有提醒的分店通常幾日內就會輪到。相對地，${lw(x.ch.resale)} 沒有原廠購買記錄，${x.ch.returnDays ? `沒有${returnPhrase(x.ch.returnDays)}` : "完全沒有退貨期"}，還有一般的風險——被啟用鎖鎖住的機、換過的盒、「未開封」的退貨。`;
   },
   resaleKeys: () => [
     "真的要買二手：當面交收，開機，在「設定 → 一般 → 關於本機」核對序號，付款前先登入。",
@@ -502,11 +503,11 @@ const api: DecideDict["api"] = {
     "不相容的改動會用新的版本路徑（/api/v2）；v1 之下只會新增欄位，不會改名。",
     "請設定一個寫明你的專案及聯絡方式的 User-Agent；我們從未封鎖過有禮的腳本。",
   ],
-  scriptLead: (x: ApiView) => `如果你想做儀表板、Discord 機械人、試算表或研究，寫腳本——API 就是為此而設。如果你想真正買到一部 iPhone Duo，腳本是較慢的工具：它要到下一次輪詢才看到補貨，最多遲 30 秒，然後還要想辦法通知你；我們的推送提醒每 ${SPEED.fastSec} 秒讀取同一批分店，確認補貨後約 ${SPEED.alertSec} 秒到你手機——${x.storesNow !== undefined ? "在約一分鐘的上架中位數之內" : "在上架中位數之內"}。很多人兩樣都用：提醒用來買，API 用來看。`,
+  scriptLead: (x: ApiView) => `如果你想做儀表板、Discord 機械人、試算表或研究，寫腳本——API 就是為此而設。如果你想真正買到一部 iPhone Duo，腳本是較慢的工具：它要到下一次輪詢才看到補貨，最多遲 30 秒，然後還要想辦法通知你；我們的推送提醒每 ${SPEED.fastSec} 秒讀取同一批分店，確認補貨後約 ${SPEED.alertSec} 秒發出——${x.storesNow !== undefined ? "在約一分鐘的上架中位數之內" : "在上架中位數之內"}。很多人兩樣都用：提醒用來買，API 用來看。`,
   scriptCaption: "輪詢腳本 vs 推送提醒",
   scriptHead: ["", "你在這個 API 上的腳本", "PickupChecker 提醒"],
   scriptRows: () => [
-    { k: "多久後看到補貨", a: "最多 30 秒（快取）+ 你的間隔", b: `約 ${SPEED.alertSec} 秒` },
+    { k: "多久後看到補貨", a: "最多 30 秒（快取）+ 你的間隔", b: `我們看到後約 ${SPEED.alertSec} 秒發出推送` },
     { k: "怎樣到你手機", a: "你自己搭的（電郵、機械人、SMS）", b: "主畫面 App 的通知" },
     { k: "盯着的分店", a: "每次呼叫全部分店", b: `你揀選的分店每 ${SPEED.fastSec} 秒，全部分店每 ${SPEED.checkSec} 秒` },
     { k: "費用", a: "免費", b: "提醒需要付費方案；本站內容免費閱讀" },
@@ -523,7 +524,7 @@ const api: DecideDict["api"] = {
     { q: "Apple 有官方現貨 API 嗎？", a: "沒有公開的。apple.com 的取貨頁可以按分店及配置讀取，本站就是這樣做，而且做得小心（輪換、確認、時區）；這裏的 API 就是把這份工作以 JSON 形式開放出來。" },
     { q: "數據有多新？", a: `每間分店每 ${SPEED.checkSec} 秒檢查一次（有提醒的分店每 ${SPEED.fastSec} 秒），API 回應快取 30 秒，所以一個數字最多約 45 秒前的；last_checked_at 會告訴你準確時間。` },
     { q: "可以用在商業產品嗎？", a: "可以，但要署名：在顯示數據的地方標示「來源：PickupChecker」並連結至 pickupchecker.com，輪詢間隔 30 秒或以上。無需金鑰。" },
-    { q: "腳本會比提醒更快買到 iPhone Duo 嗎？", a: `不會：腳本要到下一次輪詢才看到補貨，最多遲 30 秒；提醒則先確認，再在我們看到後約 ${SPEED.alertSec} 秒送到你手機。腳本用來看，提醒用來買。` },
+    { q: "腳本會比提醒更快買到 iPhone Duo 嗎？", a: `不會：腳本要到下一次輪詢才看到補貨，最多遲 30 秒；提醒則先確認，再在我們看到後約 ${SPEED.alertSec} 秒發出。腳本用來看，提醒用來買。` },
   ],
   sources: { pickup: "Apple – 店舖取貨", method: "PickupChecker – 檢查怎樣運作", log: "PickupChecker – 補貨記錄" },
   ld: (x: ApiView) => ({

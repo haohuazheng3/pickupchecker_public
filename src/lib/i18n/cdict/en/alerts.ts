@@ -77,6 +77,37 @@ export const alerts = {
     myAlerts: "My alerts",
   },
 
+  /**
+   * "What adds the most pickup windows?" under the sum line (PickupWindows). A pickup window = one restock on Apple's
+   * pickup page until it sold out; windows at the same moment count once. Past windows only: never word it as a
+   * forecast, a chance or odds of buying.
+   */
+  windows: {
+    title: "What adds the most pickup windows?",
+    /** The folded line. {windows}: windowsN; {days}: daysN. */
+    had: "Your picks: {windows} in the last {days}",
+    windowsN: { one: "# pickup window", other: "# pickup windows" } as Forms,
+    daysN: { one: "# day", other: "# days" } as Forms,
+    /** After `had`: the change that adds most. {gain}: gainN; {what}: a colour, storage or store. */
+    best: " · {gain} with {what}",
+    /** After `had`: no candidate adds a window. */
+    noGain: " · nothing nearby would have added one",
+    gainN: { one: "+# window", other: "+# windows" } as Forms,
+    /** The comparison is too small. {days}: daysN; {n}: windows counted in all. */
+    tooFew: "Too few pickup windows in the last {days} to compare ({n} counted)",
+    counting: "Counting past pickup windows…",
+    /** {time}: "46 min" (the selection's windows added up). */
+    listed: "Listed {time} in all, windows at the same moment counted once.",
+    /** A store to add: {store}, {dist} ("3 mi" or "5 km", by road, estimated). */
+    storeAt: "{store} · ≈{dist}",
+    /** The alerts a change adds. */
+    cost: { one: "+# alert", other: "+# alerts" } as Forms,
+    addButton: "Add",
+    /** The button's label for screen readers; {what}: a colour, storage or store. */
+    add: "Add {what}",
+    note: "Past listings on Apple's pickup page, not a forecast or a chance of buying. A window runs from a restock until it sold out (or until now).",
+  },
+
   /** The phone grid (PhoneMatrix). */
   matrix: {
     model: "Model",

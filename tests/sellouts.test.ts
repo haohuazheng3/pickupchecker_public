@@ -70,6 +70,8 @@ describe("SellOutTimes renders data that went through the data cache", () => {
     expect(html).toContain("Nov 2, 8:48 AM");
     // The one quotable line, then the tiles: half gone within 70 s, 34% within 30 s, fastest 25 s.
     expect(html).toContain("A typical iPhone Duo restock here sold out in about 50–70 seconds.");
+    // Under it, what a listing time is and is not (2026-11-09).
+    expect(html).toContain("A listing time is how long Apple&#x27;s pickup page showed the configuration as available, bounded by two of our checks; it is not how many phones were sold or how fast you must be.");
     expect(html).toContain(">70</span>");
     expect(html).toContain(">34%</span>");
     expect(html).toContain(">25</span>");

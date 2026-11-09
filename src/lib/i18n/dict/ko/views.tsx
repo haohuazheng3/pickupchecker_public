@@ -252,7 +252,7 @@ export const views: Dict["views"] = {
     itemList: (model: string, where: string) => `${where} ${ko(model)}`,
     nearLead: (c: Country, model: string, inStock: number, k: number, have: { store: string; city: string; configs: number }[]) =>
       inStock === 0
-        ? `지금 ${eulReul(ko(model))} 매장 픽업할 수 있는 ${dom(c)} Apple Store는 없어요. 그래서 ‘내 주변’은 어느 매장이 먼저 재입고되느냐의 문제예요. 갈 수 있는 매장에 알림을 걸어 두면 한 곳에 뜨는 순간 몇 초 안에 푸시가 와요.`
+        ? `지금 ${eulReul(ko(model))} 매장 픽업할 수 있는 ${dom(c)} Apple Store는 없어요. 그래서 ‘내 주변’은 어느 매장이 먼저 재입고되느냐의 문제예요. 갈 수 있는 매장에 알림을 걸어 두면 한 곳에 뜨는 순간 몇 초 안에 푸시를 보내요.`
         : `${n(k)}곳 중 ${n(inStock)}곳에 지금 ${iGa(ko(model))} 있어요: ${list(L, have.slice(0, 5).map((l) => `${l.city}의 ${l.store}(구성 ${n(l.configs)}개)`), 5)}.`,
     nearHead: (c: Country) => [rw(c), "지금 재고 있는 매장"],
     nearCaption: (c: Country, model: string) => `${rw(c)}별 ${ko(model)} 픽업 재고, 마지막 확인 기준`,
@@ -312,7 +312,7 @@ export const views: Dict["views"] = {
         : `마지막 확인 기준 ${n(k)}곳 중 ${n(have.length)}곳: ${have.slice(0, 6).map((x) => appleStoreLabel(x, L)).join(", ")}${have.length > 6 ? " 등" : ""}.`,
     }),
     faq: (ctx: FaqContext) => placeFaq({ ...ctx, place: ctx.place === cn("kr") ? "국내" : ctx.place, omit: [...(ctx.omit ?? []), "count", "stock", "lasts"] }, L),
-    duoBlock: (alert: string) => `가장 빨리 구하는 방법은 갈 수 있는 매장에 알림을 거는 거예요: [iPhone Duo 알림 설정](${alert}). 매장 × 정확한 구성 하나가 알림 하나이고, 매장에 뜨면 몇 초 안에 푸시가 와요.`,
+    duoBlock: (alert: string) => `가장 빨리 구하는 방법은 갈 수 있는 매장에 알림을 거는 거예요: [iPhone Duo 알림 설정](${alert}). 매장 × 정확한 구성 하나가 알림 하나이고, 매장에 뜨면 몇 초 안에 푸시를 보내요.`,
     intro: (c: Country, k: number, spread: string, now: { duo: number; max: number; pro: number }, tax: string) =>
       `${dom(c)}에는 **Apple Store ${n(k)}곳**이 있어요(${spread}). 지금 이 중 **${n(now.duo)}곳**에서 iPhone Duo를, **${n(now.max)}곳**에서 iPhone 18 Pro Max를, **${n(now.pro)}곳**에서 18 Pro를 매장 픽업할 수 있어요. ${tax}`,
     crumb: "Apple Store",
@@ -411,6 +411,24 @@ export const views: Dict["views"] = {
       { text: <>아래 표는 첫 재입고가 확인되면 채워져요</>, step: true },
       { text: <>데이터가 가장 많은 시간·요일 패턴: <Link href="/iphone-duo-restock-times" className="underline underline-offset-2">미국 페이지(영문)</Link></>, step: true },
     ],
+    keyFactsTitle: "핵심 사실",
+    keyFacts: (x: RestockTimesView, k: { top: { label: string; restocks: number } | null; latest: { config: string; store: Store; at: string } | null }): string[] => {
+      const { t, w, sell } = x;
+      const wh = rtWhere(x);
+      const since = `${dateLabel(t.since, false)}부터`;
+      const peak = t.peakHour;
+      return [
+        `PickupChecker는 ${longDate(t.since)}부터 ${wh}의 ${x.one ? "Apple Store" : `Apple Store ${n(x.stores)}곳`}에서 iPhone Duo 재입고를 ${n(t.n)}회 확인했어요(추적한 ${n(x.tracked)}일 중 ${t.days}일).`,
+        ...(x.pattern
+          ? [`${since} ${wh}에서 확인된 iPhone Duo 재입고 ${n(t.n)}회 중 ${rtPct(w.share)}가 매장 현지 시간 ${range(w.from, w.to)}에 들어왔어요.`]
+          : [`PickupChecker는 ${PATTERN_MIN_DAYS}일 이상에 걸쳐 재입고가 ${PATTERN_MIN}회 이상 쌓여야 ${wh}의 iPhone Duo ‘보통 재입고 시각’을 밝혀요. 지금까지의 ${n(t.n)}회로는 아직 부족해요.`]),
+        ...(x.pattern && peak != null ? [`${wh}에서 iPhone Duo 재입고가 가장 많았던 한 시간은 현지 시간 ${range(peak, peak + 1)}로, ${n(t.n)}회 중 ${n(t.byHour[peak])}회(${rtPct(t.byHour[peak] / t.n)})예요.`] : []),
+        ...(sell ? [`${wh}에서 재입고된 iPhone Duo가 Apple 픽업 페이지에 떠 있던 시간의 중앙값은 ${n(sell.medianSec)}초예요(${since} 측정한 ${n(sell.n)}회). 판매 대수가 아니라 노출 시간이에요.`] : []),
+        ...(k.top && k.top.restocks > 0 ? [`${wh}에서 가장 많이 재입고된 iPhone Duo 구성: ${k.top.label}, ${since} 재입고 ${n(t.n)}회 중 ${n(k.top.restocks)}회(${rtPct(k.top.restocks / t.n)}).`] : []),
+        ...(k.latest ? [`${wh}에서 확인된 가장 최근 iPhone Duo 재입고: ${k.latest.config}${x.one ? "" : `, ${appleStoreLabel(k.latest.store, L)}`}, 매장 현지 시간 ${local(k.latest.at, k.latest.store)}.`] : []),
+        `${zoneStamp(t.at, x.c)} 기준: ${wh}의 재입고는 Apple 픽업 페이지를 두 번 확인해 결과가 일치할 때만 세고, 추적 공백 뒤 처음 보인 재고는 세지 않아요.`,
+      ];
+    },
     setUpAlert: "iPhone Duo 알림 설정하기",
     logLive: "실시간 재입고 기록",
     onThisPage: "이 페이지 목차",
@@ -451,7 +469,7 @@ export const views: Dict["views"] = {
         { q: "왜 모든 Apple Store에서 iPhone Duo가 ‘픽업 불가’로 나오나요?", a: sell
           ? `재입고가 짧기 때문이에요. ${where}에서 품절까지 측정한 재입고 ${n(sell.n)}회 중 ${rtPct(sell.within2min)}가 2분 안에, ${rtPct(sell.within20min)}가 20분 안에 사라졌어요. 지금은 ${n(x.stores)}곳 중 ${n(x.duoNow)}곳에 있어요. 재입고가 수십 번 있는 날에도 거의 모든 순간 apple.com의 정직한 답은 ‘픽업 불가’예요([‘픽업 불가’의 뜻(영문)](/apple-store-pickup-availability-explained)).`
           : `픽업 재고는 몇 분씩만 뜨기 때문이에요. 지금 ${where} 매장 ${n(x.stores)}곳 중 ${n(x.duoNow)}곳에 있어요([‘픽업 불가’의 뜻(영문)](/apple-store-pickup-availability-explained)).` },
-        { q: "내 Apple Store에 iPhone Duo가 재입고되면 어떻게 알림을 받나요?", a: `매장과 정확한 용량·색상으로 알림을 설정하세요. 그때부터 그 매장은 ${SPEED.fastSec}초마다 확인되고, 재입고가 확인되면 약 ${SPEED.alertSec}초 뒤 휴대폰으로 알려 드려요([알림 설정](${x.alert}); [작동 방식(영문)](/how-it-works)).` },
+        { q: "내 Apple Store에 iPhone Duo가 재입고되면 어떻게 알림을 받나요?", a: `매장과 정확한 용량·색상으로 알림을 설정하세요. 그때부터 그 매장은 ${SPEED.fastSec}초마다 확인되고, 재입고가 확인되면 약 ${SPEED.alertSec}초 뒤 푸시를 발송해요. 휴대폰에 뜨는 시점은 기기와 네트워크에 따라 달라요([알림 설정](${x.alert}); [작동 방식(영문)](/how-it-works)).` },
       ];
     },
     sources: {
@@ -548,8 +566,8 @@ export const views: Dict["views"] = {
     configKeys: (x: RestockTimesView): Point[] => [
       { text: <>구성 선택이 <b className="text-ink">매장 선택보다 더 중요해요</b></> },
       x.storageRatio != null
-        ? { text: <>가장 많이 재입고된 용량으로 타협하면 다음 용량보다 확률이 약 <b className="text-ink">{x.storageRatio}배</b></> }
-        : { text: <>가장 많이 재입고된 용량으로 타협하면 확률이 <b className="text-ink">크게</b> 올라가요</> },
+        ? { text: <>가장 많이 재입고된 용량은 다음 용량보다 약 <b className="text-ink">{x.storageRatio}배</b> 자주 돌아왔어요. 지난 픽업 기회가 많았다는 뜻이지, 약속은 아니에요</> }
+        : { text: <>가장 많이 재입고된 용량이 지난 픽업 기회도 가장 많았어요. <b className="text-ink">얼마나 많은지</b>는 표에 있어요</> },
       { text: <><b className="text-ink">2TB</b>는 배송으로 주문하고 기다리는 폰이에요</>, no: true },
       { text: <>가격과 지금 재고: <Link href="/which-iphone-duo-restocks-most">어떤 iPhone Duo가 가장 많이 재입고될까?(영문)</Link></>, step: true },
     ],
@@ -566,7 +584,7 @@ export const views: Dict["views"] = {
       { text: <>이 페이지의 다른 모든 수치를 설명하는 숫자예요</> },
       { text: <>구성·{x.us ? "주" : rw(x.c)}별로 재입고마다 몇 초 갔는지: <Link href="/iphone-duo-sell-out-times">iPhone Duo 재입고는 얼마나 빨리 품절될까?(영문)</Link></>, step: true },
     ],
-    measured: "각 수치는 구성이 처음 보인 확인부터 사라진 것을 본 확인까지의 시간이라 상한값이에요. 실제 유지 시간은 더 짧아요.",
+    measured: "각 수치는 구성이 처음 보인 확인부터 사라진 것을 본 확인까지의 시간이라 상한값이에요. 실제 유지 시간은 더 짧아요. 이건 Apple 픽업 페이지에 그 구성이 떠 있던 시간이지, 판매 대수가 아니에요.",
 
     unavailableLead: (x: RestockTimesView) => <b>재입고는 상태가 아니라 깜빡임이기 때문이에요. {x.one ? "매장 1곳" : `매장 ${n(x.stores)}곳`} × 구성 {n(x.configs)}개 = {rtWhere(x)}에서 재고가 될 수 있는 {n(x.pairs)}가지인데, 지금 이 순간 iPhone Duo가 있는 매장은 {n(x.duoNow)}곳이에요.</b>,
     pairs: "재고가 될 수 있는 매장 × 구성",
@@ -605,7 +623,7 @@ export const views: Dict["views"] = {
     methodLead: <b>apple.com에서 그 매장에 없던 구성이 매장 픽업으로 뜨고, 두 번의 확인이 일치하면 재입고로 집계해요.</b>,
     methodKeys: (x: RestockTimesView): Point[] => [
       { text: <>{x.one ? `${rtName(x)}의 Apple Store` : `${rtWhere(x)} 모든 Apple Store`}는 <b className="text-ink">{SPEED.checkSec}초</b>마다, 알림이 걸린 매장은 <b className="text-ink">{SPEED.fastSec}초</b>마다</> },
-      { text: <>다른 트래커가 공개한 주기는 <b className="text-ink">8초~15분</b>이에요. 저희는 공개된 수치끼리만 비교해요</> },
+      { text: <>다른 트래커가 자기 사이트에 밝힌 확인 주기는 <b className="text-ink">5초~15분</b>이에요. 저희가 측정한 값이 아니라서, 각자 밝힌 수치끼리만 비교해요</> },
       { text: <>처음 보인 ‘재고 있음’은 <b className="text-ink">약 1초 뒤</b> 한 번 더 확인한 다음에야 인정해요</> },
       { text: <>사라진 재고는 <b className="text-ink">다음 확인</b>에서 확정해요</> },
       { text: <>매장을 처음 본 순간, 실패하거나 시간 초과된 요청: <b className="text-ink">절대</b> 재입고도 품절도 아니에요</>, no: true },

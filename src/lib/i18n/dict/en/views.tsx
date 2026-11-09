@@ -26,7 +26,7 @@ import type { PlaceLevel } from "@/lib/seo/products";
 import { regionWord } from "@/lib/seo/countryLinks";
 import { hourShare, rangeLabel, type DayRow, type RestockTimes, type SelloutFacts } from "@/lib/content/restockTimes";
 import { PATTERN_MIN, PATTERN_MIN_DAYS, WEEKDAYS, WEEKDAY_MIN_SPAN, hourLabel, localStamp } from "@/lib/content/siteFacts";
-import { OTHER_TRACKERS, SPEED } from "@/lib/plans";
+import { SPEED } from "@/lib/plans";
 
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
@@ -216,7 +216,7 @@ export const views = {
     /** A country's model page, "near me" section: the answer sentence (`inStock` of `n` stores have it; `have`: those stores, names in your language). */
     nearLead: (c: Country, model: string, inStock: number, n: number, have: { store: string; city: string; configs: number }[]) =>
       inStock === 0
-        ? `No Apple Store ${c.inName} lists the ${model} for pickup right now, so "near me" is a question of which store restocks first. Set an alert at the stores you can reach and the push arrives seconds after one lists it.`
+        ? `No Apple Store ${c.inName} lists the ${model} for pickup right now, so "near me" is a question of which store restocks first. Set an alert at the stores you can reach and the push is sent seconds after one lists it.`
         : `${plural(inStock, "store")} of ${n} ${inStock === 1 ? "has" : "have"} the ${model} right now: ${listWords(have.slice(0, 5).map((l) => `${l.store} in ${l.city} (${l.configs} config${l.configs === 1 ? "" : "s"})`), 5)}.`,
     /** Its table by region: head and caption. */
     nearHead: (c: Country) => [cap(c.regionNoun!), "Stores with it now"],
@@ -289,7 +289,7 @@ export const views = {
     /** The rest of the page's questions (lib/seo/enrich's place FAQ without the three this page answers elsewhere). */
     faq: (ctx: FaqContext) => placeFaq(ctx).filter((q) => !q.q.startsWith("How many Apple Stores are there") && !q.q.startsWith("Which Apple Stores in") && !q.q.startsWith("How long does stock last")),
     /** The Duo keyword section's paragraph (markdown link to the alert setup). */
-    duoBlock: (alert: string) => `The fastest way to get one is an alert at the stores you can reach: [set an iPhone Duo alert](${alert}). Each store × exact configuration is one alert, and the push arrives seconds after a store lists it.`,
+    duoBlock: (alert: string) => `The fastest way to get one is an alert at the stores you can reach: [set an iPhone Duo alert](${alert}). Each store × exact configuration is one alert, and the push is sent seconds after a store lists it.`,
     /** The intro (Inline: **bold**); `spread` = place.spreadPhrase, `tax` = place.taxSentence. */
     intro: (c: Country, n: number, spread: string, now: { duo: number; max: number; pro: number }, tax: string) => `There ${n === 1 ? "is" : "are"} **${n} Apple Store${n === 1 ? "" : "s"}** ${c.inName}, ${spread}. Right now **${now.duo}** of them list an iPhone Duo for pickup, **${now.max}** the iPhone 18 Pro Max and **${now.pro}** the 18 Pro. ${tax}`,
     crumb: "Apple Stores",
@@ -407,6 +407,29 @@ export const views = {
       { text: <>The tables below fill in from the first confirmed restock</>, step: true },
       { text: <>Hour and weekday patterns, where we have the most data: <Link href="/iphone-duo-restock-times" className="underline underline-offset-2">the US page</Link></>, step: true },
     ],
+    /**
+     * The "Key facts" list under the lead: five to seven sentences that each stand alone when quoted (place, iPhone
+     * Duo, number, window, sample). `top`: the most-restocked configuration; `latest`: the latest restock (labels in
+     * your language). Hour lines only with `x.pattern`, the listing-time line only with `x.sell` (ten timed restocks).
+     */
+    keyFactsTitle: "Key facts",
+    keyFacts: (x: RestockTimesView, k: { top: { label: string; restocks: number } | null; latest: { config: string; store: Store; at: string } | null }): string[] => {
+      const { t, w, sell } = x;
+      const where = rtIn(x);
+      const since = dateLabel(t.since, false);
+      const peak = t.peakHour;
+      return [
+        `PickupChecker has confirmed ${rtN(t.n)} iPhone Duo ${t.n === 1 ? "restock" : "restocks"} at ${x.one ? "the Apple Store" : plural(x.stores, "Apple Store")} ${where} since ${longDate(t.since)}, on ${t.days} of the ${plural(x.tracked, "day")} tracked.`,
+        ...(x.pattern
+          ? [`${rtPct(w.share)} of the ${rtN(t.n)} iPhone Duo restocks ${where} since ${since} landed between ${rangeLabel(w.from, w.to)} store local time.`]
+          : [`PickupChecker names a usual iPhone Duo restock hour ${where} only after ${PATTERN_MIN} restocks on ${PATTERN_MIN_DAYS} different days, which the ${rtN(t.n)} so far do not meet.`]),
+        ...(x.pattern && peak != null ? [`The busiest single hour for iPhone Duo restocks ${where} has been ${rangeLabel(peak, peak + 1)} local time, with ${rtN(t.byHour[peak])} of ${rtN(t.n)} (${rtPct(t.byHour[peak] / t.n)}).`] : []),
+        ...(sell ? [`A restocked iPhone Duo ${where} stayed listed on Apple's pickup page for a median ${sell.medianSec} seconds (${rtN(sell.n)} timed restocks since ${since}); that is listing time, not units sold.`] : []),
+        ...(k.top && k.top.restocks > 0 ? [`The most-restocked iPhone Duo configuration ${where} is ${k.top.label}: ${rtN(k.top.restocks)} of ${rtN(t.n)} restocks since ${since} (${rtPct(k.top.restocks / t.n)}).`] : []),
+        ...(k.latest ? [`The latest confirmed iPhone Duo restock ${where} was ${k.latest.config}${x.one ? "" : ` at ${appleName(k.latest.store)}`}, ${localStamp(k.latest.at, k.latest.store)} store local time.`] : []),
+        `As of ${zoneStamp(t.at, x.c)}, a restock ${where} counts only after two matching checks of Apple's pickup page, and the first appearance after a gap in tracking is never counted.`,
+      ];
+    },
     setUpAlert: "Set up an iPhone Duo alert",
     logLive: "The restock log, live",
     onThisPage: "On this page",
@@ -448,7 +471,7 @@ export const views = {
         { q: "Why do all Apple Stores say the iPhone Duo is unavailable?", a: sell
           ? `Because a restock is short: ${rtPct(sell.within2min)} of the ${rtN(sell.n)} sold-out restocks we measured ${where} were gone within 2 minutes and ${rtPct(sell.within20min)} within 20. Right now ${x.duoNow} of ${x.stores} stores list one; at almost any other moment the honest reading of apple.com is “unavailable” even on a day with dozens of restocks ([what “unavailable” means](/apple-store-pickup-availability-explained)).`
           : `Because pickup stock appears for minutes at a time. Right now ${x.duoNow} of ${plural(x.stores, "store")} ${where} list one ([what “unavailable” means](/apple-store-pickup-availability-explained)).` },
-        { q: "How do I get notified when my Apple Store restocks the iPhone Duo?", a: `Set an alert for the store and the exact storage and colour: from then on that store is checked every ${SPEED.fastSec} seconds and your phone is told about ${SPEED.alertSec} seconds after a restock is confirmed ([set up an alert](${x.alert}); [how it works](/how-it-works)).` },
+        { q: "How do I get notified when my Apple Store restocks the iPhone Duo?", a: `Set an alert for the store and the exact storage and colour: from then on that store is checked every ${SPEED.fastSec} seconds and the push is sent about ${SPEED.alertSec} seconds after a restock is confirmed; when it shows on your phone depends on the phone and its connection ([set up an alert](${x.alert}); [how it works](/how-it-works)).` },
       ];
     },
     /** Source list labels (`tracker`: another tracker's name). */
@@ -557,8 +580,8 @@ export const views = {
     configKeys: (x: RestockTimesView): Point[] => [
       { text: <>The configuration decision matters <b className="text-ink">more than the store decision</b></> },
       x.storageRatio != null
-        ? { text: <>Live with the most-restocked storage: about <b className="text-ink">{x.storageRatio}×</b> the odds of the next size</> }
-        : { text: <>Live with the most-restocked storage: your odds improve <b className="text-ink">sharply</b></> },
+        ? { text: <>The most-restocked storage came back about <b className="text-ink">{x.storageRatio}×</b> as often as the next size: more past pickup windows, not a promise</> }
+        : { text: <>The most-restocked storage has had the most past pickup windows; the table shows by <b className="text-ink">how much</b></> },
       { text: <>The <b className="text-ink">2TB</b>: a phone you order for delivery and wait for</>, no: true },
       { text: <>Prices and what is in stock right now: <Link href="/which-iphone-duo-restocks-most">Which iPhone Duo restocks most?</Link></>, step: true },
     ],
@@ -577,7 +600,7 @@ export const views = {
       { text: <>This is the number that explains everything else on this page</> },
       { text: <>Every restock with the seconds it lasted, by configuration and {rtRegion(x)}: <Link href="/iphone-duo-sell-out-times">How fast does an iPhone Duo restock sell out?</Link></>, step: true },
     ],
-    measured: "Each figure is the time from the check that first saw the configuration listed to the check that saw it gone, so it is an upper bound; the true lifetimes are shorter.",
+    measured: "Each figure is the time from the check that first saw the configuration listed to the check that saw it gone, so it is an upper bound; the true lifetimes are shorter. It is how long Apple's pickup page listed the configuration, not how many units were sold.",
 
     // ---- unavailable
     unavailableLead: (x: RestockTimesView) => <b>Because a restock is a flicker, not a state: {x.one ? "one store" : `${rtN(x.stores)} stores`} × {x.configs} configurations = {rtN(x.pairs)} things that can be in stock {rtIn(x)}, and at this moment {x.duoNow} {x.duoNow === 1 ? "store lists" : "stores list"} any iPhone Duo.</b>,
@@ -620,7 +643,7 @@ export const views = {
     methodLead: <b>A restock is counted when apple.com lists a configuration for in-store pickup at a store where it was not listed, confirmed by two checks that agree.</b>,
     methodKeys: (x: RestockTimesView): Point[] => [
       { text: <>{x.one ? "The Apple Store" : "Every Apple Store"} {rtIn(x)} every <b className="text-ink">{SPEED.checkSec} seconds</b>; the stores alerts point at every <b className="text-ink">{SPEED.fastSec}</b></> },
-      { text: <>Other trackers publish <b className="text-ink">{OTHER_TRACKERS}</b>; we compare published numbers only</> },
+      { text: <>Other trackers state intervals from <b className="text-ink">5 seconds to 15 minutes</b> on their own sites; we have not measured them, so we compare stated claims only</> },
       { text: <>A first “available” is asked again <b className="text-ink">about a second later</b> before it counts</> },
       { text: <>A listing that disappears is confirmed on the <b className="text-ink">next round</b></> },
       { text: <>The first sighting of a store, a failed or timed-out request: <b className="text-ink">never</b> a restock, never “out of stock”</>, no: true },

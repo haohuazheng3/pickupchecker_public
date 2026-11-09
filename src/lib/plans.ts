@@ -24,23 +24,30 @@ export const PLANS: Record<PlanKey, PlanDef> = {
  *  • fastSec: the stores paid alerts point at are asked every 5 s (the poller's fast lane, stock/fastlane.ts);
  *    every store every 15 s (24 h max gap 30 s, measured 2026-11-02). A first "available" is re-asked
  *    within a second (instant confirm) and the push is handed off 0.26 s (p50) / 1.4 s (p90) after that,
- *    so "about 3 s" is conservative. A typical iPhone Duo restock sells out in 60–80 s (median 79 s, 1,265 in 7 days to
+ *    so "about 3 s" is conservative.
+ *  • alertSec is the time until the push is SENT: handed to (accepted by) Apple's, Google's or Mozilla's push service.
+ *    When it then shows on the phone depends on the phone and its network and is not measured, so copy says "push
+ *    sent about 3 s after…", never "reaches your phone" / "your phone is told" (tests/service-copy.test.ts). A typical iPhone Duo restock sells out in 60–80 s (median 79 s, 1,265 in 7 days to
  *    2026-11-02; 9% within 30 s, a floor: shorter listings can fall between two 15 s checks); the live figures come
  *    from content/siteFacts.ts and every page's sell-out section (stock/sellouts.ts).
- *  • OTHER_TRACKERS: the check intervals other iPhone stock trackers publish about themselves
- *    (docs/research.md §7, 2026-11-02: 8 s, 15 s, 1 min, 5 min, 15 min). We compare to their published
- *    numbers only, never to a measurement we do not have.
+ *    These are the plan. What is actually achieved (median / p95 interval per lane, first check → push accepted)
+ *    is measured live in content/serviceStats.ts and shown on /how-it-works#measured and /service-report.
+ *  • OTHER_TRACKERS: the range of check intervals other iPhone stock trackers state about themselves, read on
+ *    their own sites on 2026-11-09 (content/trackers.ts): Store Stock Checker "every 5 seconds", InStock Radar an
+ *    8-second check for paid stores, ManzanaTracker and Apple Inventory Check about 5 minutes (the latter's FAQ also
+ *    says 15). Their claims, not our measurements; never call our 5 s the fastest or shortest — Store Stock Checker
+ *    states the same. Keep the "N seconds to M minutes" shape: the ja/ar/es dictionaries parse it.
  */
 export const SPEED = { fastSec: 5, checkSec: 15, alertSec: 3 } as const;
-export const OTHER_TRACKERS = "8 seconds to 15 minutes";
+export const OTHER_TRACKERS = "5 seconds to 15 minutes";
 /** The one way the site states its cadence (labels, footer, intros): every mention reads the same. */
 export const CHECK_NOTE = `every ${SPEED.checkSec} s, ${SPEED.fastSec} s with an alert`;
 export const CHECK_SENTENCE = `every store is checked every ${SPEED.checkSec} seconds, and the stores your alerts point at every ${SPEED.fastSec}`;
 export const SPEED_PERKS = [
   `Your stores checked every ${SPEED.fastSec} s, all 269 every ${SPEED.checkSec} s`,
-  `Push about ${SPEED.alertSec} s after a restock is confirmed`,
+  `Push sent about ${SPEED.alertSec} s after a restock is confirmed`,
 ] as const;
-export const SPEED_LINE = `Your stores are checked every ${SPEED.fastSec} s (every store every ${SPEED.checkSec} s), with a push about ${SPEED.alertSec} s after a restock is confirmed.`;
+export const SPEED_LINE = `Your stores are checked every ${SPEED.fastSec} s (every store every ${SPEED.checkSec} s), with a push sent about ${SPEED.alertSec} s after a restock is confirmed.`;
 export const PLAN_ORDER: PlanKey[] = ["free", "plus", "pro", "max"];
 export const PAID_PLANS: PaidPlanKey[] = ["plus", "pro", "max"];
 /** What a visitor without a plan may line up in the wizard: exactly what Plus will switch on. */

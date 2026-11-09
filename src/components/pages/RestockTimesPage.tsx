@@ -35,6 +35,7 @@ import { cityLabel, colorLabel, configLabel, countryLabel, regionLabel } from "@
 import type { RestockTimesPlace, RestockTimesView } from "@/lib/i18n/dict/en/views";
 import { alternatesIn, hreflangFor } from "./shared";
 import { restockPlaces } from "./PlaceRestockTimesPage";
+import { KeyFacts } from "./KeyFacts";
 import { CHECK_NOTE } from "@/lib/plans";
 
 const SITE = "https://pickupchecker.com";
@@ -191,6 +192,7 @@ export async function RestockTimesPage({ country: c, scope }: { country: Country
   const reportNames = Object.keys(REPORT_SOURCES);
   const weekend = t.byWeekday[0] + t.byWeekday[6];
   const sell = t.sellout;
+  const latest = t.latest && latestStore ? { config: cfg(t.latest.partNumber), store: latestStore, at: t.latest.at } : null;
 
   // Every sentence below reads its numbers from here (the dictionary's RestockTimesView).
   const x: RestockTimesView = {
@@ -275,9 +277,13 @@ export async function RestockTimesPage({ country: c, scope }: { country: Country
       </p>
       {/* The visible date an answer engine quotes next to the numbers (docs/research.md §8.3): English pages only. */}
       {lang === "en" && <p className="mt-2 text-sm text-ink-3">Updated {UPDATED(scope ? storeTimeZone(stores[0]) : c.timeZone).format(new Date(t.at))} · data since {F.longDate(t.since)} · {stores.length} Apple {one ? "Store" : "Stores"} · checked {CHECK_NOTE}</p>}
-      {heroTiles.length > 0 && <StatGrid cols={4} className="mt-6">{heroTiles}</StatGrid>}
       {!t.unknown && t.n > 0 && (
-        <Points className="mt-4" items={V.heroPoints(x, t.latest && latestStore && today && today.restocks > 0 ? { config: cfg(t.latest.partNumber), store: latestStore, at: t.latest.at } : null)} />
+        <KeyFacts title={V.keyFactsTitle} items={V.keyFacts(x, { top: topPart && topPart.restocks > 0 ? { label: cfg(topPart.partNumber), restocks: topPart.restocks } : null, latest })} />
+      )}
+      {heroTiles.length > 0 && <StatGrid cols={4} className="mt-6">{heroTiles}</StatGrid>}
+      {/* The latest restock is a key fact above, so the lines under the tiles leave it out. */}
+      {!t.unknown && t.n > 0 && (
+        <Points className="mt-4" items={V.heroPoints(x, null)} />
       )}
       {!t.unknown && t.n === 0 && (
         <Points className="mt-4" items={V.emptyPoints(x)} />

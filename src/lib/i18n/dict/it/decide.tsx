@@ -146,15 +146,15 @@ const configs: DecideDict["configs"] = {
     const st = d.byStorage, co = d.byColor;
     const last = st[st.length - 1];
     const storage = st.length > 1
-      ? ` La capacità pesa più del colore: ${last.restocks > 0 ? `i modelli da ${st[0].key} hanno avuto ${ratio(st[0].restocks, last.restocks)} i rifornimenti di quelli da ${last.key}` : `i modelli da ${st[0].key} hanno raccolto ${il(pc(st[0].share))} dei rifornimenti, mentre ${ilCap(last.key)} non è mai stato rifornito`}${co.length > 1 ? `, mentre ${x.colour(co[0].key)} ha superato ${x.colour(co[1].key)} di appena ${Math.abs(Math.round((co[0].share - co[1].share) * 100))} punti` : ""}.`
+      ? ` La capacità divide il conteggio più del colore: ${last.restocks > 0 ? `i modelli da ${st[0].key} hanno avuto ${ratio(st[0].restocks, last.restocks)} i rifornimenti di quelli da ${last.key}` : `i modelli da ${st[0].key} hanno raccolto ${il(pc(st[0].share))} dei rifornimenti, mentre ${ilCap(last.key)} non è mai stato rifornito`}${co.length > 1 ? `, mentre ${x.colour(co[0].key)} ha superato ${x.colour(co[1].key)} di appena ${Math.abs(Math.round((co[0].share - co[1].share) * 100))} punti` : ""}.`
       : "";
-    return `${IlCfg(x, e)} è l'iPhone Duo più facile da trovare${where(x.c)}: ${n(e.restocks)} ${dei(d.n)} rifornimenti che PickupChecker ha confermato ${inStores(x)} ${dal(d.since)}, in ${stores(e.stores)}, con ${hours(e.exposureSec)} di disponibilità complessiva${e.lifetimes ? ` e una durata mediana di ${secs(e.lifetimes.medianSec)} prima di esaurirsi` : ""}. ${h ? `${IlCfg(x, h)} è il più difficile: ${restocks(h.restocks)} e ${hours(h.exposureSec)} di disponibilità.` : ""}${storage}`;
+    return `${IlCfg(x, e)} è la configurazione di iPhone Duo rimasta disponibile più a lungo${where(x.c)}: ${hours(e.exposureSec)} in totale su ${n(e.restocks)} ${dei(d.n)} rifornimenti che PickupChecker ha confermato ${inStores(x)} ${dal(d.since)}, in ${stores(e.stores)}${e.lifetimes ? `, con una mediana di ${secs(e.lifetimes.medianSec)} ciascuno` : ""}. ${h ? `${IlCfg(x, h)} è quella rimasta disponibile meno: ${restocks(h.restocks)} e ${hours(h.exposureSec)} di disponibilità.` : ""}${storage} Nessuno può dire quale riuscirai a comprare; si possono misurare le finestre di ritiro passate, ed è quello che questa pagina mette in classifica.`;
   },
   updated: (x, stamp) => `Aggiornato ${stamp} · dati ${dal(x.d.since)} · ${appleStores(x.stores)} · controllo ogni ${SPEED.checkSec} s (negozi con avvisi ogni ${SPEED.fastSec} s)`,
-  nav: { easiest: "La più facile ora", storage: "Capacità", colour: "Colore", shelf: "Tempo per prenderlo", week: "Questa settimana", alerts: "Cosa monitorare", method: "Come contiamo" },
+  nav: { easiest: "Disponibile più a lungo", storage: "Capacità", colour: "Colore", shelf: "Tempo per prenderlo", week: "Questa settimana", alerts: "Cosa monitorare", method: "Come contiamo" },
   h2: (x) => ({
-    easiest: `Quale configurazione di iPhone Duo è più facile trovare${where(x.c)} in questo momento?`,
-    storage: "La capacità cambia le probabilità?",
+    easiest: `Quale configurazione di iPhone Duo è rimasta disponibile più a lungo${where(x.c)}?`,
+    storage: "La capacità cambia quanto spesso torna disponibile?",
     colour: `${x.d.byColor.length > 1 ? `${x.colour(x.d.byColor[0].key)} o ${x.colour(x.d.byColor[1].key)}` : "Quale colore"}: quale colore torna disponibile più spesso?`,
     shelf: "Quale configurazione ti lascia più tempo per prenderla?",
     week: "Cosa è cambiato negli ultimi sette giorni?",
@@ -170,7 +170,7 @@ const configs: DecideDict["configs"] = {
   },
   easiestLead: (x) => {
     const e = x.d.easiest!;
-    return `${IlCfg(x, e)} vince su entrambi i fronti che contano: è tornato disponibile più spesso (${n(e.restocks)} rifornimenti, ${il(pc(e.restocks / x.d.n))} del totale) ed è rimasto disponibile più a lungo in totale (${hours(e.exposureSec)}), cioè il tempo che c'è stato per aprire l'app e prenotarne uno. ${e.nowStores > 0 ? `${stores(e.nowStores)} ${loHa(e.nowStores)} disponibile mentre leggi.` : "Nessun negozio lo ha disponibile mentre leggi; il prossimo rifornimento compare qui entro pochi secondi."}`;
+    return `${IlCfg(x, e)} è in testa su entrambi i fronti misurabili: è tornato disponibile più spesso (${n(e.restocks)} rifornimenti, ${il(pc(e.restocks / x.d.n))} del totale) ed è rimasto disponibile più a lungo in totale (${hours(e.exposureSec)}), cioè il tempo in cui si poteva prenotare un ritiro. ${e.nowStores > 0 ? `${stores(e.nowStores)} ${loHa(e.nowStores)} disponibile mentre leggi.` : "Nessun negozio lo ha disponibile mentre leggi; il prossimo rifornimento compare qui entro pochi secondi."}`;
   },
   easiestKeys: (x) => {
     const { d } = x;
@@ -205,7 +205,7 @@ const configs: DecideDict["configs"] = {
     const co = x.d.byColor;
     if (co.length < 2 || !x.d.n) return "I colori vengono confrontati man mano che arrivano i rifornimenti.";
     const gap = Math.abs(Math.round((co[0].share - co[1].share) * 100));
-    return `${x.colour(co[0].key)}, ma di poco: ${il(pc(co[0].share))} dei rifornimenti contro ${il(pc(co[1].share))} per ${x.colour(co[1].key)}, uno scarto di ${n(gap)} punti${co[0].medianSec && co[1].medianSec ? `; sono rimasti disponibili per una mediana di ${secs(co[0].medianSec)} e ${secs(co[1].medianSec)}` : ""}. Il colore cambia le tue probabilità meno della capacità, quindi un avviso su entrambi i colori della capacità che vuoi raddoppia più o meno le tue possibilità.`;
+    return `${x.colour(co[0].key)}, ma di poco: ${il(pc(co[0].share))} dei rifornimenti contro ${il(pc(co[1].share))} per ${x.colour(co[1].key)}, uno scarto di ${n(gap)} punti${co[0].medianSec && co[1].medianSec ? `; sono rimasti disponibili per una mediana di ${secs(co[0].medianSec)} e ${secs(co[1].medianSec)}` : ""}. Il colore sposta il conteggio meno della capacità. Seguire anche un secondo colore aggiunge le sue finestre di ritiro alle tue: ${co[1].restocks > 0 ? `${x.colour(co[1].key)} ha aggiunto ${restocks(co[1].restocks)} e ${hours(co[1].exposureSec)} di disponibilità${where(x.c)} ${dal(x.d.since)}, in aggiunta a ${restocks(co[0].restocks)} (${hours(co[0].exposureSec)}) di ${x.colour(co[0].key)} (tutte le capacità)` : `${x.colour(co[1].key)} non è tornato disponibile${where(x.c)} ${dal(x.d.since)}, quindi finora non avrebbe aggiunto nulla`}.`;
   },
   colourKeys: (x) => x.d.byColor.map((g) => `${x.colour(g.key)}: ${n(g.restocks)} rifornimenti in ${stores(g.stores)}, ${hours(g.exposureSec)} di disponibilità in totale${g.nowStores ? `, ${stores(g.nowStores)} ${loHa(g.nowStores)} disponibile adesso` : ""}.`),
   shelfLead: (x) => {
@@ -217,8 +217,9 @@ const configs: DecideDict["configs"] = {
   shelfCaption: "Durata della disponibilità per configurazione (dal rifornimento al controllo successivo che lo vede esaurito)",
   shelfHead: ["Configurazione", "Rifornimenti con fine nota", "Mediana", "Spariti entro 2 min", "Spariti entro 20 min", "Il più rapido"],
   shelfKeys: (x) => [
-    `Una notifica push arriva circa ${SPEED.alertSec} s dopo che confermiamo un rifornimento; la disponibilità mediana è di ${x.d.lifetimes ? secs(x.d.lifetimes.medianSec) : "circa un minuto"}, quindi la maggior parte dei rifornimenti è alla tua portata se hai l'app Apple Store aperta sul Duo e la carta salvata.`,
+    `Metà dei rifornimenti era già esaurita entro ${x.d.lifetimes ? secs(x.d.lifetimes.medianSec) : "circa un minuto"}; il nostro avviso parte circa ${SPEED.alertSec} s dopo la nostra conferma, e quanto resta della disponibilità dipende poi dal tuo telefono e da un checkout già pronto.`,
     `La durata è un limite superiore: vediamo l'esaurimento al controllo successivo, fino a ${SPEED.checkSec} s dopo (${SPEED.fastSec} s nei negozi con avvisi).`,
+    "«Esaurito» qui significa che la pagina di ritiro di Apple ha smesso di mostrare la configurazione in quel negozio; quanti pezzi fossero, Apple non lo dice.",
   ],
   weekLead: (x) => {
     const rows = [...x.d.byPart].sort((a, b) => b.last7 - a.last7);
@@ -237,10 +238,10 @@ const configs: DecideDict["configs"] = {
   },
   alertsKeys: (x) => [
     `Gli avvisi sono per negozio × configurazione, quindi tre negozi × tre configurazioni fanno ${alerts(9)}.`,
-    `Controlliamo i negozi con avvisi ogni ${SPEED.fastSec} s e confermiamo il rifornimento prima di inviare la notifica; il banner arriva circa ${SPEED.alertSec} s dopo.`,
+    `Controlliamo i negozi con avvisi ogni ${SPEED.fastSec} s e confermiamo il rifornimento prima di inviare la notifica; la notifica parte circa ${SPEED.alertSec} s dopo, e quando il banner compare sul tuo telefono dipende dal dispositivo e dalla sua connessione: questo non lo misuriamo.`,
     x.one ? "Il negozio più attivo è anche quello che più persone tengono d'occhio." : "Scegli i negozi per distanza, non per numero di rifornimenti: il negozio più attivo è anche quello che più persone tengono d'occhio.",
   ],
-  methodLead: "Un rifornimento è una configurazione che passa da esaurita a disponibile in un negozio, confermato da due controlli concordanti; le prime apparizioni dopo un'interruzione del monitoraggio non vengono contate. La durata della disponibilità va dal rifornimento al primo controllo che la vede di nuovo esaurita, quindi è un limite superiore. «Disponibile in totale» somma quei tempi su tutti i rifornimenti della configurazione: la misura più semplice di quanta occasione c'è stata di comprarne uno.",
+  methodLead: "Un rifornimento è una configurazione che passa da esaurita a disponibile in un negozio, confermato da due controlli concordanti; le prime apparizioni dopo un'interruzione del monitoraggio non vengono contate. La durata della disponibilità va dal rifornimento al primo controllo che la vede di nuovo esaurita, quindi è un limite superiore. «Disponibile in totale» somma quei tempi su tutti i rifornimenti della configurazione: la misura più semplice di quanto a lungo si poteva prenotare un ritiro. È un registro delle disponibilità passate, non una probabilità di acquisto né un numero di pezzi venduti: Apple non pubblica né l'una né l'altro.",
   methodKeys: (x) => [
     `Fonte: la disponibilità per il ritiro pubblicata da Apple per ${storesPhrase(x)}, letta ogni ${SPEED.checkSec} s per negozio (${SPEED.fastSec} s nei negozi con avvisi) ${dal(x.d.since)}.`,
     "I negozi che lo hanno disponibile ora e gli orari dell'ultimo rifornimento sono in tempo reale; tutto il resto viene ricalcolato entro cinque minuti.",
@@ -250,7 +251,7 @@ const configs: DecideDict["configs"] = {
     const { d } = x;
     const e = d.easiest, h = d.hardest, co = d.byColor;
     return [
-      { q: `Quale iPhone Duo è più facile trovare${where(x.c)}?`, a: e ? `${IlCfg(x, e)}: ${n(e.restocks)} rifornimenti confermati in ${appleStores(e.stores)} ${dal(d.since)} e ${hours(e.exposureSec)} di disponibilità complessiva, più di qualsiasi altra configurazione. ${h ? `${IlCfg(x, h)} è il più difficile, con ${restocks(h.restocks)}.` : ""}` : `Troppo pochi rifornimenti confermati${where(x.c)} per dirlo; questa pagina mette in classifica ogni configurazione appena arrivano.` },
+      { q: `Quale iPhone Duo è più facile trovare${where(x.c)}?`, a: e ? `Nessuno può dirti quale riuscirai a comprare: Apple non pubblica né le sue assegnazioni né quante persone ci stanno provando. Quello che si può misurare sono le finestre di ritiro passate. ${cap(dal(d.since))} ${ilCfg(x, e)} è rimasto disponibile più a lungo in totale (${hours(e.exposureSec)} su ${restocks(e.restocks)} in ${appleStores(e.stores)})${h ? `, ${ilCfg(x, h)} meno di tutti (${hours(h.exposureSec)} su ${restocks(h.restocks)})` : ""}, su ${confirmed(d.n)} in ${storesPhrase(x)}. È un registro delle disponibilità passate, non una previsione per te; per vedere quale modifica aggiunge più finestre alle tue scelte — un altro colore, un altro negozio — apri «Cosa aggiunge più finestre di ritiro?» nell'editor degli avvisi.` : `Troppo pochi rifornimenti confermati${where(x.c)} per dirlo; questa pagina mette in classifica ogni configurazione appena arrivano.` },
       { q: `${co.length > 1 ? x.colour(co[1].key) : "Un colore"} è più difficile da trovare ${co.length > 1 ? `di ${x.colour(co[0].key)}` : "dell'altro"}?`, a: co.length > 1 && d.n ? `Leggermente: ${x.colour(co[0].key)} ha fatto ${il(pc(co[0].share))} dei rifornimenti e ${x.colour(co[1].key)} ${il(pc(co[1].share))}. La differenza tra le capacità è molto più grande, quindi scegli prima la capacità e imposta gli avvisi su entrambi i suoi colori.` : "I colori vengono confrontati man mano che arrivano i rifornimenti." },
       { q: `L'iPhone Duo da 1TB o 2TB è mai disponibile${where(x.c)}?`, a: (() => { const big = d.byPart.filter((r) => /^(1|2)TB$/.test(r.storage)); const bn = big.reduce((a, r) => a + r.restocks, 0); const most = Math.max(0, ...big.map((r) => r.stores)); return bn ? `Sì, ma di rado: ${restocks(bn)} dei modelli da 1TB e 2TB su ${n(d.n)} (${pc(bn / d.n)}), ${most ? `in al massimo ${stores(most)}` : "in nessun negozio"}. Quando compare resta disponibile più a lungo (meno acquirenti), quindi un avviso vale uno slot anche se scatta di rado.` : `Non ancora nei nostri dati${where(x.c)}: nessun rifornimento confermato di un modello da 1TB o 2TB ${dal(d.since)}.`; })() },
       { q: "Conviene impostare gli avvisi su una configurazione o su più d'una?", a: `Su più d'una, in pochi negozi: le prime tre configurazioni hanno raccolto ${d.n ? il(pc(d.byPart.slice(0, 3).reduce((a, r) => a + r.restocks, 0) / d.n)) : "la maggior parte"} dei rifornimenti${where(x.c)}. Tre configurazioni in tre negozi vicini fanno nove avvisi, che rientrano in un piano Plus; aggiungi come quarto quella esatta che vuoi.` },
@@ -367,7 +368,7 @@ const supply: DecideDict["supply"] = {
   christmasLead: (x) => {
     const w = x.d.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
-    return `Tieni l'avviso attivo e tieni in coda un ordine con consegna: entrambi, non uno solo. Al ritmo attuale (${perDay >= 1 ? `circa ${restocks(Math.round(perDay))} al giorno${where(x.c)}` : `meno di un rifornimento al giorno${where(x.c)}`}${w.medianSec ? `, ognuno disponibile per una mediana di ${secs(w.medianSec)}` : ""}) un negozio sorvegliato vicino a te arriva al suo turno entro pochi giorni, e un rifornimento confermato raggiunge il tuo telefono circa ${SPEED.alertSec} s dopo che lo vediamo. Pagare un sovrapprezzo altrove ha senso solo se l'attesa in sé ti costa più della maggiorazione; il confronto tra canali lo valuta onestamente.`;
+    return `Tieni l'avviso attivo e tieni in coda un ordine con consegna: entrambi, non uno solo. Al ritmo attuale (${perDay >= 1 ? `circa ${restocks(Math.round(perDay))} al giorno${where(x.c)}` : `meno di un rifornimento al giorno${where(x.c)}`}${w.medianSec ? `, ognuno disponibile per una mediana di ${secs(w.medianSec)}` : ""}) un negozio sorvegliato vicino a te arriva al suo turno entro pochi giorni, e la notifica di un rifornimento confermato parte circa ${SPEED.alertSec} s dopo che lo vediamo. Pagare un sovrapprezzo altrove ha senso solo se l'attesa in sé ti costa più della maggiorazione; il confronto tra canali lo valuta onestamente.`;
   },
   christmasKeys: () => [
     "Ordina prima la consegna su apple.com: ti tiene il posto e si può annullare quando il ritiro va a segno.",
@@ -396,7 +397,7 @@ const supply: DecideDict["supply"] = {
       { q: `Apple sta ancora rifornendo l'iPhone Duo${where(x.c)}?`, a: d.n ? `Sì: ${confirmed(w.restocks)} negli ultimi sette giorni in ${appleStores(w.stores)}${where(x.c)}, ${restocks(d.n)} ${dal(d.since)}. ${d.sinceLastHours != null ? `L'ultimo è stato ${d.sinceLastHours < 1 ? "meno di un'ora" : `${n(d.sinceLastHours)} ore`} fa.` : "L'ultimo non è ancora registrato."}` : `Ancora nessun rifornimento confermato${where(x.c)} dall'inizio del monitoraggio ${ilData(longDate(d.since))}; questa pagina si aggiorna entro cinque minuti dal primo.` },
       { q: `La carenza di iPhone Duo${where(x.c)} si sta attenuando?`, a: d.trend === "insufficient" ? `Troppo presto per dirlo: il primo confronto completo settimana su settimana compare ${ilData(longDate(d.comparableFrom))}. Guarda due numeri, rifornimenti a settimana e secondi di disponibilità: attenuazione vuol dire che salgono entrambi.` : `${cap(trendWord(d))} rifornimenti questa settimana rispetto alla scorsa (${signed(d.change!)})${w.medianSec ? `, e un rifornimento è durato una mediana di ${secs(w.medianSec)}` : ""}. Attenuazione vuol dire più rifornimenti e durate più lunghe insieme; finora ${d.trend === "up" && w.medianSec && d.prev7.medianSec && w.medianSec > d.prev7.medianSec ? "entrambi vanno nella direzione giusta" : "succede solo in parte"}.` },
       { q: "Quando sarà facile comprare l'iPhone Duo?", a: "Nessuno fuori da Apple può dirlo, e PickupChecker non fa previsioni. La sequenza da seguire: i rifornimenti settimanali salgono per due o tre settimane, la durata mediana supera i 20 minuti, poi la maggior parte dei negozi ne ha uno disponibile nello stesso momento e i tempi di consegna su apple.com scendono entro una settimana." },
-      { q: "Conviene pagare un sovrapprezzo invece di aspettare?", a: `Solo se l'attesa ti costa più della maggiorazione: al ritmo attuale un negozio sorvegliato vicino a te arriva al suo turno entro pochi giorni, e un avviso ti raggiunge circa ${SPEED.alertSec} s dopo un rifornimento confermato. L'usato significa anche nessun diritto di reso e i rischi di sempre; la pagina di confronto tra canali li valuta.` },
+      { q: "Conviene pagare un sovrapprezzo invece di aspettare?", a: `Solo se l'attesa ti costa più della maggiorazione: al ritmo attuale un negozio sorvegliato vicino a te arriva al suo turno entro pochi giorni, e un avviso parte circa ${SPEED.alertSec} s dopo un rifornimento confermato. L'usato significa anche nessun diritto di reso e i rischi di sempre; la pagina di confronto tra canali li valuta.` },
       { q: "Le feste di fine anno cambiano le probabilità?", a: "La domanda sale verso dicembre mentre le consegne mantengono il loro ritmo, quindi le durate tendono ad accorciarsi, non ad allungarsi. Tieni un ordine con consegna come rete di sicurezza e lascia che gli avvisi catturino il ritiro; annulla quello che non ti serve." },
     ];
   },
@@ -449,7 +450,7 @@ const channels: DecideDict["channels"] = {
   compareRows: (x) => {
     const r = x.ch;
     return [
-      { channel: "Ritiro in Apple Store", known: `${confirmed(x.sup.n)} ${dal(x.sup.since)}; ogni rifornimento, ogni negozio, con l'orario.`, watch: `Un avviso qui (circa ${SPEED.alertSec} s dopo la conferma), oppure il selettore del ritiro nell'app Apple Store.`, catch: "La disponibilità dura circa un minuto; servono l'app aperta e una carta salvata." },
+      { channel: "Ritiro in Apple Store", known: `${confirmed(x.sup.n)} ${dal(x.sup.since)}; ogni rifornimento, ogni negozio, con l'orario.`, watch: `Un avviso qui (inviato circa ${SPEED.alertSec} s dopo la conferma), oppure il selettore del ritiro nell'app Apple Store.`, catch: "La disponibilità dura circa un minuto; servono l'app aperta e una carta salvata." },
       { channel: "Consegna da apple.com", known: "Apple mostra una stima di spedizione al pagamento; cambia ogni giorno e non è mai un conteggio delle scorte.", watch: "Fai l'ordine; la stima nella pagina dell'ordine si aggiorna man mano che Apple spedisce.", catch: "Settimane, non minuti, ma il tuo posto in coda è garantito." },
       { channel: `Operatori (${words(r.carriers)})`, known: "Quota propria; disponibilità online mostrata per configurazione come disponibile / in arrivo. Nessuna cronologia, nessun feed.", watch: "Le loro app e i loro localizzatori di negozi; una telefonata al negozio funziona ancora.", catch: lock(x, "Valgono piani, finanziamenti e regole di attivazione; la disponibilità varia da negozio a negozio.") },
       { channel: `Rivenditori (${words(r.retailers)})`, known: "Quota propria, spesso solo online per un prodotto appena lanciato; mostrata per configurazione nella pagina del prodotto.", watch: "La loro pagina del prodotto e la loro app; qualcuno manda email di riassortimento.", catch: "Le quote sono più piccole di quelle di Apple e si esauriscono anch'esse in pochi minuti." },
@@ -489,7 +490,7 @@ const channels: DecideDict["channels"] = {
     const w = x.sup.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
     const times = Math.round(perDay);
-    return `Di rado. Metti il sovrapprezzo sulla bilancia con l'attesa che ti fa risparmiare: gli Apple Store${where(x.c)} hanno rifornito ${perDay >= 1 ? `circa ${times === 1 ? "una volta" : `${n(times)} volte`} al giorno` : "meno di una volta al giorno"} questa settimana, e un avviso ti raggiunge circa ${SPEED.alertSec} s dopo un rifornimento confermato, quindi un negozio sorvegliato vicino a te di solito va a segno entro pochi giorni. Dall'altra parte, ${words(x.ch.resale)} non offrono alcuna prova d'acquisto del produttore, ${noReturn(x.ch.returnDays)}, e i rischi di sempre: un dispositivo con il blocco di attivazione, una scatola scambiata, un «sigillato» che è un reso.`;
+    return `Di rado. Metti il sovrapprezzo sulla bilancia con l'attesa che ti fa risparmiare: gli Apple Store${where(x.c)} hanno rifornito ${perDay >= 1 ? `circa ${times === 1 ? "una volta" : `${n(times)} volte`} al giorno` : "meno di una volta al giorno"} questa settimana, e un avviso parte circa ${SPEED.alertSec} s dopo un rifornimento confermato, quindi un negozio sorvegliato vicino a te di solito va a segno entro pochi giorni. Dall'altra parte, ${words(x.ch.resale)} non offrono alcuna prova d'acquisto del produttore, ${noReturn(x.ch.returnDays)}, e i rischi di sempre: un dispositivo con il blocco di attivazione, una scatola scambiata, un «sigillato» che è un reso.`;
   },
   resaleKeys: () => [
     "Se compri usato lo stesso: incontratevi di persona, accendilo, controlla il numero di serie in Impostazioni → Generali → Info, ed esegui l'accesso prima di pagare.",
@@ -589,11 +590,11 @@ const api: DecideDict["api"] = {
     "Le modifiche incompatibili avranno un nuovo percorso di versione (/api/v2); sotto v1 i campi vengono aggiunti, mai rinominati.",
     "Imposta per favore uno User-Agent con il nome del progetto e un contatto; non abbiamo mai bloccato uno script educato.",
   ],
-  scriptLead: (x) => `Se vuoi un cruscotto, un bot Discord, un foglio di calcolo o fare ricerca, scrivi lo script: l'API serve a questo. Se vuoi davvero comprare un iPhone Duo, lo script è lo strumento più lento: vede un rifornimento alla sua interrogazione successiva, fino a 30 s dopo, e poi deve ancora avvisarti; la nostra notifica push legge gli stessi negozi ogni ${SPEED.fastSec} s, conferma il rifornimento e arriva sul tuo telefono circa ${SPEED.alertSec} s dopo, ${x.storesNow !== undefined ? "dentro la durata mediana di circa un minuto" : "dentro la durata mediana"}. Molti fanno entrambe le cose: l'avviso per comprare, l'API per osservare.`,
+  scriptLead: (x) => `Se vuoi un cruscotto, un bot Discord, un foglio di calcolo o fare ricerca, scrivi lo script: l'API serve a questo. Se vuoi davvero comprare un iPhone Duo, lo script è lo strumento più lento: vede un rifornimento alla sua interrogazione successiva, fino a 30 s dopo, e poi deve ancora avvisarti; la nostra notifica push legge gli stessi negozi ogni ${SPEED.fastSec} s, conferma il rifornimento e parte circa ${SPEED.alertSec} s dopo, ${x.storesNow !== undefined ? "dentro la durata mediana di circa un minuto" : "dentro la durata mediana"}. Molti fanno entrambe le cose: l'avviso per comprare, l'API per osservare.`,
   scriptCaption: "Uno script che interroga l'API contro una notifica push",
   scriptHead: ["", "Il tuo script su questa API", "Avviso PickupChecker"],
   scriptRows: () => [
-    { k: "Vede un rifornimento dopo", a: "fino a 30 s (cache) + il tuo intervallo", b: `circa ${SPEED.alertSec} s` },
+    { k: "Vede un rifornimento dopo", a: "fino a 30 s (cache) + il tuo intervallo", b: `notifica inviata circa ${SPEED.alertSec} s dopo che il nostro controllo lo vede` },
     { k: "Raggiunge il tuo telefono", a: "come lo costruisci tu (email, bot, SMS)", b: "una notifica dell'app nella schermata Home" },
     { k: "Negozi osservati", a: "tutti, a ogni chiamata", b: `i negozi che scegli ogni ${SPEED.fastSec} s, tutti i negozi ogni ${SPEED.checkSec} s` },
     { k: "Costi", a: "gratis", b: "un piano per gli avvisi; leggere questo sito è gratis" },
@@ -610,7 +611,7 @@ const api: DecideDict["api"] = {
     { q: "Apple ha un'API ufficiale della disponibilità?", a: "Nessuna pubblica. La pagina del ritiro di apple.com si può leggere per negozio e configurazione, ed è quello che fa questo sito con cura (rotazione, conferma, fusi orari); l'API qui è quel lavoro esposto in JSON." },
     { q: "Quanto sono aggiornati i dati?", a: `Ogni negozio viene controllato ogni ${SPEED.checkSec} s (ogni ${SPEED.fastSec} s nei negozi con avvisi) e la risposta dell'API resta in cache 30 s, quindi un dato ha al massimo circa 45 s; last_checked_at te lo dice con precisione.` },
     { q: "Posso usarla in un prodotto commerciale?", a: "Sì, con attribuzione: «Fonte: PickupChecker» con link a pickupchecker.com ovunque i dati vengano mostrati, e un intervallo di interrogazione di 30 s o più. Non serve alcuna chiave." },
-    { q: "Uno script mi fa avere un iPhone Duo prima di un avviso?", a: `No: uno script vede un rifornimento alla sua interrogazione successiva, fino a 30 s dopo; l'avviso lo conferma e raggiunge il tuo telefono circa ${SPEED.alertSec} s dopo che lo vediamo. Usa lo script per osservare e l'avviso per comprare.` },
+    { q: "Uno script mi fa avere un iPhone Duo prima di un avviso?", a: `No: uno script vede un rifornimento alla sua interrogazione successiva, fino a 30 s dopo; l'avviso lo conferma e parte circa ${SPEED.alertSec} s dopo che lo vediamo. Usa lo script per osservare e l'avviso per comprare.` },
   ],
   sources: { pickup: "Apple – Ritiro in negozio", method: "PickupChecker – come funzionano i controlli", log: "PickupChecker – il registro dei rifornimenti" },
   ld: (x) => ({

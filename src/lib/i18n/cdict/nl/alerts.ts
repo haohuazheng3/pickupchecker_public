@@ -62,6 +62,24 @@ export const alerts: CDict["alerts"] = {
     myAlerts: "Mijn alerts",
   },
 
+  windows: {
+    title: "Wat levert de meeste ophaalvensters op?",
+    had: "Jouw keuze: {windows} in de afgelopen {days}",
+    windowsN: { one: "# ophaalvenster", other: "# ophaalvensters" } as Forms,
+    daysN: { one: "# dag", other: "# dagen" } as Forms,
+    best: " · {gain} met {what}",
+    noGain: " · geen wijziging in de buurt had er een opgeleverd",
+    gainN: { one: "+# venster", other: "+# vensters" } as Forms,
+    tooFew: "Te weinig ophaalvensters in de afgelopen {days} om te vergelijken ({n} geteld)",
+    counting: "Eerdere ophaalvensters tellen…",
+    listed: "In totaal {time} beschikbaar, gelijktijdige vensters één keer geteld.",
+    storeAt: "{store} · ≈{dist}",
+    cost: { one: "+# alert", other: "+# alerts" } as Forms,
+    addButton: "Toevoegen",
+    add: "{what} toevoegen",
+    note: "Eerdere beschikbaarheid op Apples ophaalpagina, geen voorspelling en geen kans om te kopen. Een venster loopt van nieuwe voorraad tot het uitverkocht was (of tot nu).",
+  },
+
   matrix: {
     model: "Model",
     configs: "Configuraties van de {model}",

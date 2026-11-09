@@ -99,13 +99,13 @@ const configs: DecideDict["configs"] = {
     const e = d.easiest, h = d.hardest;
     if (!e) return `PickupChecker har bekräftat ${pl(d.n, "påfyllning av iPhone Duo", "påfyllningar av iPhone Duo")} i ${storesPhrase(x)} sedan ${longDate(d.since)} – för få för att ranka konfigurationerna än. Tabellen nedan fylls på vid varje påfyllning; sidan för USA visar redan mönstret.`;
     const st = d.byStorage, co = d.byColor;
-    return `${x.cfg(e)} är den iPhone Duo som är lättast att få tag på${where(x.c)}: ${n(e.restocks)} av de ${n(d.n)} påfyllningar som PickupChecker bekräftat i ${storesPhrase(x)} sedan ${longDate(d.since)}, i ${storesN(e.stores)}, med ${tim(e.exposureSec)} i lager totalt${e.lifetimes ? ` och en median på ${sek(e.lifetimes.medianSec)} innan den var slutsåld` : ""}. ${h ? `${x.cfg(h)} är svårast: ${restocksN(h.restocks)} och ${tim(h.exposureSec)} i lager.` : ""}${st.length > 1 ? ` Lagringen avgör mer än färgen: ${st[st.length - 1].restocks > 0 ? `${st[0].key}-modellerna fylldes på ${ratio(st[0].restocks, st[st.length - 1].restocks)} så ofta som ${st[st.length - 1].key}` : `${st[0].key}-modellerna stod för ${pct(st[0].share)} av påfyllningarna medan ${st[st.length - 1].key} inte har fyllts på alls`}${co.length > 1 ? `, medan ${x.colour(co[0].key)} bara ledde över ${x.colour(co[1].key)} med ${Math.abs(Math.round((co[0].share - co[1].share) * 100))} procentenheter` : ""}.` : ""}`;
+    return `${x.cfg(e)} är den konfiguration av iPhone Duo som legat ute längst${where(x.c)}: ${tim(e.exposureSec)} sammanlagt över ${n(e.restocks)} av de ${n(d.n)} påfyllningar som PickupChecker bekräftat i ${storesPhrase(x)} sedan ${longDate(d.since)}, i ${storesN(e.stores)}${e.lifetimes ? `, med en median på ${sek(e.lifetimes.medianSec)} per påfyllning` : ""}. ${h ? `${x.cfg(h)} låg ute kortast: ${restocksN(h.restocks)} och ${tim(h.exposureSec)}.` : ""}${st.length > 1 ? ` Lagringen delar upp antalet mer än färgen: ${st[st.length - 1].restocks > 0 ? `${st[0].key}-modellerna fylldes på ${ratio(st[0].restocks, st[st.length - 1].restocks)} så ofta som ${st[st.length - 1].key}` : `${st[0].key}-modellerna stod för ${pct(st[0].share)} av påfyllningarna medan ${st[st.length - 1].key} inte har fyllts på alls`}${co.length > 1 ? `, medan ${x.colour(co[0].key)} bara ledde över ${x.colour(co[1].key)} med ${Math.abs(Math.round((co[0].share - co[1].share) * 100))} procentenheter` : ""}.` : ""} Vilken du till slut lyckas köpa kan ingen säga; det som går att mäta är tidigare hämtfönster, och det är dem den här sidan rangordnar.`;
   },
   updated: (x, stamp) => `Uppdaterad ${stamp} · data sedan ${longDate(x.d.since)} · ${appleStoresN(x.stores)} · kollas var ${SPEED.checkSec}:e sekund (butiker med bevakning var ${SPEED.fastSec}:e)`,
-  nav: { easiest: "Lättast nu", storage: "Lagring", colour: "Färg", shelf: "Tid att hinna", week: "Den här veckan", alerts: "Vad du ska bevaka", method: "Så räknar vi" },
+  nav: { easiest: "Längst ute", storage: "Lagring", colour: "Färg", shelf: "Tid att hinna", week: "Den här veckan", alerts: "Vad du ska bevaka", method: "Så räknar vi" },
   h2: (x) => ({
-    easiest: `Vilken konfiguration av iPhone Duo är lättast att få tag på${where(x.c)} just nu?`,
-    storage: "Påverkar lagringen chansen?",
+    easiest: `Vilken konfiguration av iPhone Duo har legat ute längst${where(x.c)}?`,
+    storage: "Påverkar lagringen hur ofta den kommer tillbaka?",
     colour: `${x.d.byColor.length > 1 ? `${cap(x.colour(x.d.byColor[0].key))} eller ${x.colour(x.d.byColor[1].key)}` : "Vilken färg"}: vilken färg kommer tillbaka oftast?`,
     shelf: "Vilken konfiguration ger dig mest tid att hinna köpa den?",
     week: "Vad har ändrats de senaste sju dagarna?",
@@ -121,7 +121,7 @@ const configs: DecideDict["configs"] = {
   },
   easiestLead: (x) => {
     const e = x.d.easiest!;
-    return `${x.cfg(e)} vinner på båda måtten som spelar roll: den kom tillbaka oftast (${restocksN(e.restocks)}, ${pct(e.restocks / x.d.n)} av alla) och låg ute längst sammanlagt (${tim(e.exposureSec)}), alltså den tid det fanns att öppna appen och reservera en. ${e.nowStores > 0 ? `${cap(storesN(e.nowStores))} har den medan du läser det här.` : "Ingen butik har den medan du läser det här; nästa påfyllning syns här inom några sekunder."}`;
+    return `${x.cfg(e)} leder på båda måtten som går att mäta: den kom tillbaka oftast (${restocksN(e.restocks)}, ${pct(e.restocks / x.d.n)} av alla) och låg ute längst sammanlagt (${tim(e.exposureSec)}), alltså den tid då en hämtning gick att reservera. ${e.nowStores > 0 ? `${cap(storesN(e.nowStores))} har den medan du läser det här.` : "Ingen butik har den medan du läser det här; nästa påfyllning syns här inom några sekunder."}`;
   },
   easiestKeys: (x) => {
     const { d } = x;
@@ -156,7 +156,7 @@ const configs: DecideDict["configs"] = {
     const co = x.d.byColor;
     if (co.length < 2 || !x.d.n) return "Färgerna jämförs när påfyllningarna kommer in.";
     const gap = Math.abs(Math.round((co[0].share - co[1].share) * 100));
-    return `${cap(x.colour(co[0].key))}, men inte med mycket: ${pct(co[0].share)} av påfyllningarna mot ${pct(co[1].share)} för ${x.colour(co[1].key)}, en skillnad på ${gap} procentenheter${co[0].medianSec && co[1].medianSec ? `; i lager låg de ute i ${sek(co[0].medianSec)} och ${sek(co[1].medianSec)} (median)` : ""}. Färgen påverkar chansen mindre än lagringen, så en bevakning på båda färgerna i den storlek du vill ha ungefär fördubblar dina chanser.`;
+    return `${cap(x.colour(co[0].key))}, men inte med mycket: ${pct(co[0].share)} av påfyllningarna mot ${pct(co[1].share)} för ${x.colour(co[1].key)}, en skillnad på ${gap} procentenheter${co[0].medianSec && co[1].medianSec ? `; i lager låg de ute i ${sek(co[0].medianSec)} och ${sek(co[1].medianSec)} (median)` : ""}. Färgen flyttar antalet mindre än lagringen. Bevakar du även en andra färg får du den färgens hämtfönster utöver dina: ${co[1].restocks > 0 ? `${x.colour(co[1].key)} lade till ${restocksN(co[1].restocks)} och ${tim(co[1].exposureSec)} i lager${where(x.c)} sedan ${longDate(x.d.since)}, utöver ${restocksN(co[0].restocks)} och ${tim(co[0].exposureSec)} för ${x.colour(co[0].key)} (alla storlekar)` : `${x.colour(co[1].key)} har inte fyllts på${where(x.c)} sedan ${longDate(x.d.since)}, så den hade hittills inte lagt till något`}.`;
   },
   colourKeys: (x) => x.d.byColor.map((g) => `${cap(x.colour(g.key))}: ${restocksN(g.restocks)} i ${storesN(g.stores)}, ${tim(g.exposureSec)} i lager totalt${g.nowStores ? `, ${storesN(g.nowStores)} har den nu` : ""}.`),
   shelfLead: (x) => {
@@ -168,8 +168,9 @@ const configs: DecideDict["configs"] = {
   shelfCaption: "Tid i lager per konfiguration (påfyllning → nästa kontroll som visar slutsålt)",
   shelfHead: ["Konfiguration", "Påfyllningar med känt slut", "Median", "Borta inom 2 min", "Borta inom 20 min", "Snabbast"],
   shelfKeys: (x) => [
-    `En pushnotis kommer ungefär ${SPEED.alertSec} sekunder efter att vi bekräftat en påfyllning; en påfyllning ligger ute i ${x.d.lifetimes ? sek(x.d.lifetimes.medianSec) : "ungefär en minut"} (median), så de flesta påfyllningar går att hinna med om du har Apple Store-appen öppen på Duo och kortet sparat.`,
+    `Hälften av alla påfyllningar var borta inom ${x.d.lifetimes ? sek(x.d.lifetimes.medianSec) : "ungefär en minut"}; vår notis går iväg ungefär ${SPEED.alertSec} sekunder efter att vi bekräftat en, och hur mycket som är kvar beror sedan på din telefon och på att kassan är förberedd.`,
     `Tiden är en övre gräns: vi ser att den är slutsåld vid nästa kontroll, upp till ${SPEED.checkSec} sekunder senare (${SPEED.fastSec} sekunder i butiker med bevakning).`,
+    "”Slutsåld” betyder här att Apples hämtsida slutade visa konfigurationen i den butiken; hur många exemplar det var säger Apple inte.",
   ],
   weekLead: (x) => {
     const rows = [...x.d.byPart].sort((a, b) => b.last7 - a.last7);
@@ -188,10 +189,10 @@ const configs: DecideDict["configs"] = {
   },
   alertsKeys: (x) => [
     `En bevakning gäller butik × konfiguration, så tre butiker × tre konfigurationer blir ${alertsN(9)}.`,
-    `Vi kollar butiker med bevakning var ${SPEED.fastSec}:e sekund och bekräftar en påfyllning innan vi skickar notisen; den kommer ungefär ${SPEED.alertSec} sekunder efter.`,
+    `Vi kollar butiker med bevakning var ${SPEED.fastSec}:e sekund och bekräftar en påfyllning innan vi skickar notisen; den skickas ungefär ${SPEED.alertSec} sekunder efter, och när den syns på din telefon beror på telefonen och dess uppkoppling – det mäter vi inte.`,
     x.one ? "Den mest besökta butiken är också den flest bevakar." : "Välj butiker efter avstånd, inte efter antal påfyllningar: den mest besökta butiken är också den flest bevakar.",
   ],
-  methodLead: "En påfyllning är när en konfiguration går från slutsåld till tillgänglig i en butik, bekräftat av två samstämmiga kontroller; första observationer efter ett uppehåll i bevakningen räknas inte. Tiden i lager räknas från påfyllningen till första kontrollen som visar att den är slutsåld igen, så den är en övre gräns. ”I lager totalt” lägger ihop de tiderna över alla påfyllningar av konfigurationen – det enklaste måttet på hur mycket chans det fanns att köpa en.",
+  methodLead: "En påfyllning är när en konfiguration går från slutsåld till tillgänglig i en butik, bekräftat av två samstämmiga kontroller; första observationer efter ett uppehåll i bevakningen räknas inte. Tiden i lager räknas från påfyllningen till första kontrollen som visar att den är slutsåld igen, så den är en övre gräns. ”I lager totalt” lägger ihop de tiderna över alla påfyllningar av konfigurationen – det enklaste måttet på hur länge en hämtning gick att reservera. Det är en logg över tidigare tillgänglighet, inte en köpchans och inte ett antal sålda exemplar: Apple publicerar inget av dem.",
   methodKeys: (x) => [
     `Källa: Apples egen tillgänglighet för hämtning i butik för ${storesPhrase(x)}, läst var ${SPEED.checkSec}:e sekund per butik (var ${SPEED.fastSec}:e i butiker med bevakning) sedan ${longDate(x.d.since)}.`,
     "Butiker som har den nu och tider för senaste påfyllning är live; allt annat räknas om inom fem minuter.",
@@ -201,7 +202,7 @@ const configs: DecideDict["configs"] = {
     const { d } = x;
     const e = d.easiest, h = d.hardest, co = d.byColor;
     return [
-      { q: `Vilken iPhone Duo är lättast att få tag på${where(x.c)}?`, a: e ? `${x.cfg(e)}: ${confirmedN(e.restocks)} i ${appleStoresN(e.stores)} sedan ${longDate(d.since)} och ${tim(e.exposureSec)} i lager totalt, mer än någon annan konfiguration. ${h ? `${x.cfg(h)} är svårast med ${restocksN(h.restocks)}.` : ""}` : `För få bekräftade påfyllningar${where(x.c)} för att säga det än; sidan rankar varje konfiguration så snart de kommer in.` },
+      { q: `Vilken iPhone Duo är lättast att få tag på${where(x.c)}?`, a: e ? `Ingen kan säga vilken just du lyckas köpa: Apple publicerar varken sina tilldelningar eller hur många som försöker. Det som går att mäta är tidigare upphämtningsfönster. Sedan ${longDate(d.since)} har ${x.cfg(e)} legat ute längst totalt (${tim(e.exposureSec)} över ${restocksN(e.restocks)} i ${appleStoresN(e.stores)})${h ? ` och ${x.cfg(h)} kortast (${tim(h.exposureSec)} över ${restocksN(h.restocks)})` : ""}, av ${confirmedN(d.n)} i ${storesPhrase(x)}. Det är en redovisning av tidigare tillgänglighet, ingen prognos för dig; vilken ändring som ger flest fönster för dina egna val – en färg till, en butik till – ser du under ”Vad ger flest upphämtningsfönster?” där du väljer dina bevakningar.` : `För få bekräftade påfyllningar${where(x.c)} för att säga det än; sidan rankar varje konfiguration så snart de kommer in.` },
       { q: `Är ${co.length > 1 ? x.colour(co[1].key) : "den ena färgen"} svårare att hitta än ${co.length > 1 ? x.colour(co[0].key) : "den andra"}?`, a: co.length > 1 && d.n ? `Lite: ${x.colour(co[0].key)} stod för ${pct(co[0].share)} av påfyllningarna och ${x.colour(co[1].key)} för ${pct(co[1].share)}. Skillnaden mellan lagringsstorlekarna är mycket större, så välj storlek först och bevaka båda färgerna av den.` : "Färgerna jämförs när påfyllningarna kommer in." },
       { q: `Finns iPhone Duo med 1TB eller 2TB någonsin i lager${where(x.c)}?`, a: (() => { const big = d.byPart.filter((r) => /^(1|2)TB$/.test(r.storage)); const bn = big.reduce((a, r) => a + r.restocks, 0); return bn ? `Ja, men sällan: ${restocksN(bn)} av 1TB- och 2TB-modellerna av ${n(d.n)} (${pct(bn / d.n)}), i högst ${new Set(big.flatMap((r) => (r.stores ? [r.partNumber] : []))).size ? storesN(Math.max(...big.map((r) => r.stores))) : "ingen butik"}. När en dyker upp ligger den ute längre (färre köpare), så en bevakning på den är värd en plats även om den sällan slår till.` : `Inte än i vår data${where(x.c)}: ingen bekräftad påfyllning av en 1TB- eller 2TB-modell sedan ${longDate(d.since)}.`; })() },
       { q: "Ska jag bevaka en konfiguration eller flera?", a: `Flera, i få butiker: de tre främsta konfigurationerna stod för ${d.n ? pct(d.byPart.slice(0, 3).reduce((a, r) => a + r.restocks, 0) / d.n) : "de flesta"} av påfyllningarna${where(x.c)}. Tre konfigurationer i tre närliggande butiker är nio bevakningar, vilket ryms i en Plus-plan; lägg till exakt den du vill ha som en fjärde.` },
@@ -312,7 +313,7 @@ const supply: DecideDict["supply"] = {
   christmasLead: (x) => {
     const w = x.d.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
-    return `Låt bevakningen vara på och ha en leveransbeställning i kön – båda, inte en av dem. I nuvarande takt (${perDay >= 1 ? `ungefär ${pl(Math.round(perDay), "påfyllning", "påfyllningar")} om dagen${where(x.c)}` : `färre än en påfyllning om dagen${where(x.c)}`}${w.medianSec ? `, var och en i lager ${sek(w.medianSec)} (median)` : ""}) får en bevakad butik nära dig sin tur inom några dagar, och en bekräftad påfyllning når din telefon ungefär ${SPEED.alertSec} sekunder efter att vi ser den. Att betala överpris någon annanstans är bara vettigt om själva väntan kostar dig mer än påslaget; jämförelsen av köpkanaler väger det ärligt.`;
+    return `Låt bevakningen vara på och ha en leveransbeställning i kön – båda, inte en av dem. I nuvarande takt (${perDay >= 1 ? `ungefär ${pl(Math.round(perDay), "påfyllning", "påfyllningar")} om dagen${where(x.c)}` : `färre än en påfyllning om dagen${where(x.c)}`}${w.medianSec ? `, var och en i lager ${sek(w.medianSec)} (median)` : ""}) får en bevakad butik nära dig sin tur inom några dagar, och notisen om en bekräftad påfyllning skickas ungefär ${SPEED.alertSec} sekunder efter att vi ser den. Att betala överpris någon annanstans är bara vettigt om själva väntan kostar dig mer än påslaget; jämförelsen av köpkanaler väger det ärligt.`;
   },
   christmasKeys: () => [
     "Beställ leverans på apple.com först: den håller din plats och kan avbeställas när en hämtning går igenom.",
@@ -341,7 +342,7 @@ const supply: DecideDict["supply"] = {
       { q: `Fyller Apple fortfarande på iPhone Duo${where(x.c)}?`, a: d.n ? `Ja: ${confirmedN(w.restocks)} de senaste sju dagarna i ${appleStoresN(w.stores)}${where(x.c)}, ${restocksN(d.n)} sedan ${longDate(d.since)}. Den senaste var ${d.sinceLastHours != null && d.sinceLastHours < 1 ? "för mindre än en timme sedan" : d.sinceLastHours != null ? `för ${n(d.sinceLastHours)} timmar sedan` : "inte registrerad än"}.` : `Ingen bekräftad påfyllning än${where(x.c)} sedan bevakningen började den ${longDate(d.since)}; sidan uppdateras inom fem minuter efter den första.` },
       { q: `Blir bristen på iPhone Duo bättre${where(x.c)}?`, a: d.trend === "insufficient" ? `För tidigt att säga: den första hela jämförelsen vecka mot vecka visas den ${longDate(d.comparableFrom)}. Följ två siffror – påfyllningar per vecka och sekunder i lager; en lättnad betyder att båda stiger.` : `${cap(trendWord(d))} påfyllningar den här veckan än förra (${signed(d.change!)})${w.medianSec ? `, och en påfyllning låg ute i ${sek(w.medianSec)} (median)` : ""}. En lättnad betyder fler påfyllningar och längre tid i lager samtidigt; hittills ${d.trend === "up" && w.medianSec && d.prev7.medianSec && w.medianSec > d.prev7.medianSec ? "rör sig båda åt rätt håll" : "händer bara en del av det"}.` },
       { q: "När blir iPhone Duo lätt att köpa?", a: "Ingen utanför Apple kan säga det, och PickupChecker gör inga prognoser. Ordningen att följa: påfyllningarna per vecka ökar i två eller tre veckor, mediantiden i lager passerar 20 minuter, sedan har de flesta butiker en samtidigt och leveransbeskedet på apple.com hamnar inom en vecka." },
-      { q: "Ska jag betala överpris i stället för att vänta?", a: `Bara om väntan kostar dig mer än påslaget: i nuvarande takt får en bevakad butik nära dig sin tur inom några dagar, och en bevakning når dig ungefär ${SPEED.alertSec} sekunder efter en bekräftad påfyllning. Andrahandsköp betyder också ingen returrätt och de vanliga riskerna; sidan som jämför köpkanaler väger dem.` },
+      { q: "Ska jag betala överpris i stället för att vänta?", a: `Bara om väntan kostar dig mer än påslaget: i nuvarande takt får en bevakad butik nära dig sin tur inom några dagar, och notisen skickas ungefär ${SPEED.alertSec} sekunder efter en bekräftad påfyllning. Andrahandsköp betyder också ingen returrätt och de vanliga riskerna; sidan som jämför köpkanaler väger dem.` },
       { q: "Påverkar julhandeln chansen?", a: "Efterfrågan ökar fram mot december medan leveranserna behåller sin takt, så tiden i lager brukar bli kortare snarare än längre. Ha en leveransbeställning som reserv och låt bevakningarna fånga hämtningen; avbeställ den du inte behöver." },
     ];
   },
@@ -393,7 +394,7 @@ const channels: DecideDict["channels"] = {
   compareRows: (x) => {
     const r = x.ch;
     return [
-      { channel: "Hämtning i Apple Store", known: `${cap(confirmedN(x.sup.n))} sedan ${longDate(x.sup.since)}; varje påfyllning, varje butik, tidsatt.`, watch: `En bevakning här (ungefär ${SPEED.alertSec} sekunder efter bekräftelsen), eller hämtningsväljaren i Apple Store-appen.`, catch: "En påfyllning ligger ute ungefär en minut; du behöver ha appen öppen och kortet sparat." },
+      { channel: "Hämtning i Apple Store", known: `${cap(confirmedN(x.sup.n))} sedan ${longDate(x.sup.since)}; varje påfyllning, varje butik, tidsatt.`, watch: `En bevakning här (notis skickad ungefär ${SPEED.alertSec} sekunder efter bekräftelsen), eller hämtningsväljaren i Apple Store-appen.`, catch: "En påfyllning ligger ute ungefär en minut; du behöver ha appen öppen och kortet sparat." },
       { channel: "Leverans från apple.com", known: "Apple visar ett leveransbesked i kassan; det ändras dagligen och är aldrig en lagersiffra.", watch: "Lägg beställningen; beskedet på din ordersida uppdateras när Apple skickar.", catch: "Veckor, inte minuter – men din plats i kön hålls." },
       { channel: `Operatörer (${words(r.carriers)})`, known: "Egen tilldelning; lagret på nätet visas per konfiguration som i lager / restnoterad. Ingen historik, inget flöde.", watch: "Deras appar och butikssökare; att ringa en butik fungerar fortfarande.", catch: lock(x) ?? "Abonnemang, avbetalning och aktiveringsregler gäller; lagret varierar mellan butiker." },
       { channel: `Återförsäljare (${words(r.retailers)})`, known: "Egen tilldelning, ofta bara på nätet för en nylanserad produkt; visas per konfiguration på produktsidan.", watch: "Deras produktsida och app; några skickar mejl vid påfyllning.", catch: "Tilldelningarna är mindre än Apples och tar också slut på minuter." },
@@ -428,7 +429,7 @@ const channels: DecideDict["channels"] = {
   resaleLead: (x) => {
     const w = x.sup.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
-    return `Sällan. Väg påslaget mot den väntan det köper bort: Apple Store-butikerna${where(x.c)} fylldes på ${perDay >= 1 ? `ungefär ${pl(Math.round(perDay), "gång", "gånger")} om dagen` : "mindre än en gång om dagen"} den här veckan, och en bevakning når dig ungefär ${SPEED.alertSec} sekunder efter en bekräftad påfyllning, så en bevakad butik nära dig brukar ge resultat inom några dagar. Mot det ger ${words(x.ch.resale)} inget inköpsbevis från tillverkaren, ${x.ch.returnDays ? `ingen del av ${returnPhrase(x.ch.returnDays)}` : "ingen returrätt alls"}, och de vanliga riskerna – en aktiveringslåst enhet, en utbytt kartong, en ”förseglad” retur.`;
+    return `Sällan. Väg påslaget mot den väntan det köper bort: Apple Store-butikerna${where(x.c)} fylldes på ${perDay >= 1 ? `ungefär ${pl(Math.round(perDay), "gång", "gånger")} om dagen` : "mindre än en gång om dagen"} den här veckan, och notisen skickas ungefär ${SPEED.alertSec} sekunder efter en bekräftad påfyllning, så en bevakad butik nära dig brukar ge resultat inom några dagar. Mot det ger ${words(x.ch.resale)} inget inköpsbevis från tillverkaren, ${x.ch.returnDays ? `ingen del av ${returnPhrase(x.ch.returnDays)}` : "ingen returrätt alls"}, och de vanliga riskerna – en aktiveringslåst enhet, en utbytt kartong, en ”förseglad” retur.`;
   },
   resaleKeys: () => [
     "Köper du ändå i andrahand: träffas, starta telefonen, kolla serienumret under Inställningar → Allmänt → Om, och logga in innan du betalar.",
@@ -523,11 +524,11 @@ const api: DecideDict["api"] = {
     "Ändringar som bryter kompatibiliteten får en ny versionssökväg (/api/v2); under v1 läggs fält till, de byter aldrig namn.",
     "Ange gärna en User-Agent som namnger ditt projekt och en kontakt; vi har aldrig blockerat ett hyfsat skript.",
   ],
-  scriptLead: (x) => `Vill du ha en instrumentpanel, en Discord-bot, ett kalkylark eller forskning, skriv skriptet – det är vad API:t är till för. Vill du faktiskt köpa en iPhone Duo är ett skript det långsammare verktyget: det ser en påfyllning vid nästa anrop, upp till 30 sekunder senare, och måste sedan meddela dig; vår pushnotis läser samma butiker var ${SPEED.fastSec}:e sekund, bekräftar påfyllningen och når din telefon ungefär ${SPEED.alertSec} sekunder efter – ${x.storesNow !== undefined ? "innanför mediantiden i lager på ungefär en minut" : "innanför mediantiden i lager"}. Många gör båda: bevakningen för att köpa, API:t för att följa.`,
+  scriptLead: (x) => `Vill du ha en instrumentpanel, en Discord-bot, ett kalkylark eller forskning, skriv skriptet – det är vad API:t är till för. Vill du faktiskt köpa en iPhone Duo är ett skript det långsammare verktyget: det ser en påfyllning vid nästa anrop, upp till 30 sekunder senare, och måste sedan meddela dig; vår pushnotis läser samma butiker var ${SPEED.fastSec}:e sekund, bekräftar påfyllningen och går iväg ungefär ${SPEED.alertSec} sekunder efter – ${x.storesNow !== undefined ? "innanför mediantiden i lager på ungefär en minut" : "innanför mediantiden i lager"}. Många gör båda: bevakningen för att köpa, API:t för att följa.`,
   scriptCaption: "Ett skript som frågar mot en pushnotis",
   scriptHead: ["", "Ditt skript mot det här API:t", "Bevakning från PickupChecker"],
   scriptRows: () => [
-    { k: "Ser en påfyllning efter", a: "upp till 30 s (cache) + ditt intervall", b: `ungefär ${SPEED.alertSec} s` },
+    { k: "Ser en påfyllning efter", a: "upp till 30 s (cache) + ditt intervall", b: `notis skickad ungefär ${SPEED.alertSec} s efter att vår kontroll ser den` },
     { k: "Når din telefon", a: "det du bygger (mejl, bot, sms)", b: "en notis i appen på hemskärmen" },
     { k: "Butiker som bevakas", a: "alla, vid varje anrop", b: `dina valda butiker var ${SPEED.fastSec}:e sekund, alla butiker var ${SPEED.checkSec}:e sekund` },
     { k: "Kostnad", a: "gratis", b: "en plan för bevakningarna; sajten är gratis att läsa" },
@@ -544,7 +545,7 @@ const api: DecideDict["api"] = {
     { q: "Har Apple ett officiellt lager-API?", a: "Inget offentligt. apple.com:s hämtningssida kan läsas per butik och konfiguration, vilket är vad den här sajten gör med omsorg (rotation, bekräftelse, tidszoner); API:t här är det arbetet exponerat som JSON." },
     { q: "Hur aktuell är datan?", a: `Varje butik kollas var ${SPEED.checkSec}:e sekund (var ${SPEED.fastSec}:e i butiker med bevakning) och API-svaret cachas 30 sekunder, så en siffra är högst ungefär 45 sekunder gammal; last_checked_at visar exakt.` },
     { q: "Får jag använda det i en kommersiell produkt?", a: "Ja, med källhänvisning: ”Källa: PickupChecker” länkat till pickupchecker.com överallt där datan visas, och ett frågeintervall på 30 sekunder eller längre. Ingen nyckel behövs." },
-    { q: "Får jag en iPhone Duo snabbare med ett skript än med en bevakning?", a: `Nej: ett skript ser en påfyllning vid nästa anrop, upp till 30 sekunder senare; bevakningen bekräftar den och når din telefon ungefär ${SPEED.alertSec} sekunder efter att vi ser den. Använd skriptet för att följa och bevakningen för att köpa.` },
+    { q: "Får jag en iPhone Duo snabbare med ett skript än med en bevakning?", a: `Nej: ett skript ser en påfyllning vid nästa anrop, upp till 30 sekunder senare; bevakningen bekräftar den och notisen går iväg ungefär ${SPEED.alertSec} sekunder efter att vi ser den. Använd skriptet för att följa och bevakningen för att köpa.` },
   ],
   sources: { pickup: "Apple – hämtning i butik", method: "PickupChecker – så fungerar kontrollerna", log: "PickupChecker – påfyllningsloggen" },
   ld: (x) => ({

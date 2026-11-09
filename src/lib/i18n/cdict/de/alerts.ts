@@ -61,6 +61,24 @@ export const alerts: CDict["alerts"] = {
     myAlerts: "Meine Alarme",
   },
 
+  windows: {
+    title: "Was bringt die meisten Abholfenster?",
+    had: "Ihre Auswahl: {windows} im Zeitraum von {days}",
+    windowsN: { one: "# Abholfenster", other: "# Abholfenster" } as Forms,
+    daysN: { one: "# Tag", other: "# Tagen" } as Forms,
+    best: " · {gain} mit {what}",
+    noGain: " · keine Änderung in der Nähe hätte eines dazugebracht",
+    gainN: { one: "+# Fenster", other: "+# Fenster" } as Forms,
+    tooFew: "Zu wenige Abholfenster im Zeitraum von {days} für einen Vergleich ({n} gezählt)",
+    counting: "Vergangene Abholfenster werden gezählt…",
+    listed: "Insgesamt {time} gelistet, gleichzeitige Fenster einmal gezählt.",
+    storeAt: "{store} · ≈{dist}",
+    cost: { one: "+# Alarm", other: "+# Alarme" } as Forms,
+    addButton: "Hinzufügen",
+    add: "{what} hinzufügen",
+    note: "Vergangene Einträge auf Apples Abholseite, keine Prognose und keine Kaufchance. Ein Fenster reicht von einem Restock, bis er ausverkauft war (oder bis jetzt).",
+  },
+
   matrix: {
     model: "Modell",
     configs: "Konfigurationen: {model}",

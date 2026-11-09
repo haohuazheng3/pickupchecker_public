@@ -97,12 +97,16 @@ export default async function GrabRestockGuide() {
   const topShare = top && t.n ? top.restocks / t.n : 0;
   const alert = alertHref({ model: "duo" });
   const reserveAt = SPEED.alertSec + YOU_SEC;
-  const budget = [
-    { label: "Confirmed → push", sec: SPEED.alertSec, tone: "bg-ink/25" },
+  /** `sec: null` = a leg we do not measure (push service → your phone): drawn as a narrow "?" slice, never given a number. */
+  const budget: { label: string; sec: number | null; tone: string }[] = [
+    { label: "Confirmed → push sent", sec: SPEED.alertSec, tone: "bg-ink/25" },
+    { label: "Push arrives on your phone (depends on your phone; not measured)", sec: null, tone: "bg-ink/5 border border-dashed border-ink/30" },
     { label: "You: four taps", sec: YOU_SEC, tone: "bg-accent" },
     { label: sell ? `Typical listing: ${sell.medianSec} s` : "Typical listing", sec: sell ? Math.max(sell.medianSec - YOU_SEC - SPEED.alertSec, 10) : 60, tone: "bg-ink/10" },
   ];
-  const total = budget.reduce((a, b) => a + b.sec, 0);
+  const total = budget.reduce((a, b) => a + (b.sec ?? 0), 0);
+  /** Share of the bar the unmeasured slice takes; the measured legs split the rest by their seconds. */
+  const UNMEASURED = 6;
   const taps = ["Pickup – In-Store", "The store it named", "First slot", "Apple Pay"];
 
   const before: Step[] = [
@@ -140,7 +144,8 @@ export default async function GrabRestockGuide() {
     {
       title: "Read it, don't tap it",
       points: [
-        { text: <>Push lands <b className="text-ink">~{SPEED.alertSec} s</b> after two matching checks</>, plain: `The push arrives about ${SPEED.alertSec} seconds after two matching checks` },
+        { text: <>Push sent <b className="text-ink">~{SPEED.alertSec} s</b> after two matching checks</>, plain: `The push is sent about ${SPEED.alertSec} seconds after two matching checks` },
+        { text: <>Arrives on your phone: depends on your phone · <b className="text-ink">not measured</b></>, plain: "When it arrives on your phone depends on the phone and its connection; PickupChecker does not measure that leg" },
         { text: <>Tapping it = Safari + a fresh checkout</>, plain: "Tapping the notification opens apple.com in Safari, a fresh checkout", no: true },
         { text: <>Read the <b className="text-ink">store name</b> → swipe to the app</>, plain: "Read the store name and swipe back to the Apple Store app" },
       ],
@@ -189,7 +194,7 @@ export default async function GrabRestockGuide() {
     { q: "Carrier plan or unlocked?", a: "Unlocked, paid in full, is the fewest taps and the fewest things that can fail at the last second: no carrier agreement to tick, no eligibility check. A carrier plan works, but tick the agreement before the window and expect to tick it again if the sheet reloads." },
     { q: "What if the alert is for a different storage or color than I staged?", a: `Changing the configuration on the sheet costs about ten seconds, so decide now whether you would take it. Stage the configuration that restocks most${topShare ? ` (${topName}, ${pct(topShare)} of US Duo restocks since ${longDate(t.since)})` : ""} and set alerts for exactly that configuration at two or three stores ([which configuration restocks most](/which-iphone-duo-restocks-most)).` },
     { q: "Two stores restocked at once — which do I pick?", a: "The nearer one, without thinking: a reservation is only useful at a store you will reach in the pickup window. Set alerts only at stores you can get to, and the question rarely comes up." },
-    { q: "Can PickupChecker reserve it for me?", a: `No, and nothing legitimate can: PickupChecker tells you within seconds that a store lists your configuration, and the reservation is yours to make on apple.com. PickupChecker is independent and not affiliated with Apple; it reads the same pickup availability anyone can see, every ${SPEED.fastSec} seconds for the stores your alerts point at.` },
+    { q: "Can PickupChecker reserve it for me?", a: `No, and nothing legitimate can: PickupChecker sends you a push within seconds of seeing a store list your configuration, and the reservation is yours to make on apple.com. PickupChecker is independent and not affiliated with Apple; it reads the same pickup availability anyone can see, every ${SPEED.fastSec} seconds for the stores your alerts point at.` },
   ];
   const sources: Source[] = [
     { label: "Apple: Delivery and Pickup (how in-store pickup and the hold work)", url: APPLE_PICKUP },
@@ -236,16 +241,16 @@ export default async function GrabRestockGuide() {
         <h2 id="budget-h" className="display text-2xl sm:text-4xl">How much time do you actually have?</h2>
         <p className="mt-3 text-ink-2"><b className="text-ink">{sell ? `About ${band}.` : "About a minute."}</b> {sell ? <>Median of {n(sell.n)} timed US restocks since {longDate(t.since)}; {pct(sell.within2min)} were gone within two minutes.</> : <>By every restock we have timed.</>}</p>
         <StatGrid cols={3} className="mt-5">
-          <Stat value={`${SPEED.alertSec}`} unit="s" label="Confirmed → push on your phone" />
+          <Stat value={`${SPEED.alertSec}`} unit="s" label="Confirmed → push sent (arrival on your phone not measured)" />
           <Stat value={`${YOU_SEC}`} unit="s" label="You: the four taps, practised" tone="accent" />
           <Stat value={sell ? `${sell.medianSec}` : "~60"} unit="s" label="Typical listing, listed to gone" />
         </StatGrid>
-        <div className="mt-5 flex h-10 w-full overflow-hidden rounded-full border border-line-2" role="img" aria-label={budget.map((b) => `${b.label}: ${b.sec} seconds`).join("; ")}>
-          {budget.map((b) => <div key={b.label} className={`${b.tone} flex items-center justify-center px-2 text-[11px] font-semibold text-ink`} style={{ width: `${(b.sec / total) * 100}%` }} title={`${b.label}: ${b.sec} s`}><span className="truncate">{b.sec} s</span></div>)}
+        <div className="mt-5 flex h-10 w-full overflow-hidden rounded-full border border-line-2" role="img" aria-label={budget.map((b) => (b.sec == null ? b.label : `${b.label}: ${b.sec} seconds`)).join("; ")}>
+          {budget.map((b) => <div key={b.label} className={`${b.tone} flex items-center justify-center px-2 text-[11px] font-semibold text-ink`} style={{ width: `${b.sec == null ? UNMEASURED : (b.sec / total) * (100 - UNMEASURED)}%` }} title={b.sec == null ? b.label : `${b.label}: ${b.sec} s`}><span className="truncate">{b.sec == null ? "?" : `${b.sec} s`}</span></div>)}
         </div>
         <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-ink-3">{budget.map((b) => <span key={b.label} className="inline-flex items-center gap-1.5"><span className={`h-2 w-2 rounded-sm ${b.tone}`} />{b.label}</span>)}</div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <div className="flex items-start gap-2 text-sm text-ink-2"><Do /><span>Start from the staged sheet → reserving at <b className="text-ink">second {reserveAt}</b>{ds ? <>, ahead of <b className="text-ink">~{pct(1 - ds.within30)}</b> of last week&apos;s sell-outs</> : null}</span></div>
+          <div className="flex items-start gap-2 text-sm text-ink-2"><Do /><span>Start from the staged sheet → reserving at <b className="text-ink">second {reserveAt}</b> plus the push&apos;s trip to your phone{ds ? <>, ahead of <b className="text-ink">~{pct(1 - ds.within30)}</b> of last week&apos;s sell-outs</> : null}</span></div>
           <div className="flex items-start gap-2 text-sm text-ink-3"><Dont /><span>Start from the app&apos;s home screen → model, storage, colour, address → <b>second 90</b>, gone</span></div>
         </div>
         <p className="mt-4 text-xs text-ink-3">Lifetimes are measured between two of our checks ({SPEED.fastSec} s apart at stores with alerts), so they are upper bounds. <Link href="/iphone-duo-sell-out-times" className="underline-offset-2 hover:underline">Every restock with the seconds it lasted</Link>.</p>
@@ -315,7 +320,7 @@ export default async function GrabRestockGuide() {
         </StatGrid>
         <ul className="mt-5 grid gap-2 text-sm text-ink-2 sm:grid-cols-2">
           <li className="flex items-start gap-2"><Do /><span>Stores your alerts point at: checked every <b className="text-ink">{SPEED.fastSec} seconds</b></span></li>
-          <li className="flex items-start gap-2"><Do /><span>First &quot;available&quot;: asked again ~1 s later → push ~{SPEED.alertSec} s after the match</span></li>
+          <li className="flex items-start gap-2"><Do /><span>First &quot;available&quot;: asked again ~1 s later → push sent ~{SPEED.alertSec} s after the match</span></li>
           {ds && <li className="flex items-start gap-2 text-ink-3"><Dont /><span>A tracker checking once a minute sees <b>{pct(ds.caught.m1)}</b> of Duo restocks; every 5 minutes, <b>{pct(ds.caught.m5)}</b></span></li>}
           <li className="flex items-start gap-2"><Do /><span>Against a listing that lasts {band}: {YOU_SEC} practised seconds win</span></li>
         </ul>

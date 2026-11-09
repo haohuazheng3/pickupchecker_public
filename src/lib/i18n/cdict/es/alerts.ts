@@ -58,6 +58,24 @@ export const alerts: CDict["alerts"] = {
     myAlerts: "Mis alertas",
   },
 
+  windows: {
+    title: "¿Qué añade más ventanas de recogida?",
+    had: "Tu selección: {windows} en un periodo de {days}",
+    windowsN: { one: "# ventana de recogida", other: "# ventanas de recogida" } as Forms,
+    daysN: { one: "# día", other: "# días" } as Forms,
+    best: " · {gain} con {what}",
+    noGain: " · ningún cambio cercano habría añadido una",
+    gainN: { one: "+# ventana", other: "+# ventanas" } as Forms,
+    tooFew: "Muy pocas ventanas de recogida en un periodo de {days} para comparar ({n} contadas)",
+    counting: "Contando ventanas de recogida pasadas…",
+    listed: "Disponible {time} en total; las ventanas simultáneas cuentan una sola vez.",
+    storeAt: "{store} · ≈{dist}",
+    cost: { one: "+# alerta", other: "+# alertas" } as Forms,
+    addButton: "Añadir",
+    add: "Añadir {what}",
+    note: "Disponibilidad pasada en la página de recogida de Apple, no una previsión ni una probabilidad de compra. Una ventana va desde una reposición hasta que se agotó (o hasta ahora).",
+  },
+
   matrix: {
     model: "Modelo",
     configs: "Configuraciones del {model}",

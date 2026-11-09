@@ -89,6 +89,7 @@ export const modules: Dict["modules"] = {
     none: (label: string, days: number) => `${label}過去 ${n(days)} 日暫未有補貨售罄。`,
     whatDuo: "iPhone Duo",
     whatAll: "所有 iPhone",
+    definition: "上架時間是指 Apple 取貨頁面把該款式顯示為可取貨的時間長短，以我們兩次檢查為界；它不代表賣出了多少部手機，也不代表你要多快。",
     tileHalf: (what: string) => <>一半在此時間內售罄 · {what}</>,
     tileWithin30: "30 秒內售罄",
     tileWithin60: "1 分鐘內售罄",
@@ -203,20 +204,43 @@ export const modules: Dict["modules"] = {
     lastIn: (o: { config: string; store: ReactNode | null; when: string; lasted: string | null }) => <>上次有貨：<b className="text-ink">{o.config}</b>{o.store != null && <>，{o.store}</>}，{o.when}{o.lasted ? <>（{o.lasted}）</> : null}。</>,
     neverYet: (label: string, since: string) => `自 ${since} 開始追蹤以來，${label}仍未有已確認的 iPhone Duo 補貨。`,
     others: (o: { pro: number; max: number; one: boolean; configs: number }) => (o.one ? `本店 iPhone 18 Pro 的 ${n(o.configs)} 款中有 ${n(o.pro)} 款可取貨，18 Pro Max 有 ${n(o.max)} 款。` : `iPhone 18 Pro 在其中 ${n(o.pro)} 間有貨，18 Pro Max 在 ${n(o.max)} 間。`),
-    updated: (stamp: string) => `更新於 ${stamp}`,
-    checked: () => CHECK,
-    since: (date: string) => `數據由 ${date} 起`,
-    method: "兩次檢查一致才算補貨；分店第一次被看到不計",
+    evidence: (o) => (o.one
+      ? (o.fresh > 0
+        ? <>截至 {o.stamp}：{o.name}在最近一分鐘內回應了我們的檢查。</>
+        : <>截至 {o.stamp}：{o.name}最近一分鐘沒有回應——狀態不明，不計作售罄。</>)
+      : <>截至 {o.stamp}：{n(o.total)} 間分店中有 {n(o.fresh)} 間在最近一分鐘內回應{o.stale > 0 ? `；${n(o.stale)} 間未有最新回應——狀態不明，不計作售罄` : ""}。</>),
+    evidenceNone: (o) => (o.one
+      ? `${o.name}仍未回應任何檢查——狀態不明，不計作售罄。`
+      : `${n(o.total)} 間分店仍未有任何一間回應檢查——狀態不明，不計作售罄。`),
+    howCounted: (o) => {
+      const base = "兩次回應一致才算補貨（分店第一次被看到不計）；上架時間介乎最後一次仍看到該款式的檢查與第一次不再看到的檢查之間。按計劃，有提醒的分店每 5 秒檢查一次，所有分店每 15 秒一次";
+      const lanes = [
+        o.fast && `有提醒分店的間隔中位數 ${o.fast.p50}（p95 ${o.fast.p95}，${n(o.fast.n)} 次${o.fast.slow ? "，比計劃慢" : ""}）`,
+        o.round && `完整一輪 ${o.round.p50}（p95 ${o.round.p95}，${n(o.round.n)} 輪${o.round.slow ? "，比計劃慢" : ""}）`,
+      ].filter(Boolean);
+      if (lanes.length === 0 || !o.win) return `${base}。`;
+      const win = o.win.days ? `最近 ${n(o.win.days)} 日` : `最近 ${n(o.win.hours ?? 1)} 小時`;
+      return `${base}；${win}實測：${lanes.join("，")}。`;
+    },
+    howLink: "我們怎樣量度 →",
+    sec: (v) => `${v} 秒`,
+    technique: "PickupChecker 逐間 Apple Store 查詢 Apple 的店內取貨供應：有會員提醒的分店每 5 秒一次，所有分店每 15 秒一次。兩次回應一致才算補貨（分店第一次被看到不計）；上架時間介乎最後一次仍看到該款式的檢查與第一次不再看到的檢查之間。",
     tShare: (range: string) => `的補貨落在 ${range}`,
     tBusiest: (count: number) => `最多補貨的一小時 · ${n(count)} 次`,
-    tHalf: "一半在這時間內售罄",
+    tHalf: "上架時間中位數",
     tSince: (date: string) => `${date} 起已確認的補貨`,
     tToday: "今日至今",
     mostOften: (config: string, k: number, total: number) => `最常補貨：${config}（${n(total)} 次中 ${n(k)} 次）`,
     zone: (tz: string | null): string => (void tz, "當地時間"),
-    summary: (o: { pct: string; n: number; stores: number; label: string; since: string; range: string; zone: string; busiest: string; busiestN: number; median: string | null; config: string | null; k: number; one: boolean }) =>
-      `PickupChecker 自 ${o.since} 起在${o.one ? o.label : `${o.label} ${n(o.stores)} 間 Apple Store`}確認的 ${n(o.n)} 次 iPhone Duo 補貨中，${o.pct} 落在${o.zone} ${o.range}；補貨最多的一小時是 ${o.busiest}（${n(o.busiestN)} 次）。${o.median ? `一半在 ${o.median} 內售罄。` : ""}${o.config ? `最常補貨的是 ${o.config}（${n(o.n)} 次中 ${n(o.k)} 次）。` : ""}`,
-    tooFew: (o: { n: number; label: string; since: string; one: boolean; stores: number }) => `自 ${o.since} 起，${o.one ? o.label : `${o.label} ${n(o.stores)} 間 Apple Store`}已確認的 iPhone Duo 補貨共 ${n(o.n)} 次——數量太少，暫時未能說出慣常時段；每一次都列在下面。`,
+    factsTitle: (label) => `重點數據：${label}的 iPhone Duo`,
+    fN: (o) => <>PickupChecker 自 {o.since} 起在{o.one ? o.label : `${o.label} ${n(o.stores)} 間 Apple Store`}確認了 <b className="text-ink">{n(o.n)}</b> 次 iPhone Duo 補貨，分佈在 {n(o.days)} 個不同日子。</>,
+    fShare: (o) => <>{o.label}自 {o.since} 起的 {n(o.n)} 次 iPhone Duo 補貨中，<b className="text-ink">{o.pct}</b> 落在{o.zone} {o.range}；補貨最多的一小時是 {o.busiest}（{n(o.busiestN)} 次）。</>,
+    fTooFew: (o) => `${o.label}在 ${n(o.days)} 日內已確認的 iPhone Duo 補貨共 ${n(o.n)} 次——數量太少，暫時未能說出慣常時段；PickupChecker 要在 ${n(o.minDays)} 個不同日子累積 ${n(o.min)} 次補貨才會列出。`,
+    fMedian: (o) => <>{o.label}的 iPhone Duo 在 Apple 取貨頁面上架時間的中位數約為 <b className="text-ink">{o.median}</b>（自 {o.since} 起計時的 {n(o.n)} 次）。</>,
+    fTop: (o) => <>{o.label}最常補貨的 iPhone Duo 款式是 <b className="text-ink">{o.config}</b>：自 {o.since} 起 {n(o.n)} 次補貨中佔 {n(o.k)} 次（{o.pct}）。</>,
+    fToday: (o) => (o.n > 0
+      ? <>今日（{o.date}，當地時間）至今，PickupChecker 在{o.label}確認了 <b className="text-ink">{n(o.n)}</b> 次 iPhone Duo 補貨。</>
+      : <>今日（{o.date}，當地時間）至今，{o.label}仍未有已確認的 iPhone Duo 補貨。</>),
     hourByHour: "逐小時、逐間分店 →",
     lastThree: (k: number, label: string) => (k === 1 ? `${label}最近一次 iPhone Duo 補貨` : `${label}最近 ${n(k)} 次 iPhone Duo 補貨`),
     secs: (x: number) => `${n(x)} 秒`,

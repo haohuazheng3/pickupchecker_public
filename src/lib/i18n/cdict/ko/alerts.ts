@@ -60,6 +60,24 @@ export const alerts: CDict["alerts"] = {
     myAlerts: "내 알림",
   },
 
+  windows: {
+    title: "픽업 가능 구간을 가장 많이 늘리는 선택은?",
+    had: "내 선택: 최근 {days} 동안 {windows}",
+    windowsN: { other: "픽업 가능 구간 #회" },
+    daysN: { other: "#일" },
+    best: " · {what} 추가 시 {gain}",
+    noGain: " · 근처 변경으로는 늘지 않았어요",
+    gainN: { other: "+#회" },
+    tooFew: "최근 {days} 동안 픽업 가능 구간이 너무 적어 비교할 수 없어요({n}회)",
+    counting: "지난 픽업 가능 구간 집계 중…",
+    listed: "총 {time} 동안 표시됐어요(같은 시각의 구간은 한 번만 계산).",
+    storeAt: "{store} · 약 {dist}",
+    cost: { other: "알림 +#개" },
+    addButton: "추가",
+    add: "{what} 추가",
+    note: "Apple 픽업 페이지에 과거에 표시된 기록이며, 예측이나 구매 확률이 아니에요. 구간은 재입고부터 품절까지(아직 표시 중이면 지금까지)예요.",
+  },
+
   matrix: {
     model: "모델",
     configs: "{model} 구성",

@@ -226,7 +226,7 @@ export const views: Dict["views"] = {
     itemList: (model: string, where: string) => `${prod(model)} ${where}`,
     nearLead: (c: Country, model: string, inStock: number, k: number, have: { store: string; city: string; configs: number }[]) =>
       inStock === 0
-        ? `Ingen Apple Store ${inLand(c)} har ${model} att hämta just nu, så ”nära mig” handlar om vilken butik som fyller på först. Bevaka butikerna du kan ta dig till, så kommer notisen sekunder efter att någon av dem listar den.`
+        ? `Ingen Apple Store ${inLand(c)} har ${model} att hämta just nu, så ”nära mig” handlar om vilken butik som fyller på först. Bevaka butikerna du kan ta dig till, så skickas notisen sekunder efter att någon av dem listar den.`
         : `${inStock} av ${k} butiker har ${model} just nu: ${words(have.slice(0, 5).map((l) => `${l.store} i ${l.city} (${pl(l.configs, "konfiguration", "konfigurationer")})`), 5)}.`,
     nearHead: (c: Country) => [cap(noun(c)), "Butiker med den nu"],
     nearCaption: (c: Country, model: string) => `${model} att hämta per ${noun(c)}, vid senaste kontrollen`,
@@ -293,7 +293,7 @@ export const views: Dict["views"] = {
         : `${have.length} av de ${k} vid senaste kontrollen: ${have.length > 6 ? `${have.slice(0, 6).map((x) => apple(x)).join(", ")} med flera` : words(have.map((x) => apple(x)))}.`,
     }),
     faq: (ctx: FaqContext) => placeFaq({ ...ctx, omit: [...(ctx.omit ?? []), "count", "stock", "lasts"] }, SV),
-    duoBlock: (alert: string) => `Snabbaste sättet att få en är en bevakning i butikerna du kan ta dig till: [bevaka iPhone Duo](${alert}). Varje butik × exakt konfiguration är en bevakning, och notisen kommer sekunder efter att en butik listar den.`,
+    duoBlock: (alert: string) => `Snabbaste sättet att få en är en bevakning i butikerna du kan ta dig till: [bevaka iPhone Duo](${alert}). Varje butik × exakt konfiguration är en bevakning, och notisen skickas sekunder efter att en butik listar den.`,
     intro: (c: Country, k: number, spread: string, now: { duo: number; max: number; pro: number }, tax: string) =>
       `Det finns **${pl(k, "Apple Store", "Apple Store-butiker")}** ${inLand(c)}, ${spread}${/Solna/.test(spread) && /Täby/.test(spread) ? " – Solna och Täby är Stockholms två" : ""}. Just nu har **${now.duo}** av dem iPhone Duo att hämta, **${now.max}** har iPhone 18 Pro Max och **${now.pro}** har 18 Pro. ${tax}`,
     crumb: "Apple Store-butiker",
@@ -393,6 +393,24 @@ export const views: Dict["views"] = {
       { text: <>Tabellerna nedan fylls i från första bekräftade påfyllningen</>, step: true },
       { text: <>Mönster per timme och veckodag, där vi har mest data: <Link href="/iphone-duo-restock-times" className="underline underline-offset-2">sidan för USA (på engelska)</Link></>, step: true },
     ],
+    keyFactsTitle: "Viktigaste fakta",
+    keyFacts: (x: RestockTimesView, k: { top: { label: string; restocks: number } | null; latest: { config: string; store: Store; at: string } | null }): string[] => {
+      const { t, w, sell } = x;
+      const wh = rtIn(x);
+      const since = `sedan ${dateLabel(t.since, false)}`;
+      const peak = t.peakHour;
+      return [
+        `PickupChecker har bekräftat ${n(t.n)} ${t.n === 1 ? "påfyllning" : "påfyllningar"} av iPhone Duo ${x.one ? "i Apple Store-butiken" : `i ${n(x.stores)} Apple Store-butiker`} ${wh} sedan ${longDate(t.since)}, under ${t.days} av ${n(x.tracked)} bevakade dagar.`,
+        ...(x.pattern
+          ? [`${share(w.share)} av de ${n(t.n)} påfyllningarna av iPhone Duo ${wh} ${since} kom ${between(w.from, w.to)} i butikens lokala tid.`]
+          : [`PickupChecker anger en vanlig tid för påfyllningar av iPhone Duo ${wh} först efter ${PATTERN_MIN} påfyllningar på ${PATTERN_MIN_DAYS} olika dagar; de ${n(t.n)} hittills räcker inte.`]),
+        ...(x.pattern && peak != null ? [`Den enskilt mest intensiva timmen för påfyllningar av iPhone Duo ${wh} har varit ${range(peak, peak + 1)} lokal tid, med ${n(t.byHour[peak])} av ${n(t.n)} (${share(t.byHour[peak] / t.n)}).`] : []),
+        ...(sell ? [`En påfylld iPhone Duo ${wh} låg kvar på Apples hämtsida i median ${n(sell.medianSec)} sekunder (${n(sell.n)} tidsmätta påfyllningar ${since}); det är tid på sidan, inte antal sålda exemplar.`] : []),
+        ...(k.top && k.top.restocks > 0 ? [`Den konfiguration av iPhone Duo som fyllts på oftast ${wh} är ${k.top.label}: ${n(k.top.restocks)} av ${n(t.n)} påfyllningar ${since} (${share(k.top.restocks / t.n)}).`] : []),
+        ...(k.latest ? [`Den senaste bekräftade påfyllningen av iPhone Duo ${wh} var ${k.latest.config}${x.one ? "" : ` på ${apple(k.latest.store)}`}, ${localStamp(k.latest.at, k.latest.store, SV)} butikens lokala tid.`] : []),
+        `Per ${zoneStamp(t.at, x.c)}: en påfyllning ${wh} räknas först efter två samstämmiga kontroller av Apples hämtsida, och första gången något dyker upp efter ett uppehåll i bevakningen räknas aldrig.`,
+      ];
+    },
     setUpAlert: "Bevaka iPhone Duo",
     logLive: "Påfyllningsloggen, live",
     onThisPage: "På den här sidan",
@@ -433,7 +451,7 @@ export const views: Dict["views"] = {
         { q: "Varför säger alla Apple Store att iPhone Duo inte är tillgänglig?", a: sell
           ? `För att en påfyllning är kort: ${share(sell.within2min)} av de ${n(sell.n)} slutsålda påfyllningarna vi mätt ${where} var borta inom 2 minuter och ${share(sell.within20min)} inom 20. Just nu har ${x.duoNow} av ${x.stores} butiker en; nästan alla andra stunder är den ärliga läsningen av apple.com ”inte tillgänglig”, även en dag med dussintals påfyllningar ([vad ”inte tillgänglig” betyder, på engelska](/apple-store-pickup-availability-explained)).`
           : `För att lager för hämtning dyker upp några minuter i taget. Just nu har ${x.duoNow} av ${storesN(x.stores)} ${where} en ([vad ”inte tillgänglig” betyder, på engelska](/apple-store-pickup-availability-explained)).` },
-        { q: "Hur får jag en notis när min Apple Store fyller på iPhone Duo?", a: `Skapa en bevakning för butiken och exakt lagring och färg: från och med då kollas den butiken var ${SPEED.fastSec}:e sekund, och din telefon får besked ungefär ${SPEED.alertSec} sekunder efter att en påfyllning bekräftats ([skapa en bevakning](${x.alert}); [så funkar det, på engelska](/how-it-works)).` },
+        { q: "Hur får jag en notis när min Apple Store fyller på iPhone Duo?", a: `Skapa en bevakning för butiken och exakt lagring och färg: från och med då kollas den butiken var ${SPEED.fastSec}:e sekund, och notisen skickas ungefär ${SPEED.alertSec} sekunder efter att en påfyllning bekräftats; när den syns på telefonen beror på telefonen och dess uppkoppling ([skapa en bevakning](${x.alert}); [så funkar det, på engelska](/how-it-works)).` },
       ];
     },
     sources: {
@@ -534,8 +552,8 @@ export const views: Dict["views"] = {
     configKeys: (x: RestockTimesView): Point[] => [
       { text: <>Valet av konfiguration betyder <b className="text-ink">mer än valet av butik</b></> },
       x.storageRatio != null
-        ? { text: <>Nöj dig med den lagring som fylls på oftast: ungefär <b className="text-ink">{n(x.storageRatio)}×</b> chansen mot nästa storlek</> }
-        : { text: <>Nöj dig med den lagring som fylls på oftast: dina chanser ökar <b className="text-ink">rejält</b></> },
+        ? { text: <>Den lagring som fylls på oftast kom tillbaka ungefär <b className="text-ink">{n(x.storageRatio)}×</b> så ofta som nästa storlek: fler tidigare hämtfönster, inget löfte</> }
+        : { text: <>Den lagring som fylls på oftast har haft flest tidigare hämtfönster; tabellen visar <b className="text-ink">hur många fler</b></> },
       { text: <><b className="text-ink">2TB</b>: en telefon du beställer för leverans och väntar på</>, no: true },
       { text: <>Priser och vad som finns i lager just nu: <Link href="/which-iphone-duo-restocks-most">Vilken iPhone Duo fylls på oftast? (på engelska)</Link></>, step: true },
     ],
@@ -553,7 +571,7 @@ export const views: Dict["views"] = {
       { text: <>Det här är siffran som förklarar allt annat på sidan</> },
       { text: <>Varje påfyllning med antalet sekunder den varade, per konfiguration och {rtRegion(x)}: <Link href="/iphone-duo-sell-out-times">Hur snabbt tar en påfyllning av iPhone Duo slut? (på engelska)</Link></>, step: true },
     ],
-    measured: "Varje siffra är tiden från kontrollen som först såg konfigurationen listad till kontrollen som såg den borta, så den är en övre gräns; de verkliga tiderna är kortare.",
+    measured: "Varje siffra är tiden från kontrollen som först såg konfigurationen listad till kontrollen som såg den borta, så den är en övre gräns; de verkliga tiderna är kortare. Det är hur länge Apples hämtsida visade konfigurationen, inte hur många exemplar som såldes.",
 
     // ---- unavailable
     unavailableLead: (x: RestockTimesView) => <b>För att en påfyllning är ett ögonblick, inte ett tillstånd: {x.one ? "en butik" : `${n(x.stores)} butiker`} × {x.configs} konfigurationer = {n(x.pairs)} saker som kan finnas i lager {rtIn(x)}, och just nu har {x.duoNow === 1 ? "1 butik" : `${x.duoNow} butiker`} någon iPhone Duo.</b>,
@@ -594,7 +612,7 @@ export const views: Dict["views"] = {
     methodLead: <b>En påfyllning räknas när apple.com listar en konfiguration för hämtning i butik i en butik där den inte var listad, bekräftat av två kontroller som stämmer överens.</b>,
     methodKeys: (x: RestockTimesView): Point[] => [
       { text: <>{x.one ? "Apple Store-butiken" : "Varje Apple Store"} {rtIn(x)} var <b className="text-ink">{SPEED.checkSec}:e sekund</b>; butikerna med bevakning var <b className="text-ink">{SPEED.fastSec}:e</b></> },
-      { text: <>Andra bevakningstjänster uppger <b className="text-ink">från 8 sekunder till 15 minuter</b>; vi jämför bara publicerade siffror</> },
+      { text: <>Andra bevakningstjänster uppger på sina egna sajter intervall <b className="text-ink">från 5 sekunder till 15 minuter</b>; vi har inte mätt dem, så vi jämför bara vad de själva uppger</> },
       { text: <>Ett första ”tillgänglig” kontrolleras igen <b className="text-ink">ungefär en sekund senare</b> innan det räknas</> },
       { text: <>Något som försvinner bekräftas vid <b className="text-ink">nästa varv</b></> },
       { text: <>Första gången en butik ses, en misslyckad eller avbruten förfrågan: <b className="text-ink">aldrig</b> en påfyllning, aldrig ”slutsåld”</>, no: true },

@@ -3,9 +3,11 @@
  * these functions raw and print as the site always has; another language may format them (format.num …). Strings
  * with **bold** / [label](href) render through <Md>.
  */
-import { OTHER_TRACKERS, SPEED, SPEED_PERKS } from "@/lib/plans";
+import { SPEED, SPEED_PERKS } from "@/lib/plans";
 
 const s = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+/** A plan's alert limit and monthly price in USD (pricing table). */
+export interface Tier { limit: number; price: number }
 
 export const account = {
   loading: "Loading",
@@ -38,7 +40,7 @@ export const account = {
     title: "Reserve it in 20 seconds",
     sub: "do everything but the last four taps now",
     lasts: "a typical Duo listing lasts",
-    push: "confirmed → push on your phone",
+    push: "confirmed → push sent (arrival not measured)",
     tapsLeft: "left for you once the push lands",
     steps: [
       { title: "Find your window", hint: "your stores' hours, below · staged 10 min early" },
@@ -119,22 +121,66 @@ export const account = {
     title: "Pricing",
     lead: "**One alert = one store × one exact iPhone.** Browsing is free.",
     chips: ["All 269 US Apple Stores", "Cancel anytime", "Card or Link"],
-    fastest: "The fastest published check interval of any iPhone stock tracker",
-    everyFast: `Your stores every **${SPEED.fastSec} seconds** · other trackers publish ${OTHER_TRACKERS}`,
-    /** {band} is "60–80 seconds" or "about a minute". */
-    sellsOut: (band: string) => `A typical iPhone Duo restock sells out in **${band}**, some in 20–30 seconds`,
+    /**
+     * The speed block (2026-11-09): what every plan gets, planned and then measured (content/serviceStats.ts) on the
+     * same basis, instead of a "fastest" claim. Values arrive formatted ("5.0 s"). A push accepted by Apple's or
+     * Google's push service is not arrival on the phone: never word it as "to your phone".
+     */
+    speedTitle: "How fast is it? Planned, then measured",
+    /** The quotable answer. {p50}, {p95}: seconds between two answers for a store with a paid alert, US, last 7 days. */
+    speedAnswer: (v: { p50: string; p95: string }) => `Stores your alerts point at are planned every ${SPEED.fastSec} seconds. Measured over the last 7 days in the US, the gap between two answers for such a store was **${v.p50}** at the median and ${v.p95} at the 95th percentile. Every plan gets the same lanes.`,
+    /** No week of measurements yet. */
+    speedPlanned: `Stores your alerts point at are planned every ${SPEED.fastSec} seconds, every other store every ${SPEED.checkSec}. Measured figures appear here once a week of checks is recorded. Every plan gets the same lanes.`,
+    planned: `Planned: your stores every **${SPEED.fastSec} s**, every store every **${SPEED.checkSec} s**`,
+    /** Outside the US, last 7 days; `above`: the median is over the plan (say so). */
+    intl: (v: { p50: string; p95: string; above: boolean }) => `Outside the US: median **${v.p50}**, 95th percentile ${v.p95}${v.above ? `, slower than the ${SPEED.fastSec}-second plan` : ""}`,
+    /** First check that saw stock → push accepted by the push service, last 7 days; {n}: restocks. */
+    push: (v: { p50: string; p90: string; n: string }) => `First check that saw stock → push accepted by Apple's or Google's push service: median **${v.p50}**, 90th percentile ${v.p90} (${v.n} restocks, 7 days)`,
+    pushPending: "Alert timing appears here once a week of alerts is recorded",
+    notMeasured: "Arrival on your phone is not measured: the push services don't report it back",
+    /** {band}: band(…) or aboutMinute; {n}: restocks in the last 7 days. "Listed for", never "sells out in". */
+    listingLine: (band: string, n: string) => `Apple's pickup page listed a typical iPhone Duo restock for **${band}** (median of ${n} restocks, 7 days)`,
     band: (range: string) => `${range} seconds`,
     aboutMinute: "about a minute",
-    sameSpeed: "Every plan gets the same speed",
-    rechecked: "your stores re-checked",
-    toPhone: "confirmed restock to your phone",
-    listing: "typical Duo listing, listed to gone",
+    report: "[Service report](/service-report): every lane over 24 hours, 7 and 30 days, with samples and limits",
+    /** Tile labels under the big numbers. */
+    gapTile: "your stores: median gap between checks, 7 days",
+    plannedTile: "your stores: planned check interval",
+    pushTile: "first sighting → push service, median, 7 days",
+    pushTilePending: "first sighting → push service: measuring",
+    listing: "typical Duo listing on Apple's pickup page, median",
     note: { plus: "1 iPhone × 10 stores", pro: "2 iPhones × 10 stores", max: "5 iPhones × 10 stores" } as Record<string, string>,
     month: "/ month",
-    alerts: (n: number) => `${n} alerts`,
+    alerts: (n: number) => s(n, "alert"),
     perks: [...SPEED_PERKS] as string[],
     cancel: "Cancel anytime",
     get: (plan: string) => `Get ${plan}`,
+    /** "Do you need a plan?": who does not, who does (answer first). Links in [label](href). */
+    needTitle: "Do you need a plan?",
+    needAnswer: "Often not. A plan pays off when you want one exact iPhone at stores you can reach, can't keep checking yourself, and its restocks don't stay listed for long. Live stock, the map, the restock log, every store page and the public API stay free, with no account.",
+    skipTitle: "You don't need one if",
+    skip: [
+      "You're browsing live stock, the map or the restock log",
+      "Your store is one you can walk into any time: open its page before you go",
+      "You're flexible on configuration: store pages list everything in stock right now",
+      "You want the data: the [free public API](/iphone-duo-stock-api) has the same live stock",
+    ] as string[],
+    helpsTitle: "A plan helps if",
+    helps: [
+      "You want one exact configuration and its restocks are gone within minutes",
+      "You can't keep a tab open: a push is sent once two matching checks confirm a restock",
+      "You watch several stores or configurations at once",
+    ] as string[],
+    tool: "Not sure which stores or colours? The [alert setup](/#notify) shows how many past pickup windows your picks had and which change would have added the most, free.",
+    /** The alerts table: configurations × stores → the plan that holds it (plans.ts PLANS). */
+    tableTitle: "How many alerts do you need?",
+    /** Each plan's alert limit and monthly price in USD (PLANS). */
+    tableAnswer: (plus: Tier, pro: Tier, max: Tier) => `Alerts = configurations × stores. Up to ${plus.limit} alerts, such as one iPhone at ${plus.limit} stores, is Plus at $${plus.price} a month; up to ${pro.limit} is Pro at $${pro.price}; up to ${max.limit} is Max at $${max.price}. Past ${max.limit}, no plan holds it, so narrow the stores or the configurations.`,
+    corner: "iPhones ↓ · stores →",
+    configsN: (n: number) => s(n, "iPhone"),
+    storesN: (n: number) => s(n, "store"),
+    noPlan: "No plan holds it",
+    tableNote: "One alert = one store × one exact configuration (model, storage, colour). Any plan watches any mix, up to its number.",
     billing: "Stripe billing · card or Link · plan changes prorated",
     /** The refund policy line, as published (no other refund wording anywhere). */
     refund: "Not for you? [Full refund within 7 days](/refunds) if no restock alert has reached you yet",

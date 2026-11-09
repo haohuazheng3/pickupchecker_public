@@ -113,7 +113,7 @@ export default async function PickupAvailabilityExplained() {
     { q: "Is the Apple Store app different from apple.com for pickup availability?", a: "Both show the store's pickup availability for the exact configuration you choose; use whichever you can check out from faster while signed in. PickupChecker reads the public apple.com availability and is independent and not affiliated with Apple." },
     { q: "Why does my friend 50 miles away see stock I don't?", a: so ? `Two reasons: Apple answers each ZIP code with its own short list of nearby stores, and a listing may have appeared and sold out between your two looks, since the median iPhone Duo listing lasts ${so.medianSec} seconds. The stores around you, with their recent restocks, are on [iPhone Duo near me](/iphone-duo-near-me).` : "Two reasons: Apple answers each ZIP code with its own short list of nearby stores, and a listing may have appeared and sold out between your two looks. The stores around you are on [iPhone Duo near me](/iphone-duo-near-me)." },
     { q: "Is pickup availability the same as delivery availability?", a: `No — two inventories. Pickup availability is the store's own stock and changes within one check (every 15 s here); delivery availability is Apple's warehouse and shows as a shipping estimate that moves daily. A configuration can be "currently unavailable" for pickup at every store and still ship in a few weeks, or appear for pickup at one store while delivery says December. Hold both: a delivery order keeps your place, an alert catches the pickup ([where to buy an iPhone Duo today](/where-to-buy-iphone-duo)).` },
-    { q: "It showed available and was gone before I could reserve — what happened?", a: `A typical iPhone Duo pickup listing lasts about a minute — the median in our log is {{duo.medianStay}} — so the page you refreshed by hand was already behind. The sold-out state appears at Apple's next answer; we commit it after two consistent checks. The practical fix is to have the Apple Store app signed in with the Duo in your bag and a card saved, and to let an alert do the refreshing — it lands about 3 seconds after we confirm a restock.` },
+    { q: "It showed available and was gone before I could reserve — what happened?", a: `A typical iPhone Duo pickup listing lasts about a minute — the median in our log is {{duo.medianStay}} — so the page you refreshed by hand was already behind. The sold-out state appears at Apple's next answer; we commit it after two consistent checks. The practical fix is to have the Apple Store app signed in with the Duo in your bag and a card saved, and to let an alert do the refreshing — the push is sent about ${SPEED.alertSec} seconds after we confirm a restock; how fast it then shows on your phone depends on the phone and its connection, which we do not measure.` },
   ];
 
   const sources: Source[] = [
@@ -218,13 +218,13 @@ export default async function PickupAvailabilityExplained() {
           <StatGrid cols={3} className="mt-5">
             <Stat value={`${SPEED.checkSec}`} unit="s" label={<>between checks of every US Apple Store ({n(STORES.length)} stores, around the clock)</>} />
             <Stat value={`${SPEED.fastSec}`} unit="s" label="between checks of the stores with alerts" tone="accent" />
-            <Stat value={`~${SPEED.alertSec}`} unit="s" label="confirmed restock to the push on your phone" />
+            <Stat value={`~${SPEED.alertSec}`} unit="s" label="confirmed restock → push sent (arrival on your phone is not measured)" />
           </StatGrid>
           <Points className="mt-5" items={[
             { text: <><b className="text-ink">Two answers must agree</b>: a restock counts after a second answer about a second later says the same; a sell-out is confirmed on the next round</> },
             { text: <><b className="text-ink">An error is never &quot;out of stock&quot;</b>: a failed or timed-out request changes nothing; unavailable here was answered unavailable by apple.com, twice</> },
             { text: <><b className="text-ink">Your own tab does not refresh itself</b>: what you see is the answer to the search you ran; to see a change you search again</>, no: true },
-            { text: <Inline text={`That gap is what an alert closes: your phone is told about ${SPEED.alertSec} seconds after a confirmed restock ([iPhone Duo stock alerts](/iphone-duo-stock-alerts))`} facts={facts} />, step: true },
+            { text: <Inline text={`That gap is what an alert closes: the push is handed to Apple's push service about ${SPEED.alertSec} seconds after a confirmed restock ([iPhone Duo stock alerts](/iphone-duo-stock-alerts))`} facts={facts} />, step: true },
           ]} />
           <Measured>
             We do not know how often Apple&apos;s own systems update the figure behind the page and will not guess. What we can say is how often we ask: {n(STORES.length)} stores every {SPEED.checkSec} seconds, around the clock, since {longDate(TRACKING_SINCE_US)}.
@@ -255,7 +255,7 @@ export default async function PickupAvailabilityExplained() {
           <LinkRow links={[{ label: "When the iPhone Duo restocks, hour by hour", href: "/iphone-duo-restock-times" }, { label: "Which iPhone Duo restocks most", href: "/which-iphone-duo-restocks-most" }]} />
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Link href={setupHref} className="btn btn-primary">Set up an iPhone Duo alert</Link>
-            <span className="text-sm text-ink-3">Your stores checked every {SPEED.fastSec} seconds; a push about {SPEED.alertSec} seconds after a confirmed restock.</span>
+            <span className="text-sm text-ink-3">Your stores checked every {SPEED.fastSec} seconds; a push sent about {SPEED.alertSec} seconds after a confirmed restock.</span>
           </div>
         </Section>
       </div>

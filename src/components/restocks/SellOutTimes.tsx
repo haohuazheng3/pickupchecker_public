@@ -2,8 +2,9 @@
  * "How fast do restocks sell out here?": one quotable line, four big numbers, the per-model table, then each
  * restock as a bar whose length is the seconds it lasted. Server-rendered (times in the store's own zone,
  * formatted here, so nothing differs between server and browser). Numbers are bounds between two of our checks
- * (lib/stock/sellouts.ts), shown as ranges, never rounded up to a claim the checks cannot support; the method
- * sits folded under the module.
+ * (lib/stock/sellouts.ts), shown as ranges, never rounded up to a claim the checks cannot support; one line under
+ * the headline says what a listing time is (and is not: units sold or how fast a buyer must be); the method sits
+ * folded under the module.
  */
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { MODELS, PART_INDEX, STORE_INDEX, appleName, modelByKey, modelKeyFor, storePath, storeTimeZone } from "@/lib/apple/catalog";
@@ -82,6 +83,8 @@ export function SellOutTimes({ data, label, showStore = false, limit = 10 }: { d
   return (
     <div>
       <p className="text-sm font-medium text-ink">{headline(data, label, duo, w, lang)}</p>
+      {/* What the number is and is not (2026-11-09): a listing on Apple's page, bounded by two checks; not units sold, not a deadline. */}
+      <p className="mt-1 max-w-3xl text-xs leading-snug text-ink-3">{w.definition}</p>
 
       {have && (
         <StatGrid cols={4} className="mt-3">

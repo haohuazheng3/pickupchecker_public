@@ -92,6 +92,7 @@ export const modules: Dict["modules"] = {
     none: (label: string, days: number) => `In den letzten ${days} Tagen war noch kein Restock ${label} ausverkauft.`,
     whatDuo: "iPhone Duo",
     whatAll: "alle iPhones",
+    definition: "Die Angebotsdauer ist die Zeit, in der Apples Abholseite die Konfiguration als verfügbar zeigte, begrenzt durch zwei unserer Prüfungen; sie sagt nicht, wie viele Geräte verkauft wurden oder wie schnell Sie sein müssen.",
     tileHalf: (what: string) => <>Hälfte weg binnen · {what}</>,
     tileWithin30: "weg binnen 30 Sek.",
     tileWithin60: "weg binnen 1 Min.",
@@ -208,22 +209,45 @@ export const modules: Dict["modules"] = {
     lastIn: (o: { config: string; store: ReactNode | null; when: string; lasted: string | null }) => <>Zuletzt vorrätig: <b className="text-ink">{o.config}</b>{o.store != null && <> bei {o.store}</>}, {o.when}{o.lasted ? <> ({o.lasted})</> : null}.</>,
     neverYet: (label: string, since: string) => `Kein bestätigter iPhone-Duo-Restock ${label} seit Beginn der Erfassung am ${since}.`,
     others: (o: { pro: number; max: number; one: boolean; configs: number }) => (o.one ? `Das iPhone 18 Pro ist hier in ${n(o.pro)} von ${n(o.configs)} Konfigurationen vorrätig, das 18 Pro Max in ${n(o.max)}.` : `Das iPhone 18 Pro gibt es in ${n(o.pro)} davon, das 18 Pro Max in ${n(o.max)}.`),
-    updated: (stamp: string) => `Aktualisiert ${stamp}`,
-    checked: (note: string) => `geprüft ${note}`,
-    since: (date: string) => `Daten seit ${date}`,
-    method: "ein Restock zählt nur, wenn zwei Prüfungen übereinstimmen; erste Sichtungen zählen nicht",
+    evidence: (o) => (o.one
+      ? (o.fresh > 0
+        ? <>Stand {o.stamp}: {o.name} hat innerhalb der letzten Minute auf unsere Prüfung geantwortet.</>
+        : <>Stand {o.stamp}: keine Antwort von {o.name} in der letzten Minute – Status unbekannt, nicht als ausverkauft gezählt.</>)
+      : <>Stand {o.stamp}: {n(o.fresh)} von {n(o.total)} Stores {o.fresh === 1 ? "hat" : "haben"} innerhalb der letzten Minute geantwortet{o.stale > 0 ? `; ${n(o.stale)} ohne aktuelle Antwort – Status unbekannt, nicht als ausverkauft gezählt` : ""}.</>),
+    evidenceNone: (o) => (o.one
+      ? `${o.name} hat noch auf keine Prüfung geantwortet – Status unbekannt, nicht als ausverkauft gezählt.`
+      : `Noch keiner der ${n(o.total)} Stores hat auf eine Prüfung geantwortet – Status unbekannt, nichts wird als ausverkauft gezählt.`),
+    howCounted: (o) => {
+      const base = "Ein Restock zählt erst nach zwei übereinstimmenden Antworten (erste Sichtungen zählen nicht); die Angebotsdauer liegt zwischen der letzten Prüfung, die die Konfiguration noch sah, und der ersten, die sie nicht mehr sah. Geplant sind Prüfungen alle 5 Sek. bei Stores mit Alarm und alle 15 Sek. bei jedem Store";
+      const lanes = [
+        o.fast && `im Median ${o.fast.p50} bei Stores mit Alarm (p95 ${o.fast.p95}, ${n(o.fast.n)} Intervalle${o.fast.slow ? "; langsamer als geplant" : ""})`,
+        o.round && `${o.round.p50} pro voller Runde (p95 ${o.round.p95}, ${n(o.round.n)} Runden${o.round.slow ? "; langsamer als geplant" : ""})`,
+      ].filter(Boolean);
+      if (lanes.length === 0 || !o.win) return `${base}.`;
+      const win = o.win.days ? `in den letzten ${n(o.win.days)} Tagen` : o.win.hours && o.win.hours > 1 ? `in den letzten ${n(o.win.hours)} Stunden` : "in der letzten Stunde";
+      return `${base}; gemessen ${win}: ${lanes.join(" und ")}.`;
+    },
+    howLink: "So messen wir →",
+    sec: (v) => `${v} Sek.`,
+    technique: "PickupChecker fragt Apples Abholverfügbarkeit für jeden Apple Store ab: alle 5 Sekunden bei Stores mit Mitglieder-Alarm, alle 15 Sekunden bei jedem Store. Ein Restock zählt erst nach zwei übereinstimmenden Antworten (erste Sichtungen ausgenommen); die Angebotsdauer liegt zwischen der letzten Prüfung, die die Konfiguration noch sah, und der ersten, die sie nicht mehr sah.",
     /* Tiles */
     tShare: (range: string) => `der Restocks im Fenster ${range}`,
     tBusiest: (count: number) => `stärkste Stunde · ${restocks(count)}`,
-    tHalf: "Hälfte ausverkauft innerhalb",
+    tHalf: "mittlere Angebotsdauer",
     tSince: (date: string) => `bestätigte Restocks seit ${date}`,
     tToday: "heute bisher",
     mostOften: (config: string, k: number, total: number) => `am häufigsten ${config} (${n(k)} von ${n(total)})`,
     /** German pages always say "Ortszeit"; US zone names are only for English. */
     zone: (tz: string | null): string => { void tz; return "Ortszeit"; },
-    summary: (o: { pct: string; n: number; stores: number; label: string; since: string; range: string; zone: string; busiest: string; busiestN: number; median: string | null; config: string | null; k: number; one: boolean }) =>
-      `${o.pct} der ${n(o.n)} iPhone-Duo-Restocks, die PickupChecker ${o.one ? o.label : o.stores === 1 ? `im Apple Store ${o.label}` : `in den ${n(o.stores)} Apple Stores ${o.label}`} seit ${o.since} bestätigt hat, fielen in das Fenster ${o.range} ${o.zone}; die stärkste Stunde war ${o.busiest} (${n(o.busiestN)}).${o.median ? ` Die Hälfte war innerhalb von ${o.median} ausverkauft.` : ""}${o.config ? ` Am häufigsten kam das ${o.config} zurück (${n(o.k)} von ${n(o.n)}).` : ""}`,
-    tooFew: (o: { n: number; label: string; since: string; one: boolean; stores: number }) => `${plural(o.n, "bestätigter iPhone-Duo-Restock", "bestätigte iPhone-Duo-Restocks")} ${o.one ? o.label : o.stores === 1 ? `im Apple Store ${o.label}` : `in den ${n(o.stores)} Apple Stores ${o.label}`} seit ${o.since} – zu wenige für eine übliche Uhrzeit; jeder einzelne steht unten.`,
+    factsTitle: (label) => `Kernfakten: iPhone Duo ${label}`,
+    fN: (o) => <>PickupChecker hat seit dem {o.since} <b className="text-ink">{n(o.n)}</b> {o.n === 1 ? "iPhone-Duo-Restock" : "iPhone-Duo-Restocks"} {o.one ? o.label : o.stores === 1 ? `im Apple Store ${o.label}` : `in den ${n(o.stores)} Apple Stores ${o.label}`} bestätigt, an {o.days === 1 ? "einem Tag" : `${n(o.days)} verschiedenen Tagen`}.</>,
+    fShare: (o) => <><b className="text-ink">{o.pct}</b> der {n(o.n)} iPhone-Duo-Restocks {o.label} seit dem {o.since} fielen in das Fenster {o.range} {o.zone}; die stärkste Stunde war {o.busiest} ({restocks(o.busiestN)}).</>,
+    fTooFew: (o) => `${plural(o.n, "bestätigter iPhone-Duo-Restock", "bestätigte iPhone-Duo-Restocks")} ${o.label} an ${o.days === 1 ? "einem Tag" : `${n(o.days)} Tagen`} – zu wenige für eine übliche Uhrzeit: PickupChecker nennt sie erst ab ${n(o.min)} Restocks an ${n(o.minDays)} verschiedenen Tagen.`,
+    fMedian: (o) => <>Im Median stand ein iPhone Duo {o.label} <b className="text-ink">etwa {o.median}</b> auf Apples Abholseite ({n(o.n)} gemessene Angebote seit dem {o.since}).</>,
+    fTop: (o) => <>Die am häufigsten aufgefüllte iPhone-Duo-Konfiguration {o.label} ist das <b className="text-ink">{o.config}</b>: {n(o.k)} von {n(o.n)} Restocks ({o.pct}) seit dem {o.since}.</>,
+    fToday: (o) => (o.n > 0
+      ? <>Heute ({o.date}, Ortszeit) hat PickupChecker {o.label} bisher <b className="text-ink">{n(o.n)}</b> {o.n === 1 ? "iPhone-Duo-Restock" : "iPhone-Duo-Restocks"} bestätigt.</>
+      : <>Heute ({o.date}, Ortszeit) hat PickupChecker {o.label} bisher keinen iPhone-Duo-Restock bestätigt.</>),
     hourByHour: "Stunde für Stunde, jeder Store →",
     lastThree: (k: number, label: string) => (k === 1 ? `Der letzte iPhone-Duo-Restock ${label}` : `Die letzten ${n(k)} iPhone-Duo-Restocks ${label}`),
     secs: (x: number) => `${n(x)} s`,

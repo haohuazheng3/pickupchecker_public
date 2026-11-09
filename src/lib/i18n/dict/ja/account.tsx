@@ -2,16 +2,11 @@
  * 日本語: account（マイ通知ページ、そこに出る入荷モジュール、/install、/checkout/success、/pricing）。
  * **太字** と [ラベル](リンク) は <Md> で表示。プラン名とドル金額は訳さない（全言語で米ドル課金）。
  */
-import { OTHER_TRACKERS, SPEED } from "@/lib/plans";
+import { SPEED } from "@/lib/plans";
 import { num } from "@/lib/i18n/format";
 import type { Dict } from "../en";
 
 const N = (n: number) => num("ja", n);
-/** 他サイトが公表しているチェック間隔（"8 seconds to 15 minutes" → 「8秒〜15分」）。 */
-const others = (() => {
-  const m = OTHER_TRACKERS.match(/^(\d+) seconds? to (\d+) minutes?$/);
-  return m ? `${m[1]}秒〜${m[2]}分` : OTHER_TRACKERS;
-})();
 
 export const account: Dict["account"] = {
   loading: "読み込み中",
@@ -41,7 +36,7 @@ export const account: Dict["account"] = {
     title: "20秒で確保する",
     sub: "最後の4タップ以外は、いま済ませておく",
     lasts: "Duoの在庫が出ている時間（通常）",
-    push: "入荷確認 → スマートフォンにプッシュ通知",
+    push: "入荷確認 → プッシュ通知を送信（端末への到着は未計測）",
     tapsLeft: "通知が届いてから残る操作",
     steps: [
       { title: "時間帯を決める", hint: "店舗の営業時間は下に · 10分前から準備" },
@@ -109,24 +104,55 @@ export const account: Dict["account"] = {
     title: "料金",
     lead: "**通知1件＝1店舗 × 1台のiPhone（容量・カラーまで指定）。** 在庫の閲覧は無料です。",
     chips: ["日本のアップルストア全11店舗に対応", "いつでも解約", "カードまたはLink"],
-    fastest: "公表されているiPhone在庫トラッカーの中で、最速のチェック間隔",
-    everyFast: `選んだ店舗を**${SPEED.fastSec}秒ごと**にチェック · 他サイトの公表値は${others}`,
-    sellsOut: (band: string) => `iPhone Duoの入荷は通常**${band}**で完売、20〜30秒で消えることも`,
+    speedTitle: "どれくらい速い？ 計画値と実測値",
+    speedAnswer: (v) => `通知を設定した店舗は${SPEED.fastSec}秒ごとにチェックする計画です。米国での直近7日間の実測では、そうした店舗への2回の応答の間隔は中央値**${v.p50}**、95パーセンタイル${v.p95}でした。どのプランでも同じペースです。`,
+    speedPlanned: `通知を設定した店舗は${SPEED.fastSec}秒ごと、それ以外の店舗は${SPEED.checkSec}秒ごとにチェックする計画です。1週間分のチェックが記録されると、ここに実測値が表示されます。どのプランでも同じペースです。`,
+    planned: `計画値：選んだ店舗は**${SPEED.fastSec}秒ごと**、全店舗は**${SPEED.checkSec}秒ごと**`,
+    intl: (v) => `米国以外：中央値**${v.p50}**、95パーセンタイル${v.p95}${v.above ? `（計画の${SPEED.fastSec}秒より遅い）` : ""}`,
+    push: (v) => `在庫を最初に検知したチェック → AppleまたはGoogleのプッシュサービスが受理：中央値**${v.p50}**、90パーセンタイル${v.p90}（入荷${v.n}回、7日間）`,
+    pushPending: "1週間分の通知が記録されると、通知のタイミングをここに表示します",
+    notMeasured: "スマートフォンへの到着は測定していません（プッシュサービスから報告がないため）",
+    listingLine: (band, k) => `iPhone Duoの入荷がAppleの受け取りページに掲載されていた時間は通常**${band}**（入荷${k}回の中央値、7日間）`,
     band: (range: string) => `${range.replace(/[–-]/, "〜")}秒`,
     aboutMinute: "約1分",
-    sameSpeed: "どのプランでも速さは同じ",
-    rechecked: "選んだ店舗の再チェック間隔",
-    toPhone: "入荷確認からスマートフォンへ",
-    listing: "Duoの在庫が出てから消えるまで（通常）",
+    report: "[サービスレポート](/service-report)：チェック系統ごとの24時間・7日・30日の実測値（サンプル数と限界つき）",
+    gapTile: "選んだ店舗：チェック間隔の中央値（7日間）",
+    plannedTile: "選んだ店舗：計画上のチェック間隔",
+    pushTile: "初回検知 → プッシュサービス、中央値（7日間）",
+    pushTilePending: "初回検知 → プッシュサービス：測定中",
+    listing: "Duoの受け取りページ掲載時間（通常）、中央値",
     note: { plus: "iPhone 1台 × 10店舗", pro: "iPhone 2台 × 10店舗", max: "iPhone 5台 × 10店舗" },
     month: "/ 月",
     alerts: (n: number) => `通知${N(n)}件`,
     perks: [
       `選んだ店舗は${SPEED.fastSec}秒ごと、全店舗は${SPEED.checkSec}秒ごとにチェック`,
-      `入荷を確認してから約${SPEED.alertSec}秒でプッシュ通知`,
+      `入荷を確認してから約${SPEED.alertSec}秒でプッシュ通知を送信`,
     ],
     cancel: "いつでも解約可能",
     get: (plan: string) => `${plan}を始める`,
+    needTitle: "プランは必要？",
+    needAnswer: "多くの場合、不要です。プランが役立つのは、行ける店舗で特定のiPhoneが欲しいのに自分ではずっと確認できず、しかも入荷してもすぐ消えてしまう場合です。リアルタイム在庫、地図、入荷ログ、各店舗ページ、公開APIはアカウントなしで無料のままです。",
+    skipTitle: "こんな人には不要",
+    skip: [
+      "リアルタイム在庫、地図、入荷ログを見るだけ",
+      "いつでも行ける店舗：出かける前にその店舗ページを確認",
+      "構成にこだわらない：店舗ページで今ある在庫をすべて確認できます",
+      "データが欲しい：[無料の公開API](/iphone-duo-stock-api)で同じリアルタイム在庫を取得できます",
+    ],
+    helpsTitle: "こんな人に役立つ",
+    helps: [
+      "特定の構成が欲しく、入荷しても数分で消える",
+      "タブを開いたままにできない：2回のチェックが一致して入荷を確認した時点でプッシュを送信",
+      "複数の店舗や構成を同時に見張りたい",
+    ],
+    tool: "店舗やカラーで迷ったら？[通知設定](/#notify)で、選んだ組み合わせの過去の受け取り枠の数と、いちばん枠が増える変更を無料で確認できます。",
+    tableTitle: "通知はいくつ必要？",
+    tableAnswer: (plus, pro, max) => `通知の数＝構成 × 店舗。通知${N(plus.limit)}件まで（例：iPhone 1台を${N(plus.limit)}店舗で）ならPlusで月額$${plus.price}、${N(pro.limit)}件までならProで$${pro.price}、${N(max.limit)}件までならMaxで$${max.price}。${N(max.limit)}件を超えるとどのプランにも収まらないので、店舗か構成を絞ってください。`,
+    corner: "iPhone ↓ · 店舗 →",
+    configsN: (k) => `iPhone ${N(k)}台`,
+    storesN: (k) => `${N(k)}店舗`,
+    noPlan: "対応プランなし",
+    tableNote: "通知1件＝1店舗 × 1つの構成（モデル・容量・カラー）。どのプランでも、上限数まで自由に組み合わせられます。",
     billing: "Stripeで決済 · カードまたはLink · プラン変更は日割り計算",
     refund: "合わなかったら：入荷通知がまだ一度も届いていなければ、[7日以内は全額返金](/refunds)します",
   },

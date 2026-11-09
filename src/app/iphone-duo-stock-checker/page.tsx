@@ -41,7 +41,7 @@ const APPLE_NEWSROOM = "https://www.apple.com/newsroom/2026/10/iphone-duo-arrive
 const MACRUMORS = "https://macrumors.com/2026/10/24/apple-store-pickup-iphone-duo-us/";
 const WIKI_INVENTORY = "https://en.wikipedia.org/wiki/Inventory";
 /** The one price sentence, word for word, in the body and in a FAQ answer (answer engines quote it as is). */
-const PRICE_SENTENCE = `Alerts from $${PLANS.plus.priceUsd}/month: the stores you pick are checked every ${SPEED.fastSec} s, with a push about ${SPEED.alertSec} s after a restock is confirmed.`;
+const PRICE_SENTENCE = `Alerts from $${PLANS.plus.priceUsd}/month: the stores you pick are checked every ${SPEED.fastSec} s, with a push sent about ${SPEED.alertSec} s after a restock is confirmed.`;
 const QUOTE = "You are welcome to quote these numbers with a link to this page; PickupChecker is independent and not affiliated with Apple, and reads the same pickup availability anyone can see on apple.com, just far more often.";
 
 const n = (x: number) => x.toLocaleString("en-US");
@@ -219,8 +219,8 @@ export default async function StockCheckerPage() {
   const h2Of = (id: string) => sections.find((s) => s.id === id)!.h2;
 
   const faq: Faq[] = [
-    { q: "Is there an iPhone Duo stock checker?", a: `Yes, this page: PickupChecker checks all ${STORES.length} US Apple Stores for iPhone Duo pickup stock every ${SPEED.checkSec} seconds (and ${intlStores} stores in ${INTL_CODES.length} other countries), lists the states and stores with one right now, and logs every confirmed restock${t.unknown ? "" : ` (${n(t.n)} in the US since ${since})`}. Browsing is free; [alerts](/iphone-duo-stock-alerts) push a restock to your phone within seconds.` },
-    { q: "How often is Apple Store stock checked?", a: `Every ${SPEED.checkSec} seconds for every US Apple Store and every ${SPEED.fastSec} seconds for the stores a paid alert points at, the shortest published interval of any iPhone stock tracker we know of (others publish ${OTHER_TRACKERS}). A first "available" is asked again about a second later and counts only when both answers agree; a failed request never counts as "out of stock".` },
+    { q: "Is there an iPhone Duo stock checker?", a: `Yes, this page: PickupChecker checks all ${STORES.length} US Apple Stores for iPhone Duo pickup stock every ${SPEED.checkSec} seconds (and ${intlStores} stores in ${INTL_CODES.length} other countries), lists the states and stores with one right now, and logs every confirmed restock${t.unknown ? "" : ` (${n(t.n)} in the US since ${since})`}. Browsing is free; [alerts](/iphone-duo-stock-alerts) send a push within seconds of a confirmed restock (when it shows on your phone depends on the phone and its connection).` },
+    { q: "How often is Apple Store stock checked?", a: `Every ${SPEED.checkSec} seconds for every US Apple Store and every ${SPEED.fastSec} seconds for the stores a paid alert points at, with the measured intervals published on the [service report](/service-report) (other trackers state ${OTHER_TRACKERS}; [compared](/iphone-stock-tracker-comparison)). A first "available" is asked again about a second later and counts only when both answers agree; a failed request never counts as "out of stock".` },
     { q: "Why does apple.com say \"currently unavailable for pickup\" everywhere?", a: sell && band
       ? `Because you are looking between restocks: a typical iPhone Duo listing lasts about ${band} (median ${sell.medianSec} seconds over ${n(sell.n)} timed sell-outs since ${since}), so the page you reload is almost always between two of them. [What the wording means](/apple-store-pickup-availability-explained); the state table above shows where it reads "available" right now.`
       : `Because you are looking between restocks: an iPhone Duo listing lasts seconds to a few minutes and reads "currently unavailable" for the rest of the day, so the page you reload is almost always between two of them. [What the wording means](/apple-store-pickup-availability-explained); the state table above shows where it reads "available" right now.` },
@@ -251,7 +251,7 @@ export default async function StockCheckerPage() {
           `Every store checked every ${SPEED.checkSec} seconds; the stores an alert points at every ${SPEED.fastSec} seconds`,
           "Every restock confirmed by a second check before it counts",
           "Log of every confirmed restock and sell-out with store, configuration and local time",
-          `Phone alert about ${SPEED.alertSec} seconds after a confirmed restock`,
+          `Push alert sent about ${SPEED.alertSec} seconds after a confirmed restock`,
         ],
         offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: `Free to browse; alerts from $${PLANS.plus.priceUsd}/month` },
         publisher: { "@id": `${SITE}/#organization` },
@@ -298,7 +298,7 @@ export default async function StockCheckerPage() {
         { text: <>All {STORES.length} US stores every <b className="text-ink">{SPEED.checkSec} s</b>; the stores an alert points at every <b className="text-ink">{SPEED.fastSec} s</b></> },
         { text: <>Two agreeing answers from apple.com before a restock counts; a failed request never counts as sold out</> },
         { text: <>Times in each store&apos;s local zone; independent, not affiliated with Apple</> },
-        { text: <>Alerts push a confirmed restock to your phone about <b className="text-ink">{SPEED.alertSec} s</b> later</>, step: true },
+        { text: <>Alerts send the push about <b className="text-ink">{SPEED.alertSec} s</b> after a confirmed restock; arrival on your phone is not measured</>, step: true },
       ]} />
       <div className="mt-6 flex flex-wrap gap-3">
         <Link href={alert} className="btn btn-primary">Alert me when a store restocks</Link>
@@ -363,7 +363,7 @@ export default async function StockCheckerPage() {
             { text: <>What each phrase on the pickup page means, word by word: <Link href="/apple-store-pickup-availability-explained">pickup availability explained</Link></>, step: true },
           ]} />
           <ol className="my-4 grid gap-3 sm:grid-cols-2">
-            <Swap no="Reload apple.com every few minutes" yes="Let a checker reload for you and ping your phone" why={`Every US store is asked every ${SPEED.checkSec} seconds here, the stores an alert points at every ${SPEED.fastSec}; the push follows about ${SPEED.alertSec} seconds after a restock is confirmed.`} />
+            <Swap no="Reload apple.com every few minutes" yes="Let a checker reload for you and ping your phone" why={`Every US store is asked every ${SPEED.checkSec} seconds here, the stores an alert points at every ${SPEED.fastSec}; the push is sent about ${SPEED.alertSec} seconds after a restock is confirmed.`} />
             <Swap no="Check one ZIP, then another, then another" yes={<Link href="/iphone-duo-near-me">Every store ranked by distance from you</Link>} why={`All ${STORES.length} US Apple Stores, live stock on each, in one list.`} />
           </ol>
           <Figure id="click-and-collect-queue" />
@@ -385,7 +385,7 @@ export default async function StockCheckerPage() {
             { text: <>A disappearance is confirmed on the next round, so a one-response glitch never becomes a sell-out</> },
             { text: <>A failed or slow request is never written down as &quot;out of stock&quot;</>, no: true },
             { text: <>Times in the store&apos;s own local zone; data since <b className="text-ink">{longDate(TRACKING_SINCE_US)}</b> in the US, {longDate(TRACKING_SINCE_INTL)} elsewhere</> },
-            { text: <>Other trackers publish check intervals of <b className="text-ink">{OTHER_TRACKERS}</b>; we compare published numbers only</> },
+            { text: <>Other trackers state check intervals of <b className="text-ink">{OTHER_TRACKERS}</b>, their own claims: <Link href="/iphone-stock-tracker-comparison">side by side</Link>, with our measured ones on the <Link href="/service-report">service report</Link></> },
             { text: <>The full method with the confirmation rules: <Link href="/how-it-works">how it works</Link></>, step: true },
           ]} />
           <Measured title="What &quot;stock&quot; means here">
@@ -517,7 +517,7 @@ export default async function StockCheckerPage() {
           </Table>
           <Keys items={[
             { text: <>Prices and times on each country&apos;s pages in its own currency and zones; store names as Apple writes them there</> },
-            { text: <>Alerts for a store abroad work the same way: that store every <b className="text-ink">{SPEED.fastSec} s</b>, a push about {SPEED.alertSec} s after confirmation</> },
+            { text: <>Alerts for a store abroad work the same way: that store every <b className="text-ink">{SPEED.fastSec} s</b>, a push sent about {SPEED.alertSec} s after confirmation</> },
             { text: <>Austria and Belgium have one Apple Store each, so their country page is that store&apos;s page</> },
           ]} />
         </section>

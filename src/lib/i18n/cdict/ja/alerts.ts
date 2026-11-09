@@ -58,6 +58,24 @@ export const alerts: CDict["alerts"] = {
     myAlerts: "マイ通知",
   },
 
+  windows: {
+    title: "受け取り枠がいちばん増えるのは？",
+    had: "選択中：過去{days}で{windows}",
+    windowsN: { other: "受け取り枠#回" } as Forms,
+    daysN: { other: "#日" } as Forms,
+    best: " · {what}を追加で{gain}",
+    noGain: " · 近くの変更では増えませんでした",
+    gainN: { other: "+#回" } as Forms,
+    tooFew: "過去{days}の受け取り枠が少なすぎて比較できません（{n}回）",
+    counting: "過去の受け取り枠を集計中…",
+    listed: "掲載時間は合計{time}（同時刻の枠は1回として計算）。",
+    storeAt: "{store} · 約{dist}",
+    cost: { other: "通知+#件" } as Forms,
+    addButton: "追加",
+    add: "{what}を追加",
+    note: "Appleの受け取りページに過去に出た在庫の記録で、予測や購入できる確率ではありません。枠は入荷から完売まで（掲載中なら現在まで）です。",
+  },
+
   matrix: {
     model: "機種",
     configs: "{model}の構成",

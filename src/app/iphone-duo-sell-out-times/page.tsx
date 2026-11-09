@@ -18,6 +18,8 @@ import { COUNTRIES, INTL_CODES, type CountryCode } from "@/lib/apple/countries";
 import { OTHER_TRACKERS, SPEED } from "@/lib/plans";
 import { TRACKING_SINCE_INTL, TRACKING_SINCE_US, WEEKDAY_MIN_SPAN, localHourDay, siteFacts } from "@/lib/content/siteFacts";
 import { duoRestockTimes } from "@/lib/content/restockTimes";
+import { STATE_MIN, selloutsByState } from "@/lib/content/selloutStates";
+import { serviceStats } from "@/lib/content/serviceStats";
 import { ROUND_SEC, medianBand, sellouts, summarize, type SelloutRow, type SelloutSummary } from "@/lib/stock/sellouts";
 
 export const dynamic = "force-dynamic";
@@ -138,13 +140,14 @@ function KeyTable({ rows }: { rows: [ReactNode, ReactNode][] }) {
 }
 
 export default async function SellOutTimesPage() {
-  const [us, all, rt, f, facts, abroad] = await Promise.all([
+  const [us, all, rt, f, facts, abroad, svc] = await Promise.all([
     sellouts({ country: "us", model: "duo", limit: 1000 }),
     sellouts({ country: "us" }),
     duoRestockTimes("us"),
     siteFacts(),
     getFacts(),
     Promise.all(ABROAD.map((cc) => sellouts({ country: cc, model: "duo" }))),
+    serviceStats(),
   ]);
   const s = us.summary;
   const days = s.days;
@@ -159,9 +162,15 @@ export default async function SellOutTimesPage() {
   const solidConfigs = configRows.filter((r) => r.s.n >= SOLID && r.s.medianSec != null).sort((a, b) => a.s.medianSec! - b.s.medianSec!);
   const fastCfg = solidConfigs[0], slowCfg = solidConfigs[solidConfigs.length - 1];
 
-  const regions = grouped(us.recent, days, (r) => storeByNumber(r.storeNumber)?.state).slice(0, 8);
-  const solidRegions = regions.filter((r) => r.s.n >= SOLID && r.s.medianSec != null).sort((a, b) => a.s.medianSec! - b.s.medianSec!);
+  // The rows above are the most recent timed listings the page loaded (up to 1,000): tables built from them say "since" their oldest one.
+  const byState = selloutsByState(us.recent, (num) => storeByNumber(num)?.state);
+  const recentSince = byState.from ? LONG.format(new Date(byState.from)) : null;
+  const timedRecent = us.recent.filter((r) => r.highSec != null).length;
+  const topState = byState.rows[0] ?? byState.thin[0] ?? null;
+  const topStateMedian = byState.rows[0] ? byState.rows[0].medianSec : null;
+  const solidRegions = [...byState.rows].sort((a, b) => a.medianSec - b.medianSec);
   const fastSt = solidRegions[0], slowSt = solidRegions[solidRegions.length - 1];
+  const push7 = svc.delivery["7d"].push;
 
   const wk = weekendSplit(us.recent, days);
   const weekendKnown = wk.spanDays >= WEEKDAY_MIN_SPAN && wk.weekday.n >= SOLID && wk.weekend.n >= SOLID && wk.weekday.medianSec != null && wk.weekend.medianSec != null;
@@ -237,6 +246,9 @@ export default async function SellOutTimesPage() {
           ? <>A typical iPhone Duo restock at a US Apple Store sold out in <b className="text-ink">about {band}</b>: the median is <b className="text-ink">{s.medianSec} seconds</b> over {n(s.n)} sold-out restocks {sinceLabel}.</>
           : <>No iPhone Duo restock at a US Apple Store has sold out inside the last {days} days of our log, so there is no sell-out time to quote yet; the tiles fill in with the next restock.</>}
       </p>
+      <p className="mt-2 text-sm text-ink-3">
+        <b className="text-ink-2">What &ldquo;sold out&rdquo; means here:</b> a sell-out time is how long Apple&apos;s pickup page listed one configuration at one store, from the check that first saw it to the first check that did not ({SPEED.fastSec}–{SPEED.checkSec} seconds apart). It is not a count of units sold (Apple publishes none), and a short listing is not a measure of your chance to buy one.
+      </p>
       <StatGrid cols={3} className="mt-6">
         <Stat value={have ? s.medianSec : "–"} unit={have ? "s" : undefined} label="typical listing, listed to gone (median)" tone="accent" />
         <Stat value={have ? pct(s.within30) : "–"} label="gone within 30 seconds" tone="warn" />
@@ -284,13 +296,13 @@ export default async function SellOutTimesPage() {
             : solidConfigs.length === 1 && fastCfg
               ? `Only ${cfgName(fastCfg.item)} has ${SOLID} or more timed sell-outs so far (median ${fastCfg.s.medianSec} seconds over ${fastCfg.s.n}); every other row is a handful of restocks, so there is no ranking yet.`
               : `Not knowable yet: no configuration has ${SOLID} timed sell-outs in the window, so the rows below are anecdotes rather than a ranking.`}</b></p>
-          <LifeTable head="Configuration" caption={`Seconds each iPhone Duo configuration stayed listed before it sold out, US Apple Stores, last ${days} days; "thin" = under ${SOLID} sell-outs`} rows={configRows.map((r) => ({ label: cfgName(r.item), s: r.s }))} />
+          <LifeTable head="Configuration" caption={`Seconds each iPhone Duo configuration stayed listed before it sold out, US Apple Stores, ${recentSince ? `the ${n(timedRecent)} timed listings since ${recentSince}` : `last ${days} days`}; "thin" = under ${SOLID} sell-outs`} rows={configRows.map((r) => ({ label: cfgName(r.item), s: r.s }))} />
           <Keys items={[
             { text: <>Rows under <b className="text-ink">{SOLID}</b> sell-outs: marked thin, not ranked</> },
             { text: <>Alert stores timed at <b className="text-ink">{SPEED.fastSec} s</b>, the rest at <b className="text-ink">{ROUND_SEC} s</b>: our resolution, not demand</> },
           ]} />
           <ol className="my-4 grid gap-3 sm:grid-cols-2">
-            <Swap no="Pick the color that looks slowest to sell" yes="Pick the storage and color you want to own" why="The gap between rows is seconds; hearing about a restock within seconds is the whole phone." />
+            <Swap no="Pick the color that looks slowest to sell" yes="Pick the storage and color you want to own" why="The gap between rows is seconds; an alert sent within seconds of the restock is what decides it." />
             <Swap no="Guess which configuration comes back" yes={<Link href="/which-iphone-duo-restocks-most">Which iPhone Duo restocks most</Link>} why="A different question, answered by configuration and by store." />
           </ol>
         </section>
@@ -298,11 +310,45 @@ export default async function SellOutTimesPage() {
         {/* ---------------------------------------------------------------- by state */}
         <section id="states" className="scroll-mt-24">
           <h2>{sections[2].h2}</h2>
-          <p><b>{regions[0]
-            ? `${regions[0].key} has the most timed sell-outs (${regions[0].s.n}, median ${regions[0].s.medianSec} seconds against ${s.medianSec} nationally)${solidRegions.length >= 2 && fastSt && slowSt && fastSt !== slowSt ? `; among states with at least ${SOLID}, ${fastSt.key} is quickest at a median of ${fastSt.s.medianSec} seconds and ${slowSt.key} slowest at ${slowSt.s.medianSec}.` : "; no second state has enough timed sell-outs for a fair comparison yet."}`
-            : `No state has a timed iPhone Duo sell-out in the last ${days} days, so there is nothing to compare yet.`}</b></p>
-          {regions.length > 0 && (
-            <LifeTable head="State" caption={`The ${regions.length} states with the most timed iPhone Duo sell-outs, last ${days} days`} rows={regions.map((r) => ({ label: <Link href={statePath(r.key)} className="underline-offset-2 hover:underline">{r.key}</Link>, s: r.s }))} />
+          <p><b>{topState && byState.all.medianSec != null
+            ? `${topState.state} has the most timed iPhone Duo listings (${n(topState.n)}${topStateMedian != null ? `, median ${topStateMedian} seconds` : ""}), against a median of ${byState.all.medianSec} seconds over all ${n(byState.all.n)} US listings timed since ${recentSince}${solidRegions.length >= 2 && fastSt && slowSt && fastSt !== slowSt ? `; among the ${byState.rows.length} states with at least ${STATE_MIN}, ${fastSt.state} has the shortest median listing (${fastSt.medianSec} seconds) and ${slowSt.state} the longest (${slowSt.medianSec}).` : "; no second state has enough timed listings for a fair comparison yet."}`
+            : `No state has a timed iPhone Duo listing in the last ${days} days, so there is nothing to compare yet.`}</b></p>
+          {byState.rows.length > 0 && (
+            <div className="my-4 overflow-x-auto">
+              <table className="w-full min-w-[30rem] border-collapse text-sm">
+                <caption className="mb-2 text-start text-xs text-ink-3">{`Every US state with at least ${STATE_MIN} timed iPhone Duo listings, most first, out of ${n(byState.all.n)} timed since ${recentSince}. Median: half of the state's listings ended sooner. The shares: listings gone within 30 seconds and within 2 minutes. Listing time on Apple's pickup page, not units sold.`}</caption>
+                <thead>
+                  <tr className="border-b border-line-2 text-start text-ink">
+                    <th scope="col" className="py-2 pe-3 font-semibold">State</th>
+                    <th scope="col" className="py-2 pe-3 font-semibold">Timed listings</th>
+                    <th scope="col" className="py-2 pe-3 font-semibold">Median listing</th>
+                    <th scope="col" className="py-2 pe-3 font-semibold">≤ 30 s</th>
+                    <th scope="col" className="py-2 pe-3 font-semibold">≤ 2 min</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {byState.rows.map((r) => (
+                    <tr key={r.state} className="border-b border-line">
+                      <th scope="row" className="py-2 pe-3 text-start font-medium text-ink"><Link href={statePath(r.state)} className="underline-offset-2 hover:underline">{r.state}</Link></th>
+                      <td className="py-2 pe-3 tabular-nums">{n(r.n)}</td>
+                      <td className="py-2 pe-3 tabular-nums">{secs(r.medianSec)}</td>
+                      <td className="py-2 pe-3 tabular-nums">{pct(r.within30)}</td>
+                      <td className="py-2 pe-3 tabular-nums">{pct(r.within120)}</td>
+                    </tr>
+                  ))}
+                  <tr className="border-b border-line text-ink-3">
+                    <th scope="row" className="py-2 pe-3 text-start font-medium">All US states</th>
+                    <td className="py-2 pe-3 tabular-nums">{n(byState.all.n)}</td>
+                    <td className="py-2 pe-3 tabular-nums">{secs(byState.all.medianSec)}</td>
+                    <td className="py-2 pe-3 tabular-nums">{pct(byState.all.within30)}</td>
+                    <td className="py-2 pe-3 tabular-nums">{pct(byState.all.within120)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+          {byState.thin.length > 0 && (
+            <p className="text-sm text-ink-3">Fewer than {STATE_MIN} timed listings, so not ranked: {byState.thin.map((r, i) => <span key={r.state}>{i ? ", " : ""}<Link href={statePath(r.state)} className="underline-offset-2 hover:underline">{r.state}</Link> ({r.n})</span>)}.</p>
           )}
           <Keys items={[
             { text: <>Big states lead: <b className="text-ink">more stores</b>, not faster shoppers</> },
@@ -340,15 +386,17 @@ export default async function SellOutTimesPage() {
               <Stat value={pct(ds.caught.m1)} label="of Duo restocks seen by a tracker checking every minute" tone="warn" />
               <Stat value={pct(ds.caught.m5)} label="seen when checking every 5 minutes" tone="warn" />
               <Stat value={pct(ds.caught.m15)} label="seen when checking every 15 minutes" tone="warn" />
-              <Stat value={`~${SPEED.alertSec}`} unit="s" label="PickupChecker: confirmed restock to the push on your phone" tone="accent" />
+              {push7
+                ? <Stat value={push7.p50Sec.toFixed(1)} unit="s" label={`PickupChecker, last 7 days: first check that saw a restock to the push accepted by Apple or Google (median, ${n(push7.events)} restocks; arrival on the phone is not measured)`} tone="accent" />
+                : <Stat value={`~${SPEED.alertSec}`} unit="s" label="PickupChecker's planned time from a confirmed restock to the push being sent (not yet measured here)" tone="accent" />}
             </StatGrid>
           )}
           <ol className="my-4 grid gap-3 sm:grid-cols-2">
             <Swap no="A check every few minutes" yes={`A check every ${SPEED.fastSec} seconds`} why={band ? `A listing that lasts about ${band} is often gone between two slow checks.` : "A listing that lasts seconds is often gone between two slow checks."} />
-            <Swap no="Refreshing apple.com by hand" yes="An alert on two or three stores" why={`Your stores every ${SPEED.fastSec} seconds, every other Apple Store every ${SPEED.checkSec}; a first "available" is confirmed about a second later and the push follows about ${SPEED.alertSec} seconds after that.`} />
+            <Swap no="Refreshing apple.com by hand" yes="An alert on two or three stores" why={`Your stores every ${SPEED.fastSec} seconds, every other Apple Store every ${SPEED.checkSec}; a first "available" is confirmed about a second later and the push is sent ${push7 ? `a median ${push7.p50Sec.toFixed(1)} seconds after that first sighting (last 7 days)` : `about ${SPEED.alertSec} seconds after that`}.`} />
           </ol>
           <Keys items={[
-            { text: <>Other trackers publish intervals of <b className="text-ink">{OTHER_TRACKERS}</b>; published numbers only</> },
+            { text: <>Other trackers state intervals of <b className="text-ink">{OTHER_TRACKERS}</b>, their own claims (<Link href="/iphone-stock-tracker-comparison">compared</Link>)</> },
             { text: <><Link href="/iphone-duo-stock-alerts">What one alert covers</Link> · <Link href="/pricing">what it costs</Link></>, step: true },
           ]} />
           <Measured>
@@ -364,6 +412,7 @@ export default async function SellOutTimesPage() {
           <KeyTable rows={[
             ["45–60 s", <>Still listed at the check 45 seconds after it appeared, gone at the check 60 seconds after</>],
             ["60 s", <>Both checks agreed to the second</>],
+            ["sold out", <>Apple&apos;s pickup page stopped listing that configuration at that store; not a count of units sold, which Apple does not publish</>],
             ["still listed", <>Not sold out yet; the figure counts up</>],
             ["≈", <>The oldest rows: bounded by the {ROUND_SEC}-second round, not by two exact checks</>],
             ["thin", <>Under {SOLID} sell-outs; not ranked</>],
@@ -391,7 +440,7 @@ export default async function SellOutTimesPage() {
             { text: <><a href={APPLE_PICKUP} target="_blank" rel="noopener">Apple&apos;s pickup page</a> shows what a store can hand over <b className="text-ink">now</b>, never when the next batch lands</> },
             { text: <>iPhone Duo in Apple Stores since <a href={APPLE_NEWSROOM} target="_blank" rel="noopener"><b className="text-ink">October 23, 2026</b></a></> },
             { text: <>Bought out faster than it arrives: <b className="text-ink">unavailable</b> is the normal state</>, no: true },
-            { text: <>Our part: being told within seconds, while the listing is still there to reserve</>, step: true },
+            { text: <>Our part: sending the push within seconds, while the listing is still there to reserve</>, step: true },
           ]} />
           <ChipLinks items={[
             { href: "/iphone-duo-restock-times", label: "When Apple restocks the iPhone Duo" },

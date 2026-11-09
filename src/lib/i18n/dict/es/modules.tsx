@@ -101,6 +101,7 @@ export const modules: Dict["modules"] = {
     none: (label: string, days: number) => `Aún no se ha agotado ninguna reposición ${label} en los últimos ${n(days)} días.`,
     whatDuo: "iPhone Duo",
     whatAll: "todos los iPhone",
+    definition: "El tiempo disponible es cuánto tiempo mostró la página de recogida de Apple la configuración como disponible, acotado por dos de nuestras comprobaciones; no indica cuántos teléfonos se vendieron ni lo rápido que tienes que ser.",
     tileHalf: (what: string) => <>la mitad, agotada en · {what}</>,
     tileWithin30: "agotadas en 30 s",
     tileWithin60: "agotadas en 1 min",
@@ -218,13 +219,30 @@ export const modules: Dict["modules"] = {
     others: (o) => (o.one
       ? `El iPhone 18 Pro está disponible aquí en ${n(o.pro)} de ${configs(o.configs)}; el 18 Pro Max, en ${n(o.max)}.`
       : `El iPhone 18 Pro está en ${n(o.pro)} de esas tiendas; el 18 Pro Max, en ${n(o.max)}.`),
-    updated: (stamp) => `Actualizado: ${stamp}`,
-    checked: (note) => `comprobado ${note}`,
-    since: (date) => `datos desde el ${date}`,
-    method: "una reposición solo cuenta cuando dos comprobaciones coinciden; las primeras detecciones no cuentan",
+    evidence: (o) => (o.one
+      ? (o.fresh > 0
+        ? <>A fecha de {o.stamp}: {o.name} respondió a nuestra comprobación en el último minuto.</>
+        : <>A fecha de {o.stamp}: sin respuesta de {o.name} en el último minuto — estado desconocido, no se cuenta como agotado.</>)
+      : <>A fecha de {o.stamp}: {n(o.fresh)} de {n(o.total)} tiendas {v(o.fresh, "respondió", "respondieron")} en el último minuto{o.stale > 0 ? `; ${n(o.stale)} sin respuesta reciente — estado desconocido, no se ${v(o.stale, "cuenta como agotada", "cuentan como agotadas")}` : ""}.</>),
+    evidenceNone: (o) => (o.one
+      ? `${o.name} todavía no ha respondido a ninguna comprobación — estado desconocido, no se cuenta como agotado.`
+      : `Ninguna de las ${n(o.total)} tiendas ha respondido todavía a una comprobación — estado desconocido, nada se cuenta como agotado.`),
+    howCounted: (o) => {
+      const base = "Una reposición solo cuenta tras dos respuestas coincidentes (las primeras detecciones no cuentan); el tiempo disponible queda acotado entre la última comprobación que aún veía la configuración y la primera que ya no la veía. Las comprobaciones están previstas cada 5 s en las tiendas con alerta y cada 15 s en todas las tiendas";
+      const lanes = [
+        o.fast && `${o.fast.p50} de mediana en las tiendas con alerta (p95 ${o.fast.p95}, ${n(o.fast.n)} intervalos${o.fast.slow ? "; más lento de lo previsto" : ""})`,
+        o.round && `${o.round.p50} por ronda completa (p95 ${o.round.p95}, ${n(o.round.n)} rondas${o.round.slow ? "; más lento de lo previsto" : ""})`,
+      ].filter(Boolean);
+      if (lanes.length === 0 || !o.win) return `${base}.`;
+      const win = o.win.days ? `los últimos ${n(o.win.days)} días` : o.win.hours && o.win.hours > 1 ? `las últimas ${n(o.win.hours)} horas` : "la última hora";
+      return `${base}; medido en ${win}: ${lanes.join(" y ")}.`;
+    },
+    howLink: "Cómo medimos →",
+    sec: (x) => `${x} s`,
+    technique: "PickupChecker consulta la disponibilidad para recoger en tienda de Apple en cada Apple Store: cada 5 segundos en las tiendas con alertas de miembros y cada 15 segundos en todas. Una reposición solo cuenta tras dos respuestas coincidentes (sin contar las primeras detecciones); el tiempo disponible queda acotado entre la última comprobación que aún veía la configuración y la primera que ya no la veía.",
     tShare: (range) => `de las reposiciones en la franja ${range}`,
     tBusiest: (count) => `hora con más · ${reposiciones(count)}`,
-    tHalf: "la mitad se agota en menos de",
+    tHalf: "mediana de tiempo disponible",
     tSince: (date) => `reposiciones confirmadas desde el ${date}`,
     tToday: "hoy, hasta ahora",
     mostOften: (config, k, total) => `sobre todo ${config} (${n(k)} de ${n(total)})`,
@@ -233,9 +251,15 @@ export const modules: Dict["modules"] = {
       void tz;
       return "hora local";
     },
-    summary: (o) =>
-      `El ${o.pct} de las ${reposiciones(o.n)} del iPhone Duo que PickupChecker ha confirmado ${esWhere(o)} desde el ${o.since} se produjo en la franja ${o.range}, ${o.zone}; la hora con más fue ${o.busiest} (${reposiciones(o.busiestN)}).${o.median ? ` La mitad se agotó en menos de ${o.median}.` : ""}${o.config ? ` La configuración que más veces volvió fue ${o.config} (${n(o.k)} de ${n(o.n)}).` : ""}`,
-    tooFew: (o) => `${reposiciones(o.n)} del iPhone Duo ${v(o.n, "confirmada", "confirmadas")} ${esWhere(o)} desde el ${o.since}: todavía son pocas para indicar una hora habitual; abajo aparecen todas.`,
+    factsTitle: (label) => `Datos clave: iPhone Duo ${label}`,
+    fN: (o) => <>PickupChecker ha confirmado <b className="text-ink">{n(o.n)}</b> {o.n === 1 ? "reposición" : "reposiciones"} del iPhone Duo {esWhere(o)} desde el {o.since}, en {o.days === 1 ? "un solo día" : `${n(o.days)} días distintos`}.</>,
+    fShare: (o) => <>El <b className="text-ink">{o.pct}</b> de las {reposiciones(o.n)} del iPhone Duo {o.label} desde el {o.since} se produjo en la franja {o.range}, {o.zone}; la hora con más fue {o.busiest} ({reposiciones(o.busiestN)}).</>,
+    fTooFew: (o) => `${reposiciones(o.n)} del iPhone Duo ${v(o.n, "confirmada", "confirmadas")} ${o.label} en ${dias(o.days)}: todavía son pocas para indicar una hora habitual; PickupChecker espera a reunir ${n(o.min)} reposiciones en ${n(o.minDays)} días distintos.`,
+    fMedian: (o) => <>La mediana del tiempo que un iPhone Duo {o.label} estuvo disponible en la página de recogida de Apple es de <b className="text-ink">unos {o.median}</b> ({n(o.n)} apariciones medidas desde el {o.since}).</>,
+    fTop: (o) => <>La configuración del iPhone Duo que más veces se ha repuesto {o.label} es <b className="text-ink">{o.config}</b>: {n(o.k)} de {reposiciones(o.n)} ({o.pct}) desde el {o.since}.</>,
+    fToday: (o) => (o.n > 0
+      ? <>Hoy ({o.date}, hora local), PickupChecker lleva {v(o.n, "confirmada", "confirmadas")} <b className="text-ink">{n(o.n)}</b> {o.n === 1 ? "reposición" : "reposiciones"} del iPhone Duo {o.label}.</>
+      : <>Hoy ({o.date}, hora local), PickupChecker todavía no ha confirmado ninguna reposición del iPhone Duo {o.label}.</>),
     hourByHour: "Hora a hora, tienda por tienda →",
     lastThree: (k, label) => (k === 1 ? `La última reposición del iPhone Duo ${label}` : `Las últimas ${n(k)} reposiciones del iPhone Duo ${label}`),
     secs: (x) => `${n(x)} s`,

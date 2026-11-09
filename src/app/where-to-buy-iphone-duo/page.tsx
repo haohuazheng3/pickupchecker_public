@@ -47,7 +47,7 @@ const CARRIERS = [
 ];
 const BEST_BUY = { name: "Best Buy", url: "https://www.bestbuy.com/" };
 /** The one price sentence, verbatim, once in the body and once in a FAQ answer (the brief's wording). */
-const PRICE_SENTENCE = `Alerts from $${PLANS.plus.priceUsd}/month: the stores you pick are checked every ${SPEED.fastSec} s, with a push about ${SPEED.alertSec} s after a restock is confirmed.`;
+const PRICE_SENTENCE = `Alerts from $${PLANS.plus.priceUsd}/month: the stores you pick are checked every ${SPEED.fastSec} s, with a push sent about ${SPEED.alertSec} s after a restock is confirmed.`;
 
 const n = (x: number) => x.toLocaleString("en-US");
 /** Whole-percent shares; a share under half a percent reads "<1%", never a misleading "0%". */
@@ -245,7 +245,7 @@ export default async function WhereToBuyPage() {
       ? "The restock log could not be read at this moment, so the ranking is blank; the table still carries every configuration's price and apple.com order page."
       : `No configuration has a confirmed restock since ${since} yet; the table lists all ${items.length} with Apple's list price and the apple.com order page, and ranks itself as restocks are confirmed.`;
 
-  const minuteLead = `With an alert on two or three stores and Apple's checkout staged to its last step: a confirmed restock reaches your phone about ${SPEED.alertSec} seconds after we see it, and the people who get the phone finish in about 20 seconds${band ? `, inside a listing that typically lasts ${band}` : ""}.`;
+  const minuteLead = `With an alert on two or three stores and Apple's checkout staged to its last step: the push for a confirmed restock is sent about ${SPEED.alertSec} seconds after we see it, and the people who get the phone finish in about 20 seconds${band ? `, inside a listing that typically lasts ${band}` : ""}.`;
 
   const abroadLead = `Apple sells the iPhone Duo through its own stores and online store in the ${INTL_CODES.length} other countries PickupChecker tracks (${n(intlStores)} Apple Stores, since ${longDate(TRACKING_SINCE_INTL)}); right now ${abroadNow} of them list one for pickup${abroad[0] && abroad[0].now > 0 ? `, most in ${COUNTRIES[abroad[0].cc].name} (${abroad[0].now} of ${abroad[0].total})` : ""}.`;
 
@@ -261,7 +261,7 @@ export default async function WhereToBuyPage() {
       : `Too early to rank: no configuration has a confirmed restock since ${since} in a readable log right now. The ranking fills in by itself on [which iPhone Duo restocks most](/which-iphone-duo-restocks-most); until then, fix the storage you need and accept any of its colors.` },
     { q: "How do I know when a store near me has one?", a: `${PRICE_SENTENCE} On iPhone, add PickupChecker to your Home Screen and allow notifications ([install guide](/install)); alerts arrive as push notifications, or by email while no device is set up. Pick the stores you can reach on [iPhone Duo near me](/iphone-duo-near-me), and the live list of every store is free without an account.` },
     { q: "Should I try Best Buy, Walmart, Target or a carrier instead of Apple?", a: `Check them when you are already there, but do not count on them: they receive their own allocations, show a yes/no on a product page and publish no restock history, so no one can rank them against Apple Store pickup ({{duo.restocks}} confirmed restocks since {{trackingSince}}, every one timed). Our stance is to watch Apple pickup with an alert, keep an apple.com delivery order as the backstop, and glance at a retailer's page in passing — the reasoning is on [Apple, Best Buy or a carrier?](/iphone-duo-apple-vs-carriers-vs-retailers).` },
-    { q: "Is paying a markup on eBay worth it?", a: `Rarely. Weigh the premium against the wait it buys: US Apple Stores are restocking the Duo daily and an alert reaches you about 3 seconds after a confirmed restock, so a watched store near you usually comes through within days. Resale means no Apple return window, no manufacturer purchase record and the usual risks (activation lock, swapped box). If you do buy privately, meet in person, power it on and sign in before paying.` },
+    { q: "Is paying a markup on eBay worth it?", a: `Rarely. Weigh the premium against the wait it buys: US Apple Stores are restocking the Duo daily and an alert is sent about ${SPEED.alertSec} seconds after a confirmed restock, so a watched store near you usually comes through within days. Resale means no Apple return window, no manufacturer purchase record and the usual risks (activation lock, swapped box). If you do buy privately, meet in person, power it on and sign in before paying.` },
   ];
 
   const sources: Source[] = [
@@ -495,7 +495,7 @@ export default async function WhereToBuyPage() {
             { title: "Tap the alert and finish in about 20 seconds", hint: "choose the store it names, confirm pickup, pay; the reservation is the order" },
           ]} />
           <Keys items={[
-            { text: <>Push about <b className="text-ink">{SPEED.alertSec} s</b> after two checks agree; your stores asked every <b className="text-ink">{SPEED.fastSec} s</b>, every other store every {SPEED.checkSec}</> },
+            { text: <>Push sent about <b className="text-ink">{SPEED.alertSec} s</b> after two checks agree; your stores asked every <b className="text-ink">{SPEED.fastSec} s</b>, every other store every {SPEED.checkSec}</> },
             { text: <>Typing an address during a restock is how people lose it</>, no: true },
             { text: <>Browsing is free; alerts are {PLANS.plus.name} ${PLANS.plus.priceUsd} ({PLANS.plus.limit} alerts), {PLANS.pro.name} ${PLANS.pro.priceUsd} ({PLANS.pro.limit}) or {PLANS.max.name} ${PLANS.max.priceUsd} ({PLANS.max.limit}) a month</>, step: true },
           ]} />

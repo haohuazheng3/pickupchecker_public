@@ -86,13 +86,13 @@ const configs: DecideDict["configs"] = {
     const colourPart = co.length > 1
       ? `고, 색상은 ${gwaWa(x.colour(co[0].key))} ${x.colour(co[1].key)}의 차이가 ${n(Math.abs(Math.round((co[0].share - co[1].share) * 100)))}포인트에 그쳤어요`
       : "어요";
-    return `${at(x.c)} 가장 구하기 쉬운 iPhone Duo는 ${ieyo(x.cfg(e))}. PickupChecker가 ${longDate(d.since)}부터 ${storesPhrase(x)}에서 확인한 재입고 ${n(d.n)}회 중 ${n(e.restocks)}회가 이 구성이었고, 매장 ${n(e.stores)}곳에 들어왔으며, 판매 목록에 떠 있던 시간을 모두 더하면 ${hours(e.exposureSec)}${e.lifetimes ? `, 한 번 뜨면 중앙값 ${secs(e.lifetimes.medianSec)} 유지됐어요` : "예요"}. ${h ? `가장 어려운 건 ${x.cfg(h)}: 재입고 ${n(h.restocks)}회, 판매 노출 ${hours(h.exposureSec)}.` : ""}${st.length > 1 ? ` 색상보다 용량이 확률을 더 크게 바꿔요: ${sizePart}${colourPart}.` : ""}`;
+    return `${at(x.c)} 판매 목록에 가장 오래 떠 있던 iPhone Duo 구성은 ${ieyo(x.cfg(e))}. PickupChecker가 ${longDate(d.since)}부터 ${storesPhrase(x)}에서 확인한 재입고 ${n(d.n)}회 중 ${n(e.restocks)}회가 이 구성이었고, 매장 ${n(e.stores)}곳에 들어왔으며, 판매 목록에 떠 있던 시간을 모두 더하면 ${hours(e.exposureSec)}${e.lifetimes ? `, 한 번 뜨면 중앙값 ${secs(e.lifetimes.medianSec)} 유지됐어요` : "예요"}. ${h ? `가장 짧았던 건 ${x.cfg(h)}: 재입고 ${n(h.restocks)}회, 판매 노출 ${hours(h.exposureSec)}.` : ""}${st.length > 1 ? ` 재입고 횟수는 색상보다 용량에 따라 더 크게 갈려요: ${sizePart}${colourPart}.` : ""} 실제로 어느 걸 살 수 있을지는 누구도 말할 수 없어요. 잴 수 있는 건 지난 픽업 기회이고, 이 페이지는 그걸 순서대로 보여 줘요.`;
   },
   updated: (x: ConfigsView, stamp: string) => `${stamp} 업데이트 · ${longDate(x.d.since)}부터의 데이터 · Apple Store ${n(x.stores)}곳 · ${SPEED.checkSec}초마다 확인(알림 매장은 ${SPEED.fastSec}초마다)`,
-  nav: { easiest: "지금 가장 쉬운 구성", storage: "용량", colour: "색상", shelf: "잡을 시간", week: "이번 주", alerts: "알림 걸 구성", method: "집계 방법" },
+  nav: { easiest: "가장 오래 떠 있던 구성", storage: "용량", colour: "색상", shelf: "잡을 시간", week: "이번 주", alerts: "알림 걸 구성", method: "집계 방법" },
   h2: (x: ConfigsView) => ({
-    easiest: `지금 ${at(x.c)} 가장 구하기 쉬운 iPhone Duo 구성은?`,
-    storage: "용량에 따라 확률이 달라지나요?",
+    easiest: `${at(x.c)} 판매 목록에 가장 오래 떠 있던 iPhone Duo 구성은?`,
+    storage: "용량에 따라 재입고 빈도가 달라지나요?",
     colour: `${x.d.byColor.length > 1 ? `${gwaWa(x.colour(x.d.byColor[0].key))} ${x.colour(x.d.byColor[1].key)} 중 ` : ""}어느 색상이 더 자주 재입고되나요?`,
     shelf: "어떤 구성이 잡을 시간을 가장 많이 주나요?",
     week: "최근 7일 동안 무엇이 달라졌나요?",
@@ -109,7 +109,7 @@ const configs: DecideDict["configs"] = {
   },
   easiestLead: (x: ConfigsView) => {
     const e = x.d.easiest!;
-    return `${iGa(x.cfg(e))} 중요한 두 가지 모두에서 앞서요: 가장 자주 돌아왔고(재입고 ${n(e.restocks)}회, 전체의 ${pct(e.restocks / x.d.n)}), 판매 목록에 떠 있던 시간 합계도 가장 길어요(${hours(e.exposureSec)}). 이 시간이 바로 앱을 열고 예약할 수 있었던 시간이에요. ${e.nowStores > 0 ? `지금 이 글을 읽는 순간 매장 ${n(e.nowStores)}곳에 재고가 있어요.` : "지금 이 순간 재고가 있는 매장은 없어요. 다음 재입고는 몇 초 안에 여기 표시돼요."}`;
+    return `${iGa(x.cfg(e))} 잴 수 있는 두 가지 모두에서 앞서요: 가장 자주 돌아왔고(재입고 ${n(e.restocks)}회, 전체의 ${pct(e.restocks / x.d.n)}), 판매 목록에 떠 있던 시간 합계도 가장 길어요(${hours(e.exposureSec)}). 이 시간이 픽업을 예약할 수 있었던 시간이에요. ${e.nowStores > 0 ? `지금 이 글을 읽는 순간 매장 ${n(e.nowStores)}곳에 재고가 있어요.` : "지금 이 순간 재고가 있는 매장은 없어요. 다음 재입고는 몇 초 안에 여기 표시돼요."}`;
   },
   easiestKeys: (x: ConfigsView) => {
     const { d } = x;
@@ -144,7 +144,7 @@ const configs: DecideDict["configs"] = {
     const co = x.d.byColor;
     if (co.length < 2 || !x.d.n) return "색상 비교는 재입고가 쌓이면 표시돼요.";
     const gap = Math.abs(Math.round((co[0].share - co[1].share) * 100));
-    return `${x.colour(co[0].key)}, 하지만 차이는 크지 않아요: 재입고의 ${pct(co[0].share)} 대 ${x.colour(co[1].key)} ${pct(co[1].share)}, ${n(gap)}포인트 차이예요${co[0].medianSec && co[1].medianSec ? `. 판매 유지 중앙값은 각각 ${secs(co[0].medianSec)}와 ${secs(co[1].medianSec)}였어요` : ""}. 색상은 용량보다 확률을 덜 바꾸니, 원하는 용량의 두 색상 모두에 알림을 걸면 기회가 대략 두 배가 돼요.`;
+    return `${x.colour(co[0].key)}, 하지만 차이는 크지 않아요: 재입고의 ${pct(co[0].share)} 대 ${x.colour(co[1].key)} ${pct(co[1].share)}, ${n(gap)}포인트 차이예요${co[0].medianSec && co[1].medianSec ? `. 판매 유지 중앙값은 각각 ${secs(co[0].medianSec)}와 ${secs(co[1].medianSec)}였어요` : ""}. 색상은 용량보다 재입고 횟수를 덜 바꿔요. 두 번째 색상도 지켜보면 그 색상의 픽업 기회가 더해져요: ${co[1].restocks > 0 ? `${longDate(x.d.since)}부터 ${at(x.c)} ${eunNeun(x.colour(co[1].key))} 재입고 ${n(co[1].restocks)}회, 노출 ${hours(co[1].exposureSec)}을 더했어요. ${x.colour(co[0].key)}의 ${n(co[0].restocks)}회, ${hours(co[0].exposureSec)}에 더해서요(전 용량 합계)` : `${longDate(x.d.since)}부터 ${at(x.c)} ${eunNeun(x.colour(co[1].key))} 재입고가 없어서 지금까지는 더해진 게 없어요`}.`;
   },
   colourKeys: (x: ConfigsView) => x.d.byColor.map((g) => `${x.colour(g.key)}: 매장 ${n(g.stores)}곳에서 재입고 ${n(g.restocks)}회, 판매 노출 합계 ${hours(g.exposureSec)}${g.nowStores ? `, 지금 ${n(g.nowStores)}곳에 재고` : ""}.`),
   shelfLead: (x: ConfigsView) => {
@@ -156,8 +156,9 @@ const configs: DecideDict["configs"] = {
   shelfCaption: "구성별 판매 유지 시간(재입고 → 다음 품절 확인)",
   shelfHead: ["구성", "끝난 시점이 확인된 재입고", "중앙값", "2분 내 품절", "20분 내 품절", "가장 빠른 품절"],
   shelfKeys: (x: ConfigsView) => [
-    `푸시 알림은 재입고를 확인한 약 ${SPEED.alertSec}초 뒤에 도착하고, 판매 유지 중앙값은 ${x.d.lifetimes ? secs(x.d.lifetimes.medianSec) : "1분 안팎"}이라, Apple Store 앱에 Duo를 열어 두고 카드를 저장해 뒀다면 대부분의 재입고를 잡을 수 있어요.`,
+    `재입고의 절반은 ${x.d.lifetimes ? secs(x.d.lifetimes.medianSec) : "1분 안팎"} 안에 사라졌어요. 알림은 재입고를 확인하고 약 ${SPEED.alertSec}초 뒤에 발송되고, 남은 시간 안에 살 수 있을지는 휴대폰과 미리 준비해 둔 결제에 달려 있어요.`,
     `이 시간은 상한값이에요. 품절은 다음 확인에서 보이는데, 최대 ${SPEED.checkSec}초(알림 매장은 ${SPEED.fastSec}초) 뒤예요.`,
+    "여기서 ‘품절’은 Apple 픽업 페이지가 그 매장에서 그 구성을 더 이상 표시하지 않았다는 뜻이에요. 몇 대였는지는 Apple이 밝히지 않아요.",
   ],
   weekLead: (x: ConfigsView) => {
     const rows = [...x.d.byPart].sort((a, b) => b.last7 - a.last7);
@@ -176,10 +177,10 @@ const configs: DecideDict["configs"] = {
   },
   alertsKeys: (x: ConfigsView) => [
     "알림은 매장 × 구성 단위라, 매장 3곳 × 구성 3개면 알림 9개예요.",
-    `알림 매장은 ${SPEED.fastSec}초마다 확인하고, 재입고를 한 번 더 확인한 뒤 푸시해요. 배너는 약 ${SPEED.alertSec}초 뒤에 떠요.`,
+    `알림 매장은 ${SPEED.fastSec}초마다 확인하고, 재입고를 한 번 더 확인한 뒤 푸시해요. 푸시는 약 ${SPEED.alertSec}초 뒤에 발송되고, 휴대폰에 배너가 뜨는 시점은 기기와 네트워크에 따라 달라 저희가 측정하지 않아요.`,
     `${x.one ? "" : "매장은 재입고 횟수가 아니라 거리로 고르세요: "}가장 바쁜 매장은 지켜보는 사람도 가장 많은 매장이에요.`,
   ],
-  methodLead: "재입고는 한 매장에서 어떤 구성이 품절에서 재고 있음으로 바뀌는 것이고, 일치하는 두 번의 확인으로 확정해요. 추적 공백 뒤에 처음 보인 건 세지 않아요. 판매 유지 시간은 재입고부터 다시 품절로 보이는 첫 확인까지라 상한값이에요. ‘노출 합계’는 그 구성의 모든 재입고에 걸쳐 이 시간을 더한 값으로, 살 기회가 얼마나 있었는지 보여 주는 가장 단순한 척도예요.",
+  methodLead: "재입고는 한 매장에서 어떤 구성이 품절에서 재고 있음으로 바뀌는 것이고, 일치하는 두 번의 확인으로 확정해요. 추적 공백 뒤에 처음 보인 건 세지 않아요. 판매 유지 시간은 재입고부터 다시 품절로 보이는 첫 확인까지라 상한값이에요. ‘노출 합계’는 그 구성의 모든 재입고에 걸쳐 이 시간을 더한 값으로, 픽업을 예약할 수 있었던 시간을 보여 주는 가장 단순한 척도예요. 지난 노출의 기록일 뿐, 구매 확률도 판매 대수도 아니에요. Apple은 둘 다 공개하지 않아요.",
   methodKeys: (x: ConfigsView) => [
     `출처: ${storesPhrase(x)}의 Apple 자체 픽업 재고 정보. ${longDate(x.d.since)}부터 매장마다 ${SPEED.checkSec}초마다(알림 매장은 ${SPEED.fastSec}초마다) 읽어요.`,
     "지금 재고 있는 매장과 마지막 재입고 시각은 실시간이고, 나머지는 5분 안에 다시 계산돼요.",
@@ -189,7 +190,7 @@ const configs: DecideDict["configs"] = {
     const { d } = x;
     const e = d.easiest, h = d.hardest, co = d.byColor;
     return [
-      { q: `${at(x.c)} 가장 구하기 쉬운 iPhone Duo는 무엇인가요?`, a: e ? `${x.cfg(e)}: ${longDate(d.since)} 이후 Apple Store ${n(e.stores)}곳에서 확인된 재입고 ${n(e.restocks)}회, 판매 노출 합계 ${hours(e.exposureSec)}로 다른 어떤 구성보다 많아요. ${h ? `가장 어려운 건 ${x.cfg(h)}, 재입고 ${n(h.restocks)}회예요.` : ""}` : `${at(x.c)} 확인된 재입고가 아직 너무 적어 말할 수 없어요. 재입고가 들어오는 대로 이 페이지가 모든 구성의 순위를 매겨요.` },
+      { q: `${at(x.c)} 가장 구하기 쉬운 iPhone Duo는 무엇인가요?`, a: e ? `어떤 걸 사게 될지는 누구도 말할 수 없어요. Apple은 배정 물량도, 몇 명이 노리는지도 공개하지 않거든요. 잴 수 있는 건 지난 픽업 가능 구간이에요. ${longDate(d.since)} 이후 ${storesPhrase(x)}에서 확인된 재입고 ${n(d.n)}회 가운데 판매 노출 합계는 ${iGa(x.cfg(e))} 가장 길었고(재입고 ${n(e.restocks)}회, ${n(e.stores)}곳, 합계 ${hours(e.exposureSec)})${h ? ` ${iGa(x.cfg(h))} 가장 짧았어요(재입고 ${n(h.restocks)}회, 합계 ${hours(h.exposureSec)}).` : ", 다른 구성은 그보다 짧았어요."} 지난 노출 기록일 뿐, 살 수 있을지에 대한 예측은 아니에요. 색상이나 매장을 하나 더하면 구간이 얼마나 늘어나는지는 알림 설정의 ‘픽업 가능 구간을 가장 많이 늘리는 선택은?’에서 볼 수 있어요.` : `${at(x.c)} 확인된 재입고가 아직 너무 적어 말할 수 없어요. 재입고가 들어오는 대로 이 페이지가 모든 구성의 순위를 매겨요.` },
       { q: co.length > 1 ? `${iGa(x.colour(co[1].key))} ${x.colour(co[0].key)}보다 구하기 어렵나요?` : "한 색상이 다른 색상보다 구하기 어렵나요?", a: co.length > 1 && d.n ? `조금요: ${iGa(x.colour(co[0].key))} 재입고의 ${pct(co[0].share)}, ${iGa(x.colour(co[1].key))} ${pct(co[1].share)}였어요. 용량 간 차이가 훨씬 크니, 용량을 먼저 정하고 그 용량의 두 색상 모두에 알림을 걸어 두세요.` : "색상 비교는 재입고가 쌓이면 표시돼요." },
       { q: `${at(x.c)} 1TB나 2TB iPhone Duo 재고가 뜨기도 하나요?`, a: (() => { const big = d.byPart.filter((r) => /^(1|2)TB$/.test(r.storage)); const bn = big.reduce((a, r) => a + r.restocks, 0); const most = big.length ? Math.max(...big.map((r) => r.stores)) : 0; return bn ? `네, 하지만 드물어요: 전체 ${n(d.n)}회 중 1TB·2TB 모델 재입고는 ${n(bn)}회(${pct(bn / d.n)}), 많아야 매장 ${n(most)}곳에서였어요. 한 번 뜨면 더 오래 남아 있어서(원하는 사람이 적어요) 드물게 울려도 알림 한 자리를 쓸 가치가 있어요.` : `아직 저희 데이터에는 없어요: ${longDate(d.since)} 이후 ${at(x.c)} 1TB·2TB 모델의 확인된 재입고가 없어요.`; })() },
       { q: "알림은 한 구성에만 걸까요, 여러 구성에 걸까요?", a: `여러 구성, 적은 매장에요: 상위 3개 구성이 ${at(x.c)} 재입고의 ${d.n ? pct(d.byPart.slice(0, 3).reduce((a, r) => a + r.restocks, 0) / d.n) : "대부분"}을 차지했어요. 가까운 매장 3곳 × 구성 3개면 알림 9개로 Plus 요금제에 들어가고, 정확히 원하는 구성은 네 번째로 추가하세요.` },
@@ -294,7 +295,7 @@ const supply: DecideDict["supply"] = {
   },
   easierKeys: (x: SupplyView) => [
     "여기서 ‘풀렸다’는 이런 모습일 거예요: 판매 유지 중앙값 20분 초과, 대부분 매장에 동시에 재고, apple.com 배송 예정이 일주일 이내.",
-    `그때까지 사는 방법은 여전히 알림이에요. 재입고를 확인하고 약 ${SPEED.alertSec}초 뒤에 푸시하니, 유지 중앙값 안에 충분히 들어와요.`,
+    `그때까지 사는 방법은 여전히 알림이에요. 재입고를 확인하고 약 ${SPEED.alertSec}초 뒤에 푸시를 발송하니, 유지 중앙값 안에 충분히 들어와요.`,
     x.d.lifetimes ? `${dom(x.c)} 전체 기간: 끝난 시점이 확인된 재입고 ${n(x.d.lifetimes.n)}회, 중앙값 ${secs(x.d.lifetimes.medianSec)}, ${pct(x.d.lifetimes.within2min)}는 2분 안에 품절.` : "전체 기간 판매 유지 수치는 끝난 재입고 10회 뒤에 표시돼요.",
   ],
   storesLead: (x: SupplyView) => {
@@ -318,7 +319,7 @@ const supply: DecideDict["supply"] = {
   christmasLead: (x: SupplyView) => {
     const w = x.d.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
-    return `알림을 켜 두고, apple.com 배송 주문도 넣어 두세요. 둘 중 하나가 아니라 둘 다요. 지금 속도(${perDay >= 1 ? `${at(x.c)} 하루 약 ${n(Math.round(perDay))}회 재입고` : `${at(x.c)} 하루 1회 미만 재입고`}${w.medianSec ? `, 각각 중앙값 ${secs(w.medianSec)} 유지` : ""})면 가까운 매장에 걸어 둔 알림은 며칠 안에 차례가 오고, 확인된 재입고는 저희가 본 뒤 약 ${SPEED.alertSec}초 만에 휴대폰에 도착해요. 다른 곳에서 웃돈을 주는 건 기다림 자체가 웃돈보다 더 비쌀 때만 말이 돼요. 판매 채널 비교 페이지가 그걸 솔직하게 따져요.`;
+    return `알림을 켜 두고, apple.com 배송 주문도 넣어 두세요. 둘 중 하나가 아니라 둘 다요. 지금 속도(${perDay >= 1 ? `${at(x.c)} 하루 약 ${n(Math.round(perDay))}회 재입고` : `${at(x.c)} 하루 1회 미만 재입고`}${w.medianSec ? `, 각각 중앙값 ${secs(w.medianSec)} 유지` : ""})면 가까운 매장에 걸어 둔 알림은 며칠 안에 차례가 오고, 확인된 재입고 알림은 저희가 본 뒤 약 ${SPEED.alertSec}초 만에 발송돼요. 다른 곳에서 웃돈을 주는 건 기다림 자체가 웃돈보다 더 비쌀 때만 말이 돼요. 판매 채널 비교 페이지가 그걸 솔직하게 따져요.`;
   },
   christmasKeys: () => [
     "먼저 apple.com에서 배송으로 주문하세요. 자리를 잡아 두고, 픽업이 되면 취소할 수 있어요.",
@@ -347,7 +348,7 @@ const supply: DecideDict["supply"] = {
       { q: `${at(x.c)} iPhone Duo는 아직 재입고되고 있나요?`, a: d.n ? `네: 최근 7일 동안 ${dom(x.c)} Apple Store ${n(w.stores)}곳에서 확인된 재입고 ${n(w.restocks)}회, ${longDate(d.since)} 이후로는 ${n(d.n)}회예요. 마지막 재입고는 ${d.sinceLastHours != null && d.sinceLastHours < 1 ? "1시간이 안 됐어요" : d.sinceLastHours != null ? `${n(d.sinceLastHours)}시간 전이에요` : "아직 기록되지 않았어요"}.` : `${longDate(d.since)}에 추적을 시작한 뒤 ${at(x.c)} 아직 확인된 재입고가 없어요. 첫 재입고 뒤 5분 안에 이 페이지가 갱신돼요.` },
       { q: `${at(x.c)} iPhone Duo 품귀는 나아지고 있나요?`, a: d.trend === "insufficient" ? `아직 말하기 일러요: 첫 주간 비교는 ${longDate(d.comparableFrom)}에 나와요. 두 숫자를 지켜보세요. 주간 재입고 횟수와 판매 유지 초, 둘 다 올라야 풀리는 거예요.` : `이번 주 재입고는 지난주보다 ${trendCmp(d)}(${signed(d.change!)})${w.medianSec ? `, 재입고는 중앙값 ${secs(w.medianSec)} 유지됐어요` : ""}. 풀린다는 건 재입고가 늘고 유지 시간도 함께 길어지는 것인데, 지금까지는 ${d.trend === "up" && w.medianSec && d.prev7.medianSec && w.medianSec > d.prev7.medianSec ? "둘 다 좋은 방향으로 움직이고 있어요" : "그중 일부만 일어나고 있어요"}.` },
       { q: "iPhone Duo는 언제쯤 쉽게 살 수 있을까요?", a: "Apple 바깥에선 아무도 말할 수 없고, PickupChecker도 예측하지 않아요. 지켜볼 순서: 주간 재입고가 2~3주 늘고, 판매 유지 중앙값이 20분을 넘고, 그다음 대부분 매장에 동시에 재고가 생기며 apple.com 배송 예정이 일주일 이내로 들어와요." },
-      { q: "기다리는 대신 웃돈을 주고 사야 할까요?", a: `기다림이 웃돈보다 비쌀 때만요: 지금 속도면 가까운 매장에 걸어 둔 알림은 며칠 안에 차례가 오고, 확인된 재입고 뒤 약 ${SPEED.alertSec}초면 알림이 도착해요. 리셀은 반품 기간도 없고 흔한 위험도 따라와요. 판매 채널 비교 페이지가 그걸 따져요.` },
+      { q: "기다리는 대신 웃돈을 주고 사야 할까요?", a: `기다림이 웃돈보다 비쌀 때만요: 지금 속도면 가까운 매장에 걸어 둔 알림은 며칠 안에 차례가 오고, 확인된 재입고 뒤 약 ${SPEED.alertSec}초면 알림이 발송돼요. 리셀은 반품 기간도 없고 흔한 위험도 따라와요. 판매 채널 비교 페이지가 그걸 따져요.` },
       { q: "연말 시즌에는 확률이 달라지나요?", a: "12월로 갈수록 수요는 늘고 배송 리듬은 그대로여서, 판매 유지 시간은 길어지기보다 짧아지는 편이에요. 배송 주문을 안전장치로 두고 알림으로 픽업을 잡으세요. 필요 없게 된 쪽은 취소하면 돼요." },
     ];
   },
@@ -406,7 +407,7 @@ const channels: DecideDict["channels"] = {
   compareRows: (x: ChannelsView) => {
     const r = x.ch;
     return [
-      { channel: "Apple Store 픽업", known: `${longDate(x.sup.since)} 이후 확인된 재입고 ${n(x.sup.n)}회. 모든 재입고, 모든 매장, 시각까지.`, watch: `여기 알림(확인 뒤 약 ${SPEED.alertSec}초), 또는 Apple Store 앱의 픽업 선택 화면.`, catch: "재고는 1분 안팎만 떠 있어요. 앱을 열어 두고 카드를 저장해 둬야 해요." },
+      { channel: "Apple Store 픽업", known: `${longDate(x.sup.since)} 이후 확인된 재입고 ${n(x.sup.n)}회. 모든 재입고, 모든 매장, 시각까지.`, watch: `여기 알림(확인 뒤 약 ${SPEED.alertSec}초에 발송), 또는 Apple Store 앱의 픽업 선택 화면.`, catch: "재고는 1분 안팎만 떠 있어요. 앱을 열어 두고 카드를 저장해 둬야 해요." },
       { channel: "apple.com 배송", known: "Apple이 결제 화면에 배송 예정을 보여 줘요. 매일 바뀌고, 재고 수량은 아니에요.", watch: "주문을 넣어 두세요. 주문 페이지의 예정일이 Apple 출하에 맞춰 갱신돼요.", catch: "분이 아니라 주 단위예요. 대신 줄의 자리는 지켜져요." },
       { channel: `통신사(${list(L, r.carriers)})`, known: "자체 물량. 온라인 재고는 구성별로 구매 가능/입고 대기로 표시돼요. 기록도 피드도 없어요.", watch: "통신사 앱과 매장 찾기. 매장에 전화해 보는 것도 여전히 통해요.", catch: `요금제·할부·개통 조건이 붙고, 재고는 매장마다 달라요. ${lockNote(x)}` },
       { channel: `리테일러(${list(L, r.retailers)})`, known: "자체 물량, 출시 초기엔 온라인 전용인 경우가 많아요. 상품 페이지에 구성별로 표시돼요.", watch: "상품 페이지와 앱. 재입고 알림 메일을 보내 주는 곳도 몇 군데 있어요.", catch: "물량이 Apple보다 적고, 역시 몇 분 안에 품절돼요." },
@@ -441,7 +442,7 @@ const channels: DecideDict["channels"] = {
   resaleLead: (x: ChannelsView) => {
     const w = x.sup.last7;
     const perDay = w.days ? w.restocks / w.days : 0;
-    return `거의 없어요. 웃돈과 그걸로 아끼는 기다림을 저울질해 보세요: 이번 주 ${dom(x.c)} Apple Store는 ${perDay >= 1 ? `하루 약 ${n(Math.round(perDay))}회` : "하루 1회 미만"} 재입고됐고, 확인된 재입고 뒤 약 ${SPEED.alertSec}초면 알림이 도착하니, 가까운 매장에 걸어 둔 알림은 보통 며칠 안에 차례가 와요. 반면 ${list(L, x.ch.resale)}에는 제조사 구매 기록이 없고, ${x.ch.returnDays ? `${returnPhrase(x.ch.returnDays)}도 없고` : "반품 기간도 전혀 없고"}, 흔한 위험도 따라와요. 활성화 잠금이 걸린 기기, 바꿔 넣은 박스, ‘미개봉’이라는 반품품.`;
+    return `거의 없어요. 웃돈과 그걸로 아끼는 기다림을 저울질해 보세요: 이번 주 ${dom(x.c)} Apple Store는 ${perDay >= 1 ? `하루 약 ${n(Math.round(perDay))}회` : "하루 1회 미만"} 재입고됐고, 확인된 재입고 뒤 약 ${SPEED.alertSec}초면 알림이 발송되니, 가까운 매장에 걸어 둔 알림은 보통 며칠 안에 차례가 와요. 반면 ${list(L, x.ch.resale)}에는 제조사 구매 기록이 없고, ${x.ch.returnDays ? `${returnPhrase(x.ch.returnDays)}도 없고` : "반품 기간도 전혀 없고"}, 흔한 위험도 따라와요. 활성화 잠금이 걸린 기기, 바꿔 넣은 박스, ‘미개봉’이라는 반품품.`;
   },
   resaleKeys: () => [
     "그래도 리셀로 산다면: 직접 만나서, 전원을 켜고, 설정 → 일반 → 정보에서 일련번호를 확인하고, 돈을 내기 전에 로그인해 보세요.",
@@ -546,11 +547,11 @@ const api: DecideDict["api"] = {
     "호환되지 않는 변경은 새 버전 경로(/api/v2)로 나가요. v1에서는 필드가 추가만 되고 이름은 바뀌지 않아요.",
     "프로젝트 이름과 연락처를 담은 User-Agent를 설정해 주세요. 예의 바른 스크립트를 차단한 적은 한 번도 없어요.",
   ],
-  scriptLead: (x: ApiView) => `대시보드, Discord 봇, 스프레드시트, 연구가 목적이면 스크립트를 짜세요. API는 그걸 위한 거예요. 실제로 iPhone Duo를 사는 게 목적이면 스크립트는 더 느린 도구예요: 다음 폴링에서, 최대 30초 뒤에 재입고를 보고, 그다음 그걸 전달해야 하죠. 저희 푸시 알림은 같은 매장을 ${SPEED.fastSec}초마다 읽고 재입고를 확인한 뒤 약 ${SPEED.alertSec}초 만에 휴대폰에 도착해요. ${x.storesNow !== undefined ? "1분 안팎인 판매 유지 중앙값 안에요" : "판매 유지 중앙값 안에요"}. 많은 분이 둘 다 써요: 사는 건 알림으로, 지켜보는 건 API로.`,
+  scriptLead: (x: ApiView) => `대시보드, Discord 봇, 스프레드시트, 연구가 목적이면 스크립트를 짜세요. API는 그걸 위한 거예요. 실제로 iPhone Duo를 사는 게 목적이면 스크립트는 더 느린 도구예요: 다음 폴링에서, 최대 30초 뒤에 재입고를 보고, 그다음 그걸 전달해야 하죠. 저희 푸시 알림은 같은 매장을 ${SPEED.fastSec}초마다 읽고 재입고를 확인한 뒤 약 ${SPEED.alertSec}초 만에 발송돼요. ${x.storesNow !== undefined ? "1분 안팎인 판매 유지 중앙값 안에요" : "판매 유지 중앙값 안에요"}. 많은 분이 둘 다 써요: 사는 건 알림으로, 지켜보는 건 API로.`,
   scriptCaption: "폴링 스크립트 vs 푸시 알림",
   scriptHead: ["", "이 API를 쓰는 내 스크립트", "PickupChecker 알림"],
   scriptRows: () => [
-    { k: "재입고를 보는 시점", a: "최대 30초(캐시) + 폴링 간격", b: `약 ${SPEED.alertSec}초` },
+    { k: "재입고를 보는 시점", a: "최대 30초(캐시) + 폴링 간격", b: `확인에서 본 뒤 약 ${SPEED.alertSec}초 만에 푸시 발송` },
     { k: "휴대폰에 닿는 방법", a: "직접 만든 것(이메일, 봇, SMS)", b: "홈 화면 앱의 알림" },
     { k: "지켜보는 매장", a: "매 호출마다 전부", b: `고른 매장은 ${SPEED.fastSec}초마다, 전체 매장은 ${SPEED.checkSec}초마다` },
     { k: "비용", a: "무료", b: "알림은 요금제, 이 사이트 읽기는 무료" },
@@ -567,7 +568,7 @@ const api: DecideDict["api"] = {
     { q: "Apple의 공식 재고 API가 있나요?", a: "공개된 건 없어요. apple.com 픽업 페이지를 매장·구성별로 읽을 수 있고, 이 사이트가 그 일을 세심하게(로테이션, 재확인, 시간대) 하고 있어요. 여기 API는 그 작업을 JSON으로 드러낸 거예요." },
     { q: "데이터는 얼마나 최신인가요?", a: `매장마다 ${SPEED.checkSec}초마다(알림 매장은 ${SPEED.fastSec}초마다) 확인하고 API 응답은 30초 캐시되니, 어떤 수치든 길어도 약 45초 전 것이에요. 정확한 시각은 last_checked_at에 있어요.` },
     { q: "상업용 제품에 써도 되나요?", a: "네, 출처를 표기하면요: 데이터가 보이는 곳마다 ‘출처: PickupChecker’를 pickupchecker.com 링크와 함께 표시하고, 폴링 간격은 30초 이상으로요. 키는 필요 없어요." },
-    { q: "스크립트가 알림보다 iPhone Duo를 더 빨리 구해 주나요?", a: `아니요: 스크립트는 다음 폴링에서, 최대 30초 뒤에 재입고를 봐요. 알림은 재입고를 확인하고 저희가 본 뒤 약 ${SPEED.alertSec}초 만에 휴대폰에 도착해요. 지켜보는 건 스크립트로, 사는 건 알림으로.` },
+    { q: "스크립트가 알림보다 iPhone Duo를 더 빨리 구해 주나요?", a: `아니요: 스크립트는 다음 폴링에서, 최대 30초 뒤에 재입고를 봐요. 알림은 재입고를 확인하고 저희가 본 뒤 약 ${SPEED.alertSec}초 만에 발송돼요. 지켜보는 건 스크립트로, 사는 건 알림으로.` },
   ],
   sources: { pickup: "Apple: 매장 픽업", method: "PickupChecker: 확인 방식", log: "PickupChecker: 재입고 기록" },
   ld: (x: ApiView) => ({

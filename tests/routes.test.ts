@@ -24,6 +24,8 @@ describe("publicRouteCheck (proxy: real 404 / 308 before the page streams)", () 
   it("lets every real address through", () => {
     expect(publicRouteCheck("/")).toBeNull();
     expect(publicRouteCheck("/research/iphone-duo-week-2026-11-07")).toBeNull();
+    expect(publicRouteCheck("/service-report")).toBeNull();
+    expect(publicRouteCheck("/iphone-stock-tracker-comparison")).toBeNull();
     expect(publicRouteCheck("/stores")).toBeNull();
     expect(publicRouteCheck(`/stores/${state}`)).toBeNull();
     expect(publicRouteCheck("/stores/texas/houston")).toBeNull();

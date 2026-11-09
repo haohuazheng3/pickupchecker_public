@@ -62,6 +62,24 @@ export const alerts: CDict["alerts"] = {
     myAlerts: "Mina bevakningar",
   },
 
+  windows: {
+    title: "Vad ger flest upphämtningsfönster?",
+    had: "Ditt val: {windows} de senaste {days}",
+    windowsN: { one: "# upphämtningsfönster", other: "# upphämtningsfönster" },
+    daysN: { one: "# dagen", other: "# dagarna" },
+    best: " · {gain} med {what}",
+    noGain: " · ingen ändring i närheten hade gett ett till",
+    gainN: { one: "+# fönster", other: "+# fönster" },
+    tooFew: "För få upphämtningsfönster de senaste {days} för att jämföra ({n} räknade)",
+    counting: "Räknar tidigare upphämtningsfönster…",
+    listed: "Listat {time} totalt, samtidiga fönster räknas en gång.",
+    storeAt: "{store} · ≈{dist}",
+    cost: { one: "+# bevakning", other: "+# bevakningar" },
+    addButton: "Lägg till",
+    add: "Lägg till {what}",
+    note: "Tidigare listningar på Apples upphämtningssida, ingen prognos och ingen köpchans. Ett fönster varar från en påfyllning tills den sålde slut (eller till nu).",
+  },
+
   matrix: {
     model: "Modell",
     configs: "Konfigurationer av {model}",

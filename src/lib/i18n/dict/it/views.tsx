@@ -229,7 +229,7 @@ export const views: Dict["views"] = {
     itemList: (model: string, where: string) => `${itName(model)} ${where}`,
     nearLead: (c: Country, model: string, inStock: number, n: number, have: { store: string; city: string; configs: number }[]) =>
       inStock === 0
-        ? `In questo momento nessun Apple Store ${inPaese(c.cc)} ha l'${itName(model)} disponibile per il ritiro, quindi «vicino a me» vuol dire capire quale negozio torna ad averlo per primo. Imposta un avviso nei negozi che puoi raggiungere e la notifica arriva pochi secondi dopo che uno lo rende disponibile.`
+        ? `In questo momento nessun Apple Store ${inPaese(c.cc)} ha l'${itName(model)} disponibile per il ritiro, quindi «vicino a me» vuol dire capire quale negozio torna ad averlo per primo. Imposta un avviso nei negozi che puoi raggiungere e la notifica parte pochi secondi dopo che uno lo rende disponibile.`
         : `${inStock === 1 ? "1 negozio" : `${N(inStock)} negozi`} su ${N(n)} ${ha(inStock)} l'${itName(model)} in questo momento: ${list(IT, have.slice(0, 5).map((l) => `${l.store} a ${l.city} (${pl(l.configs, "configurazione", "configurazioni")})`), 5)}.`,
     nearHead: (c: Country) => [cap(regione(c)), "Negozi che ce l'hanno ora"],
     nearCaption: (c: Country, model: string) => `Disponibilità di ${itName(model)} per il ritiro per ${regione(c)}, all'ultimo controllo`,
@@ -289,7 +289,7 @@ export const views: Dict["views"] = {
       a: have.length === 0 ? `Nessuno ${dei(n)} all'ultimo controllo. Questa pagina e la mappa si aggiornano appena uno lo rende disponibile, e un avviso te lo dice per primo.` : `${N(have.length)} su ${N(n)} all'ultimo controllo: ${have.slice(0, 6).map(apple).join(", ")}${have.length > 6 ? " e altri" : ""}.`,
     }),
     faq: (ctx: FaqContext) => placeFaq({ ...ctx, omit: [...(ctx.omit ?? []), "count", "stock", "lasts"] }, IT),
-    duoBlock: (alert: string) => `Il modo più rapido per averne uno è un avviso nei negozi che puoi raggiungere: [imposta un avviso per l'iPhone Duo](${alert}). Ogni negozio × configurazione esatta è un avviso, e la notifica arriva pochi secondi dopo che un negozio lo rende disponibile.`,
+    duoBlock: (alert: string) => `Il modo più rapido per averne uno è un avviso nei negozi che puoi raggiungere: [imposta un avviso per l'iPhone Duo](${alert}). Ogni negozio × configurazione esatta è un avviso, e la notifica parte pochi secondi dopo che un negozio lo rende disponibile.`,
     intro: (c: Country, n: number, spread: string, now: { duo: number; max: number; pro: number }, tax: string) => `${n === 1 ? "C'è" : "Ci sono"} **${N(n)} Apple Store** ${inPaese(c.cc)}, ${spread}. In questo momento l'iPhone Duo è disponibile per il ritiro in **${N(now.duo)}** di questi, l'iPhone 18 Pro Max in **${N(now.max)}** e il 18 Pro in **${N(now.pro)}**. ${tax}`,
     crumb: "Apple Store",
     panel: (c: Country) => `Scegli gli iPhone e seleziona i negozi ${inPaese(c.cc)} che puoi raggiungere`,
@@ -392,6 +392,25 @@ export const views: Dict["views"] = {
       { text: <>Le tabelle qui sotto si riempiono dal primo rifornimento confermato</>, step: true },
       { text: <>Tendenze per ora e giorno della settimana, dove abbiamo più dati: <Link href="/iphone-duo-restock-times" className="underline underline-offset-2">la pagina degli Stati Uniti (in inglese)</Link></>, step: true },
     ],
+    keyFactsTitle: "I fatti principali",
+    keyFacts: (x: RestockTimesView, k: { top: { label: string; restocks: number } | null; latest: { config: string; store: Store; at: string } | null }): string[] => {
+      const { t, w, sell } = x;
+      const wh = rtIn(x);
+      const dalD = (s: string) => (/^(1|8|11)\b/.test(s) ? `dall'${s}` : `dal ${s}`);
+      const since = dalD(giorno(t.since, false));
+      const peak = t.peakHour;
+      return [
+        `PickupChecker ha confermato ${N(t.n)} ${t.n === 1 ? "rifornimento" : "rifornimenti"} di iPhone Duo ${x.one ? "nell'Apple Store" : `in ${N(x.stores)} Apple Store`} ${wh} ${dalD(giornoLungo(t.since))}, in ${t.days} ${dei(x.tracked)} giorni monitorati.`,
+        ...(x.pattern
+          ? [`${Il(rtPct(w.share))} ${dei(t.n)} rifornimenti di iPhone Duo ${wh} ${since} è arrivato ${tra(w.from, w.to)} nell'ora locale del negozio.`]
+          : [`PickupChecker indica un orario abituale di rifornimento dell'iPhone Duo ${wh} solo da ${PATTERN_MIN} rifornimenti in ${PATTERN_MIN_DAYS} giorni diversi; quelli registrati finora (${N(t.n)}) non bastano.`]),
+        ...(x.pattern && peak != null ? [`L'ora con più rifornimenti di iPhone Duo ${wh} è stata finora ${fascia(peak, peak + 1)}, ora locale, con ${N(t.byHour[peak])} su ${N(t.n)} (${il(rtPct(t.byHour[peak] / t.n))}).`] : []),
+        ...(sell ? [`Un iPhone Duo tornato disponibile ${wh} è rimasto sulla pagina di ritiro di Apple per una mediana di ${N(sell.medianSec)} secondi (${N(sell.n)} rifornimenti cronometrati ${since}); è tempo di disponibilità, non pezzi venduti.`] : []),
+        ...(k.top && k.top.restocks > 0 ? [`La configurazione di iPhone Duo rifornita più spesso ${wh} è ${k.top.label}: ${N(k.top.restocks)} su ${N(t.n)} rifornimenti ${since} (${il(rtPct(k.top.restocks / t.n))}).`] : []),
+        ...(k.latest ? [`L'ultimo rifornimento confermato di iPhone Duo ${wh} è stato ${k.latest.config}${x.one ? "" : ` da ${apple(k.latest.store)}`}, ${localStamp(k.latest.at, k.latest.store, IT)} ora locale del negozio.`] : []),
+        `Dati al ${conFuso(t.at, x.c)}: un rifornimento ${wh} conta solo dopo due controlli concordanti della pagina di ritiro di Apple, e la prima comparsa dopo un'interruzione del monitoraggio non conta mai.`,
+      ];
+    },
     setUpAlert: "Imposta un avviso per l'iPhone Duo",
     logLive: "Il registro dei rifornimenti, in tempo reale",
     onThisPage: "In questa pagina",
@@ -431,7 +450,7 @@ export const views: Dict["views"] = {
         { q: "Perché tutti gli Apple Store dicono che l'iPhone Duo non è disponibile?", a: sell
           ? `Perché un rifornimento dura poco: ${il(rtPct(sell.within2min))} ${dei(sell.n)} rifornimenti esauriti che abbiamo misurato ${where} è sparito entro 2 minuti, e ${il(rtPct(sell.within20min))} entro 20. In questo momento lo hanno disponibile ${N(x.duoNow)} negozi su ${N(x.stores)}; in quasi ogni altro momento la lettura onesta di apple.com è «non disponibile», anche in un giorno con decine di rifornimenti ([cosa significa «non disponibile»](/apple-store-pickup-availability-explained)).`
           : `Perché la disponibilità per il ritiro compare per pochi minuti alla volta. In questo momento lo hanno disponibile ${N(x.duoNow)} negozi su ${N(x.stores)} ${where} ([cosa significa «non disponibile»](/apple-store-pickup-availability-explained)).` },
-        { q: "Come ricevo una notifica quando il mio Apple Store rifornisce l'iPhone Duo?", a: `Imposta un avviso per il negozio con capacità e colore esatti: da quel momento il negozio viene controllato ogni 5 secondi e il telefono riceve la notifica circa 3 secondi dopo un rifornimento confermato ([imposta un avviso](${x.alert}); [come funziona](/how-it-works)).` },
+        { q: "Come ricevo una notifica quando il mio Apple Store rifornisce l'iPhone Duo?", a: `Imposta un avviso per il negozio con capacità e colore esatti: da quel momento il negozio viene controllato ogni 5 secondi e la notifica parte circa 3 secondi dopo un rifornimento confermato; quando compare sul telefono dipende dal dispositivo e dalla sua connessione ([imposta un avviso](${x.alert}); [come funziona](/how-it-works)).` },
       ];
     },
     sources: {
@@ -533,8 +552,8 @@ export const views: Dict["views"] = {
     configKeys: (x: RestockTimesView): Point[] => [
       { text: <>La scelta della configurazione conta <b className="text-ink">più della scelta del negozio</b></> },
       x.storageRatio != null
-        ? { text: <>Accontentati della capacità rifornita più spesso: circa <b className="text-ink">{N(x.storageRatio)}×</b> le probabilità della capacità successiva</> }
-        : { text: <>Accontentati della capacità rifornita più spesso: le probabilità migliorano <b className="text-ink">nettamente</b></> },
+        ? { text: <>La capacità rifornita più spesso è tornata circa <b className="text-ink">{N(x.storageRatio)}×</b> più spesso della successiva: più finestre di ritiro passate, non una promessa</> }
+        : { text: <>La capacità rifornita più spesso ha avuto più finestre di ritiro passate; la tabella mostra <b className="text-ink">quante in più</b></> },
       { text: <>Il <b className="text-ink">2TB</b>: un telefono da ordinare con consegna, e aspettare</>, no: true },
       { text: <>Prezzi e disponibilità in questo momento: <Link href="/which-iphone-duo-restocks-most">Quale iPhone Duo torna disponibile più spesso?</Link></>, step: true },
     ],
@@ -552,7 +571,7 @@ export const views: Dict["views"] = {
       { text: <>È il numero che spiega tutto il resto di questa pagina</> },
       { text: <>Ogni rifornimento con i secondi che è durato, per configurazione e {rtRegion(x)}: <Link href="/iphone-duo-sell-out-times">In quanto tempo si esaurisce un rifornimento di iPhone Duo?</Link></>, step: true },
     ],
-    measured: "Ogni dato è il tempo tra il controllo che ha visto per primo la configurazione disponibile e quello che l'ha vista sparita, quindi è un limite superiore: le durate reali sono più brevi.",
+    measured: "Ogni dato è il tempo tra il controllo che ha visto per primo la configurazione disponibile e quello che l'ha vista sparita, quindi è un limite superiore: le durate reali sono più brevi. È il tempo in cui la pagina di ritiro di Apple ha mostrato la configurazione, non un numero di pezzi venduti.",
 
     // ---- unavailable
     unavailableLead: (x: RestockTimesView) => <b>Perché un rifornimento è un lampo, non uno stato: {x.one ? "un negozio" : `${N(x.stores)} negozi`} × {N(x.configs)} configurazioni = {N(x.pairs)} cose che possono essere disponibili {rtIn(x)}, e in questo momento {x.duoNow === 1 ? "1 negozio ha" : `${N(x.duoNow)} negozi hanno`} un iPhone Duo disponibile.</b>,
@@ -593,7 +612,7 @@ export const views: Dict["views"] = {
     methodLead: <b>Un rifornimento viene contato quando apple.com rende disponibile una configurazione per il Ritiro in negozio in un negozio dove prima non lo era, con la conferma di due controlli concordanti.</b>,
     methodKeys: (x: RestockTimesView): Point[] => [
       { text: <>{x.one ? "L'Apple Store" : "Ogni Apple Store"} {rtIn(x)} ogni <b className="text-ink">15 secondi</b>; i negozi dei tuoi avvisi ogni <b className="text-ink">5</b></> },
-      { text: <>Gli altri tracker dichiarano <b className="text-ink">da 8 secondi a 15 minuti</b>; confrontiamo solo i numeri pubblicati</> },
+      { text: <>Gli altri tracker dichiarano sui propri siti intervalli <b className="text-ink">da 5 secondi a 15 minuti</b>; non li abbiamo misurati, quindi confrontiamo solo ciò che dichiarano</> },
       { text: <>Un primo «disponibile» viene ricontrollato <b className="text-ink">circa un secondo dopo</b> prima di contare</> },
       { text: <>Una disponibilità che sparisce viene confermata al <b className="text-ink">giro successivo</b></> },
       { text: <>La prima volta che vediamo un negozio, una richiesta fallita o scaduta: <b className="text-ink">mai</b> un rifornimento, mai «esaurito»</>, no: true },

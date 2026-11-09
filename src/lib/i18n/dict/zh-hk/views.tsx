@@ -204,7 +204,7 @@ export const views: Dict["views"] = {
     itemList: (model: string, where: string) => `${where}的 ${zhCfg(model)}`,
     nearLead: (c: Country, model: string, inStock: number, k: number, have: { store: string; city: string; configs: number }[]) =>
       inStock === 0
-        ? `${cnOf(c)}現時沒有 Apple Store 開放 ${model} 取貨，所以「附近哪裏有貨」要看哪間分店先補貨。在你去得到的分店設提醒，任何一間一上架，推送幾秒內送到。`
+        ? `${cnOf(c)}現時沒有 Apple Store 開放 ${model} 取貨，所以「附近哪裏有貨」要看哪間分店先補貨。在你去得到的分店設提醒，任何一間一上架，推送幾秒內發出。`
         : `${n(k)} 間分店中有 ${n(inStock)} 間現在有 ${model}：${lw(have.slice(0, 5).map((l) => `${l.store}${l.store.includes(l.city) ? "" : ` · ${l.city}`} · ${n(l.configs)} 款`), 5)}。`,
     nearHead: (c: Country) => [rn(c), "現時有貨分店"],
     nearCaption: (c: Country, model: string) => `各${rn(c)}的 ${model} 取貨現貨（最近一次檢查）`,
@@ -264,7 +264,7 @@ export const views: Dict["views"] = {
       const peak = ctx.peak ? { hour: hrFromEn(ctx.peak.hour), day: ctx.peak.day ? dayFromEn(ctx.peak.day) : null, total: ctx.peak.total } : ctx.peak;
       return placeFaq({ ...ctx, place: zhPlace(cc, ctx.place), peak, omit: [...(ctx.omit ?? []), "count", "stock", "lasts"] }, L);
     },
-    duoBlock: (alert: string) => `想買到，最快的方法是在你去得到的分店設提醒：[設定 iPhone Duo 提醒](${alert})。每間分店 × 每款指定配置算一個提醒，分店一上架，推送幾秒內送到。`,
+    duoBlock: (alert: string) => `想買到，最快的方法是在你去得到的分店設提醒：[設定 iPhone Duo 提醒](${alert})。每間分店 × 每款指定配置算一個提醒，分店一上架，推送幾秒內發出。`,
     intro: (c: Country, k: number, spread: string, now: { duo: number; max: number; pro: number }, tax: string) => `${cnOf(c)}共有 **${n(k)} 間 Apple Store**，${spread}。現時其中 **${n(now.duo)}** 間可取貨 iPhone Duo，**${n(now.max)}** 間有 iPhone 18 Pro Max，**${n(now.pro)}** 間有 18 Pro。${tax}`,
     crumb: "Apple Store",
     panel: (c: Country) => `揀選手機，再剔選${cnOf(c)}你去得到的分店`,
@@ -362,6 +362,24 @@ export const views: Dict["views"] = {
       { text: <>下面的表格會由第一次確認補貨開始填上</>, step: true },
       { text: <>數據最多的鐘點及星期規律：<Link href="/iphone-duo-restock-times" className="underline underline-offset-2">美國版頁面</Link></>, step: true },
     ],
+    keyFactsTitle: "重點事實",
+    keyFacts: (x: RestockTimesView, k: { top: { label: string; restocks: number } | null; latest: { config: string; store: Store; at: string } | null }): string[] => {
+      const { t, w, sell } = x;
+      const wh = rtW(x);
+      const since = ymd(t.since, false);
+      const peak = t.peakHour;
+      return [
+        `PickupChecker 自${longYmd(t.since)}起在${wh}${x.one ? "的 Apple Store" : ` ${n(x.stores)} 間 Apple Store`}確認了 ${n(t.n)} 次 iPhone Duo 補貨（追蹤的 ${n(x.tracked)} 日中有 ${t.days} 日有補貨）。`,
+        ...(x.pattern
+          ? [`自${since}起，${wh}的 ${n(t.n)} 次 iPhone Duo 補貨中，有 ${pct(w.share)} 落在分店當地時間${rng(w.from, w.to)}。`]
+          : [`PickupChecker 要在 ${PATTERN_MIN_DAYS} 個不同日子累積 ${PATTERN_MIN} 次補貨，才會說出${wh} iPhone Duo 的「慣常補貨時間」；至今的 ${n(t.n)} 次還未夠。`]),
+        ...(x.pattern && peak != null ? [`${wh} iPhone Duo 補貨最多的單一小時是當地時間${rng(peak, peak + 1)}，佔 ${n(t.n)} 次中的 ${n(t.byHour[peak])} 次（${pct(t.byHour[peak] / t.n)}）。`] : []),
+        ...(sell ? [`${wh}補貨的 iPhone Duo 在 Apple 取貨頁面上架時間的中位數是 ${n(sell.medianSec)} 秒（自${since}起計時的 ${n(sell.n)} 次補貨）；這是上架時間，不是售出數量。`] : []),
+        ...(k.top && k.top.restocks > 0 ? [`${wh}補貨最多的 iPhone Duo 配置是 ${k.top.label}：自${since}起 ${n(t.n)} 次補貨中佔 ${n(k.top.restocks)} 次（${pct(k.top.restocks / t.n)}）。`] : []),
+        ...(k.latest ? [`${wh}最近一次確認的 iPhone Duo 補貨是 ${k.latest.config}${x.one ? "" : `（${apple(k.latest.store)}）`}，分店當地時間 ${localStamp(k.latest.at, k.latest.store, L)}。`] : []),
+        `截至${zoneStampZh(t.at, x.c.cc)}：${wh}的補貨要經 Apple 取貨頁面兩次一致的檢查才計算，追蹤中斷後首次出現的貨一律不計。`,
+      ];
+    },
     setUpAlert: "設定 iPhone Duo 提醒",
     logLive: "即時補貨記錄",
     onThisPage: "本頁內容",
@@ -402,7 +420,7 @@ export const views: Dict["views"] = {
         { q: "為何每間 Apple Store 都顯示 iPhone Duo 沒有貨？", a: sell
           ? `因為補貨很短暫：我們在${where}量度的 ${n(sell.n)} 次售罄補貨中，${pct(sell.within2min)} 在 2 分鐘內售罄，${pct(sell.within20min)} 在 20 分鐘內。現時 ${n(x.stores)} 間中有 ${n(x.duoNow)} 間有貨；即使一日補貨幾十次，幾乎任何時刻 apple.com 如實顯示的都是「沒有貨」（[「沒有貨」是甚麼意思](/apple-store-pickup-availability-explained)）。`
           : `因為取貨現貨每次只出現幾分鐘。現時${where} ${n(x.stores)} 間分店中有 ${n(x.duoNow)} 間有貨（[「沒有貨」是甚麼意思](/apple-store-pickup-availability-explained)）。` },
-        { q: "我的 Apple Store 補貨 iPhone Duo 時，怎樣收到通知？", a: `為分店及指定容量、顏色設定提醒：之後該分店每 ${SPEED.fastSec} 秒檢查一次，確認補貨後約 ${SPEED.alertSec} 秒通知你的手機（[設定提醒](${x.alert})；[運作原理](/how-it-works)）。` },
+        { q: "我的 Apple Store 補貨 iPhone Duo 時，怎樣收到通知？", a: `為分店及指定容量、顏色設定提醒：之後該分店每 ${SPEED.fastSec} 秒檢查一次，確認補貨後約 ${SPEED.alertSec} 秒發出推送，何時在手機上顯示視乎手機和網絡（[設定提醒](${x.alert})；[運作原理](/how-it-works)）。` },
       ];
     },
     sources: {
@@ -503,8 +521,8 @@ export const views: Dict["views"] = {
     configKeys: (x: RestockTimesView): Point[] => [
       { text: <>揀款式<b className="text-ink">比揀分店更重要</b></> },
       x.storageRatio != null
-        ? { text: <>選補貨最多的容量：機會約是下一個容量的 <b className="text-ink">{x.storageRatio}×</b></> }
-        : { text: <>選補貨最多的容量：機會<b className="text-ink">大大提高</b></> },
+        ? { text: <>補貨最多的容量，補貨次數約是下一個容量的 <b className="text-ink">{x.storageRatio}×</b>：代表過去取貨時段較多，不是保證</> }
+        : { text: <>補貨最多的容量，過去的取貨時段也最多；<b className="text-ink">多多少</b>，看表就知</> },
       { text: <><b className="text-ink">2TB</b>：要網上訂購、等送貨的手機</>, no: true },
       { text: <>價錢及現時有貨情況：<Link href="/which-iphone-duo-restocks-most">哪款 iPhone Duo 補貨最多？</Link></>, step: true },
     ],
@@ -521,7 +539,7 @@ export const views: Dict["views"] = {
       { text: <>本頁其他一切，都由這個數字解釋</> },
       { text: <>每次補貨維持了多少秒，按款式及{regionWordOf(x)}：<Link href="/iphone-duo-sell-out-times">iPhone Duo 補貨幾快售罄？</Link></>, step: true },
     ],
-    measured: "每個數字是由首次看到該款上架的那次檢查，到看到它消失的那次檢查之間的時間，所以是上限；真實的上架時間更短。",
+    measured: "每個數字是由首次看到該款上架的那次檢查，到看到它消失的那次檢查之間的時間，所以是上限；真實的上架時間更短。這是 Apple 取貨頁面列出該配置的時間，不是售出數量。",
 
     unavailableLead: (x: RestockTimesView) => <b>因為補貨只是一閃而過，而不是一種狀態：{x.one ? "一間分店" : `${n(x.stores)} 間分店`} × {n(x.configs)} 款 = {rtW(x)}有 {n(x.pairs)} 個可能有貨的組合，而此刻有 {n(x.duoNow)} 間分店有任何一款 iPhone Duo。</b>,
     pairs: "可能有貨的「分店 × 款式」組合",
@@ -559,7 +577,7 @@ export const views: Dict["views"] = {
     methodLead: <b>只有當 apple.com 在一間原本沒有上架的分店，開放某款配置的店舖取貨，並經兩次一致的檢查確認，才算一次補貨。</b>,
     methodKeys: (x: RestockTimesView): Point[] => [
       { text: <>{x.one ? `${rtW(x)}的 Apple Store ` : `${rtW(x)}每一間 Apple Store `}每 <b className="text-ink">{SPEED.checkSec} 秒</b>檢查一次；有提醒的分店每 <b className="text-ink">{SPEED.fastSec} 秒</b></> },
-      { text: <>其他追蹤器自述的間隔是 <b className="text-ink">8 秒至 15 分鐘</b>；我們只比較對方公布的數字</> },
+      { text: <>其他追蹤器在自己網站上自述的檢查間隔是 <b className="text-ink">5 秒至 15 分鐘</b>；我們沒有實測過，只比較它們自己公布的數字</> },
       { text: <>首次出現的「有貨」會在<b className="text-ink">約一秒後</b>再查一次才算數</> },
       { text: <>消失的上架會在<b className="text-ink">下一輪</b>確認</> },
       { text: <>分店第一次被看到、請求失敗或逾時：<b className="text-ink">永不</b>當作補貨，也不當作「沒有貨」</>, no: true },

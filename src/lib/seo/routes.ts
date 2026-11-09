@@ -33,6 +33,8 @@ export const TOP_LEVEL: ReadonlySet<string> = new Set([
   "iphone-duo-back-in-stock", "iphone-duo-stock-checker", "where-to-buy-iphone-duo",
   "research", "blog", "opengraph-image", "_not-found", "icons", "img", "vendor", "zip",
   "iphone-duo-stock-api",
+  // The proof pages (2026-11-09): the live service report and the dated tracker comparison.
+  "service-report", "iphone-stock-tracker-comparison",
 ]);
 
 /** Question pages that exist for every country under its prefix (/ca/iphone-duo-restock-times …). */
