@@ -4,13 +4,14 @@
  *
  *  match: active, unpaused rules of the same store × exact configuration (model, storage, colour)
  *  dedupe: one notification per (watch, event) — unique index, and checked before sending
- *  repeats: every confirmed restock alerts, a second batch ten minutes after the first included (2026-11-09: the old
- *          30-minute cool-down per (watch, store, part) held back 3,386 alerts in 14 days — 22 % of real restocks
- *          follow another one of the same store × configuration within 30 minutes, and they stay listed about as
- *          long as first batches). Flicker is not a restock: ingest only commits a sell-out after two answers at
- *          least 15 s apart and a restock after two matching answers. The only limit left is a flood guard:
- *          at most MAX_ALERTS_PER_HOUR alerts per (watch, store, part) in any 60 minutes (it binds on under 1 %
- *          of restocks).
+ *  one batch, one alert (2026-11-09): alerts fire only on a committed unavailable → available transition, never
+ *          per check, so a listing that stays up for ten minutes is one alert. A listing that drops off for less
+ *          than SAME_BATCH_GAP_MS and comes back is the same batch (Apple's page flickering, an abandoned checkout
+ *          putting the unit back): members already alerted for that batch are not alerted again. Off-shelf gaps
+ *          before a re-listing peak at 30–90 s and flatten out after 2 minutes (14 days, 35,713 re-listings).
+ *  new batches: a return after 2+ minutes off the shelf alerts again, even within 30 minutes of the last alert (the
+ *          old 30-minute cool-down held back 3,386 alerts in 14 days). Backstop: at most MAX_ALERTS_PER_HOUR alerts
+ *          per (watch, store, part) in any 60 minutes.
  */
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -33,6 +34,31 @@ const REPEAT_WINDOW_MS = 60 * 60 * 1000;
 export function underHourlyCap(sentAt: (Date | string | number)[], now: Date, max = MAX_ALERTS_PER_HOUR): boolean {
   const from = now.getTime() - REPEAT_WINDOW_MS;
   return sentAt.filter((t) => new Date(t).getTime() > from).length < max;
+}
+
+/** Off the shelf for less than this and back again: still the same batch (no new alert for members already told). */
+export const SAME_BATCH_GAP_MS = 2 * 60 * 1000;
+/** How far back a batch is followed (events and sent alerts read for it). */
+const BATCH_LOOKBACK_MS = 6 * 60 * 60 * 1000;
+
+export interface PairEvent { kind: string; at: Date | string; seenUntil: Date | string | null }
+
+/**
+ * Pure: when the batch that a restock at `restockAt` belongs to started. Walks back over one store × part's events:
+ * while the sell-out just before the current listing was off the shelf for less than `gapMs` (from its last check
+ * that still saw the unit to the first check that saw it again), the listing before it is the same batch.
+ */
+export function batchStart(events: PairEvent[], restockAt: Date, gapMs = SAME_BATCH_GAP_MS): Date {
+  const ms = (v: Date | string) => new Date(v).getTime();
+  const before = events.filter((e) => ms(e.at) < restockAt.getTime()).sort((a, b) => ms(b.at) - ms(a.at));
+  let start = restockAt.getTime();
+  for (let i = 0; i + 1 < before.length; i += 2) {
+    const out = before[i], prev = before[i + 1];
+    if (out.kind !== "soldout" || prev.kind !== "restock") break;
+    if (start - ms(out.seenUntil ?? out.at) >= gapMs) break;
+    start = ms(prev.at);
+  }
+  return new Date(start);
 }
 
 export interface NotifyStats {
@@ -81,7 +107,8 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
   }
   const active = candidates.filter((c) => coveredByUser.get(c.watch.userId)?.has(c.watch.id));
 
-  // Alerts these rules sent in the last hour: the flood guard counts them; an event already alerted is never re-sent.
+  // Alerts these rules sent in the last hours: the flood guard counts the last hour; an event already alerted is never
+  // re-sent; a batch already alerted is not alerted again.
   const watchIds = active.map((c) => c.watch.id);
   const recent =
     watchIds.length === 0
@@ -93,7 +120,7 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
             and(
               inArray(schema.notifications.watchId, watchIds),
               eq(schema.notifications.status, "sent"),
-              sql`${schema.notifications.createdAt} > ${new Date(now.getTime() - REPEAT_WINDOW_MS)}`,
+              sql`${schema.notifications.createdAt} > ${new Date(now.getTime() - BATCH_LOOKBACK_MS)}`,
             ),
           );
   const sentAt = new Map<string, Date[]>();
@@ -104,6 +131,29 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
     if (r.eventId != null) alerted.add(`${r.watchId}|${r.eventId}`);
   }
   const capped: { watchId: string; store: string; part: string }[] = [];
+  // Each restocked pair's recent events: where its batch started (a short dip and back is the same batch).
+  const pairKeys = [...new Set(restocks.map((x) => `${x.t.storeNumber}|${x.t.partNumber}`))];
+  const pairEvents = new Map<string, PairEvent[]>();
+  if (watchIds.length && pairKeys.length) {
+    const rows = await d
+      .select({ store: schema.availabilityEvents.storeNumber, part: schema.availabilityEvents.partNumber, kind: schema.availabilityEvents.kind, at: schema.availabilityEvents.at, seenUntil: schema.availabilityEvents.seenUntil })
+      .from(schema.availabilityEvents)
+      .where(and(
+        inArray(schema.availabilityEvents.storeNumber, [...new Set(restocks.map((x) => x.t.storeNumber))]),
+        inArray(schema.availabilityEvents.partNumber, [...new Set(restocks.map((x) => x.t.partNumber))]),
+        eq(schema.availabilityEvents.firstSeen, false),
+        sql`${schema.availabilityEvents.at} > ${new Date(now.getTime() - BATCH_LOOKBACK_MS)}`,
+      ));
+    for (const r of rows) {
+      const k = `${r.store}|${r.part}`;
+      if (pairKeys.includes(k)) pairEvents.set(k, [...(pairEvents.get(k) ?? []), r]);
+    }
+  }
+  const startOf = new Map<string, Date>();
+  for (const x of restocks) {
+    const k = `${x.t.storeNumber}|${x.t.partNumber}`;
+    startOf.set(`${k}|${x.eventId}`, batchStart(pairEvents.get(k) ?? [], new Date(x.t.at)));
+  }
   const pushByUser = pushConfigured() ? await enabledSubscriptionsFor(active.map((c) => c.watch.userId)) : new Map<string, never[]>();
 
   // Group per member: every rule of theirs that a restock of this sweep matched. One e-mail carries all of it; pushes go
@@ -121,6 +171,12 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
       if (!ruleMatches(w, modelKey, item.storage, item.color, store.storeNumber)) continue;
       stats.matched++;
       if (alerted.has(`${w.id}|${x.eventId}`)) {
+        stats.skipped++;
+        continue;
+      }
+      // Same batch as one this rule was already alerted for (it dipped off the shelf for under 2 minutes): no new alert.
+      const start = startOf.get(`${store.storeNumber}|${item.partNumber}|${x.eventId}`);
+      if (start && start.getTime() < new Date(x.t.at).getTime() && (sentAt.get(`${w.id}|${store.storeNumber}|${item.partNumber}`) ?? []).some((t) => t.getTime() >= start.getTime())) {
         stats.skipped++;
         continue;
       }
