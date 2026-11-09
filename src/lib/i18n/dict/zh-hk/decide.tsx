@@ -58,12 +58,12 @@ const configs: DecideDict["configs"] = {
     const e = d.easiest, h = d.hardest;
     return e && h
       ? fitW([
-        `${x.cfg(e)}是${inAt(x.c)}最容易買到的 iPhone Duo：自${longYmd(d.since)}起 ${n(x.stores)} 間 Apple Store 確認的 ${n(d.n)} 次補貨中佔 ${n(e.restocks)} 次，累計上架 ${hours(e.exposureSec)}；最難買到的是 ${x.cfg(h)}（${n(h.restocks)} 次）。全部款式按容量及顏色排名，每次補貨即時更新。`,
-        `${x.cfg(e)}是${inAt(x.c)}最容易買到的 iPhone Duo（自${longYmd(d.since)}起 ${n(d.n)} 次補貨中佔 ${n(e.restocks)} 次）；最難買到的是 ${x.cfg(h)}。全部款式按容量及顏色排名。`,
+        `${x.cfg(e)}是${inAt(x.c)}上架時間最長的 iPhone Duo：自${longYmd(d.since)}起 ${n(x.stores)} 間 Apple Store 確認的 ${n(d.n)} 次補貨中佔 ${n(e.restocks)} 次，累計上架 ${hours(e.exposureSec)}；最短的是 ${x.cfg(h)}（${n(h.restocks)} 次）。全部款式按容量及顏色排名，每次補貨即時更新。`,
+        `${x.cfg(e)}是${inAt(x.c)}上架時間最長的 iPhone Duo（自${longYmd(d.since)}起 ${n(d.n)} 次補貨中佔 ${n(e.restocks)} 次）；最短的是 ${x.cfg(h)}。全部款式按容量及顏色排名。`,
       ], 160)
       : `${ofAt(x.c)}每款 iPhone Duo 配置，按自${longYmd(d.since)}起 Apple Store 已確認的補貨排名：容量、顏色、上架時間，以及現時有貨的款式。`;
   },
-  h1: (x: ConfigsView) => `哪款 iPhone Duo 配置${inAt(x.c)}最常補貨？哪款最容易買到？`,
+  h1: (x: ConfigsView) => `哪款 iPhone Duo 配置${inAt(x.c)}最常補貨？哪款上架時間最長？`,
   intro: (x: ConfigsView) => {
     const { d } = x;
     const e = d.easiest, h = d.hardest;
@@ -335,7 +335,7 @@ const supply: DecideDict["supply"] = {
   related: "繼續閱讀",
   sameData: "同一組數據，其他問題",
   otherCountries: "其他國家／地區的同一頁",
-  questions: { restockTimes: "Apple 幾時補貨 iPhone Duo？", configs: "哪款配置最容易買到？", channels: "Apple、電訊商還是零售商？", sellOut: "補貨後幾快售罄？", howToGet: "怎樣買到 iPhone Duo", alerts: "最快收到通知的方法" },
+  questions: { restockTimes: "Apple 幾時補貨 iPhone Duo？", configs: "哪款配置最常補貨？", channels: "Apple、電訊商還是零售商？", sellOut: "補貨後幾快售罄？", howToGet: "怎樣買到 iPhone Duo", alerts: "最快收到通知的方法" },
   setUpAlert: "設定提醒",
   logLive: "補貨記錄（即時）",
   faqTitle: "常見問題",
@@ -438,7 +438,7 @@ const channels: DecideDict["channels"] = {
   related: "繼續閱讀",
   sameData: "同一組數據，其他問題",
   otherCountries: "其他國家／地區的同一頁",
-  questions: { howToGet: "怎樣買到 iPhone Duo", whereToBuy: "今日去哪裏買", shortage: "缺貨有改善嗎？", configs: "哪款配置最容易買到？", restockTimes: "Apple 幾時補貨 iPhone Duo？", alerts: "最快收到通知的方法" },
+  questions: { howToGet: "怎樣買到 iPhone Duo", whereToBuy: "今日去哪裏買", shortage: "缺貨有改善嗎？", configs: "哪款配置最常補貨？", restockTimes: "Apple 幾時補貨 iPhone Duo？", alerts: "最快收到通知的方法" },
   setUpAlert: "設定提醒",
   logLive: "補貨記錄（即時）",
   faqTitle: "常見問題",
@@ -533,7 +533,7 @@ const api: DecideDict["api"] = {
   related: "繼續閱讀",
   sameData: "同一組數據，其他問題",
   otherCountries: "其他國家／地區的同一頁",
-  questions: { alerts: "最快收到通知的方法", howItWorks: "檢查怎樣運作", restockTimes: "Apple 幾時補貨 iPhone Duo？", shortage: "缺貨有改善嗎？", configs: "哪款配置最容易買到？", stockChecker: "iPhone Duo 現貨查詢" },
+  questions: { alerts: "最快收到通知的方法", howItWorks: "檢查怎樣運作", restockTimes: "Apple 幾時補貨 iPhone Duo？", shortage: "缺貨有改善嗎？", configs: "哪款配置最常補貨？", stockChecker: "iPhone Duo 現貨查詢" },
   setUpAlert: "設定提醒",
   tryIt: "打開即時 JSON",
   faqTitle: "常見問題",

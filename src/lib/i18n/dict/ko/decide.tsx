@@ -62,16 +62,16 @@ const configs: DecideDict["configs"] = {
     const e = d.easiest, h = d.hardest;
     return e && h
       ? fitTitleW([
-        `${at(x.c)} 가장 구하기 쉬운 iPhone Duo는 ${x.cfg(e)}: ${longDate(d.since)} 이후 Apple Store ${n(x.stores)}곳에서 확인된 재입고 ${n(d.n)}회 중 ${n(e.restocks)}회, 판매 노출 ${hours(e.exposureSec)}. 가장 어려운 건 ${x.cfg(h)}(${n(h.restocks)}회). 용량·색상별 전체 구성 순위, 재입고마다 갱신.`,
-        `${at(x.c)} 가장 구하기 쉬운 iPhone Duo는 ${x.cfg(e)}(${longDate(d.since)} 이후 재입고 ${n(d.n)}회 중 ${n(e.restocks)}회), 가장 어려운 건 ${x.cfg(h)}. 용량·색상별 전체 구성 순위.`,
-        `${dom(x.c)} iPhone Duo 가장 구하기 쉬운 구성: ${x.cfg(e)}(재입고 ${n(d.n)}회 중 ${n(e.restocks)}회). 용량·색상별 전체 순위.`,
+        `${at(x.c)} 가장 오래 판매 노출된 iPhone Duo는 ${x.cfg(e)}: ${longDate(d.since)} 이후 Apple Store ${n(x.stores)}곳에서 확인된 재입고 ${n(d.n)}회 중 ${n(e.restocks)}회, 판매 노출 ${hours(e.exposureSec)}. 가장 짧은 건 ${x.cfg(h)}(${n(h.restocks)}회). 용량·색상별 전체 구성 순위, 재입고마다 갱신.`,
+        `${at(x.c)} 가장 오래 판매 노출된 iPhone Duo는 ${x.cfg(e)}(${longDate(d.since)} 이후 재입고 ${n(d.n)}회 중 ${n(e.restocks)}회), 가장 짧은 건 ${x.cfg(h)}. 용량·색상별 전체 구성 순위.`,
+        `${dom(x.c)} iPhone Duo 가장 오래 판매 노출된 구성: ${x.cfg(e)}(재입고 ${n(d.n)}회 중 ${n(e.restocks)}회). 용량·색상별 전체 순위.`,
       ], 160)
       : fitTitleW([
         `${longDate(d.since)} 이후 ${dom(x.c)} Apple Store에서 확인된 재입고로 매긴 iPhone Duo 전체 구성 순위: 용량, 색상, 판매 노출 시간, 지금 재고 있는 구성.`,
         `${dom(x.c)} Apple Store 확인된 재입고로 매긴 iPhone Duo 구성 순위: 용량, 색상, 노출 시간, 지금 재고.`,
       ], 160);
   },
-  h1: (x: ConfigsView) => `${dom(x.c)} iPhone Duo, 어떤 구성이 가장 많이 재입고되고 가장 구하기 쉬울까요?`,
+  h1: (x: ConfigsView) => `${dom(x.c)} iPhone Duo, 어떤 구성이 가장 많이 재입고되고 가장 오래 재고가 남아 있을까요?`,
   intro: (x: ConfigsView) => {
     const { d } = x;
     const e = d.easiest, h = d.hardest;
@@ -361,7 +361,7 @@ const supply: DecideDict["supply"] = {
   related: "이어서 읽기",
   sameData: "같은 데이터, 다른 질문",
   otherCountries: "다른 나라의 같은 페이지",
-  questions: { restockTimes: "Apple은 iPhone Duo를 언제 재입고하나요?", configs: "가장 구하기 쉬운 구성은?", channels: "Apple, 통신사, 아니면 리테일러?", sellOut: "재입고는 얼마나 빨리 품절되나요?", howToGet: "iPhone Duo 구하는 법", alerts: "가장 빨리 알림 받는 법" },
+  questions: { restockTimes: "Apple은 iPhone Duo를 언제 재입고하나요?", configs: "가장 많이 재입고되는 구성은?", channels: "Apple, 통신사, 아니면 리테일러?", sellOut: "재입고는 얼마나 빨리 품절되나요?", howToGet: "iPhone Duo 구하는 법", alerts: "가장 빨리 알림 받는 법" },
   setUpAlert: "알림 설정하기",
   logLive: "실시간 재입고 기록",
   faqTitle: "자주 묻는 질문",
@@ -472,7 +472,7 @@ const channels: DecideDict["channels"] = {
   related: "이어서 읽기",
   sameData: "같은 데이터, 다른 질문",
   otherCountries: "다른 나라의 같은 페이지",
-  questions: { howToGet: "iPhone Duo 구하는 법", whereToBuy: "오늘 살 수 있는 곳", shortage: "품귀는 풀리고 있나요?", configs: "가장 구하기 쉬운 구성은?", restockTimes: "Apple은 iPhone Duo를 언제 재입고하나요?", alerts: "가장 빨리 알림 받는 법" },
+  questions: { howToGet: "iPhone Duo 구하는 법", whereToBuy: "오늘 살 수 있는 곳", shortage: "품귀는 풀리고 있나요?", configs: "가장 많이 재입고되는 구성은?", restockTimes: "Apple은 iPhone Duo를 언제 재입고하나요?", alerts: "가장 빨리 알림 받는 법" },
   setUpAlert: "알림 설정하기",
   logLive: "실시간 재입고 기록",
   faqTitle: "자주 묻는 질문",
@@ -577,7 +577,7 @@ const api: DecideDict["api"] = {
   related: "이어서 읽기",
   sameData: "같은 데이터, 다른 질문",
   otherCountries: "다른 나라의 같은 페이지",
-  questions: { alerts: "가장 빨리 알림 받는 법", howItWorks: "확인 방식", restockTimes: "Apple은 iPhone Duo를 언제 재입고하나요?", shortage: "품귀는 풀리고 있나요?", configs: "가장 구하기 쉬운 구성은?", stockChecker: "iPhone Duo 재고 확인" },
+  questions: { alerts: "가장 빨리 알림 받는 법", howItWorks: "확인 방식", restockTimes: "Apple은 iPhone Duo를 언제 재입고하나요?", shortage: "품귀는 풀리고 있나요?", configs: "가장 많이 재입고되는 구성은?", stockChecker: "iPhone Duo 재고 확인" },
   setUpAlert: "알림 설정하기",
   tryIt: "실시간 JSON 열기",
   faqTitle: "자주 묻는 질문",

@@ -88,12 +88,12 @@ const configs: DecideDict["configs"] = {
     const e = d.easiest, h = d.hardest;
     return e && h
       ? fitTitleW([
-        `${x.cfg(e)} är den iPhone Duo som är lättast att få tag på${where(x.c)}: ${n(e.restocks)} av ${n(d.n)} bekräftade påfyllningar i ${appleStoresN(x.stores)} och ${tim(e.exposureSec)} i lager sedan ${longDate(d.since)}; ${x.cfg(h)} är svårast (${n(h.restocks)}). Varje konfiguration rankad efter lagring och färg, uppdaterad vid varje påfyllning.`,
-        `${x.cfg(e)} är lättast att få tag på${where(x.c)} (${n(e.restocks)} av ${n(d.n)} påfyllningar sedan ${longDate(d.since)}); ${x.cfg(h)} är svårast. Varje konfiguration rankad efter lagring och färg.`,
+        `${x.cfg(e)} är den iPhone Duo som har varit till salu längst${where(x.c)}: ${n(e.restocks)} av ${n(d.n)} bekräftade påfyllningar i ${appleStoresN(x.stores)} och ${tim(e.exposureSec)} i lager sedan ${longDate(d.since)}; ${x.cfg(h)} kortast (${n(h.restocks)}). Varje konfiguration rankad efter lagring och färg, uppdaterad vid varje påfyllning.`,
+        `${x.cfg(e)} har varit till salu längst${where(x.c)} (${n(e.restocks)} av ${n(d.n)} påfyllningar sedan ${longDate(d.since)}); ${x.cfg(h)} kortast. Varje konfiguration rankad efter lagring och färg.`,
       ], 160)
       : `Varje konfiguration av iPhone Duo rankad efter bekräftade påfyllningar i Apple Store-butikerna${where(x.c)} sedan ${longDate(d.since)}: lagring, färg, tid i lager och vad som finns just nu.`;
   },
-  h1: (x) => `Vilken konfiguration av iPhone Duo fylls på oftast${where(x.c)}, och vilken är lättast att få tag på?`,
+  h1: (x) => `Vilken konfiguration av iPhone Duo fylls på oftast${where(x.c)}, och vilken är till salu längst?`,
   intro: (x) => {
     const { d } = x;
     const e = d.easiest, h = d.hardest;
@@ -355,7 +355,7 @@ const supply: DecideDict["supply"] = {
   related: "Läs vidare",
   sameData: "Samma data, andra frågor",
   otherCountries: "Den här sidan för andra länder",
-  questions: { restockTimes: "När fyller Apple på iPhone Duo?", configs: "Vilken konfiguration är lättast att få tag på?", channels: "Apple, operatör eller återförsäljare?", sellOut: "Hur snabbt tar en påfyllning slut?", howToGet: "Så får du tag på en iPhone Duo", alerts: "Snabbaste sättet att få en notis" },
+  questions: { restockTimes: "När fyller Apple på iPhone Duo?", configs: "Vilken konfiguration fylls på oftast?", channels: "Apple, operatör eller återförsäljare?", sellOut: "Hur snabbt tar en påfyllning slut?", howToGet: "Så får du tag på en iPhone Duo", alerts: "Snabbaste sättet att få en notis" },
   setUpAlert: "Skapa bevakningar",
   logLive: "Påfyllningslogg, live",
   faqTitle: "Vanliga frågor",
@@ -459,7 +459,7 @@ const channels: DecideDict["channels"] = {
   related: "Läs vidare",
   sameData: "Samma data, andra frågor",
   otherCountries: "Den här sidan för andra länder",
-  questions: { howToGet: "Så får du tag på en iPhone Duo", whereToBuy: "Var du kan köpa en i dag", shortage: "Lättar bristen?", configs: "Vilken konfiguration är lättast att få tag på?", restockTimes: "När fyller Apple på iPhone Duo?", alerts: "Snabbaste sättet att få en notis" },
+  questions: { howToGet: "Så får du tag på en iPhone Duo", whereToBuy: "Var du kan köpa en i dag", shortage: "Lättar bristen?", configs: "Vilken konfiguration fylls på oftast?", restockTimes: "När fyller Apple på iPhone Duo?", alerts: "Snabbaste sättet att få en notis" },
   setUpAlert: "Skapa bevakningar",
   logLive: "Påfyllningslogg, live",
   faqTitle: "Vanliga frågor",
@@ -554,7 +554,7 @@ const api: DecideDict["api"] = {
   related: "Läs vidare",
   sameData: "Samma data, andra frågor",
   otherCountries: "Den här sidan för andra länder",
-  questions: { alerts: "Snabbaste sättet att få en notis", howItWorks: "Så fungerar kontrollerna", restockTimes: "När fyller Apple på iPhone Duo?", shortage: "Lättar bristen?", configs: "Vilken konfiguration är lättast att få tag på?", stockChecker: "Lagerkoll för iPhone Duo" },
+  questions: { alerts: "Snabbaste sättet att få en notis", howItWorks: "Så fungerar kontrollerna", restockTimes: "När fyller Apple på iPhone Duo?", shortage: "Lättar bristen?", configs: "Vilken konfiguration fylls på oftast?", stockChecker: "Lagerkoll för iPhone Duo" },
   setUpAlert: "Skapa bevakningar",
   tryIt: "Öppna live-JSON",
   faqTitle: "Vanliga frågor",

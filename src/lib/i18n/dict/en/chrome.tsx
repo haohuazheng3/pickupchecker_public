@@ -32,7 +32,7 @@ export const chrome = {
     englishOnly: "In English",
     questions: "iPhone Duo questions",
     restockTimes: "When does Apple restock the iPhone Duo?",
-    configsPage: "Which iPhone Duo configuration is easiest to get?",
+    configsPage: "Which iPhone Duo configuration restocks most?",
     shortagePage: "Is the iPhone Duo shortage easing?",
     channelsPage: "Apple Store, carrier or retailer?",
     apiPage: "Free stock API",

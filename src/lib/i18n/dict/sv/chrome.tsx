@@ -30,7 +30,7 @@ export const chrome: Dict["chrome"] = {
     englishOnly: "På engelska",
     questions: "Frågor om iPhone Duo",
     restockTimes: "När fyller Apple på iPhone Duo?",
-    configsPage: "Vilken iPhone Duo är lättast att få tag på?",
+    configsPage: "Vilken iPhone Duo fylls på oftast?",
     shortagePage: "Lättar bristen på iPhone Duo?",
     channelsPage: "Apple Store, operatör eller återförsäljare?",
     apiPage: "Gratis lager-API",

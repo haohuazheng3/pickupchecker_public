@@ -87,7 +87,6 @@ const configs: DecideDict["configs"] = {
   crumb: "Welke configuratie?",
   title: (c: Country) => fitTitleW([
     `Welke iPhone Duo komt ${inC(c)} het vaakst terug?`,
-    `Welke iPhone Duo is ${inC(c)} het makkelijkst?`,
     "Welke iPhone Duo komt het vaakst terug?",
   ], 49),
   metaDescription: (x: ConfigsView) => {
@@ -95,12 +94,12 @@ const configs: DecideDict["configs"] = {
     const e = d.easiest, h = d.hardest;
     return e && h
       ? fitTitleW([
-        `${x.cfg(e)} is de iPhone Duo die ${inC(x.c)} het makkelijkst te krijgen is: ${n(e.restocks)} van ${n(d.n)} bevestigde aanvullingen bij ${appleStores(x.stores)} en ${uren(e.exposureSec)} beschikbaar sinds ${longDate(d.since)}; ${x.cfg(h)} is het moeilijkst (${n(h.restocks)}). Elke configuratie gerangschikt op opslag en kleur, bijgewerkt bij elke aanvulling.`,
-        `${x.cfg(e)} is ${inC(x.c)} de makkelijkst te krijgen iPhone Duo (${n(e.restocks)} van ${n(d.n)} aanvullingen sinds ${longDate(d.since)}); ${x.cfg(h)} de moeilijkste. Elke configuratie gerangschikt op opslag en kleur.`,
+        `${x.cfg(e)} is de iPhone Duo die ${inC(x.c)} het langst te koop stond: ${n(e.restocks)} van ${n(d.n)} bevestigde aanvullingen bij ${appleStores(x.stores)} en ${uren(e.exposureSec)} beschikbaar sinds ${longDate(d.since)}; ${x.cfg(h)} het kortst (${n(h.restocks)}). Elke configuratie gerangschikt op opslag en kleur, bijgewerkt bij elke aanvulling.`,
+        `${x.cfg(e)} stond ${inC(x.c)} het langst te koop (${n(e.restocks)} van ${n(d.n)} iPhone Duo-aanvullingen sinds ${longDate(d.since)}); ${x.cfg(h)} het kortst. Elke configuratie gerangschikt op opslag en kleur.`,
       ], 160)
       : `Elke iPhone Duo-configuratie gerangschikt op bevestigde aanvullingen in Apple Stores ${inC(x.c)} sinds ${longDate(d.since)}: opslag, kleur, hoe lang hij beschikbaar blijft en wat er nu te koop staat.`;
   },
-  h1: (x: ConfigsView) => `Welke iPhone Duo-configuratie wordt ${inC(x.c)} het vaakst aangevuld, en welke is het makkelijkst te krijgen?`,
+  h1: (x: ConfigsView) => `Welke iPhone Duo-configuratie wordt ${inC(x.c)} het vaakst aangevuld, en welke staat het langst te koop?`,
   intro: (x: ConfigsView) => {
     const { d } = x;
     const e = d.easiest, h = d.hardest;
@@ -369,7 +368,7 @@ const supply: DecideDict["supply"] = {
   related: "Lees verder",
   sameData: "Dezelfde data, andere vragen",
   otherCountries: "Deze pagina voor andere landen",
-  questions: { restockTimes: "Wanneer vult Apple de iPhone Duo aan?", configs: "Welke configuratie is het makkelijkst te krijgen?", channels: "Apple, provider of winkelketen?", sellOut: "Hoe snel is een aanvulling uitverkocht?", howToGet: "Zo krijg je een iPhone Duo", alerts: "Snelste manier om een melding te krijgen" },
+  questions: { restockTimes: "Wanneer vult Apple de iPhone Duo aan?", configs: "Welke configuratie wordt het vaakst aangevuld?", channels: "Apple, provider of winkelketen?", sellOut: "Hoe snel is een aanvulling uitverkocht?", howToGet: "Zo krijg je een iPhone Duo", alerts: "Snelste manier om een melding te krijgen" },
   setUpAlert: "Alerts instellen",
   logLive: "Voorraadlogboek, live",
   faqTitle: "Vragen die mensen stellen",
@@ -474,7 +473,7 @@ const channels: DecideDict["channels"] = {
   related: "Lees verder",
   sameData: "Dezelfde data, andere vragen",
   otherCountries: "Deze pagina voor andere landen",
-  questions: { howToGet: "Zo krijg je een iPhone Duo", whereToBuy: "Waar je er vandaag een koopt", shortage: "Neemt het tekort af?", configs: "Welke configuratie is het makkelijkst te krijgen?", restockTimes: "Wanneer vult Apple de iPhone Duo aan?", alerts: "Snelste manier om een melding te krijgen" },
+  questions: { howToGet: "Zo krijg je een iPhone Duo", whereToBuy: "Waar je er vandaag een koopt", shortage: "Neemt het tekort af?", configs: "Welke configuratie wordt het vaakst aangevuld?", restockTimes: "Wanneer vult Apple de iPhone Duo aan?", alerts: "Snelste manier om een melding te krijgen" },
   setUpAlert: "Alerts instellen",
   logLive: "Voorraadlogboek, live",
   faqTitle: "Vragen die mensen stellen",
@@ -574,7 +573,7 @@ const api: DecideDict["api"] = {
   related: "Lees verder",
   sameData: "Dezelfde data, andere vragen",
   otherCountries: "Deze pagina voor andere landen",
-  questions: { alerts: "Snelste manier om een melding te krijgen", howItWorks: "Zo werken de checks", restockTimes: "Wanneer vult Apple de iPhone Duo aan?", shortage: "Neemt het tekort af?", configs: "Welke configuratie is het makkelijkst te krijgen?", stockChecker: "iPhone Duo-voorraadchecker" },
+  questions: { alerts: "Snelste manier om een melding te krijgen", howItWorks: "Zo werken de checks", restockTimes: "Wanneer vult Apple de iPhone Duo aan?", shortage: "Neemt het tekort af?", configs: "Welke configuratie wordt het vaakst aangevuld?", stockChecker: "iPhone Duo-voorraadchecker" },
   setUpAlert: "Alerts instellen",
   tryIt: "Open de live JSON",
   faqTitle: "Vragen die mensen stellen",

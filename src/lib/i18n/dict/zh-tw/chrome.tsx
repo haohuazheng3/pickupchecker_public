@@ -30,7 +30,7 @@ export const chrome: Dict["chrome"] = {
     englishOnly: "英文版",
     questions: "iPhone Duo 常見問題",
     restockTimes: "Apple 什麼時候補貨 iPhone Duo？",
-    configsPage: "哪個 iPhone Duo 規格最容易買到？",
+    configsPage: "哪個 iPhone Duo 規格最常補貨？",
     shortagePage: "iPhone Duo 缺貨緩解了嗎？",
     channelsPage: "Apple 直營店、電信商還是經銷商？",
     apiPage: "免費現貨 API",

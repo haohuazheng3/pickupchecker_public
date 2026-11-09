@@ -61,7 +61,7 @@ function head(f: SiteFacts, st: ServiceStats): string[] {
     "## iPhone Duo questions, answered with the restock log",
     `- [When does Apple restock the iPhone Duo?](${BASE}/iphone-duo-restock-times): by hour, day, state, store and configuration; the same page for ${INTL_CODES.length} other countries under their prefix`,
     `- [How fast does an iPhone Duo restock sell out?](${BASE}/iphone-duo-sell-out-times)`,
-    `- [Which iPhone Duo configuration is easiest to get?](${BASE}/which-iphone-duo-restocks-most)`,
+    `- [Which iPhone Duo configuration restocks most and stays listed longest?](${BASE}/which-iphone-duo-restocks-most)`,
     `- [Free iPhone Duo stock API (JSON)](${BASE}/iphone-duo-stock-api)`,
     `- [Fastest way to be notified of an iPhone Duo restock](${BASE}/iphone-duo-stock-alerts)`,
     `- [Apple Stores with the iPhone Duo in stock near me, right now](${BASE}/iphone-duo-near-me)`,

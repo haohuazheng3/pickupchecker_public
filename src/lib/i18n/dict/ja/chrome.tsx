@@ -30,7 +30,7 @@ export const chrome: Dict["chrome"] = {
     englishOnly: "英語のみ",
     questions: "iPhone Duoの疑問",
     restockTimes: "iPhone Duoの再入荷はいつ？",
-    configsPage: "いちばん手に入れやすいiPhone Duoの構成は？",
+    configsPage: "いちばん入荷が多いiPhone Duoの構成は？",
     shortagePage: "iPhone Duoの品薄は緩和してきた？",
     channelsPage: "アップルストア、キャリア、量販店？",
     apiPage: "無料の在庫API",

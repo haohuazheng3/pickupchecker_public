@@ -61,19 +61,19 @@ const returnPhrase = (days: number | null) => (days ? `Apple's ${days}-day retur
 /* ================================================================== which configuration restocks most (listed longest) */
 const configs = {
   crumb: "Which configuration?",
-  /** The US title is fixed (it has been indexed since 2026-11-03); other countries get the question alone. */
-  title: (c: Country) => (c.cc === "us" ? "Which iPhone Duo Restocks Most? Storage & Color Odds" : fitTitle([`Which iPhone Duo Restocks Most ${c.inName}? Storage & Color`, `Which iPhone Duo Restocks Most ${c.inName}?`, `Which iPhone Duo Restocks Most? (${c.short})`], 49)),
+  /** The US title has no country (60 characters at most); other countries get the question with the country, fitted to 49. */
+  title: (c: Country) => (c.cc === "us" ? "Which iPhone Duo Restocks Most? Storage & Color Ranked" : fitTitle([`Which iPhone Duo Restocks Most ${c.inName}? Storage & Color`, `Which iPhone Duo Restocks Most ${c.inName}?`, `Which iPhone Duo Restocks Most? (${c.short})`], 49)),
   metaDescription: (x: ConfigsView) => {
     const { d } = x;
     const e = d.easiest, h = d.hardest;
     return e && h
       ? fitTitle([
-        `${x.cfg(e)} is the easiest iPhone Duo to get${where(x.c)}: ${n(e.restocks)} of ${n(d.n)} confirmed restocks at ${plural(x.stores, "Apple Store")} and ${hours(e.exposureSec)} of listing time since ${longDate(d.since)}; ${x.cfg(h)} the hardest (${n(h.restocks)}). Every configuration ranked, by storage and colour, updated with every restock.`,
-        `${x.cfg(e)} is the easiest iPhone Duo to get${where(x.c)} (${n(e.restocks)} of ${n(d.n)} restocks since ${longDate(d.since)}); ${x.cfg(h)} the hardest. Every configuration ranked by storage and colour.`,
+        `${x.cfg(e)} has been listed longest of any iPhone Duo${where(x.c)}: ${n(e.restocks)} of ${n(d.n)} confirmed restocks at ${plural(x.stores, "Apple Store")} and ${hours(e.exposureSec)} of listing time since ${longDate(d.since)}; ${x.cfg(h)} the shortest (${n(h.restocks)}). Every configuration ranked, by storage and colour, updated with every restock.`,
+        `${x.cfg(e)} has been listed longest${where(x.c)} (${n(e.restocks)} of ${n(d.n)} iPhone Duo restocks since ${longDate(d.since)}); ${x.cfg(h)} the shortest. Every configuration ranked by storage and colour.`,
       ], 160)
       : `Every iPhone Duo configuration ranked by confirmed Apple Store restocks${where(x.c)} since ${longDate(d.since)}: storage, colour, time on the shelf and what is listed right now.`;
   },
-  h1: (x: ConfigsView) => `Which iPhone Duo configuration restocks most${where(x.c)}, and which is easiest to get?`,
+  h1: (x: ConfigsView) => `Which iPhone Duo configuration restocks most${where(x.c)}, and which stays listed longest?`,
   intro: (x: ConfigsView) => {
     const { d } = x;
     const e = d.easiest, h = d.hardest;
@@ -335,7 +335,7 @@ const supply = {
   related: "Keep reading",
   sameData: "Same data, other questions",
   otherCountries: "This page for other countries",
-  questions: { restockTimes: "When does Apple restock the iPhone Duo?", configs: "Which configuration is easiest to get?", channels: "Apple, carrier or retailer?", sellOut: "How fast does a restock sell out?", howToGet: "How to get an iPhone Duo", alerts: "Fastest way to get notified" },
+  questions: { restockTimes: "When does Apple restock the iPhone Duo?", configs: "Which configuration restocks most?", channels: "Apple, carrier or retailer?", sellOut: "How fast does a restock sell out?", howToGet: "How to get an iPhone Duo", alerts: "Fastest way to get notified" },
   setUpAlert: "Set up alerts",
   logLive: "Restock log, live",
   faqTitle: "Questions people ask",
@@ -436,7 +436,7 @@ const channels = {
   related: "Keep reading",
   sameData: "Same data, other questions",
   otherCountries: "This page for other countries",
-  questions: { howToGet: "How to get an iPhone Duo", whereToBuy: "Where to buy one today", shortage: "Is the shortage easing?", configs: "Which configuration is easiest to get?", restockTimes: "When does Apple restock the iPhone Duo?", alerts: "Fastest way to get notified" },
+  questions: { howToGet: "How to get an iPhone Duo", whereToBuy: "Where to buy one today", shortage: "Is the shortage easing?", configs: "Which configuration restocks most?", restockTimes: "When does Apple restock the iPhone Duo?", alerts: "Fastest way to get notified" },
   setUpAlert: "Set up alerts",
   logLive: "Restock log, live",
   faqTitle: "Questions people ask",
@@ -531,7 +531,7 @@ const api = {
   related: "Keep reading",
   sameData: "Same data, other questions",
   otherCountries: "This page for other countries",
-  questions: { alerts: "Fastest way to get notified", howItWorks: "How the checks work", restockTimes: "When does Apple restock the iPhone Duo?", shortage: "Is the shortage easing?", configs: "Which configuration is easiest to get?", stockChecker: "iPhone Duo stock checker" },
+  questions: { alerts: "Fastest way to get notified", howItWorks: "How the checks work", restockTimes: "When does Apple restock the iPhone Duo?", shortage: "Is the shortage easing?", configs: "Which configuration restocks most?", stockChecker: "iPhone Duo stock checker" },
   setUpAlert: "Set up alerts",
   tryIt: "Open the live JSON",
   faqTitle: "Questions people ask",

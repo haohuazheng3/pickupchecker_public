@@ -83,12 +83,12 @@ const configs: DecideDict["configs"] = {
     const e = d.easiest, h = d.hardest;
     return e && h
       ? fitTitleW([
-        `${x.cfg(e)} هو خيار iPhone Duo الأسهل حصولًا${where(x)}: ${N(e.restocks)} من ${count(d.n, RESTOCKS_G)} المؤكدة في ${count(x.stores, APPLE_STORES_G)} و${hours(e.exposureSec)} من مدة العرض منذ ${longDate(d.since)}؛ و${x.cfg(h)} الأصعب (${N(h.restocks)}). ترتيب كل الخيارات حسب السعة واللون، يتحدث مع كل توفر.`,
-        `${x.cfg(e)} هو خيار iPhone Duo الأسهل حصولًا${where(x)} (${N(e.restocks)} من ${count(d.n, RESTOCKS_G)} منذ ${longDate(d.since)})؛ و${x.cfg(h)} الأصعب. ترتيب كل الخيارات حسب السعة واللون.`,
+        `${x.cfg(e)} هو خيار iPhone Duo الأطول عرضًا${where(x)}: ${N(e.restocks)} من ${count(d.n, RESTOCKS_G)} المؤكدة في ${count(x.stores, APPLE_STORES_G)} و${hours(e.exposureSec)} من مدة العرض منذ ${longDate(d.since)}؛ و${x.cfg(h)} الأقصر (${N(h.restocks)}). ترتيب كل الخيارات حسب السعة واللون، يتحدث مع كل توفر.`,
+        `${x.cfg(e)} هو خيار iPhone Duo الأطول عرضًا${where(x)} (${N(e.restocks)} من ${count(d.n, RESTOCKS_G)} منذ ${longDate(d.since)})؛ و${x.cfg(h)} الأقصر. ترتيب كل الخيارات حسب السعة واللون.`,
       ], 160)
       : `ترتيب كل خيارات iPhone Duo حسب حالات التوفر المؤكدة في متاجر Apple${where(x)} منذ ${longDate(d.since)}: السعة واللون ومدة العرض وما يُعرض الآن.`;
   },
-  h1: (x: ConfigsView) => `أي خيار iPhone Duo يتوفر أكثر${where(x)}، وأيها الأسهل حصولًا؟`,
+  h1: (x: ConfigsView) => `أي خيار iPhone Duo يتوفر أكثر${where(x)}، وأيها يبقى معروضًا أطول؟`,
   intro: (x: ConfigsView) => {
     const { d } = x;
     const e = d.easiest, h = d.hardest;
@@ -356,7 +356,7 @@ const supply: DecideDict["supply"] = {
   related: "تابع القراءة",
   sameData: "البيانات نفسها، أسئلة أخرى",
   otherCountries: "هذه الصفحة لدول أخرى",
-  questions: { restockTimes: "متى توفّر Apple جهاز iPhone Duo؟", configs: "أي خيار هو الأسهل حصولًا؟", channels: "Apple أم شركة الاتصالات أم التجزئة؟", sellOut: "كم يصمد التوفر قبل النفاد؟", howToGet: "كيف تحصل على iPhone Duo", alerts: "أسرع طريقة لتلقي الإشعار" },
+  questions: { restockTimes: "متى توفّر Apple جهاز iPhone Duo؟", configs: "أي خيار يتوفر أكثر؟", channels: "Apple أم شركة الاتصالات أم التجزئة؟", sellOut: "كم يصمد التوفر قبل النفاد؟", howToGet: "كيف تحصل على iPhone Duo", alerts: "أسرع طريقة لتلقي الإشعار" },
   setUpAlert: "فعّل التنبيهات",
   logLive: "سجل التوفر مباشرة",
   faqTitle: "أسئلة يطرحها الناس",
@@ -458,7 +458,7 @@ const channels: DecideDict["channels"] = {
   related: "تابع القراءة",
   sameData: "البيانات نفسها، أسئلة أخرى",
   otherCountries: "هذه الصفحة لدول أخرى",
-  questions: { howToGet: "كيف تحصل على iPhone Duo", whereToBuy: "من أين تشتري واحدًا اليوم", shortage: "هل ينفرج النقص؟", configs: "أي خيار هو الأسهل حصولًا؟", restockTimes: "متى توفّر Apple جهاز iPhone Duo؟", alerts: "أسرع طريقة لتلقي الإشعار" },
+  questions: { howToGet: "كيف تحصل على iPhone Duo", whereToBuy: "من أين تشتري واحدًا اليوم", shortage: "هل ينفرج النقص؟", configs: "أي خيار يتوفر أكثر؟", restockTimes: "متى توفّر Apple جهاز iPhone Duo؟", alerts: "أسرع طريقة لتلقي الإشعار" },
   setUpAlert: "فعّل التنبيهات",
   logLive: "سجل التوفر مباشرة",
   faqTitle: "أسئلة يطرحها الناس",
@@ -557,7 +557,7 @@ const api: DecideDict["api"] = {
   related: "تابع القراءة",
   sameData: "البيانات نفسها، أسئلة أخرى",
   otherCountries: "هذه الصفحة لدول أخرى",
-  questions: { alerts: "أسرع طريقة لتلقي الإشعار", howItWorks: "كيف تعمل الفحوص", restockTimes: "متى توفّر Apple جهاز iPhone Duo؟", shortage: "هل ينفرج النقص؟", configs: "أي خيار هو الأسهل حصولًا؟", stockChecker: "فحص مخزون iPhone Duo" },
+  questions: { alerts: "أسرع طريقة لتلقي الإشعار", howItWorks: "كيف تعمل الفحوص", restockTimes: "متى توفّر Apple جهاز iPhone Duo؟", shortage: "هل ينفرج النقص؟", configs: "أي خيار يتوفر أكثر؟", stockChecker: "فحص مخزون iPhone Duo" },
   setUpAlert: "فعّل التنبيهات",
   tryIt: "افتح JSON المباشر",
   faqTitle: "أسئلة يطرحها الناس",

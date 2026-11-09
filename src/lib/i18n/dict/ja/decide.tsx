@@ -64,13 +64,13 @@ const configs: D["configs"] = {
     const e = d.easiest, h = d.hardest;
     return e && h
       ? fitTitleW([
-        `${inJa(x.c)}いちばん手に入れやすいiPhone Duoは${x.cfg(e)}：${longDate(d.since)}以降にアップルストア${N(x.stores)}店舗で確認した入荷${N(d.n)}回のうち${N(e.restocks)}回、在庫時間の合計は${hours(e.exposureSec)}。最も難しいのは${x.cfg(h)}（${N(h.restocks)}回）。全構成を容量・カラー別に順位づけし、入荷のたびに更新。`,
-        `${inJa(x.c)}いちばん手に入れやすいiPhone Duoは${x.cfg(e)}（${longDate(d.since)}以降の入荷${N(d.n)}回のうち${N(e.restocks)}回）、最も難しいのは${x.cfg(h)}。全構成を容量・カラー別に順位づけ。`,
-        `${inJa(x.c)}いちばん手に入れやすいiPhone Duoは${x.cfg(e)}（入荷${N(d.n)}回中${N(e.restocks)}回）、最も難しいのは${x.cfg(h)}。全構成を容量・カラー別に順位づけ。`,
+        `${inJa(x.c)}いちばん長く掲載されてきたiPhone Duoは${x.cfg(e)}：${longDate(d.since)}以降にアップルストア${N(x.stores)}店舗で確認した入荷${N(d.n)}回のうち${N(e.restocks)}回、在庫時間の合計は${hours(e.exposureSec)}。最も短いのは${x.cfg(h)}（${N(h.restocks)}回）。全構成を容量・カラー別に順位づけし、入荷のたびに更新。`,
+        `${inJa(x.c)}いちばん長く掲載されてきたiPhone Duoは${x.cfg(e)}（${longDate(d.since)}以降の入荷${N(d.n)}回のうち${N(e.restocks)}回）、最も短いのは${x.cfg(h)}。全構成を容量・カラー別に順位づけ。`,
+        `${inJa(x.c)}いちばん長く掲載されてきたiPhone Duoは${x.cfg(e)}（入荷${N(d.n)}回中${N(e.restocks)}回）、最も短いのは${x.cfg(h)}。全構成を容量・カラー別に順位づけ。`,
       ], 160)
       : `${ofJa(x.c)}アップルストアで${longDate(d.since)}以降に確認した入荷をもとに、iPhone Duoの全構成を順位づけ：容量、カラー、在庫時間、いま掲載中の構成。`;
   },
-  h1: (x: ConfigsView) => `${inJa(x.c)}最も入荷が多いiPhone Duoの構成はどれで、いちばん手に入れやすいのはどれ？`,
+  h1: (x: ConfigsView) => `${inJa(x.c)}最も入荷が多いiPhone Duoの構成はどれで、いちばん長く掲載されてきたのはどれ？`,
   intro: (x: ConfigsView) => {
     const { d } = x;
     const e = d.easiest, h = d.hardest;
@@ -353,7 +353,7 @@ const supply: D["supply"] = {
   related: "続けて読む",
   sameData: "同じデータで答えるほかの疑問",
   otherCountries: "ほかの国の同じページ",
-  questions: { restockTimes: "iPhone Duoの再入荷はいつ？", configs: "いちばん手に入れやすい構成は？", channels: "Apple、キャリア、量販店？", sellOut: "入荷は何秒で完売する？", howToGet: "iPhone Duoを手に入れる方法", alerts: "いちばん早く通知を受け取るには" },
+  questions: { restockTimes: "iPhone Duoの再入荷はいつ？", configs: "いちばん入荷が多い構成は？", channels: "Apple、キャリア、量販店？", sellOut: "入荷は何秒で完売する？", howToGet: "iPhone Duoを手に入れる方法", alerts: "いちばん早く通知を受け取るには" },
   setUpAlert: "入荷通知を設定",
   logLive: "入荷履歴をライブで見る",
   faqTitle: "よくある質問",
@@ -463,7 +463,7 @@ const channels: D["channels"] = {
   related: "続けて読む",
   sameData: "同じデータで答えるほかの疑問",
   otherCountries: "ほかの国の同じページ",
-  questions: { howToGet: "iPhone Duoを手に入れる方法", whereToBuy: "今日どこで買えるか", shortage: "品薄は緩和してきた？", configs: "いちばん手に入れやすい構成は？", restockTimes: "iPhone Duoの再入荷はいつ？", alerts: "いちばん早く通知を受け取るには" },
+  questions: { howToGet: "iPhone Duoを手に入れる方法", whereToBuy: "今日どこで買えるか", shortage: "品薄は緩和してきた？", configs: "いちばん入荷が多い構成は？", restockTimes: "iPhone Duoの再入荷はいつ？", alerts: "いちばん早く通知を受け取るには" },
   setUpAlert: "入荷通知を設定",
   logLive: "入荷履歴をライブで見る",
   faqTitle: "よくある質問",
@@ -568,7 +568,7 @@ const api: D["api"] = {
   related: "続けて読む",
   sameData: "同じデータで答えるほかの疑問",
   otherCountries: "ほかの国の同じページ",
-  questions: { alerts: "いちばん早く通知を受け取るには", howItWorks: "チェックの仕組み（英語）", restockTimes: "iPhone Duoの再入荷はいつ？", shortage: "品薄は緩和してきた？", configs: "いちばん手に入れやすい構成は？", stockChecker: "iPhone Duoの在庫チェッカー" },
+  questions: { alerts: "いちばん早く通知を受け取るには", howItWorks: "チェックの仕組み（英語）", restockTimes: "iPhone Duoの再入荷はいつ？", shortage: "品薄は緩和してきた？", configs: "いちばん入荷が多い構成は？", stockChecker: "iPhone Duoの在庫チェッカー" },
   setUpAlert: "入荷通知を設定",
   tryIt: "ライブのJSONを開く",
   faqTitle: "よくある質問",

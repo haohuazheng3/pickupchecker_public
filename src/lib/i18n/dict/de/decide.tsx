@@ -74,12 +74,12 @@ const configs: DecideDict["configs"] = {
     const e = d.easiest, h = d.hardest;
     return e && h
       ? fitDe([
-        `${x.cfg(e)} ist das iPhone Duo, das ${wo(x.c)} am leichtesten zu bekommen ist: ${n(e.restocks)} von ${n(d.n)} bestätigten Restocks in ${appleStores(x.stores)} und ${stunden(e.exposureSec)} im Angebot seit dem ${longDate(d.since)}; ${x.cfg(h)} ist am schwersten (${n(h.restocks)}). Jede Konfiguration nach Speicher und Farbe gereiht, mit jedem Restock aktualisiert.`,
-        `${x.cfg(e)} ist ${wo(x.c)} das am leichtesten erhältliche iPhone Duo (${n(e.restocks)} von ${n(d.n)} Restocks seit dem ${longDate(d.since)}); ${x.cfg(h)} das schwerste. Jede Konfiguration nach Speicher und Farbe gereiht.`,
+        `${x.cfg(e)} ist das iPhone Duo, das ${wo(x.c)} am längsten gelistet war: ${n(e.restocks)} von ${n(d.n)} bestätigten Restocks in ${appleStores(x.stores)} und ${stunden(e.exposureSec)} im Angebot seit dem ${longDate(d.since)}; ${x.cfg(h)} am kürzesten (${n(h.restocks)}). Jede Konfiguration nach Speicher und Farbe gereiht, mit jedem Restock aktualisiert.`,
+        `${x.cfg(e)} war ${wo(x.c)} am längsten im Angebot (${n(e.restocks)} von ${n(d.n)} iPhone-Duo-Restocks seit dem ${longDate(d.since)}); ${x.cfg(h)} am kürzesten. Jede Konfiguration nach Speicher und Farbe gereiht.`,
       ], 160, x.c.cc)
       : `Jede iPhone-Duo-Konfiguration nach bestätigten Apple-Store-Restocks ${wo(x.c)} seit dem ${longDate(d.since)}: Speicher, Farbe, Zeit im Angebot und was gerade gelistet ist.`;
   },
-  h1: (x: ConfigsView) => `Welche iPhone-Duo-Konfiguration kommt ${wo(x.c)} am häufigsten wieder – und welche bekommt man am leichtesten?`,
+  h1: (x: ConfigsView) => `Welche iPhone-Duo-Konfiguration kommt ${wo(x.c)} am häufigsten wieder – und welche bleibt am längsten im Angebot?`,
   intro: (x: ConfigsView) => {
     const { d } = x;
     const e = d.easiest, h = d.hardest;
@@ -363,7 +363,7 @@ const supply: DecideDict["supply"] = {
   related: "Weiterlesen",
   sameData: "Dieselben Daten, andere Fragen",
   otherCountries: "Diese Seite für andere Länder",
-  questions: { restockTimes: "Wann ist das iPhone Duo wieder verfügbar?", configs: "Welche Konfiguration bekommt man am leichtesten?", channels: "Apple, Provider oder Händler?", sellOut: "Wie schnell ist ein Restock ausverkauft?", howToGet: "So bekommen Sie ein iPhone Duo", alerts: "Am schnellsten benachrichtigt werden" },
+  questions: { restockTimes: "Wann ist das iPhone Duo wieder verfügbar?", configs: "Welche Konfiguration kommt am häufigsten wieder?", channels: "Apple, Provider oder Händler?", sellOut: "Wie schnell ist ein Restock ausverkauft?", howToGet: "So bekommen Sie ein iPhone Duo", alerts: "Am schnellsten benachrichtigt werden" },
   setUpAlert: "Alarm einrichten",
   logLive: "Restock-Protokoll, live",
   faqTitle: "Häufige Fragen",
@@ -475,7 +475,7 @@ const channels: DecideDict["channels"] = {
   related: "Weiterlesen",
   sameData: "Dieselben Daten, andere Fragen",
   otherCountries: "Diese Seite für andere Länder",
-  questions: { howToGet: "So bekommen Sie ein iPhone Duo", whereToBuy: "Wo Sie heute eins kaufen", shortage: "Lässt der Engpass nach?", configs: "Welche Konfiguration bekommt man am leichtesten?", restockTimes: "Wann ist das iPhone Duo wieder verfügbar?", alerts: "Am schnellsten benachrichtigt werden" },
+  questions: { howToGet: "So bekommen Sie ein iPhone Duo", whereToBuy: "Wo Sie heute eins kaufen", shortage: "Lässt der Engpass nach?", configs: "Welche Konfiguration kommt am häufigsten wieder?", restockTimes: "Wann ist das iPhone Duo wieder verfügbar?", alerts: "Am schnellsten benachrichtigt werden" },
   setUpAlert: "Alarm einrichten",
   logLive: "Restock-Protokoll, live",
   faqTitle: "Häufige Fragen",
@@ -582,7 +582,7 @@ const api: DecideDict["api"] = {
   related: "Weiterlesen",
   sameData: "Dieselben Daten, andere Fragen",
   otherCountries: "Diese Seite für andere Länder",
-  questions: { alerts: "Am schnellsten benachrichtigt werden", howItWorks: "So funktionieren die Prüfungen", restockTimes: "Wann ist das iPhone Duo wieder verfügbar?", shortage: "Lässt der Engpass nach?", configs: "Welche Konfiguration bekommt man am leichtesten?", stockChecker: "iPhone-Duo-Bestandsprüfung" },
+  questions: { alerts: "Am schnellsten benachrichtigt werden", howItWorks: "So funktionieren die Prüfungen", restockTimes: "Wann ist das iPhone Duo wieder verfügbar?", shortage: "Lässt der Engpass nach?", configs: "Welche Konfiguration kommt am häufigsten wieder?", stockChecker: "iPhone-Duo-Bestandsprüfung" },
   setUpAlert: "Alarm einrichten",
   tryIt: "Live-JSON öffnen",
   faqTitle: "Häufige Fragen",

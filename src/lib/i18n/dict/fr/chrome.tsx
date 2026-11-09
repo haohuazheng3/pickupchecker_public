@@ -29,7 +29,7 @@ export const chrome: Dict["chrome"] = {
     englishOnly: "En anglais",
     questions: "Questions sur l’iPhone Duo",
     restockTimes: "Quand Apple réapprovisionne-t-il l’iPhone Duo ?",
-    configsPage: "Quel iPhone Duo est le plus facile à obtenir ?",
+    configsPage: "Quel iPhone Duo revient le plus en stock ?",
     shortagePage: "La pénurie d’iPhone Duo s’atténue-t-elle ?",
     channelsPage: "Apple Store, opérateur ou revendeur ?",
     apiPage: "API de stock gratuite",
