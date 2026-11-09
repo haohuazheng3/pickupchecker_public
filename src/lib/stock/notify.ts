@@ -3,8 +3,14 @@
  * or an email when no device has (email is the fallback, not the default).
  *
  *  match: active, unpaused rules of the same store × exact configuration (model, storage, colour)
- *  dedupe: one notification per (watch, event) — unique index; plus a per-(watch, store, part)
- *          cool-down so a flapping store does not mail every 15 s
+ *  dedupe: one notification per (watch, event) — unique index, and checked before sending
+ *  repeats: every confirmed restock alerts, a second batch ten minutes after the first included (2026-11-09: the old
+ *          30-minute cool-down per (watch, store, part) held back 3,386 alerts in 14 days — 22 % of real restocks
+ *          follow another one of the same store × configuration within 30 minutes, and they stay listed about as
+ *          long as first batches). Flicker is not a restock: ingest only commits a sell-out after two answers at
+ *          least 15 s apart and a restock after two matching answers. The only limit left is a flood guard:
+ *          at most MAX_ALERTS_PER_HOUR alerts per (watch, store, part) in any 60 minutes (it binds on under 1 %
+ *          of restocks).
  */
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -19,7 +25,15 @@ import { coveredWatchIds, effectivePlan } from "../plans";
 import type { Transition } from "./ingest";
 import { langOfUser } from "../i18n/notify";
 
-const COOLDOWN_MS = 30 * 60 * 1000; // same watch × store × part at most every 30 min
+/** Flood guard: alerts per (watch, store, part) in any rolling hour. Pairs that restock 7+ times in one hour are 0.7 % of restocks. */
+export const MAX_ALERTS_PER_HOUR = 6;
+const REPEAT_WINDOW_MS = 60 * 60 * 1000;
+
+/** Pure: may one more alert go out for this (watch, store, part), given the times its alerts were sent? */
+export function underHourlyCap(sentAt: (Date | string | number)[], now: Date, max = MAX_ALERTS_PER_HOUR): boolean {
+  const from = now.getTime() - REPEAT_WINDOW_MS;
+  return sentAt.filter((t) => new Date(t).getTime() > from).length < max;
+}
 
 export interface NotifyStats {
   matched: number;
@@ -67,22 +81,29 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
   }
   const active = candidates.filter((c) => coveredByUser.get(c.watch.userId)?.has(c.watch.id));
 
-  // Recent notifications for cool-down (last 30 min) for the involved watches.
+  // Alerts these rules sent in the last hour: the flood guard counts them; an event already alerted is never re-sent.
   const watchIds = active.map((c) => c.watch.id);
   const recent =
     watchIds.length === 0
       ? []
       : await d
-          .select({ watchId: schema.notifications.watchId, storeNumber: schema.notifications.storeNumber, partNumber: schema.notifications.partNumber })
+          .select({ watchId: schema.notifications.watchId, storeNumber: schema.notifications.storeNumber, partNumber: schema.notifications.partNumber, eventId: schema.notifications.eventId, createdAt: schema.notifications.createdAt })
           .from(schema.notifications)
           .where(
             and(
               inArray(schema.notifications.watchId, watchIds),
               eq(schema.notifications.status, "sent"),
-              sql`${schema.notifications.createdAt} > ${new Date(now.getTime() - COOLDOWN_MS)}`,
+              sql`${schema.notifications.createdAt} > ${new Date(now.getTime() - REPEAT_WINDOW_MS)}`,
             ),
           );
-  const cooled = new Set(recent.map((r) => `${r.watchId}|${r.storeNumber}|${r.partNumber}`));
+  const sentAt = new Map<string, Date[]>();
+  const alerted = new Set<string>();
+  for (const r of recent) {
+    const k = `${r.watchId}|${r.storeNumber}|${r.partNumber}`;
+    sentAt.set(k, [...(sentAt.get(k) ?? []), r.createdAt]);
+    if (r.eventId != null) alerted.add(`${r.watchId}|${r.eventId}`);
+  }
+  const capped: { watchId: string; store: string; part: string }[] = [];
   const pushByUser = pushConfigured() ? await enabledSubscriptionsFor(active.map((c) => c.watch.userId)) : new Map<string, never[]>();
 
   // Group per member: every rule of theirs that a restock of this sweep matched. One e-mail carries all of it; pushes go
@@ -99,8 +120,13 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
       const w = c.watch;
       if (!ruleMatches(w, modelKey, item.storage, item.color, store.storeNumber)) continue;
       stats.matched++;
-      if (cooled.has(`${w.id}|${store.storeNumber}|${item.partNumber}`)) {
+      if (alerted.has(`${w.id}|${x.eventId}`)) {
         stats.skipped++;
+        continue;
+      }
+      if (!underHourlyCap(sentAt.get(`${w.id}|${store.storeNumber}|${item.partNumber}`) ?? [], now)) {
+        stats.skipped++;
+        capped.push({ watchId: w.id, store: store.storeNumber, part: item.partNumber });
         continue;
       }
       const g = perUser.get(w.userId) ?? { c, hits: [] };
@@ -108,6 +134,8 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
       perUser.set(w.userId, g);
     }
   }
+
+  if (capped.length) await logOps("poller", "info", `alert flood guard: ${capped.length} alert(s) held (${MAX_ALERTS_PER_HOUR} per rule × store × configuration per hour already sent)`, { capped: capped.slice(0, 10) }).catch(() => undefined);
 
   const lineOf = (h: Hit) => {
     const store = STORE_INDEX.get(h.t.storeNumber)!;

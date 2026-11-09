@@ -80,7 +80,7 @@ export async function sendPushToRows(rows: PushRow[], payload: PushPayload, opts
   }
   const body = JSON.stringify(payload);
   const vapidDetails = { subject: env.vapidSubject(), publicKey: env.vapidPublicKey(), privateKey: env.vapidPrivateKey() };
-  const topic = pushTopic(payload.tag);
+  const topic = pushTopic(payload.collapse ?? payload.tag);
   const ttl = opts.ttlSec ?? 600;
   const started = Date.now();
   const now = new Date();

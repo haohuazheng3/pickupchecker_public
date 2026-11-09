@@ -59,10 +59,19 @@ describe("push payload", () => {
     expect(JSON.stringify(p).length).toBeLessThan(1000);
   });
   it("tags one alert as one store × one configuration (no '+N more')", () => {
-    const p = restockPayload([{ item, store, quote: null }, { item, store, quote: null }, { item, store, quote: null }], "w2");
+    const at = new Date("2026-11-09T06:00:00Z");
+    const p = restockPayload([{ item, store, quote: null }, { item, store, quote: null }, { item, store, quote: null }], "w2", at);
     expect(p.title).not.toContain("more");
-    expect(p.tag).toBe("restock-w2-R032-MJQ34LL-A");
-    expect(restockPayload({ item, store, quote: null }, "w2").tag).toBe(p.tag);
+    expect(p.collapse).toBe("restock-w2-R032-MJQ34LL-A");
+    expect(p.tag).toBe(`restock-w2-R032-MJQ34LL-A-${at.getTime().toString(36)}`);
+    expect(restockPayload({ item, store, quote: null }, "w2", at).tag).toBe(p.tag);
+  });
+  it("makes a second batch of the same store × configuration a new banner, queued under the same key (2026-11-09)", () => {
+    const first = restockPayload({ item, store, quote: null }, "w2", new Date("2026-11-09T06:00:00Z"));
+    const again = restockPayload({ item, store, quote: null }, "w2", new Date("2026-11-09T06:04:10Z"));
+    expect(again.tag).not.toBe(first.tag); // Safari ignores renotify: a same-tag swap could stay silent
+    expect(again.collapse).toBe(first.collapse); // an offline phone still gets only the newest
+    expect(again.tag).toMatch(/^[A-Za-z0-9_-]+$/);
   });
   it("names every configuration that came back at the store in one banner (11-05 Somerset: two colours, two banners, one read)", () => {
     const night = PART_INDEX.get("MK1H4LL/A")!; // iPhone Duo 512GB Night Sky
@@ -71,8 +80,8 @@ describe("push payload", () => {
     expect(p.title).toBe("iPhone Duo 512GB Night Sky & Star White");
     expect(p.body).toContain("Available Today");
     // A different set of configurations is a different banner, never a replacement of the first.
-    expect(p.tag).toBe("restock-w3-R032-MK1G4LL-A-MK1H4LL-A");
-    expect(p.tag).not.toBe(restockPayload([{ item: night, store, quote: null }], "w3").tag);
+    expect(p.collapse).toBe("restock-w3-R032-MK1G4LL-A-MK1H4LL-A");
+    expect(p.collapse).not.toBe(restockPayload([{ item: night, store, quote: null }], "w3").collapse);
     // Mixed storage sizes: every configuration spelled out.
     const mixed = restockPayload([{ item: night, store, quote: null }, { item, store, quote: null }], "w3");
     expect(mixed.title).toBe(`iPhone Duo 512GB Night Sky + ${item.model} ${item.storage} ${item.color}`);

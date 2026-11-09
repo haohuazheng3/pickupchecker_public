@@ -296,7 +296,8 @@ describe("alerts for a store outside the US", () => {
     expect(p.url).toBe(`${storePath(store)}?from=push`);
     expect(p.url.startsWith("/uk/stores/")).toBe(true);
     expect(p.data?.buyUrl).toBe("https://www.apple.com/uk/shop/buy-iphone/iphone-duo");
-    expect(p.tag).toBe("restock-w1-R092-MK2E4QN-A");
+    expect(p.collapse).toBe("restock-w1-R092-MK2E4QN-A");
+    expect(p.tag.startsWith("restock-w1-R092-MK2E4QN-A-")).toBe(true);
     // A US alert is exactly what it was: its store page and Apple's own quote.
     const us = STORE_INDEX.get("R085")!;
     const usItem = PART_INDEX.get(partNumbersFor("duo")[0])!;

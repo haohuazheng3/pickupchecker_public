@@ -51,7 +51,7 @@ export default async function AdminSystem() {
             ["Stale → unknown", "a status not confirmed for 30 min becomes unknown (never 'sold out' by silence)"],
             ["Heartbeat thresholds", "health: 150 s · watchdog: 120 s → degraded mode + owner email, reminders every 3 h"],
             ["Plans", "no free alerts · Plus $5/mo 10 rules · Pro $10/mo 20 rules · the oldest rules within the limit send; extra ones are saved but silent · hard cap 30 saved"],
-            ["Alert rules", "push to every enabled device, else email · one per (rule, event) · 30 min cool-down per rule × store × SKU · push TTL 600 s"],
+            ["Alert rules", "push to every enabled device, else email · one per (rule, event) · every confirmed restock alerts (repeats too), at most 6 per rule × store × SKU per hour · push TTL 600 s"],
             ["Rate limits", "alerts API 30/h per user · push subscribe 30/h · push test 10/h · console login 10 per 15 min per IP"],
             ["Console session", "30 days, HMAC-signed cookie; rotate ADMIN_SESSION_SECRET to sign everyone out"],
           ]} />

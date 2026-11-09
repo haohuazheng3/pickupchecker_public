@@ -44,8 +44,17 @@ export interface PushPayload {
   body: string;
   /** Same-origin path the notification opens. */
   url: string;
-  /** Notifications with the same tag replace each other: one per alert rule × store × configuration. */
+  /**
+   * Notifications with the same tag replace each other. A restock banner's tag names the rule, the store, the
+   * configurations and the batch, so a second batch minutes later is a new banner that alerts again (Safari ignores
+   * `renotify`, so a same-tag swap may stay silent on iPhone), never a quiet replacement of the first.
+   */
   tag: string;
+  /**
+   * The push service's queue key (Topic header): an alert still waiting for an offline phone is replaced by a newer
+   * one for the same rule × store × configurations. Absent: the tag is used.
+   */
+  collapse?: string;
   /** ISO time the restock was seen (or the test was sent). */
   at: string;
   data?: {
@@ -64,8 +73,8 @@ export function sanitizePartNumber(partNumber: string): string {
 }
 
 /**
- * The tag names the rule, the store and every configuration in the banner, so two banners for the same store that
- * list different configurations never replace each other, while a repeat of the same one does.
+ * The rule, the store and every configuration in the banner: two banners for the same store that list different
+ * configurations never collapse into each other. Restock banners add the batch time to it (see `tag`).
  */
 export function restockTag(watchId: string, storeNumber: string, partNumber: string | string[]): string {
   const parts = [...new Set(Array.isArray(partNumber) ? partNumber : [partNumber])].sort();
@@ -103,7 +112,8 @@ export function restockPayload(lines: AlertLine | AlertLine[], watchId: string, 
     // The store's page where its country's pages are live; elsewhere the account page (never a 404).
     // In the reader's language where the store's country has that version (a Tokyo store for a Japanese reader: /ja-jp/…).
     url: COUNTRIES_WITH_PAGES.has(first.store.country ?? "us") ? localizePath(`${storePath(first.store)}?from=push`, lang) : "/account?from=push",
-    tag: restockTag(watchId, first.store.storeNumber, list.map((l) => l.item.partNumber)),
+    tag: `${restockTag(watchId, first.store.storeNumber, list.map((l) => l.item.partNumber))}-${now.getTime().toString(36)}`,
+    collapse: restockTag(watchId, first.store.storeNumber, list.map((l) => l.item.partNumber)),
     at: now.toISOString(),
     data: { buyUrl: appleBuyUrl(first.item, first.store.country), storeNumber: first.store.storeNumber, partNumber: first.item.partNumber },
   };
