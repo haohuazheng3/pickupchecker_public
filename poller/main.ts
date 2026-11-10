@@ -58,6 +58,7 @@ import { INTL_COVERAGE } from "../src/lib/apple/catalog";
 import { fallbackOrder } from "../src/lib/stock/fallback";
 import { loadFastTargets, runFastRound, targetsForDuties } from "../src/lib/stock/fastlane";
 import { expireStale } from "../src/lib/stock/ingest";
+import { drainNotifications } from "../src/lib/stock/notify";
 import { recordError, errorMessage } from "../src/lib/errors";
 import { prefixFromInterfaces, randomAddressIn } from "./ipv6";
 import { pickupCountryOf, type FetchLike } from "../src/lib/apple/client";
@@ -562,10 +563,20 @@ async function main() {
   if (ipv6 && FAST_CADENCE_SEC > 0) void fastLoop(ipv6, () => mode === "full" && (duty.us || duty.intl));
   const startIntl = () => { if (intlOn && ipv6) void intlLoop(ipv6, () => mode === "full" && duty.intl, intlGeneration); };
   startIntl();
+  // Stop only after the alerts being sent have gone out (11-10: a restart 3.5 s after a confirmed restock lost its
+  // alerts). The hard exit stays well inside systemd's 90 s stop timeout.
+  let stopping = false;
   for (const sig of ["SIGTERM", "SIGINT"] as const) {
     process.on(sig, () => {
-      logOps("poller", "info", `poller stopping (${sig})`, { host: HOST, commit: COMMIT }).finally(() => process.exit(0));
-      setTimeout(() => process.exit(0), 3000).unref();
+      if (stopping) return;
+      stopping = true;
+      setTimeout(() => process.exit(0), 20_000).unref();
+      void (async () => {
+        await logOps("poller", "info", `poller stopping (${sig})`, { host: HOST, commit: COMMIT }).catch(() => undefined);
+        const left = await drainNotifications(15_000);
+        if (left) await logOps("poller", "warn", `poller stopped with ${left} alert send(s) still running`, { host: HOST }).catch(() => undefined);
+        process.exit(0);
+      })();
     });
   }
   let sweepsSinceStart = 0;
