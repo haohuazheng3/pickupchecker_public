@@ -9,8 +9,9 @@
  *  • the handover never has two hosts writing one store (Postgres deadlocked on exactly that, 2026-11-03): the
  *    primary keeps reporting "us" until its last US round has finished (poller/main.ts), and the worker starts
  *    only once no other host reports "us".
- *  • the other countries run on the standby; the primary runs them only while no other host reports doing so,
- *    so they come back to it by themselves if the standby stops.
+ *  • the other countries run on the standby, or on an intl worker (POLLER_ROLE=intl: other countries only, no
+ *    takeover; since 2026-11-10 linode-2, while linode-4 is the standby with no egress of its own); the primary
+ *    runs them only while no other host reports doing so, so they come back to it by themselves if that host stops.
  *  • nothing runs without a writable database (a replica-only view cannot ingest).
  *  • takeover: the standby promotes its replica when, for PROMOTE_AFTER checks in a row, it cannot reach the
  *    primary database AND the site (Vercel, a third vantage point) reports the same. Its own view alone never
@@ -21,7 +22,7 @@
 import { sql } from "drizzle-orm";
 import { db } from "../db";
 
-export type PollerRole = "primary" | "standby" | "worker";
+export type PollerRole = "primary" | "standby" | "worker" | "intl";
 export interface ClusterRecord { primary: string; epoch: number; fencedAt?: string }
 /** A standby's view of its replica: the WAL receiver's status ("streaming") and how far behind replay is. */
 export interface ReplicaInfo { status: string | null; lagSec: number | null }
@@ -57,6 +58,12 @@ export function duties(i: DutyInput): Duties {
     // its last US round has finished.
     const othersRunUs = i.alive.some((a) => fresh(a) && a.duties.includes("us"));
     return { us: !othersRunUs, intl: false, fenced: false, why: othersRunUs ? "US worker, waiting for the US to be handed over" : "US worker" };
+  }
+  if (i.role === "intl") {
+    // The intl worker runs the other countries whenever it can; the primary hands them over on seeing its record.
+    return i.intlConfigured
+      ? { us: false, intl: true, fenced: false, why: "intl worker: other countries" }
+      : { us: false, intl: false, fenced: false, why: "intl worker, no egress for other countries" };
   }
   const isPrimary = owner === i.me;
   const worker = i.alive.find((a) => fresh(a) && a.role === "worker");

@@ -84,7 +84,7 @@ export function sharedFastlanePoolConfig(env: Record<string, string | undefined>
     || (url.port && url.port !== "5432") || !url.password
     || decodeURIComponent(url.username) !== "shelfspring_fastlane_reader"
     || !["/pickupchecker", "/shelfspring"].includes(url.pathname)
-    || (!local && !["172.232.3.151", "45.33.64.182"].includes(url.hostname))) {
+    || (!local && !["172.232.3.151", "45.33.64.182", "104.237.144.224"].includes(url.hostname))) {
     throw new Error("Invalid shared fast-lane database scope");
   }
   const ca = env.FASTLANE_SHARED_DATABASE_CA?.replace(/\\n/g, "\n").trim();

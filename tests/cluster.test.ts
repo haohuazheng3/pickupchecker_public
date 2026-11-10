@@ -60,6 +60,24 @@ describe("duties — who polls what", () => {
   it("nothing without a writable database", () => {
     expect(dutyLabel(duties({ ...base, writable: false }))).toBe("none");
   });
+  it("an intl worker polls the other countries only, and never the US even when the primary is gone", () => {
+    const intl = { ...base, me: "linode-2", role: "intl" as const };
+    expect(dutyLabel(duties(intl))).toBe("intl");
+    expect(dutyLabel(duties({ ...intl, cluster: { primary: "linode-4", epoch: 2 } }))).toBe("intl");
+    expect(dutyLabel(duties({ ...intl, intlConfigured: false }))).toBe("none");
+    expect(dutyLabel(duties({ ...intl, writable: false }))).toBe("none");
+  });
+  it("2026-11-10 layout: linode-3 US, linode-2 intl, linode-4 a standby without egress — the primary only holds the database", () => {
+    const alive = [
+      { host: "linode-3", role: "worker" as const, duties: "us", at: ago(5) },
+      { host: "linode-2", role: "intl" as const, duties: "intl", at: ago(5) },
+      { host: "linode-4", role: "standby" as const, duties: "none", at: ago(5) },
+    ];
+    expect(dutyLabel(duties({ ...base, alive }))).toBe("none");
+    expect(dutyLabel(duties({ ...base, me: "linode-4", role: "standby", intlConfigured: false, alive }))).toBe("none");
+    // linode-4 promoted: the workers keep their lanes, it holds the database
+    expect(dutyLabel(duties({ ...base, me: "linode-4", role: "standby", intlConfigured: false, alive, cluster: { primary: "linode-4", epoch: 2 } }))).toBe("none");
+  });
 });
 
 describe("duties — the US worker takes the US without two hosts ever writing one store", () => {

@@ -24,7 +24,7 @@
  *    poll_log keeps only its failures (one sweeps row per round, mode "intl"); totals ride along with the
  *    heartbeat. Runs only in full mode (the spare egress is budgeted for the US).
  *  • heartbeat after every sweep (the Vercel watchdog alerts when it stops, or when the data goes stale)
- *  • hosts (POLLER_ROLE primary | standby | worker, stock/cluster.ts): every ALIVE_EVERY_MS each one decides its
+ *  • hosts (POLLER_ROLE primary | standby | worker | intl, stock/cluster.ts): every ALIVE_EVERY_MS each one decides its
  *    duties from the cluster record and the others' alive:<host> records — the cluster primary polls the US unless
  *    a US worker reports in, the standby the other countries (the primary takes either back when no one else
  *    reports doing it). The standby promotes its database replica when the primary database is unreachable from
@@ -36,7 +36,8 @@
  *
  *  Env: DATABASE_URL (the poller's own role, which has reserved connection slots: infra/linode/postgres.sh),
  *       DATABASE_URL_STANDBY (the other host's database: TLS from the primary, loopback on the standby),
- *       POLLER_ROLE (primary | standby | worker: no database of its own, polls the US once handed over),
+ *       POLLER_ROLE (primary | standby | worker: no database of its own, polls the US once handed over |
+ *       intl: polls the other countries, never takes over the database),
  *       RESEND_API_KEY, IPV6_PREFIX (e.g. 2600:3c0a:e000:1b::/56, or "auto" = read
  *       IPV6_PREFIX_FILE written by anyip.sh, else derive the /64 of the first global address), SITE_URL,
  *       POLLER_TOKEN (for the vercel egress fallback), CADENCE_SEC, CONCURRENCY, SWEEP_TIMEOUT_MS (6000),
@@ -77,7 +78,7 @@ const INTL_CADENCE_SEC = Number(process.env.INTL_CADENCE_SEC ?? 15);
 const INTL_CONCURRENCY = Number(process.env.INTL_CONCURRENCY ?? 12);
 const INTL_TIMEOUT_MS = Number(process.env.INTL_TIMEOUT_MS ?? 6000);
 const HOST = process.env.HOST_LABEL ?? os.hostname();
-const ROLE: PollerRole = process.env.POLLER_ROLE === "standby" ? "standby" : process.env.POLLER_ROLE === "worker" ? "worker" : "primary";
+const ROLE: PollerRole = (["standby", "worker", "intl"] as const).find((r) => r === process.env.POLLER_ROLE) ?? "primary";
 const PREFIX = resolvePrefix(process.env.IPV6_PREFIX ?? "");
 const SITE = process.env.SITE_URL ?? "https://pickupchecker.com";
 const POLLER_TOKEN = process.env.POLLER_TOKEN ?? "";

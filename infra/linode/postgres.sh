@@ -29,6 +29,10 @@ CA=/root/pg-ca
 CONF=/etc/postgresql/$PGV/main
 IP4=$(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | head -1)
 ROLE=${ROLE:-primary}; HOST_LABEL=${HOST_LABEL:-linode-1}; PEER_IP=${PEER_IP:-}
+# A second standby streams through its own slot (create it on the primary first:
+# select pg_create_physical_replication_slot('standby4')), and can copy at a capped rate so the live primary
+# keeps its disk and page cache for members: SLOT=standby4 BASEBACKUP_RATE=8M.
+SLOT=${SLOT:-standby}; BASEBACKUP_RATE=${BASEBACKUP_RATE:-}
 [ "$ROLE" = primary ] || [ "$ROLE" = standby ] || { echo "ROLE must be primary or standby" >&2; exit 1; }
 [ "$ROLE" = primary ] || [ -n "$PEER_IP" ] || { echo "a standby needs PEER_IP (the primary)" >&2; exit 1; }
 [ "$ROLE" = primary ] || [ -s "$SECRETS/replicator.pw" ] || { echo "copy /root/pg-secrets and /root/pg-ca from the primary first" >&2; exit 1; }
@@ -153,7 +157,7 @@ if [ "$ROLE" = standby ]; then
     systemctl stop postgresql@$PGV-main
     rm -rf /var/lib/postgresql/$PGV/main.old && mv /var/lib/postgresql/$PGV/main /var/lib/postgresql/$PGV/main.old
     install -d -m 700 -o postgres -g postgres /var/lib/postgresql/$PGV/main
-    sudo -u postgres pg_basebackup -D /var/lib/postgresql/$PGV/main -R -X stream -S standby -P \
+    sudo -u postgres pg_basebackup -D /var/lib/postgresql/$PGV/main -R -X stream -S "$SLOT" ${BASEBACKUP_RATE:+--max-rate=$BASEBACKUP_RATE} -P \
       -d "host=$PEER_IP port=5432 user=replicator sslmode=verify-ca sslrootcert=$CONF/root.crt application_name=$HOST_LABEL"
     systemctl start postgresql@$PGV-main
     for _ in $(seq 1 30); do sudo -u postgres pg_isready -q && break; sleep 1; done
