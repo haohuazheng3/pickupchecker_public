@@ -110,7 +110,7 @@ export default async function Account() {
               // English as always; another language: Apple's own colour and store names in it.
               const what = item ? (lang === "en" ? `${item.model} ${item.storage} ${item.color}` : `${item.model} ${configLabel(item, lang)}`) : n.partNumber;
               const where = store && lang !== "en" ? appleStoreLabel(store, lang) : `Apple ${store?.name ?? n.storeNumber}`;
-              return <li key={n.id} className="flex justify-between gap-3 py-2"><span>{what} · {where}</span><span className="shrink-0 text-ink-3">{n.channel === "push" ? d.sent.channel.push : d.sent.channel.email} · {d.sent.status[n.status] ?? n.status} · {ago(lang, n.createdAt)}</span></li>;
+              return <li key={n.id} className="flex justify-between gap-3 py-2"><span>{what} · {where}</span><span className="shrink-0 text-ink-3">{n.channel === "push" ? d.sent.channel.push : d.sent.channel.email} · {d.sent.status[n.status === "sent" && n.deliveredAt ? "delivered" : n.status] ?? n.status} · {ago(lang, n.createdAt)}</span></li>;
             })}
           </ul>
         )}

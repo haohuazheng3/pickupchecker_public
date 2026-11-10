@@ -73,6 +73,7 @@
   "src/lib/plans.ts",
   "src/lib/push/payload.ts",
   "src/lib/push/policy.ts",
+  "src/lib/push/receipt.ts",
   "src/lib/push/server.ts",
   "src/lib/stock/cluster.ts",
   "src/lib/stock/fallback.ts",

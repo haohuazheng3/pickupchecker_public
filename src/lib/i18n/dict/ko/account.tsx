@@ -29,7 +29,7 @@ export const account: Dict["account"] = {
     none: "아직 보낸 알림 없음",
     empty: "아직 보낸 알림이 없어요.",
     channel: { push: "푸시", email: "이메일" },
-    status: { sent: "발송됨", failed: "실패", skipped: "건너뜀" },
+    status: { sent: "발송됨", delivered: "도착함", failed: "실패", skipped: "건너뜀" },
   },
 
   fast: {
@@ -50,6 +50,8 @@ export const account: Dict["account"] = {
   },
 
   restock: {
+    /** "Restock by restock" on the dashboard: each restock against the member's alerts (lib/alertMarks.ts). */
+    mark: { delivered: "알림 도착", sent: "알림 발송됨", other: "내 알림 대상 아님", before: "알림 설정 전" },
     title: "내 매장은 언제 재입고되나",
     anyIphone: "iPhone",
     and: " 및 ",

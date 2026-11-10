@@ -33,7 +33,7 @@ export const account: Dict["account"] = {
     none: "لم يُرسَل شيء بعد",
     empty: "لم يُرسَل شيء بعد.",
     channel: { push: "إشعار", email: "بريد إلكتروني" },
-    status: { sent: "أُرسل", failed: "فشل", skipped: "تُخطّي" },
+    status: { sent: "أُرسل", delivered: "وصل", failed: "فشل", skipped: "تُخطّي" },
   },
 
   fast: {
@@ -54,6 +54,8 @@ export const account: Dict["account"] = {
   },
 
   restock: {
+    /** "Restock by restock" on the dashboard: each restock against the member's alerts (lib/alertMarks.ts). */
+    mark: { delivered: "وصل التنبيه", sent: "أُرسل التنبيه", other: "ليس ضمن تنبيهاتك", before: "قبل تنبيهك" },
     title: "متى تتوفر متاجرك",
     anyIphone: "iPhone",
     and: " و",

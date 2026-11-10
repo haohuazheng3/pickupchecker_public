@@ -162,7 +162,7 @@ describe("restock timeline", () => {
 });
 
 describe("account: When your stores restock, with reports", () => {
-  const watches = [{ active: true, model: "duo", storages: ["256GB"], colors: ["Night Sky"], storeNumbers: ["R095"] }];
+  const watches = [{ userId: "user_test", createdAt: "2026-10-01T00:00:00Z", active: true, model: "duo", storages: ["256GB"], colors: ["Night Sky"], storeNumbers: ["R095"] }];
   it("adds dashed report marks, the legend and the footnote to the user's stores' chart, not to the timeline", async () => {
     const { RestockTimes } = await import("@/components/account/RestockTimes");
     fake.reports = nyc({ stores: ["R095"], parts: ["MK1E4LL/A", "MK1H4LL/A"] });

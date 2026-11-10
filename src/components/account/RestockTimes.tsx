@@ -19,8 +19,13 @@ import { pageLocale, t } from "@/lib/i18n/server";
 import { LANG_TAG, hour, list, weekdays } from "@/lib/i18n/format";
 import { storeLabel } from "@/lib/i18n/places";
 import type { Lang } from "@/lib/i18n/locales";
+import { and, eq, inArray } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
+import { alertMarks } from "@/lib/alertMarks";
 
-type Rule = { active: boolean; model: string; storages: string[]; colors: string[]; storeNumbers: string[] };
+type Rule = { userId: string; createdAt: Date | string; active: boolean; model: string; storages: string[]; colors: string[]; storeNumbers: string[] };
+/** Rows in the "Restock by restock" list (each marked against the member's alerts). */
+const LIST = 15;
 const DAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -72,7 +77,14 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
   const zoneStores = countries.flatMap((cc) => storesOf(cc)).filter((s) => storeTimeZone(s) === tz).map((s) => s.storeNumber);
   const others = zoneStores.filter((n) => !own.includes(n));
 
-  const [mine, mineSlots, rep, sell] = await Promise.all([restockPattern(own, parts, [], tz), restockSlots(own, parts, tz), restockReportStats(own, tz, 30, undefined, parts), sellouts({ storeNumbers: own, parts })]);
+  const [mine, mineSlots, rep, sell] = await Promise.all([restockPattern(own, parts, [], tz), restockSlots(own, parts, tz), restockReportStats(own, tz, 30, undefined, parts), sellouts({ storeNumbers: own, parts, limit: LIST })]);
+  // Which listed restocks the member was alerted to, had no alert for, or predate their alert (lib/alertMarks.ts).
+  const listed = sell.recent.slice(0, LIST);
+  const notes = listed.length
+    ? await Promise.resolve().then(() => db().select({ eventId: schema.notifications.eventId, status: schema.notifications.status, deliveredAt: schema.notifications.deliveredAt }).from(schema.notifications)
+      .where(and(eq(schema.notifications.userId, live[0].userId), inArray(schema.notifications.eventId, listed.map((r) => r.id))))).catch(() => [])
+    : [];
+  const marks = alertMarks(listed, watches, notes);
   const thin = mine.total < THIN && others.length > 0;
   const [area, areaSlots] = thin ? await Promise.all([restockPattern(zoneStores, parts, [], tz), restockSlots(others, parts, tz)]) : [null, []];
 
@@ -176,7 +188,7 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
           <h2 id="sellout-times" className="text-xl font-semibold">{d.sellTitle}</h2>
           <span className="text-xs text-ink-3">{d.sellMeta(what, own.length, sell.summary.days)}</span>
         </div>
-        <div className="mt-3"><SellOutTimes data={sell} label={d.sellLabel(yours)} showStore={own.length > 1} limit={15} /></div>
+        <div className="mt-3"><SellOutTimes data={sell} label={d.sellLabel(yours)} showStore={own.length > 1} limit={LIST} marks={marks} markLabels={d.mark} /></div>
       </section>
     </>
   );

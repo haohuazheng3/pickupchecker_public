@@ -32,7 +32,7 @@ export const account = {
     none: "Nothing sent yet",
     empty: "Nothing sent yet.",
     channel: { push: "notification", email: "email" } as Record<string, string>,
-    status: { sent: "sent", failed: "failed", skipped: "skipped" } as Record<string, string>,
+    status: { sent: "sent", delivered: "delivered", failed: "failed", skipped: "skipped" } as Record<string, string>,
   },
 
   /** "Reserve it in 20 seconds" (FastCheckoutCard). */
@@ -59,6 +59,8 @@ export const account = {
    * Hours ("9 AM") arrive formatted.
    */
   restock: {
+    /** "Restock by restock" on the dashboard: each restock against the member's alerts (lib/alertMarks.ts). */
+    mark: { delivered: "Alert delivered", sent: "Alert sent", other: "Not in your alerts", before: "Before your alert" },
     title: "When your stores restock",
     /** Every model: "iPhone"; otherwise the models' names joined. */
     anyIphone: "iPhone",

@@ -15,6 +15,7 @@ import type { Lang } from "@/lib/i18n/locales";
 import { num, pct as pctOf, stamp, unit, bidi } from "@/lib/i18n/format";
 import { appleStoreLabel, configLabel } from "@/lib/i18n/places";
 import { Measured, Stat, StatGrid } from "@/components/ui/Viz";
+import type { AlertMark } from "@/lib/alertMarks";
 
 type Words = Dict["modules"]["sellout"];
 
@@ -67,7 +68,18 @@ function ModelRow({ name, s, lang }: { name: string; s: SelloutSummary; lang: La
   );
 }
 
-export function SellOutTimes({ data, label, showStore = false, limit = 10 }: { data: Sellouts; label: string; showStore?: boolean; limit?: number }) {
+/** The dashboard's chip on a restock row: alerted (bell), or why there was no alert (muted). */
+function MarkChip({ mark, label }: { mark: AlertMark; label: string }) {
+  const alerted = mark === "delivered" || mark === "sent";
+  return (
+    <span className={`ms-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-full px-1.5 py-px align-[1px] text-[11px] font-medium ${alerted ? "bg-accent/12 text-accent" : "bg-ink/6 text-ink-3"}`} data-mark={mark}>
+      {alerted && <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" /></svg>}
+      {label}
+    </span>
+  );
+}
+
+export function SellOutTimes({ data, label, showStore = false, limit = 10, marks, markLabels }: { data: Sellouts; label: string; showStore?: boolean; limit?: number; marks?: Record<number, AlertMark>; markLabels?: Record<AlertMark, string> }) {
   const w = t().modules.sellout;
   const lang = pageLocale().lang;
   const models = MODELS.filter((m) => data.byModel[m.key]?.n);
@@ -129,12 +141,14 @@ export function SellOutTimes({ data, label, showStore = false, limit = 10 }: { d
               const lived = gone ? r.highSec! : r.listedSec ?? 0;
               const fast = gone && r.highSec! <= 30;
               const width = `${Math.max(3, Math.min(100, (lived / BAR_SEC) * 100))}%`;
+              const mark = marks?.[r.id];
               return (
                 <li key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 py-2 sm:grid-cols-[minmax(0,1fr)_7rem_auto]">
-                  <span className="min-w-0 truncate">
+                  <span className={`min-w-0 ${mark ? "" : "truncate"}`}>
                     <span className="tabular-nums text-ink-3">{when}</span>{" · "}
-                    <span className="text-ink">{bidi(model?.short ?? "", lang)} {configLabel(item, lang)}</span>
+                    <span className={mark === "other" || mark === "before" ? "text-ink-3" : "text-ink"}>{bidi(model?.short ?? "", lang)} {configLabel(item, lang)}</span>
                     {showStore && <>{" · "}<Link href={storePath(store)} className="underline-offset-2 hover:underline">{lang === "en" ? appleName(store) : appleStoreLabel(store, lang)}</Link></>}
+                    {mark && markLabels && <MarkChip mark={mark} label={markLabels[mark]} />}
                   </span>
                   <span className="col-span-2 flex h-2 items-center sm:col-span-1" aria-hidden>
                     <span className={`h-1.5 rounded-full ${!gone ? "bg-accent/35" : fast ? "bg-warn" : "bg-ink/25"}`} style={{ width }} />

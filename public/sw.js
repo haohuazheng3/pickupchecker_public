@@ -1,7 +1,7 @@
 /* PickupChecker service worker: Web Push only (no offline cache — stock pages must be live). */
 /* global self */
 
-var SW_VERSION = "2026-10-30.1";
+var SW_VERSION = "2026-11-10.1";
 
 self.addEventListener("install", function () { self.skipWaiting(); });
 self.addEventListener("activate", function (event) { event.waitUntil(self.clients.claim()); });
@@ -38,7 +38,13 @@ self.addEventListener("push", function (event) {
     actions: actions,
   };
   // Safari revokes the subscription after silent pushes, so a notification is always shown.
-  event.waitUntil(self.registration.showNotification(data.title || "PickupChecker", options));
+  var shown = self.registration.showNotification(data.title || "PickupChecker", options);
+  // Delivery receipt (2026-11-10): tells the server this phone got the push. Never delays or blocks the banner,
+  // never retried, and a failure is ignored.
+  var receipt = typeof data.r === "string"
+    ? fetch("/api/push/receipt", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ r: data.r }), keepalive: true, credentials: "omit" }).catch(function () {})
+    : Promise.resolve();
+  event.waitUntil(Promise.all([shown, receipt]));
 });
 
 /* ------------------------------------------------------------------ tap → the right page */

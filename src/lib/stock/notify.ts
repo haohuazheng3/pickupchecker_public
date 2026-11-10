@@ -219,7 +219,7 @@ export async function notifyRestocks(transitions: Transition[], eventIds: number
       for (const h of g.hits) byStore.set(h.t.storeNumber, [...(byStore.get(h.t.storeNumber) ?? []), h]);
       await Promise.all([...byStore.values()].map(async (hits) => {
         try {
-          const r = await sendPushToRows(devices, restockPayload(hits.map(lineOf), hits[0].watch.id, now, lang), { source: "poller" });
+          const r = await sendPushToRows(devices, restockPayload(hits.map(lineOf), hits[0].watch.id, now, lang), { source: "poller", events: [...new Set(hits.map((h) => h.eventId).filter((n): n is number => n != null))] });
           // Only when nothing reached the user: a device the push service dropped (410) while another
           // device received the alert is a rotation, not an outage.
           if (r.sent === 0 && r.disabledRows.length) await notifyPushStopped(userId, g.c.email, r.disabledRows, now, lang).catch(() => undefined);

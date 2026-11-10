@@ -31,7 +31,7 @@ export const account: Dict["account"] = {
     none: "Nog niets verstuurd",
     empty: "Nog niets verstuurd.",
     channel: { push: "melding", email: "e-mail" } as Record<string, string>,
-    status: { sent: "verstuurd", failed: "mislukt", skipped: "overgeslagen" } as Record<string, string>,
+    status: { sent: "verstuurd", delivered: "afgeleverd", failed: "mislukt", skipped: "overgeslagen" } as Record<string, string>,
   },
 
   fast: {
@@ -52,6 +52,8 @@ export const account: Dict["account"] = {
   },
 
   restock: {
+    /** "Restock by restock" on the dashboard: each restock against the member's alerts (lib/alertMarks.ts). */
+    mark: { delivered: "Alert afgeleverd", sent: "Alert verstuurd", other: "Niet in je alerts", before: "Vóór je alert" },
     title: "Wanneer je winkels nieuwe voorraad krijgen",
     anyIphone: "iPhone",
     and: " en ",

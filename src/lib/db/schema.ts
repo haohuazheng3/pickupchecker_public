@@ -110,6 +110,8 @@ export const pushSubscriptions = pgTable(
     expirationTime: ts("expiration_time"),
     /** base64url VAPID public key the browser subscribed with: a rotated key means re-subscribe. */
     appServerKey: text("app_server_key"),
+    /** The last push this device confirmed receiving (sw.js receipt, migration 0017); lastSentAt only says the push service took it. */
+    lastDeliveredAt: ts("last_delivered_at"),
   },
   (t) => [uniqueIndex("push_subscriptions_endpoint_idx").on(t.endpoint), index("push_subscriptions_user_idx").on(t.userId)],
 );
@@ -242,6 +244,8 @@ export const notifications = pgTable(
     error: text("error"),
     latencyMs: integer("latency_ms"),
     createdAt: ts("created_at").notNull().defaultNow(),
+    /** Push only: when the first of the member's devices confirmed receiving it (sw.js receipt, migration 0017). */
+    deliveredAt: ts("delivered_at"),
   },
   (t) => [
     index("notifications_user_idx").on(t.userId, t.createdAt),

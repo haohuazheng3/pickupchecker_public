@@ -57,6 +57,8 @@ export interface PushPayload {
   collapse?: string;
   /** ISO time the restock was seen (or the test was sent). */
   at: string;
+  /** Delivery receipt token, added per device by sendPushToRows (lib/push/receipt.ts); sw.js posts it back. */
+  r?: string;
   data?: {
     /** apple.com buy page for exactly this storage/colour ("Buy" action on Android/desktop). */
     buyUrl?: string;
