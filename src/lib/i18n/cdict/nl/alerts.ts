@@ -11,6 +11,7 @@ export const alerts: CDict["alerts"] = {
     title: "Stel een alert in",
     lead: "Vink de iPhones aan die je wilt en de winkels waar je kunt komen. Elke iPhone wordt in elke winkel gevolgd.",
   },
+  steps: { of: "Stap {n} van {total}", next: "Volgende", back: "Terug", finish: "Inschakelen" },
 
   editor: {
     listSep: ", ",

@@ -387,7 +387,7 @@ header.site-header > .pane {
 .alert-dialog {
   padding: 0; border: 0; margin: auto; color: var(--ink); background: var(--pane-solid);
   width: min(40rem, calc(100vw - 2rem)); max-width: none; max-height: min(88dvh, 54rem);
-  border-radius: 28px; overflow-y: auto; overscroll-behavior: contain;
+  border-radius: 28px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
   box-shadow: 0 40px 100px -30px rgba(0, 0, 0, .45), 0 0 0 1px var(--line);
 }
 .alert-dialog[open] { animation: dialog-in .22s cubic-bezier(.2, .8, .2, 1); }
@@ -402,6 +402,10 @@ header.site-header > .pane {
 }
 @keyframes sheet-in { from { transform: translateY(100%); } }
 html.dialog-open { overflow: hidden; }
+/* The lightbox's steps: each one slides in. */
+.step-in { animation: step-in .24s cubic-bezier(.2, .8, .2, 1); }
+@keyframes step-in { from { opacity: 0; transform: translateX(10px); } }
+@media (prefers-reduced-motion: reduce) { .step-in { animation: none; } }
 
 /* Site search: a command palette on larger screens, the whole screen on phones. In the top layer (showModal),
    so the header's backdrop-filter cannot trap it the way it trapped the old position: fixed overlay. */

@@ -9,6 +9,7 @@ export const alerts: CDict["alerts"] = {
     title: "재입고 알림 받기",
     lead: "원하는 iPhone과 갈 수 있는 매장을 체크하세요. 체크한 iPhone마다 체크한 모든 매장을 지켜봐요.",
   },
+  steps: { of: "{total}단계 중 {n}단계", next: "다음", back: "이전", finish: "알림 켜기" },
 
   editor: {
     listSep: ", ",

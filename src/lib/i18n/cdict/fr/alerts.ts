@@ -11,6 +11,7 @@ export const alerts: CDict["alerts"] = {
     title: "Créer une alerte",
     lead: "Cochez les téléphones voulus et les magasins où vous pouvez vous rendre. Chaque téléphone est surveillé dans chaque magasin.",
   },
+  steps: { of: "Étape {n} sur {total}", next: "Suivant", back: "Retour", finish: "Activer" },
 
   editor: {
     listSep: ", ",

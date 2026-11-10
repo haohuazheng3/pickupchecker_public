@@ -7,6 +7,7 @@ export const alerts: CDict["alerts"] = {
     title: "Crea una alerta",
     lead: "Marca los iPhone que quieres y las tiendas a las que puedes ir. Cada iPhone se vigila en cada tienda.",
   },
+  steps: { of: "Paso {n} de {total}", next: "Siguiente", back: "Atrás", finish: "Activar" },
 
   editor: {
     listSep: ", ",

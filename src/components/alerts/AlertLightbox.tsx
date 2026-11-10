@@ -113,20 +113,17 @@ export function AlertLightbox() {
   return (
     <dialog ref={ref} className="alert-dialog" aria-label={signInOnly ? d.editor.signIn : d.setup.title} onClose={onClose}
       onClick={(e) => { if (e.target === e.currentTarget) hide(); }}>
-      <div className="relative px-4 pt-4 pb-6 sm:px-7 sm:pt-6 sm:pb-7">
+      <div className={`relative px-4 pt-4 sm:px-7 sm:pt-6 ${signInOnly || !cat ? "pb-6 sm:pb-7" : ""}`}>
         <button type="button" onClick={hide} aria-label={d.plan.close}
           className="absolute end-3 top-3 grid h-9 w-9 place-items-center rounded-full text-ink-2 transition hover:bg-ink/8 hover:text-ink sm:end-4 sm:top-4">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
         </button>
         {!signInOnly && (
-          <div className="mb-4 pe-10">
-            <h2 className="display text-2xl sm:text-3xl">{d.setup.title}</h2>
-            <p className="mt-1 text-sm text-ink-2">{d.setup.lead}</p>
-          </div>
+          <h2 className="display mb-5 pe-10 text-2xl sm:text-3xl">{d.setup.title}</h2>
         )}
         <div className={signInOnly ? "pe-10" : undefined}>
           {req && cat ? (
-            <AlertEditor key={req.run} catalog={cat} start={start} signInOnly={signInOnly} next={req.next} home={req.home} onStay={onStay} />
+            <AlertEditor key={req.run} catalog={cat} start={start} signInOnly={signInOnly} next={req.next} home={req.home} onStay={onStay} stepped />
           ) : failed && req ? (
             <button type="button" className="btn btn-ghost" onClick={() => fetchCatalog(req)}>{t.chrome.error.retry}</button>
           ) : (

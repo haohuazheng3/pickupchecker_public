@@ -10,6 +10,7 @@ export const alerts: CDict["alerts"] = {
     title: "Skapa en bevakning",
     lead: "Bocka i telefonerna du vill ha och butikerna du kan ta dig till. Varje telefon bevakas i varje butik.",
   },
+  steps: { of: "Steg {n} av {total}", next: "Nästa", back: "Tillbaka", finish: "Slå på" },
 
   editor: {
     listSep: ", ",

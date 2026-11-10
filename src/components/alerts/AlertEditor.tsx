@@ -47,7 +47,7 @@ function startSet(catalog: PhoneCatalog, s: AlertStart = {}): AlertSet {
   return { phones: ok ? [{ model: s.model!, storage: s.storage!, color: s.color! }] : [], stores: s.store && known ? [s.store] : [] };
 }
 
-export function AlertEditor({ catalog, account, start = {}, variant = "panel", signInOnly = false, next, known, home, onStay }: {
+export function AlertEditor({ catalog, account, start = {}, variant = "panel", signInOnly = false, next, known, home, onStay, stepped = false }: {
   catalog: PhoneCatalog;
   /** Chosen stores of any country (the dashboard: an account may watch stores in several countries). */
   known?: PickerStore[];
@@ -58,8 +58,11 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
   home?: string;
   /** In the lightbox: a sign-in that would go on to the alert setup stays here and carries on in place. */
   onStay?: () => void;
+  /** The lightbox: one step at a time (phones → stores → turn on) under a progress line, instead of one long page. */
+  stepped?: boolean;
 }) {
-  const d = useT().alerts.editor;
+  const T = useT().alerts;
+  const d = T.editor;
   const tErr = useApiError();
   const lang = useLang();
   const N = (n: number) => num(lang, n);
@@ -81,6 +84,14 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
     return () => clearTimeout(t);
   }, [refused]);
   const [justSaved, setJustSaved] = useState(false);
+  // Stepped: a link that already names the phone starts at the stores.
+  const [step, setStep] = useState(() => (startSet(catalog, start).phones.length ? 1 : 0));
+  const rootRef = useRef<HTMLDivElement>(null);
+  const goStep = (i: number) => {
+    setStep(i);
+    // The lightbox scrolls, not the page: each step starts at its top.
+    rootRef.current?.closest("dialog")?.scrollTo({ top: 0 });
+  };
   const [devices, setDevices] = useState<{ active: number; label: string | null } | null>(null);
   const signingIn = useRef(false);
   const inner = variant === "panel";
@@ -232,89 +243,162 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
     );
   }
 
+  const noticeEl = (notice || (mode === "account" && live.error)) ? (
+    <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm">
+      <span>{notice ?? live.error}</span>
+      {notice && plan && plan.key !== "free" && plan.key !== "max" && (variant === "page"
+        ? <button type="button" className="btn btn-primary btn-sm" onClick={() => openSection("plan")}>{d.seePlans}</button>
+        : <a href="/account#plan" className="btn btn-primary btn-sm">{d.seePlans}</a>)}
+    </div>
+  ) : null;
+  const toastEl = notice && refused > 0 ? (
+    // The refused tap is down in the lists, where the inline notice and its button are out of view: the toast
+    // carries the way out too (FlowGlance 11-07: 70 refused taps in a day, people tapping 7–22 times, 2 upgrades).
+    <div key={refused} role="status" className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-2xl border border-warn/40 bg-bg px-4 py-3 text-sm shadow-lg sm:bottom-6">
+      <p>{notice}</p>
+      {upgrade && (variant === "page"
+        ? <button type="button" className="btn btn-primary btn-sm mt-2 w-full" onClick={() => { setRefused(0); openSection("plan"); }}>{upgrade}</button>
+        : <a href="/account#plan" className="btn btn-primary btn-sm mt-2 w-full">{upgrade}</a>)}
+    </div>
+  ) : null;
+  const phonesEl = <PhoneMatrix catalog={catalog} selected={set.phones} onToggle={onPhone} initialModel={startModel ?? MODELS[0].key} disabled={mode === "account" && !loaded} />;
+  const storesEl = (
+    <StoreChooser selected={set.stores} onToggle={onStore} onPretick={!start.store && (mode === "draft" || (set.phones.length === 0 && set.stores.length === 0)) ? pretick : undefined} room={storeRoom} preferState={start.state} preferCity={start.city}
+      pool={catalog.stores} country={catalog.country} known={known} switchable={variant === "page"} />
+  );
+  const draftEl = mode === "draft" && count > 0 ? (
+    <div className={inner ? "pane-2 p-4" : "pane p-5 sm:p-6"}>
+      <div className="font-semibold">{plural(lang, count, d.turnOn)}</div>
+      <div className="mt-1 mb-3">
+        <p className="text-sm text-ink-2">{fit ? fill(d.thenPlan, { plan: PLANS[fit].name, price: `$${PLANS[fit].priceUsd}` }) : fill(d.untickFew, { most: N(MOST) })}</p>
+        {fit && <p className="mt-1 text-xs text-ink-3"><span aria-hidden>⚡ </span>{speed}</p>}
+      </div>
+      {fit && <EmailSignIn onSignedIn={afterSignIn} onVerifying={() => { signingIn.current = true; }} cta={plural(lang, count, d.continueWith)} />}
+    </div>
+  ) : null;
+  const planEl = mode === "account" && plan?.key === "free" && count > 0 ? (
+    <div className={inner ? "pane-2 p-4" : "pane p-5 sm:p-6"}>
+      <div className="font-semibold">{justSaved ? plural(lang, count, d.savedN) : ""}{plural(lang, count, d.choosePlan)}</div>
+      {variant === "page" ? (
+        <button type="button" className="btn btn-primary btn-sm mt-3" onClick={() => openSection("plan")}>{d.seePlans}</button>
+      ) : (
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          {PAID_PLANS.map((k) => (
+            <button key={k} type="button" disabled={checkout != null} aria-busy={checkout === k} onClick={() => void goCheckout(k)} className={`rounded-2xl border p-3 text-start transition hover:border-accent disabled:cursor-wait ${k === fit ? "border-accent bg-accent/8" : "border-line-2"}`}>
+              <div className="flex items-baseline justify-between"><span className="font-semibold">{checkout === k && <span className="spinner me-1" aria-hidden />}{PLANS[k].name}</span><span className="text-sm"><b>${PLANS[k].priceUsd}</b>{d.perMo}</span></div>
+              <div className="mt-0.5 text-xs text-ink-3">{plural(lang, PLANS[k].limit, d.alerts)}{k === fit ? fill(d.fitsYour, { n: N(count) }) : ""}</div>
+            </button>
+          ))}
+        </div>
+      )}
+      {checkoutError && <p role="alert" className="mt-3 rounded-xl border border-warn/40 bg-warn/10 px-3 py-2 text-sm">{checkoutError}</p>}
+      <p className="mt-2 text-xs text-ink-3"><span aria-hidden>⚡ </span>{speed}{d.afterSpeed}</p>
+    </div>
+  ) : null;
+  const paidEl = mode === "account" && inner && plan && plan.key !== "free" && count > 0 ? (
+    <p className="px-1 text-sm text-ink-2">
+      {justSaved ? d.alertsOn : ""}{devices?.active ? fill(d.goesTo, { device: devices.label ?? d.phone }) : <Rich text={d.getOnPhone} vars={{ link: <a href="/install" className="underline underline-offset-4">{d.getOnPhoneLink}</a> }} />}{" "}
+      <a href="/account" className="text-ink-3 underline-offset-4 hover:underline">{d.myAlerts}</a>
+    </p>
+  ) : null;
+  const sumNote = mode === "draft"
+    ? count === 0 ? d.pickBoth : fit ? fill(d.fits, { plan: PLANS[fit].name, limit: N(PLANS[fit].limit), price: `$${PLANS[fit].priceUsd}` }) : fill(d.overAny, { most: N(MOST) })
+    : count === 0 ? (set.phones.length ? d.tickStore : set.stores.length ? d.tickPhone : d.tickEach)
+    : plan?.key === "free" ? d.offUntilPlan
+    : `${fill(d.onWith, { on: N(onCount), limit: N(plan?.limit ?? 0), plan: PLANS[plan?.key ?? "plus"].name })}${count > (plan?.limit ?? 0) ? fill(d.off, { n: N(count - (plan?.limit ?? 0)) }) : ""}`;
+
+  if (stepped) {
+    const S = T.steps;
+    const names3 = [d.phonesTitle, d.storesTitle, S.finish];
+    // How far the steps can go: the stores once a phone is ticked, the last once a store is too.
+    const reach = set.phones.length === 0 ? 0 : set.stores.length === 0 ? 1 : 2;
+    const canNext = step < reach;
+    const head = (title: string, note: string) => (
+      <div className="mb-4">
+        <h3 className="display text-xl sm:text-2xl">{title}</h3>
+        <p className="mt-0.5 truncate text-sm text-ink-3">{note}</p>
+      </div>
+    );
+    return (
+      <div ref={rootRef} className="flex min-h-[min(64dvh,34rem)] flex-col">
+        {/* The progress line: three segments, each step's name under its own; a reached step can be gone back to. */}
+        <ol className="grid grid-cols-3 gap-2" aria-label={fill(S.of, { n: N(step + 1), total: N(3) })}>
+          {names3.map((nm, i) => (
+            <li key={nm} className="min-w-0">
+              <button type="button" disabled={i > reach} onClick={() => goStep(i)} aria-current={i === step ? "step" : undefined}
+                className="group w-full text-start disabled:cursor-default">
+                <span className="block h-1.5 overflow-hidden rounded-full bg-ink/8">
+                  <span className={`block h-full rounded-full bg-accent transition-[width] duration-300 ease-out ${i <= step ? "w-full" : "w-0"}`} />
+                </span>
+                <span className={`mt-2 flex min-w-0 items-center gap-1.5 text-xs font-medium transition-colors ${i === step ? "text-ink" : i <= reach ? "text-ink-2 group-hover:text-ink" : "text-ink-3"}`}>
+                  <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] tabular-nums ${i < step ? "bg-accent/15 text-accent" : i === step ? "bg-accent text-[var(--accent-ink)]" : "bg-ink/8"}`}>{i < step ? "✓" : N(i + 1)}</span>
+                  <span className="truncate">{nm}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
+
+        <div key={step} className="step-in flex-1 pt-6 pb-4">
+          {step === 0 && <>{head(d.phonesTitle, phonesText(set.phones, d, lang))}{phonesEl}</>}
+          {step === 1 && <>{head(d.storesTitle, storesText(set.stores, names, d, lang))}{storesEl}</>}
+          {step === 2 && (
+            <div className="space-y-3">
+              {/* What is about to be switched on, with a way back to either list. */}
+              <div className="rounded-2xl border border-line-2 p-4">
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="display text-xl tabular-nums sm:text-2xl">{summaryLine}</div>
+                  <div className="text-sm" aria-live="polite">{status}</div>
+                </div>
+                <p className="mt-1 text-sm text-ink-3">{sumNote}</p>
+                <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                  <button type="button" onClick={() => goStep(0)} className="min-w-0 rounded-xl bg-ink/5 px-3 py-2 text-start transition hover:bg-ink/8"><span className="block text-xs text-ink-3">{d.phonesTitle}</span><span className="block truncate">{phonesText(set.phones, d, lang)}</span></button>
+                  <button type="button" onClick={() => goStep(1)} className="min-w-0 rounded-xl bg-ink/5 px-3 py-2 text-start transition hover:bg-ink/8"><span className="block text-xs text-ink-3">{d.storesTitle}</span><span className="block truncate">{storesText(set.stores, names, d, lang)}</span></button>
+                </div>
+              </div>
+              <PickupWindows set={set} catalog={catalog} names={names} onAddPhone={onPhone} onAddStore={onStore} />
+              {draftEl}{planEl}{paidEl}
+            </div>
+          )}
+          {noticeEl && <div className="mt-3">{noticeEl}</div>}
+        </div>
+        {toastEl}
+
+        {/* The way on, pinned to the bottom of the lightbox while a step scrolls. */}
+        <div className="sticky bottom-0 z-10 -mx-4 flex items-center gap-3 border-t border-line bg-[var(--pane-solid)] px-4 py-3 sm:-mx-7 sm:px-7">
+          {step > 0 ? <button type="button" className="btn btn-ghost" onClick={() => goStep(step - 1)}>{S.back}</button> : <span />}
+          <div className="min-w-0 flex-1 truncate text-center text-sm tabular-nums text-ink-3">{step < 2 ? summaryLine : ""}</div>
+          {step < 2 && <button type="button" className="btn btn-primary" disabled={!canNext} onClick={() => goStep(step + 1)}>{S.next}</button>}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       {/* The sum, always in view: phones × stores, and how many of them send. */}
       <div className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-1 ${inner ? "" : "pane px-5 py-4 sm:px-6"}`}>
         <div className="min-w-0">
           <div className="font-semibold tabular-nums">{summaryLine}</div>
-          <div className="text-sm text-ink-3">
-            {mode === "draft"
-              ? count === 0 ? d.pickBoth : fit ? fill(d.fits, { plan: PLANS[fit].name, limit: N(PLANS[fit].limit), price: `$${PLANS[fit].priceUsd}` }) : fill(d.overAny, { most: N(MOST) })
-              : count === 0 ? (set.phones.length ? d.tickStore : set.stores.length ? d.tickPhone : d.tickEach)
-              : plan?.key === "free" ? d.offUntilPlan
-              : `${fill(d.onWith, { on: N(onCount), limit: N(plan?.limit ?? 0), plan: PLANS[plan?.key ?? "plus"].name })}${count > (plan?.limit ?? 0) ? fill(d.off, { n: N(count - (plan?.limit ?? 0)) }) : ""}`}
-          </div>
+          <div className="text-sm text-ink-3">{sumNote}</div>
         </div>
         <div className="text-sm" aria-live="polite">{status}</div>
       </div>
       {/* Past pickup windows for these picks and the change that would have added most (free, folded to one line). */}
       <PickupWindows set={set} catalog={catalog} names={names} onAddPhone={onPhone} onAddStore={onStore} />
-      {(notice || (mode === "account" && live.error)) && (
-        <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm">
-          <span>{notice ?? live.error}</span>
-          {notice && plan && plan.key !== "free" && plan.key !== "max" && (variant === "page"
-            ? <button type="button" className="btn btn-primary btn-sm" onClick={() => openSection("plan")}>{d.seePlans}</button>
-            : <a href="/account#plan" className="btn btn-primary btn-sm">{d.seePlans}</a>)}
-        </div>
-      )}
-
-      {notice && refused > 0 && (
-        // The refused tap is down in the lists, where the inline notice and its button are out of view: the toast
-        // carries the way out too (FlowGlance 11-07: 70 refused taps in a day, people tapping 7–22 times, 2 upgrades).
-        <div key={refused} role="status" className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-2xl border border-warn/40 bg-bg px-4 py-3 text-sm shadow-lg sm:bottom-6">
-          <p>{notice}</p>
-          {upgrade && (variant === "page"
-            ? <button type="button" className="btn btn-primary btn-sm mt-2 w-full" onClick={() => { setRefused(0); openSection("plan"); }}>{upgrade}</button>
-            : <a href="/account#plan" className="btn btn-primary btn-sm mt-2 w-full">{upgrade}</a>)}
-        </div>
-      )}
+      {noticeEl}
+      {toastEl}
 
       <Section id={inner ? "alert-phones" : "phones"} inner={inner} title={d.phonesTitle} badge={<Count n={set.phones.length} />} summary={phonesText(set.phones, d, lang)} defaultOpen>
-        <PhoneMatrix catalog={catalog} selected={set.phones} onToggle={onPhone} initialModel={startModel ?? MODELS[0].key} disabled={mode === "account" && !loaded} />
+        {phonesEl}
       </Section>
       <Section id={inner ? "alert-stores" : "stores"} inner={inner} title={d.storesTitle} badge={<Count n={set.stores.length} />} summary={storesText(set.stores, names, d, lang)} defaultOpen>
-        <StoreChooser selected={set.stores} onToggle={onStore} onPretick={!start.store && (mode === "draft" || (set.phones.length === 0 && set.stores.length === 0)) ? pretick : undefined} room={storeRoom} preferState={start.state} preferCity={start.city}
-          pool={catalog.stores} country={catalog.country} known={known} switchable={variant === "page"} />
+        {storesEl}
       </Section>
 
-      {mode === "draft" && count > 0 && (
-        <div className={inner ? "pane-2 p-4" : "pane p-5 sm:p-6"}>
-          <div className="font-semibold">{plural(lang, count, d.turnOn)}</div>
-          <div className="mt-1 mb-3">
-            <p className="text-sm text-ink-2">{fit ? fill(d.thenPlan, { plan: PLANS[fit].name, price: `$${PLANS[fit].priceUsd}` }) : fill(d.untickFew, { most: N(MOST) })}</p>
-            {fit && <p className="mt-1 text-xs text-ink-3"><span aria-hidden>⚡ </span>{speed}</p>}
-          </div>
-          {fit && <EmailSignIn onSignedIn={afterSignIn} onVerifying={() => { signingIn.current = true; }} cta={plural(lang, count, d.continueWith)} />}
-        </div>
-      )}
-
-      {mode === "account" && plan?.key === "free" && count > 0 && (
-        <div className={inner ? "pane-2 p-4" : "pane p-5 sm:p-6"}>
-          <div className="font-semibold">{justSaved ? plural(lang, count, d.savedN) : ""}{plural(lang, count, d.choosePlan)}</div>
-          {variant === "page" ? (
-            <button type="button" className="btn btn-primary btn-sm mt-3" onClick={() => openSection("plan")}>{d.seePlans}</button>
-          ) : (
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              {PAID_PLANS.map((k) => (
-                <button key={k} type="button" disabled={checkout != null} aria-busy={checkout === k} onClick={() => void goCheckout(k)} className={`rounded-2xl border p-3 text-start transition hover:border-accent disabled:cursor-wait ${k === fit ? "border-accent bg-accent/8" : "border-line-2"}`}>
-                  <div className="flex items-baseline justify-between"><span className="font-semibold">{checkout === k && <span className="spinner me-1" aria-hidden />}{PLANS[k].name}</span><span className="text-sm"><b>${PLANS[k].priceUsd}</b>{d.perMo}</span></div>
-                  <div className="mt-0.5 text-xs text-ink-3">{plural(lang, PLANS[k].limit, d.alerts)}{k === fit ? fill(d.fitsYour, { n: N(count) }) : ""}</div>
-                </button>
-              ))}
-            </div>
-          )}
-          {checkoutError && <p role="alert" className="mt-3 rounded-xl border border-warn/40 bg-warn/10 px-3 py-2 text-sm">{checkoutError}</p>}
-          <p className="mt-2 text-xs text-ink-3"><span aria-hidden>⚡ </span>{speed}{d.afterSpeed}</p>
-        </div>
-      )}
-
-      {mode === "account" && inner && plan && plan.key !== "free" && count > 0 && (
-        <p className="px-1 text-sm text-ink-2">
-          {justSaved ? d.alertsOn : ""}{devices?.active ? fill(d.goesTo, { device: devices.label ?? d.phone }) : <Rich text={d.getOnPhone} vars={{ link: <a href="/install" className="underline underline-offset-4">{d.getOnPhoneLink}</a> }} />}{" "}
-          <a href="/account" className="text-ink-3 underline-offset-4 hover:underline">{d.myAlerts}</a>
-        </p>
-      )}
+      {draftEl}
+      {planEl}
+      {paidEl}
     </div>
   );
 }
