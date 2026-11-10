@@ -70,8 +70,6 @@ export async function HomePage({ country: c, searchParams: sp }: { country: Coun
   if (c.cc !== "us") return <IntlHome c={c} sp={sp} />;
   const start = wizardStartFrom((k) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined));
   const model: ModelKey = start.initialModel;
-  const startSignIn = sp.signin === "1";
-  const next = typeof sp.next === "string" ? sp.next : undefined;
   const usStores = storesOf("us");
   const [facts, sell, recent, rt, duoRows, alerts, duoSell, stockNowAll] = await Promise.all([getFacts(), sellouts({ country: "us" }), recentByConfig({ country: "us" }), duoRestockTimes("us"), stockByStore("duo", {}, "us"), alertsSentAt(usStores.map((s) => s.storeNumber)), sellouts({ country: "us", parts: partNumbersFor("duo") }), storesWithStockNow(undefined, "us")]);
   const now = duoNowFrom({ stores: usStores, stock: stockFromRows(duoRows), others: { pro: stockNowAll["18-pro"], max: stockNowAll["18-pro-max"] }, times: rt, sell: duoSell, alerts, configsTotal: 8 });
@@ -102,8 +100,7 @@ export async function HomePage({ country: c, searchParams: sp }: { country: Coun
               a phone) pushed the alert setup down 860 px after the first paint (PSI CLS 0.149 in some runs). */}
           <Board model={model} c={c} />
         </div>
-        <HomeAlertSetup catalog={buildPhoneCatalog()} signInOnly={startSignIn} next={next}
-          start={{ model: start.requested ? start.initialModel : undefined, storage: start.initialStorage, color: start.initialColor, store: start.initialStore, state: start.initialState, city: start.initialCity }} />
+        <HomeAlertSetup />
       </section>
 
       <section className="mt-6 flex flex-wrap items-center gap-2 text-sm text-ink-3">
@@ -190,8 +187,6 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
   const catalog = buildPhoneCatalog(cc, lang);
   const start = startFromPool((k) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined), catalog.stores ?? [], catalog.configs);
   const model: ModelKey = start.model ?? "duo";
-  const startSignIn = sp.signin === "1";
-  const next = typeof sp.next === "string" ? sp.next : undefined;
   const stores = storesOf(cc);
   const [facts0, sell, recent, rt, duoRows, alerts, duoSell, stockNowAll] = await Promise.all([getFacts(cc), sellouts({ country: cc }), recentByConfig({ country: cc }), duoRestockTimes(cc), stockByStore("duo", {}, cc), alertsSentAt(stores.map((s) => s.storeNumber)), sellouts({ country: cc, parts: partNumbersFor("duo", [], [], cc) }), storesWithStockNow(undefined, cc)]);
   const facts = lang === "en" ? facts0 : { ...facts0, lang };
@@ -234,7 +229,7 @@ async function IntlHome({ c, sp }: { c: Country; sp: SearchParams }) {
 
       <section className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
         <div className="min-w-0"><Board model={model} c={c} /></div>
-        <HomeAlertSetup catalog={catalog} signInOnly={startSignIn} next={next} start={start} />
+        <HomeAlertSetup />
       </section>
 
       <section className="mt-6 flex flex-wrap items-center gap-2 text-sm text-ink-3">

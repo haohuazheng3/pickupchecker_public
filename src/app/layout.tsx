@@ -5,6 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { AlertBar } from "@/components/site/AlertBar";
+import { AlertLightbox } from "@/components/alerts/AlertLightbox";
 import { AlertLinkHost } from "@/components/alerts/AlertLinkHost";
 import { THEME_BOOT, THEME_COLORS } from "@/lib/theme";
 import { Consent } from "@/components/site/Consent";
@@ -79,6 +80,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <Footer loc={loc} />
           <AlertBar />
           <AlertLinkHost />
+          <AlertLightbox />
           <FreshOnReturn />
         </ClerkProvider>
         <Consent />

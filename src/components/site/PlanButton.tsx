@@ -15,6 +15,7 @@ import { ChangeConfirm } from "@/components/alerts/PlanPanel";
 import { useLocale, useT } from "@/components/i18n/LangProvider";
 import { fill } from "@/lib/i18n/format";
 import { signInHome } from "@/lib/i18n/locales";
+import { openAlertLightbox } from "@/lib/alertLightbox";
 
 export function PlanButton({ plan, label, primary }: { plan: PaidPlanKey; label: string; primary?: boolean }) {
   const t = useT().alerts;
@@ -40,7 +41,7 @@ export function PlanButton({ plan, label, primary }: { plan: PaidPlanKey; label:
     setBusy(true); setErr(null);
     try {
       const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan }) });
-      if (res.status === 401) { router.push(`${signInHome(loc.native ? loc : undefined)}?signin=1&next=${encodeURIComponent("/pricing")}`); return; }
+      if (res.status === 401) { setBusy(false); openAlertLightbox(`${signInHome(loc.native ? loc : undefined)}?signin=1&next=${encodeURIComponent("/pricing")}`); return; }
       const j = (await res.json()) as { url?: string; changed?: boolean; error?: string };
       if (!res.ok || !j.url) throw new Error((j.error ? tErr(j.error) : undefined) ?? t.editor.checkoutUnavailable);
       track(j.changed ? "plan_changed" : "checkout_started", { plan });

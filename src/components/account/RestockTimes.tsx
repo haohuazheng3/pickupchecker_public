@@ -97,14 +97,11 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
   // The timeline: the user's own times, plus the zone's when theirs are few (marked, never merged).
   const ownLine = buildTimeline(mineSlots, 12);
   const areaLine = thin ? buildTimeline(areaSlots, Math.max(6, 12 - ownLine.points.length)) : null;
-  // Other trackers' reports at the user's stores: their own rows (dashed), never "next", never merged with ours.
-  const repLine = rep ? buildTimeline(rep.slots, 8) : null;
   const rows: TimelineRow[] = [
     ...ownLine.points.map((pt) => ({ min: pt.min, drops: pt.drops, mine: true, where: storeList(pt.stores.map((s) => s.storeNumber), w.store), whereAll: pt.stores.map((s) => `${w.store(s.storeNumber)} ${s.drops}×`).join(", ") })),
     ...(areaLine?.points ?? []).map((pt) => ({ min: pt.min, drops: pt.drops, mine: false, where: d.otherStores(pt.stores.length), whereAll: pt.stores.map((s) => `${w.store(s.storeNumber)} ${s.drops}×`).join(", ") })),
-    ...(repLine?.points ?? []).map((pt) => ({ min: pt.min, drops: pt.drops, mine: false, reported: true, where: storeList(pt.stores.map((s) => s.storeNumber), w.store), whereAll: pt.stores.map((s) => `${w.store(s.storeNumber)} ${s.drops}×`).join(", ") })),
   ];
-  rows.sort((a, b) => a.min - b.min || Number(b.mine) - Number(a.mine) || Number(Boolean(a.reported)) - Number(Boolean(b.reported)));
+  rows.sort((a, b) => a.min - b.min || Number(b.mine) - Number(a.mine));
 
   return (
     <>
@@ -173,7 +170,7 @@ export async function RestockTimes({ watches }: { watches: Rule[] }) {
         )}
         {rep && <ReportsNote reports={rep} mark={patterned ? d.reportMarkBars : d.reportMarkDots} />}
       </section>
-      <RestockTimeline rows={rows} nowMin={nowMin} clocks={Object.fromEntries([nowMin, ...rows.map((r) => r.min)].map((m) => [m, clockIn(pageLocale().lang, m)]))} tz={tz} zone={zone} days={mine.days} hidden={ownLine.hidden} yours={yours} Yours={d.Yours(own.length)} mixed={Boolean(areaLine && areaLine.points.length)} {...(repLine?.points.length && rep ? { reported: { sources: rep.sources, models: rep.models, from: rep.from, to: rep.to } } : {})} />
+      <RestockTimeline rows={rows} nowMin={nowMin} clocks={Object.fromEntries([nowMin, ...rows.map((r) => r.min)].map((m) => [m, clockIn(pageLocale().lang, m)]))} tz={tz} zone={zone} days={mine.days} hidden={ownLine.hidden} yours={yours} Yours={d.Yours(own.length)} mixed={Boolean(areaLine && areaLine.points.length)} />
       <section className="pane p-5 sm:p-6" aria-labelledby="sellout-times">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <h2 id="sellout-times" className="text-xl font-semibold">{d.sellTitle}</h2>

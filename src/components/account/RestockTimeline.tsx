@@ -4,25 +4,23 @@
  * window, earliest at the top, with "now" placed among them. Gaps between lines grow with the time between
  * (capped), and the stretch from now to the next one is drawn dashed with its length in words. While the
  * user's stores have had few restocks, times from the other stores in their zone are mixed in, hollow and
- * grey. Other trackers' reports at the user's stores (`reported`), when there are any, are rows of their own:
- * dashed rings, "Reported ·", never the "next" time. The minute ticks on the client in the stores' zone; the
+ * grey. Only our own measured restocks are listed (other trackers' reports are
+ * left out of this module: owner, 2026-11-10). The minute ticks on the client in the stores' zone; the
  * first render uses the server's minute and the server's clock strings (`clocks`): Safari's Intl writes some
  * languages' times differently from Node's ("20:03" for "20 h 03"), which made React discard the page (#418).
  */
 import { useEffect, useState } from "react";
 import { clockIn, gapLabel, minuteIn, placeNow } from "@/lib/restockTimes";
-import { REPORT_MARK, ReportLegendItem, ReportsNote, type ReportMeta } from "@/components/restocks/ReportsNote";
 import { useLang, useT } from "@/components/i18n/LangProvider";
 import { fill, plural, secs } from "@/lib/i18n/format";
 import type { Lang } from "@/lib/i18n/locales";
 
-/** `reported`: a time other trackers published restocks at (restock_reports), not one of ours. */
-export interface TimelineRow { min: number; drops: number; mine: boolean; where: string; whereAll: string; reported?: boolean }
+export interface TimelineRow { min: number; drops: number; mine: boolean; where: string; whereAll: string }
 /**
  * `zone`: "Eastern" in English, the full zone name in another language (the dictionary's templates say which).
  * `Yours`: `yours` at the start of a line ("Your 2 stores"); English derives it.
  */
-interface Props { rows: TimelineRow[]; nowMin: number; tz: string; zone: string; days: number; hidden: number; yours: string; Yours?: string; mixed: boolean; reported?: ReportMeta; /** Minute of the day → its clock string, as the server wrote it (every row and `nowMin`). */ clocks?: Record<number, string> }
+interface Props { rows: TimelineRow[]; nowMin: number; tz: string; zone: string; days: number; hidden: number; yours: string; Yours?: string; mixed: boolean; /** Minute of the day → its clock string, as the server wrote it (every row and `nowMin`). */ clocks?: Record<number, string> }
 
 /** 125 → "2 h 5 min" (English) / "2 Std. 5 Min.". */
 function gapOf(lang: Lang, min: number): string {
@@ -36,7 +34,7 @@ const gapPx = (min: number) => Math.round(Math.min(40, 4 + min * 0.1));
 const COLS = "grid-cols-[4.5rem_1.25rem_minmax(0,1fr)_auto] gap-x-2.5";
 const RAIL_X = "start-[5.75rem]";
 
-export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Yours = yours.replace(/^your/, "Your"), mixed, reported, clocks }: Props) {
+export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Yours = yours.replace(/^your/, "Your"), mixed, clocks }: Props) {
   const d = useT().account.timeline;
   const lang = useLang();
   const hm = (min: number) => clocks?.[min] ?? clockIn(lang, min);
@@ -48,8 +46,7 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Y
     return () => { window.clearInterval(t); document.removeEventListener("visibilitychange", tick); };
   }, [tz]);
 
-  // Reports never make the "next" time: that is read from our own restocks (and the zone's) only.
-  const at = placeNow(rows, now, (r) => !r.reported);
+  const at = placeNow(rows, now);
   // One scale for every line, the user's and the other stores' alike, so the bars compare honestly.
   const max = Math.max(1, ...rows.map((r) => r.drops));
   const soon = at.inMin === 0 ? d.aboutNow : fill(d.in, { gap: gapOf(lang, at.inMin) });
@@ -73,16 +70,12 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Y
     const sinceAbove = i === at.before ? r.min - now : i === 0 ? 0 : r.min - rows[i - 1].min;
     const pad = i === 0 && at.before !== 0 ? 0 : isNext && !at.tomorrow ? Math.max(28, gapPx(sinceAbove)) : gapPx(sinceAbove);
     const size = r.drops >= 4 ? 12 : r.drops >= 2 ? 10 : 8;
-    const node = r.reported
-      ? <span data-series="reported" className={`block rounded-full bg-[var(--pane-solid)] ${REPORT_MARK} ${dim ? "opacity-50" : ""}`} style={{ width: size, height: size }} />
-      : r.mine
+    const node = r.mine
         ? <span className={`block rounded-full ${isNext ? "bg-accent ring-4 ring-accent/15" : dim ? "bg-ink/20" : "bg-accent/60"}`} style={{ width: size, height: size }} />
         : <span className={`block rounded-full border-[1.5px] bg-[var(--pane-solid)] ${isNext ? "border-accent ring-4 ring-accent/15" : dim ? "border-ink/20" : "border-ink/35"}`} style={{ width: size, height: size }} />;
     items.push(
-      <li key={`${r.reported ? "r" : r.mine ? "m" : "a"}${r.min}`} className={`relative grid items-center ${COLS}`} style={{ paddingTop: pad }}
-        aria-label={r.reported
-          ? fill(plural(lang, r.drops, d.rowReported), { time: hm(r.min), n: r.drops, where: r.where })
-          : `${fill(plural(lang, r.drops, r.mine ? d.rowMine : d.rowArea), { time: hm(r.min), n: r.drops, where: r.where, zone })}${isNext ? (at.tomorrow ? d.rowNextTomorrow : d.rowNext) : ""}`}>
+      <li key={`${r.mine ? "m" : "a"}${r.min}`} className={`relative grid items-center ${COLS}`} style={{ paddingTop: pad }}
+        aria-label={`${fill(plural(lang, r.drops, r.mine ? d.rowMine : d.rowArea), { time: hm(r.min), n: r.drops, where: r.where, zone })}${isNext ? (at.tomorrow ? d.rowNextTomorrow : d.rowNext) : ""}`}>
         {isNext && !at.tomorrow && (
           <>
             <span aria-hidden className={`absolute top-0 ${RAIL_X} -translate-x-1/2 border-s-2 border-dashed border-accent/70`} style={{ height: pad + ROW / 2 }} />
@@ -92,10 +85,10 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Y
         <span className={`text-end text-sm tabular-nums ${isNext ? "font-semibold text-accent" : dim || !r.mine ? "text-ink-3" : "font-medium text-ink"}`}>{hm(r.min)}</span>
         <span className="relative z-10 flex h-8 items-center justify-center">{node}</span>
         <span className={`min-w-0 truncate text-sm ${dim || !r.mine ? "text-ink-3" : "text-ink-2"}`} title={r.whereAll}>
-          {r.reported && d.reportedPrefix}{r.where}
+          {r.where}
           {isNext && at.tomorrow && <span className="ms-2 rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent">{d.tomorrow}</span>}
         </span>
-        <span className="flex items-center gap-1.5" title={fill(plural(lang, r.drops, r.reported ? d.oftenReported : d.often), { n: r.drops, days })}>
+        <span className="flex items-center gap-1.5" title={fill(plural(lang, r.drops, d.often), { n: r.drops, days })}>
           <span className="flex w-10 justify-end sm:w-28"><span className={`h-1.5 rounded-full ${dim || !r.mine ? "bg-ink/12" : "bg-accent/45"}`} style={{ width: `${Math.max(14, Math.round((100 * r.drops) / max))}%` }} /></span>
           <span className="w-7 text-end text-xs tabular-nums text-ink-3">{r.drops}×</span>
         </span>
@@ -114,11 +107,10 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Y
         <span>{fill(d.window, { yours: Yours, days })}</span><span>{fill(d.order, { zone })}</span><span>{d.bars}</span>
         {mixed && <span>{anyMine ? d.mixedSome : d.mixedNone}</span>}
       </div>
-      {(mixed || reported) && (
+      {mixed && (
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-ink-3">
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-accent/70" />{Yours}</span>
           {mixed && <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full border-[1.5px] border-ink/35" />{fill(d.otherStores, { zone })}</span>}
-          {reported && <ReportLegendItem reports={reported} round />}
         </div>
       )}
       {rows.length === 0 ? (
@@ -131,7 +123,6 @@ export function RestockTimeline({ rows, nowMin, tz, zone, days, hidden, yours, Y
           </ol>
           {at.tomorrow && at.next != null && <p className="mt-3 ps-[7rem] text-xs font-semibold text-accent">{fill(d.nextTomorrow, { time: hm(rows[at.next].min), soon })}</p>}
           {hidden > 0 && <p className="mt-3 text-xs text-ink-3">{fill(plural(lang, hidden, d.hidden), { n: hidden })}</p>}
-          {reported && <ReportsNote reports={reported} mark={d.reportMark} />}
         </>
       )}
     </section>

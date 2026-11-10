@@ -144,10 +144,8 @@ describe("RestockClock with reports", () => {
   });
 });
 
-describe("restock timeline with reports", () => {
+describe("restock timeline", () => {
   const ours: TimelineRow = { min: 540, drops: 2, mine: true, where: "Fifth Avenue", whereAll: "Fifth Avenue 2×" };
-  const reported: TimelineRow = { min: 600, drops: 1, mine: false, reported: true, where: "Fifth Avenue", whereAll: "Fifth Avenue 1×" };
-  const meta = { sources: [{ name: "DuoReady", url: REPORT_SOURCES.DuoReady }], models: ["iPhone Duo"], from: "2026-10-26", to: "2026-11-01" };
   const props = { nowMin: 570, tz: "America/New_York", zone: "Eastern", days: 30, hidden: 0, yours: "your store", mixed: false };
 
   it("never makes a report the next time", () => {
@@ -156,26 +154,22 @@ describe("restock timeline with reports", () => {
     expect(placeNow([{ min: 540 }, { min: 600 }], 570)).toEqual({ before: 1, next: 1, inMin: 30, tomorrow: false });
   });
 
-  it("lists reports as their own rows with a legend and the footnote; ours keep the next time", () => {
-    const out = html(createElement(RestockTimeline, { ...props, rows: [ours, reported], reported: meta }));
-    expect(out).toContain("Reported · Fifth Avenue");
-    expect(out).toContain("Next: 9:00 AM tomorrow"); // the 10:00 report ahead of now is not "next"
-    expect(out).toContain("Reported by other trackers (DuoReady), Oct 26 – Nov 1");
-    expect(out).toContain(`rel="nofollow noopener"`);
-    const plain = html(createElement(RestockTimeline, { ...props, rows: [ours] }));
-    expect(plain).not.toMatch(/Reported|nofollow|data-series/);
+  it("lists only our own restocks (owner, 11-10: reports left out of the timeline)", () => {
+    const out = html(createElement(RestockTimeline, { ...props, rows: [ours] }));
+    expect(out).toContain("Next: 9:00 AM tomorrow");
+    expect(out).not.toMatch(/Reported|nofollow|data-series/);
   });
 });
 
 describe("account: When your stores restock, with reports", () => {
   const watches = [{ active: true, model: "duo", storages: ["256GB"], colors: ["Night Sky"], storeNumbers: ["R095"] }];
-  it("adds dashed report marks, the legend and the footnote to the user's stores' chart and timeline", async () => {
+  it("adds dashed report marks, the legend and the footnote to the user's stores' chart, not to the timeline", async () => {
     const { RestockTimes } = await import("@/components/account/RestockTimes");
     fake.reports = nyc({ stores: ["R095"], parts: ["MK1E4LL/A", "MK1H4LL/A"] });
     const out = html((await RestockTimes({ watches }))!);
     expect(out).toContain("Reported by other trackers (Apple Pickup Live, DuoReady), Oct 26 – Nov 1");
     expect(out).toContain("Hollow dots: iPhone Duo restocks published by");
-    expect(out).toContain("Reported · Fifth Avenue");
+    expect(out).not.toContain("Reported · Fifth Avenue"); // the chart keeps the reports, the timeline does not
     // Ours only, as the count tile: the value, then its label.
     expect(out).toContain(">2</span>");
     expect(out).toContain("restocks at your store · last 30 days · too few for a pattern");

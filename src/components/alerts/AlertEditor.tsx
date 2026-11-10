@@ -47,13 +47,17 @@ function startSet(catalog: PhoneCatalog, s: AlertStart = {}): AlertSet {
   return { phones: ok ? [{ model: s.model!, storage: s.storage!, color: s.color! }] : [], stores: s.store && known ? [s.store] : [] };
 }
 
-export function AlertEditor({ catalog, account, start = {}, variant = "panel", signInOnly = false, next, known }: {
+export function AlertEditor({ catalog, account, start = {}, variant = "panel", signInOnly = false, next, known, home, onStay }: {
   catalog: PhoneCatalog;
   /** Chosen stores of any country (the dashboard: an account may watch stores in several countries). */
   known?: PickerStore[];
   /** The dashboard hands the account's set and plan in; elsewhere a signed-in visitor's set is fetched. */
   account?: { set: AlertSet; plan: PlanInfo };
   start?: AlertStart; variant?: "page" | "panel"; signInOnly?: boolean; next?: string;
+  /** The home page the sign-in belongs to ("/", "/ja-jp"); default: this page's path. */
+  home?: string;
+  /** In the lightbox: a sign-in that would go on to the alert setup stays here and carries on in place. */
+  onStay?: () => void;
 }) {
   const d = useT().alerts.editor;
   const tErr = useApiError();
@@ -111,8 +115,16 @@ export function AlertEditor({ catalog, account, start = {}, variant = "panel", s
     forgetMe();
     const me = await fetchMe();
     const paid = me ? Boolean(me.everPaid || (me.plan && me.plan.key !== "free")) : true; // unknown: the account page, as before
-    window.location.assign(afterSignInPath({ next, home: window.location.pathname, paid }));
-  }, [next]);
+    const to = afterSignInPath({ next, home: home ?? window.location.pathname, paid });
+    if (onStay && to.endsWith("#notify")) {
+      // The lightbox is the alert setup: no page to go to, the editor just carries on as a signed-in one.
+      leaving.current = false;
+      signingIn.current = false;
+      onStay();
+      return;
+    }
+    window.location.assign(to);
+  }, [next, home, onStay]);
   // The sign-in link for someone already signed in: straight on.
   useEffect(() => {
     if (!signInOnly || !isLoaded || !isSignedIn || signingIn.current) return;
