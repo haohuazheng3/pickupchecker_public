@@ -1,8 +1,10 @@
 "use client";
 /**
  * The plan, and changing it. No plan yet: pick one → Stripe Checkout (Stripe's page is the review). On a
- * plan: "Upgrade" or "Switch" opens a confirmation in place — what is charged today (or credited), the
- * monthly price from the next renewal, how many alerts it holds, the card — and only "Confirm" changes it.
+ * plan: "Upgrade" or "Switch" opens a confirmation in place — what an upgrade charges today (a downgrade charges
+ * nothing and starts at the next renewal, with nothing refunded or credited), the monthly price from then on, how
+ * many alerts it holds, the card — and only "Confirm" changes it. A waiting downgrade shows under the plan with
+ * "Keep {plan}", which undoes it.
  * "Cancel subscription" works the same way: it says until when the plan keeps working and what stops after,
  * and only the second button cancels (at the end of the paid period). Until then "Resume" takes it back.
  * Its link sits under the Plan header, so it shows with the section folded (CancelPlanLink), and every alert
@@ -20,8 +22,8 @@ import { day as dayIn, fill, num, plural, unit } from "@/lib/i18n/format";
 import type { Lang } from "@/lib/i18n/locales";
 import { openSection } from "./Section";
 
-export interface PlanView { key: PlanKey; limit: number; used: number; renewsAt: string | null; cancelAtPeriodEnd: boolean; status: string | null; hasCustomer: boolean }
-interface Preview { from: PaidPlanKey; to: PaidPlanKey; upgrade: boolean; nowCents: number; exact: boolean; monthlyCents: number; renewsAt: string | null; daysLeft: number; card: string | null; prorationDate: number }
+export interface PlanView { key: PlanKey; limit: number; used: number; renewsAt: string | null; cancelAtPeriodEnd: boolean; status: string | null; hasCustomer: boolean; nextPlan: PaidPlanKey | null }
+interface Preview { from: PaidPlanKey; to: PaidPlanKey; upgrade: boolean; atRenewal: boolean; nowCents: number; exact: boolean; monthlyCents: number; renewsAt: string | null; daysLeft: number; card: string | null; prorationDate: number }
 
 /** Plans are billed in US dollars in every language: "$4.17". */
 const money = (cents: number) => `$${(Math.abs(cents) / 100).toFixed(2)}`;
@@ -36,7 +38,8 @@ async function openUrl(path: string, unavailable: string, body?: unknown, tErr: 
 }
 
 /** Review-then-confirm for switching an existing subscription. */
-export function ChangeConfirm({ to, used, onDone, onCancel }: { to: PaidPlanKey; used: number; onDone: () => void; onCancel: () => void }) {
+/** `onDone(startsAt)`: null when the change took hold now, the renewal date when a downgrade waits for it. */
+export function ChangeConfirm({ to, used, onDone, onCancel }: { to: PaidPlanKey; used: number; onDone: (startsAt: string | null) => void; onCancel: () => void }) {
   const d = useT().alerts.plan;
   const tErr = useApiError();
   const lang = useLang();
@@ -64,12 +67,12 @@ export function ChangeConfirm({ to, used, onDone, onCancel }: { to: PaidPlanKey;
     setBusy(true); setError(null);
     try {
       const r = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: to, confirm: true, prorationDate: preview.prorationDate }) });
-      const j = (await r.json().catch(() => ({}))) as { changed?: boolean; pending?: boolean; url?: string | null; error?: string };
+      const j = (await r.json().catch(() => ({}))) as { changed?: boolean; pending?: boolean; url?: string | null; error?: string; startsAt?: string | null };
       if (j.pending) { setFinishUrl(j.url ?? null); throw new Error((j.error ? tErr(j.error) : undefined) ?? d.bankConfirm); }
       if (!r.ok || !j.changed) throw new Error((j.error ? tErr(j.error) : undefined) ?? d.notChanged);
-      track("plan_changed", { plan: to, from: preview.from });
+      track("plan_changed", { plan: to, from: preview.from, ...(j.startsAt ? { atRenewal: true } : {}) });
       forgetMe();
-      onDone();
+      onDone(j.startsAt ?? null);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); setBusy(false); }
   };
   const def = PLANS[to];
@@ -86,10 +89,10 @@ export function ChangeConfirm({ to, used, onDone, onCancel }: { to: PaidPlanKey;
           <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
             <dt className="text-ink-3">{d.today}</dt>
             <dd>
-              {preview.nowCents > 0
-                ? <><b>{est(preview.nowCents)}</b> <span className="text-ink-3">{plural(lang, Math.round(preview.daysLeft), d.daysLeft)}</span></>
-                : preview.nowCents < 0
-                  ? <>{d.noCharge}<b>{est(preview.nowCents, true)}</b> <span className="text-ink-3">{fill(d.credit, { plan: PLANS[preview.from].name })}</span></>
+              {preview.atRenewal
+                ? <><b>$0.00</b> <span className="text-ink-3">{fill(d.stays, { plan: PLANS[preview.from].name, date: day(preview.renewsAt, lang, d.nextRenewal) })}</span></>
+                : preview.nowCents > 0
+                  ? <><b>{est(preview.nowCents)}</b> <span className="text-ink-3">{plural(lang, Math.round(preview.daysLeft), d.daysLeft)}</span></>
                   : <><b>$0.00</b> <span className="text-ink-3">{preview.monthlyCents === 0 ? d.discount : ""}</span></>}
             </dd>
             <dt className="text-ink-3">{d.then}</dt>
@@ -98,10 +101,10 @@ export function ChangeConfirm({ to, used, onDone, onCancel }: { to: PaidPlanKey;
             <dd>{num(lang, def.limit)} <span className="text-ink-3">{fill(d.youHave, { n: num(lang, used) })}{off > 0 ? fill(d.newestOff, { n: num(lang, off) }) : ""}</span></dd>
             {preview.card && <><dt className="text-ink-3">{d.paidWith}</dt><dd>{preview.card}</dd></>}
           </dl>
-          {!preview.exact && <p className="mt-2 text-xs text-ink-3">{d.exactNote}</p>}
+          {preview.atRenewal ? <p className="mt-2 text-xs text-ink-3">{d.noRefund}</p> : !preview.exact && <p className="mt-2 text-xs text-ink-3">{d.exactNote}</p>}
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" className="btn btn-primary btn-sm" disabled={busy} aria-busy={busy} onClick={() => void confirm()}>
-              {busy && <span className="spinner" />}{preview.upgrade ? (preview.nowCents > 0 ? fill(d.confirmPay, { amount: est(preview.nowCents) }) : d.confirmUpgrade) : d.confirmSwitch}
+              {busy && <span className="spinner" />}{preview.atRenewal ? fill(d.confirmSwitchOn, { date: day(preview.renewsAt, lang, d.nextRenewal) }) : preview.upgrade ? (preview.nowCents > 0 ? fill(d.confirmPay, { amount: est(preview.nowCents) }) : d.confirmUpgrade) : d.confirmSwitch}
             </button>
             <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={onCancel}>{d.cancel}</button>
           </div>
@@ -218,6 +221,21 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(null); }
   };
+  // Undo a waiting downgrade: back to the plan paid for, nothing charged (POST /api/stripe/checkout with that plan).
+  const keep = async () => {
+    setBusy("keep"); setError(null); setDone(null);
+    try {
+      const r = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: plan.key, confirm: true }) });
+      const j = (await r.json().catch(() => ({}))) as { changed?: boolean; error?: string };
+      if (!r.ok || !j.changed) throw new Error((j.error ? tErr(j.error) : undefined) ?? d.notChanged);
+      track("plan_changed", { plan: plan.key, from: plan.nextPlan ?? plan.key, undo: true });
+      forgetMe();
+      setDone(fill(d.continues, { plan: def.name, date: when(plan.renewsAt), price: `$${def.priceUsd}` }));
+      router.refresh();
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { setBusy(null); }
+  };
+  const next = plan.nextPlan && plan.nextPlan !== plan.key ? PLANS[plan.nextPlan] : null;
   const portal = async () => {
     setBusy("portal"); setError(null);
     try { window.location.assign(await openUrl("/api/stripe/portal", d.unavailable, undefined, tErr)); }
@@ -234,6 +252,14 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
           </div>
           <p className="mt-1 text-sm text-ink-2">{fill(d.onOf, { on: N(Math.min(plan.used, plan.limit)), limit: N(plan.limit) })}{over ? fill(d.overOff, { n: N(plan.used - plan.limit) }) : ""}{plan.renewsAt ? fill(plan.cancelAtPeriodEnd ? d.ends : d.renews, { date: when(plan.renewsAt) }) : ""}</p>
           <div className="mt-3 h-2 w-full max-w-sm overflow-hidden rounded-full bg-ink/6"><div className={`h-full rounded-full ${over ? "bg-warn" : "bg-accent"}`} style={{ width: `${Math.min(100, Math.round((plan.used / Math.max(1, plan.limit)) * 100))}%` }} /></div>
+          {next && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-ink/5 px-3 py-2.5 text-sm">
+              <span><Rich text={fill(d.pending, { date: when(plan.renewsAt), plan: next.name, price: `$${next.priceUsd}`, limit: N(next.limit), current: def.name })} /></span>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={busy != null} aria-busy={busy === "keep"} onClick={() => void keep()}>
+                {busy === "keep" && <span className="spinner" />}{fill(d.keep, { plan: def.name })}
+              </button>
+            </div>
+          )}
           {plan.cancelAtPeriodEnd && (
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-warn/10 px-3 py-2.5 text-sm">
               <span><Rich text={fill(d.cancelled, { plan: def.name })} vars={{ date: <b>{when(plan.renewsAt)}</b> }} /></span>
@@ -269,6 +295,7 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
                   {k === recommend && !mine && <span className="ms-2 rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent">{fill(d.fitsYour, { n: N(plan.used) })}</span>}
                 </div>
                 {mine ? <span className="text-sm font-semibold text-accent">{d.yourPlan}</span>
+                  : k === next?.key ? <span className="text-sm text-ink-2">{fill(d.fromBadge, { date: when(plan.renewsAt) })}</span>
                   : paid ? (
                     <button type="button" className={`btn btn-sm ${up ? "btn-primary" : "btn-ghost"}`} disabled={busy != null} aria-expanded={open === k} onClick={() => { setOpen(open === k ? null : k); setDone(null); setCancelling(false); }}>
                       {up ? d.upgrade : d.switch}
@@ -279,7 +306,8 @@ export function PlanPanel({ plan, recommend }: { plan: PlanView; recommend?: Pai
                     </button>
                   )}
               </div>
-              {paid && open === k && <ChangeConfirm key={k} to={k} used={plan.used} onCancel={() => setOpen(null)} onDone={() => { setOpen(null); setDone(fill(d.nowOn, { plan: p.name, limit: N(p.limit) })); router.refresh(); }} />}
+              {paid && open === k && <ChangeConfirm key={k} to={k} used={plan.used} onCancel={() => setOpen(null)}
+                onDone={(startsAt) => { setOpen(null); setDone(startsAt ? fill(d.scheduled, { plan: def.name, date: when(startsAt), next: p.name, limit: N(p.limit) }) : fill(d.nowOn, { plan: p.name, limit: N(p.limit) })); router.refresh(); }} />}
             </li>
           );
         })}

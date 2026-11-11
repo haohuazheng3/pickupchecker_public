@@ -44,12 +44,14 @@ export const subscriptions = pgTable(
     id: text("id").primaryKey(), // Stripe subscription id
     userId: text("user_id").notNull().references(() => users.id),
     model: text("model").notNull().default("all"), // legacy per-model plans; "all" since the alert-count plans
-    plan: text("plan").notNull().default("plus"), // plus ($5, 10 alerts) | pro ($10, 20 alerts)
+    plan: text("plan").notNull().default("plus"), // the plan in force (paid for this period): plus | pro | max
     alertLimit: integer("alert_limit").notNull().default(10),
     status: text("status").notNull(), // active | trialing | past_due | canceled | incomplete | unpaid
     priceId: text("price_id"),
     currentPeriodEnd: ts("current_period_end"),
     cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+    /** A downgrade waiting for the next renewal: the plan it renews on (lower than `plan`, which is paid for this period). */
+    nextPlan: text("next_plan"),
     createdAt: ts("created_at").notNull().defaultNow(),
     updatedAt: ts("updated_at").notNull().defaultNow(),
   },

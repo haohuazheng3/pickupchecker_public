@@ -20,9 +20,10 @@ const Body = z.object({ plan: z.enum(["plus", "pro", "max"]), watchId: z.string(
 /**
  * Pick a paid plan. No subscription yet → Stripe Checkout (card or Link; Stripe's page is the review).
  * Already on a paid plan → switch only with `confirm: true`, after the user saw the preview
- * (POST /api/billing/preview); a request without it gets { needsConfirm } and changes nothing. The
+ * (POST /api/billing/preview); a request without it gets { needsConfirm } and changes nothing. An upgrade's
  * difference is charged now; if the bank wants to confirm it, the old plan stays and the user is sent to
- * Stripe's billing page to finish. Same plan → nothing to do.
+ * Stripe's billing page to finish. A downgrade starts at the next renewal ({ startsAt }), with nothing refunded
+ * or credited; picking the paid plan again while it waits undoes it. Same plan, nothing waiting → nothing to do.
  */
 export async function POST(req: Request) {
   const u = await ensureUser();
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
   try {
     const current = await userPlan(u.id);
     if (current.sub && isPaidPlan(current.plan.key)) {
-      if (comparePlans(plan, current.plan.key) === 0) return NextResponse.json({ alreadySubscribed: true, url: "/account" });
+      if (comparePlans(plan, current.plan.key) === 0 && !current.sub.nextPlan) return NextResponse.json({ alreadySubscribed: true, url: "/account" });
       if (!parsed.data.confirm) return NextResponse.json({ needsConfirm: true, url: "/account#plan" });
       const r = await changePlan(current.sub.id, plan, parsed.data.prorationDate);
       if (r.pending) {
@@ -46,8 +47,8 @@ export async function POST(req: Request) {
         const url = row?.stripeCustomerId ? await portalUrl(row.stripeCustomerId).catch(() => null) : null;
         return NextResponse.json({ pending: true, url, error: "Your bank needs to confirm the payment. Your plan stays as it is until it goes through." }, { status: 402 });
       }
-      await logOps("web", "info", `plan changed ${current.plan.key} → ${plan}`, { userId: u.id });
-      return NextResponse.json({ changed: true, plan });
+      await logOps("web", "info", r.startsAt ? `plan change ${current.plan.key} → ${plan} at renewal` : comparePlans(plan, current.plan.key) === 0 ? `plan change undone: stays ${plan}` : `plan changed ${current.plan.key} → ${plan}`, { userId: u.id, ...(r.startsAt ? { startsAt: r.startsAt } : {}) });
+      return NextResponse.json({ changed: true, plan, startsAt: r.startsAt ?? null });
     }
     // Stripe's page in the language the person is using now (cookie), else their account's.
     const lang = nativeLocale((await cookies()).get(LANG_COOKIE)?.value)?.lang ?? langOfUser((await userById(u.id))?.locale);

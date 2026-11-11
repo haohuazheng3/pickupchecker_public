@@ -5,6 +5,9 @@
  *   plus — $5/month, 10 alerts      pro — $10/month, 20 alerts      max — $20/month, 50 alerts
  * Paid plans are Stripe subscriptions that renew monthly until cancelled (no one-off month).
  * A user can save more rules than the plan allows; only the oldest `limit` active ones send alerts.
+ * Changing plans (lib/billing.ts changePlan): an upgrade is charged for the days left and starts at once; a
+ * downgrade starts at the next renewal — nothing is refunded or credited, the plan paid for stays until then
+ * (owner, 2026-11-11: no Stripe credit balance, and no "upgrade, use, downgrade, cancel" refund path).
  */
 import { env } from "./env";
 
@@ -75,15 +78,33 @@ export function planFromPrice(price: { id?: string | null; metadata?: Record<str
   return cents >= 2000 ? "max" : cents >= 1000 ? "pro" : "plus";
 }
 
-export interface SubLike { plan: string; status: string; alertLimit: number; id?: string; currentPeriodEnd?: Date | null; cancelAtPeriodEnd?: boolean }
+export interface SubLike { plan: string; status: string; alertLimit: number; id?: string; currentPeriodEnd?: Date | string | null; cancelAtPeriodEnd?: boolean; nextPlan?: string | null }
 
-/** The plan in force: the active subscription with the highest limit, else free. */
-export function effectivePlan<T extends SubLike>(subs: T[]): { plan: PlanDef; sub: T | null } {
-  const active = subs.filter((s) => ACTIVE_STATUSES.includes(s.status));
+/**
+ * A subscription's plan for this period and the one it renews on. A downgrade moves the Stripe price to the lower
+ * plan without proration (nothing refunded or credited) and records on the subscription the plan already paid for
+ * (metadata paid_plan) and the end of that period (paid_until, unix seconds): until then the paid plan stays in
+ * force. Once the period rolls over, paid_until no longer matches and the price's plan is the plan.
+ */
+export function planInForce(pricePlan: PaidPlanKey, meta: Record<string, string> | null | undefined, periodEnd: number | null | undefined): { plan: PaidPlanKey; nextPlan: PaidPlanKey | null } {
+  const paid = meta?.paid_plan;
+  if (isPaidPlan(paid) && periodEnd && Number(meta?.paid_until) === periodEnd && comparePlans(paid, pricePlan) > 0) return { plan: paid, nextPlan: pricePlan };
+  return { plan: pricePlan, nextPlan: null };
+}
+
+/**
+ * The plan in force: the active subscription with the highest limit, else free. A waiting downgrade (`nextPlan`)
+ * applies once its period has ended even if the renewal's webhook has not been synced yet.
+ */
+export function effectivePlan<T extends SubLike>(subs: T[], now: number = Date.now()): { plan: PlanDef; sub: T | null } {
+  const active = subs.filter((s) => ACTIVE_STATUSES.includes(s.status)).map((s) => {
+    const ended = isPaidPlan(s.nextPlan) && s.currentPeriodEnd != null && new Date(s.currentPeriodEnd).getTime() <= now;
+    return ended ? { s, plan: s.nextPlan as string, limit: PLANS[s.nextPlan as PaidPlanKey].limit } : { s, plan: s.plan, limit: s.alertLimit };
+  });
   if (active.length === 0) return { plan: PLANS.free, sub: null };
-  const best = active.reduce((a, b) => (b.alertLimit > a.alertLimit ? b : a));
-  const def = isPaidPlan(best.plan) ? PLANS[best.plan] : { ...PLANS.plus, limit: best.alertLimit };
-  return { plan: { ...def, limit: Math.max(def.limit, best.alertLimit) }, sub: best };
+  const best = active.reduce((a, b) => (b.limit > a.limit ? b : a));
+  const def = isPaidPlan(best.plan) ? PLANS[best.plan] : { ...PLANS.plus, limit: best.limit };
+  return { plan: { ...def, limit: Math.max(def.limit, best.limit) }, sub: best.s };
 }
 
 /** Which active rules send alerts: the oldest `limit` ones (ties by id, so the order is stable). */

@@ -219,7 +219,7 @@ export async function loadFastTargets(): Promise<Map<string, string[]>> {
     .where(eq(schema.watches.active, true));
   const userIds = [...new Set(rules.map((r) => r.userId))];
   const subs = userIds.length
-    ? await d.select({ userId: schema.subscriptions.userId, plan: schema.subscriptions.plan, status: schema.subscriptions.status, alertLimit: schema.subscriptions.alertLimit }).from(schema.subscriptions).where(and(inArray(schema.subscriptions.userId, userIds), inArray(schema.subscriptions.status, ACTIVE_STATUSES)))
+    ? await d.select({ userId: schema.subscriptions.userId, plan: schema.subscriptions.plan, status: schema.subscriptions.status, alertLimit: schema.subscriptions.alertLimit, currentPeriodEnd: schema.subscriptions.currentPeriodEnd, nextPlan: schema.subscriptions.nextPlan }).from(schema.subscriptions).where(and(inArray(schema.subscriptions.userId, userIds), inArray(schema.subscriptions.status, ACTIVE_STATUSES)))
     : [];
   return withSharedTargets(targetsFromRules(rules, subs));
 }

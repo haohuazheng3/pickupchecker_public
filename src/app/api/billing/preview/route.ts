@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 const Body = z.object({ plan: z.enum(["plus", "pro", "max"]) });
 
-/** What switching the current subscription to `plan` costs today and from the next renewal. Changes nothing. */
+/** What switching the current subscription to `plan` costs today (an upgrade) or when it starts (a downgrade, at the next renewal). Changes nothing. */
 export async function POST(req: Request) {
   const u = await ensureUser();
   if (!u) return NextResponse.json({ error: "sign in first" }, { status: 401 });
@@ -18,7 +18,8 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: "bad request" }, { status: 400 });
   const current = await userPlan(u.id);
   if (!current.sub || !isPaidPlan(current.plan.key)) return NextResponse.json({ error: "no plan to change — choose one first" }, { status: 400 });
-  if (comparePlans(parsed.data.plan, current.plan.key) === 0) return NextResponse.json({ error: "that is your plan already" }, { status: 400 });
+  // The plan paid for is still a choice while a downgrade waits: it undoes the downgrade.
+  if (comparePlans(parsed.data.plan, current.plan.key) === 0 && !current.sub.nextPlan) return NextResponse.json({ error: "that is your plan already" }, { status: 400 });
   try {
     return NextResponse.json(await previewPlanChange(current.sub.id, parsed.data.plan), { headers: { "cache-control": "private, no-store" } });
   } catch (e) {

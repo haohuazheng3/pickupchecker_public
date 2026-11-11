@@ -3,7 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { ensureUser } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { activeSubscriptionsFor } from "@/lib/billing";
-import { effectivePlan, PAID_PLANS, PLANS } from "@/lib/plans";
+import { effectivePlan, isPaidPlan, PAID_PLANS, PLANS } from "@/lib/plans";
 import { STORE_INDEX, PART_INDEX } from "@/lib/apple/catalog";
 import { alertSetOf } from "@/lib/alertSet";
 import { Identify } from "@/components/account/Identify";
@@ -89,7 +89,7 @@ export default async function Account() {
         foot={plan.key !== "free" && !sub?.cancelAtPeriodEnd ? <CancelPlanLink /> : undefined}
         summary={plan.key === "free" ? d.plan.none : `${d.plan.summary(PLANS[plan.key].name, Math.min(active, plan.limit), plan.limit)}${renews ? (sub?.cancelAtPeriodEnd ? d.plan.ends(renews) : d.plan.renews(renews)) : ""}`}>
         <PlanPanel recommend={plan.key === "free" ? fit : active > plan.limit ? PAID_PLANS.find((k) => PLANS[k].limit >= active) ?? "max" : null}
-          plan={{ key: plan.key, limit: plan.limit, used: active, renewsAt: sub?.currentPeriodEnd?.toISOString() ?? null, cancelAtPeriodEnd: Boolean(sub?.cancelAtPeriodEnd), status: sub?.status ?? null, hasCustomer: Boolean(row[0]?.stripeCustomerId) }} />
+          plan={{ key: plan.key, limit: plan.limit, used: active, renewsAt: sub?.currentPeriodEnd?.toISOString() ?? null, cancelAtPeriodEnd: Boolean(sub?.cancelAtPeriodEnd), status: sub?.status ?? null, hasCustomer: Boolean(row[0]?.stripeCustomerId), nextPlan: isPaidPlan(sub?.nextPlan) && sub?.nextPlan !== plan.key ? sub.nextPlan : null }} />
       </Section>
 
       {/* What to do before the next alert, so the push leaves four taps; the guide and the window below. */}

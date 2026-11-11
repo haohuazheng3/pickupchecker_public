@@ -224,10 +224,15 @@ export const alerts = {
     about: "about {amount}",
     aboutCap: "About {amount}",
     daysLeft: { other: "for the # days left of this period" } as Forms,
-    /** Before the credit in bold. */
-    noCharge: "No charge. ",
-    credit: "of unused {plan} time becomes credit for your next bills",
     discount: "· your discount covers it",
+    /** A downgrade: what stays until the renewal it starts at ({plan}: the plan paid for). */
+    stays: "{plan} stays until {date}",
+    noRefund: "Nothing is refunded or credited for the rest of this period.",
+    confirmSwitchOn: "Switch on {date}",
+    pending: "On **{date}** you switch to {plan}: {price}/month, {limit} alerts. Until then {current} stays as it is.",
+    keep: "Keep {plan}",
+    fromBadge: "From {date}",
+    scheduled: "{plan} stays until {date}, then {next} with {limit} alerts.",
     then: "Then",
     perMonth: "{price}/month",
     from: "from {date}",
@@ -279,7 +284,7 @@ export const alerts = {
     nowOn: "You're on {plan} now: {limit} alerts.",
     cancelledUntil: "Cancelled. {plan} keeps working until {date}, and you won't be charged again.",
     billing: "Billing and invoices",
-    paidNote: "Upgrades are charged for the days left; switching down turns the rest into credit.",
+    paidNote: "Upgrades are charged for the days left; switching down starts at the next renewal.",
     checkoutNote: "Stripe checkout, card or Link.",
   },
 
