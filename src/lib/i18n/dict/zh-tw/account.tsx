@@ -149,7 +149,7 @@ export const account: Dict["account"] = {
     storesN: (k) => `${n(k)} 家門市`,
     noPlan: "沒有合適方案",
     tableNote: "一則通知 = 一家門市 × 一款確切規格（機型、容量、顏色）。任何方案都能自由組合，以上限為準。",
-    billing: "Stripe 計費 · 信用卡或 Link · 變更方案按比例計算",
+    billing: "Stripe 計費 · 信用卡或 Link · 升級按比例計算，降級從下次續訂起",
     refund: "不適合你？如果還沒收到任何補貨通知，[7 天內全額退款](/refunds)",
   },
 };

@@ -150,7 +150,7 @@ export const account: Dict["account"] = {
     storesN: (k) => pl(k, "negozio", "negozi"),
     noPlan: "Nessun piano",
     tableNote: "Un avviso = un negozio × una configurazione esatta (modello, memoria, colore). Ogni piano copre qualsiasi combinazione, fino al suo numero.",
-    billing: "Pagamenti con Stripe · carta o Link · cambi di piano calcolati pro rata",
+    billing: "Pagamenti con Stripe · carta o Link · piano superiore pro rata, inferiore dal prossimo rinnovo",
     refund: "Non fa per te? [Rimborso completo entro 7 giorni](/refunds) se non ti è ancora arrivato nessun avviso di rifornimento",
   },
 };

@@ -183,7 +183,7 @@ export const account = {
     storesN: (n: number) => s(n, "store"),
     noPlan: "No plan holds it",
     tableNote: "One alert = one store × one exact configuration (model, storage, colour). Any plan watches any mix, up to its number.",
-    billing: "Stripe billing · card or Link · plan changes prorated",
+    billing: "Stripe billing · card or Link · upgrades prorated, downgrades from the next renewal",
     /** The refund policy line, as published (no other refund wording anywhere). */
     refund: "Not for you? [Full refund within 7 days](/refunds) if no restock alert has reached you yet",
   },

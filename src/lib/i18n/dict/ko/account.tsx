@@ -152,7 +152,7 @@ export const account: Dict["account"] = {
     storesN: (k) => `매장 ${n(k)}곳`,
     noPlan: "맞는 요금제 없음",
     tableNote: "알림 하나 = 매장 하나 × 정확한 구성 하나(모델, 용량, 색상). 어떤 요금제든 한도 안에서 자유롭게 조합할 수 있어요.",
-    billing: "Stripe 결제 · 카드 또는 Link · 요금제 변경은 일할 계산",
+    billing: "Stripe 결제 · 카드 또는 Link · 업그레이드는 일할 계산, 다운그레이드는 다음 갱신부터",
     refund: "맞지 않으신가요? 아직 재입고 알림을 한 번도 받지 않았다면 [7일 이내 전액 환불](/refunds)해 드려요",
   },
 };

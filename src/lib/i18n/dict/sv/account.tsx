@@ -150,7 +150,7 @@ export const account: Dict["account"] = {
     storesN: (k) => pl(k, "butik", "butiker"),
     noPlan: "Ingen plan räcker",
     tableNote: "En bevakning = en butik × en exakt konfiguration (modell, lagring, färg). Alla planer täcker vilken mix som helst, upp till sitt antal.",
-    billing: "Fakturering via Stripe · kort eller Link · planbyten räknas om proportionellt",
+    billing: "Fakturering via Stripe · kort eller Link · uppgraderingar proportionellt, nedgraderingar från nästa förnyelse",
     refund: "Inte något för dig? [Full återbetalning inom 7 dagar](/refunds) om ingen notis om påfyllning har nått dig än",
   },
 };

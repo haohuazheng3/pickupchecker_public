@@ -151,7 +151,7 @@ export const account: Dict["account"] = {
     storesN: (k) => s(k, "tienda", "tiendas"),
     noPlan: "Ningún plan",
     tableNote: "Una alerta = una tienda × una configuración exacta (modelo, capacidad, color). Cualquier plan cubre cualquier combinación, hasta su número.",
-    billing: "Facturación con Stripe · tarjeta o Link · los cambios de plan se prorratean",
+    billing: "Facturación con Stripe · tarjeta o Link · las mejoras se prorratean; bajar de plan, desde la próxima renovación",
     refund: "¿No te convence? [Reembolso completo en los primeros 7 días](/refunds) si aún no te ha llegado ninguna alerta de reposición",
   },
 };

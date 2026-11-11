@@ -152,7 +152,7 @@ export const account: Dict["account"] = {
     storesN: (k) => s(k, "magasin"),
     noPlan: "Aucune formule",
     tableNote: "Une alerte = un magasin × une configuration exacte (modèle, stockage, couleur). Chaque formule couvre n’importe quel mélange, jusqu’à son nombre.",
-    billing: "Facturation Stripe · carte ou Link · changements de formule au prorata",
+    billing: "Facturation Stripe · carte ou Link · passage supérieur au prorata, inférieur au prochain renouvellement",
     refund: "Pas pour vous ? [Remboursement intégral sous 7 jours](/refunds) si aucune alerte de retour en stock ne vous est encore parvenue",
   },
 };

@@ -155,7 +155,7 @@ export const account: Dict["account"] = {
     storesN: (k) => `${N(k)}店舗`,
     noPlan: "対応プランなし",
     tableNote: "通知1件＝1店舗 × 1つの構成（モデル・容量・カラー）。どのプランでも、上限数まで自由に組み合わせられます。",
-    billing: "Stripeで決済 · カードまたはLink · プラン変更は日割り計算",
+    billing: "Stripeで決済 · カードまたはLink · アップグレードは日割り、ダウングレードは次回更新から",
     refund: "合わなかったら：入荷通知がまだ一度も届いていなければ、[7日以内は全額返金](/refunds)します",
   },
 };

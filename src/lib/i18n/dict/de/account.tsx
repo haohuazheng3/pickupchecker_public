@@ -151,7 +151,7 @@ export const account: Dict["account"] = {
     storesN: (k) => plural(k, "Store", "Stores"),
     noPlan: "Passt in keinen Tarif",
     tableNote: "Ein Alarm = ein Store × eine exakte Konfiguration (Modell, Speicher, Farbe). Jeder Tarif deckt jede Mischung ab, bis zu seiner Anzahl.",
-    billing: "Abrechnung über Stripe · Karte oder Link · Tarifwechsel anteilig",
+    billing: "Abrechnung über Stripe · Karte oder Link · Upgrades anteilig, Downgrades ab der nächsten Verlängerung",
     refund: "Doch nichts für Sie? [Volle Rückerstattung innerhalb von 7 Tagen](/refunds), solange Sie noch keinen Restock-Alarm erhalten haben",
   },
 };

@@ -154,7 +154,7 @@ export const account: Dict["account"] = {
     storesN: (k) => cnt(k, "winkel", "winkels"),
     noPlan: "Past in geen abonnement",
     tableNote: "Eén alert = één winkel × één exacte configuratie (model, opslag, kleur). Elk abonnement dekt elke mix, tot zijn aantal.",
-    billing: "Betaling via Stripe · kaart of Link · wijzigingen naar rato verrekend",
+    billing: "Betaling via Stripe · kaart of Link · upgrades naar rato, downgrades vanaf de volgende verlenging",
     refund: "Toch niets voor jou? [Volledige terugbetaling binnen 7 dagen](/refunds) als er nog geen voorraadalert bij je is aangekomen",
   },
 };

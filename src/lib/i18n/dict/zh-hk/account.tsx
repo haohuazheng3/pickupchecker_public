@@ -150,7 +150,7 @@ export const account: Dict["account"] = {
     storesN: (k) => `${n(k)} 間分店`,
     noPlan: "沒有合適方案",
     tableNote: "一個提醒 = 一間分店 × 一款指定配置（型號、容量、顏色）。任何方案都可以自由組合，以其上限為準。",
-    billing: "Stripe 收費 · 信用卡或 Link · 轉換方案按比例計算",
+    billing: "Stripe 收費 · 信用卡或 Link · 升級按比例計算，降級由下次續期起",
     refund: "不合用？如你仍未收到任何補貨提醒，[7 日內可全額退款](/refunds)",
   },
 };
