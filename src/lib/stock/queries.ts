@@ -433,6 +433,30 @@ function dayKeysBack(days: number, tz: string): string[] {
   return out;
 }
 
+/**
+ * The 30-day median listing time: a lead() window over every event in scope, the heaviest of the place-stats
+ * queries (on 2026-11-12 ~70 runs an hour at up to several seconds each on linode-1, the one core the three sites
+ * share). A month-long median barely moves in 15 minutes, so it is cached that long while the counts and the last
+ * restock above stay at 60 s.
+ */
+const cachedPlaceMedian = unstable_cache(
+  async (storeNumbers: string[] | null, parts: string[] | null, days: number, cc: CountryCode): Promise<{ med: number | null; n: number } | null> => {
+    const ev = schema.availabilityEvents;
+    const where = and(eq(ev.firstSeen, false), sql`${ev.at} > now() - interval '1 day' * ${days}`, ...scopeConds(countryScope(cc, storeNumbers, parts), EV));
+    return must("place stats median", async () => {
+      const inner = db()
+        .select({ dur: sql<number>`extract(epoch from (lead(${ev.at}) over (partition by ${ev.storeNumber}, ${ev.partNumber} order by ${ev.at}) - ${ev.at}))`.as("dur"), kind: ev.kind, nextKind: sql<string>`lead(${ev.kind}) over (partition by ${ev.storeNumber}, ${ev.partNumber} order by ${ev.at})`.as("next_kind") })
+        .from(ev)
+        .where(where)
+        .as("t");
+      const [r] = await db().select({ med: sql<number | null>`percentile_cont(0.5) within group (order by ${inner.dur})`, n: sql<number>`count(*)::int` }).from(inner).where(and(eq(inner.kind, "restock"), eq(inner.nextKind, "soldout")));
+      return r ?? null;
+    });
+  },
+  ["seo-place-median-v1"],
+  { revalidate: 900 },
+);
+
 const cachedPlaceStats = unstable_cache(
   async (storeNumbers: string[] | null, parts: string[] | null, tz: string, days: number, cc: CountryCode): Promise<PlaceStats> => {
     const base = EMPTY_STATS(days, tz);
@@ -456,15 +480,8 @@ const cachedPlaceStats = unstable_cache(
           .where(where);
         return r ?? null;
       }),
-      must("place stats median", async () => {
-        const inner = db()
-          .select({ dur: sql<number>`extract(epoch from (lead(${ev.at}) over (partition by ${ev.storeNumber}, ${ev.partNumber} order by ${ev.at}) - ${ev.at}))`.as("dur"), kind: ev.kind, nextKind: sql<string>`lead(${ev.kind}) over (partition by ${ev.storeNumber}, ${ev.partNumber} order by ${ev.at})`.as("next_kind") })
-          .from(ev)
-          .where(where)
-          .as("t");
-        const [r] = await db().select({ med: sql<number | null>`percentile_cont(0.5) within group (order by ${inner.dur})`, n: sql<number>`count(*)::int` }).from(inner).where(and(eq(inner.kind, "restock"), eq(inner.nextKind, "soldout")));
-        return r ?? null;
-      }),
+      // The 30-day median comes from its own longer cache (see cachedPlaceMedian).
+      cachedPlaceMedian(storeNumbers, parts, days, cc),
       must("place stats series", () =>
         db()
           .select({ day: sql<string | null>`to_char(${ev.at} at time zone ${tz}, 'YYYY-MM-DD')`, partNumber: sql<string | null>`${ev.partNumber}`, kind: ev.kind, n: sql<number>`count(*)::int` })
