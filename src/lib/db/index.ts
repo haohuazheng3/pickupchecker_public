@@ -100,6 +100,50 @@ export function chooseTarget(probes: DbProbe[]): { index: number; writable: bool
   return readable >= 0 ? { index: readable, writable: false } : null;
 }
 
+/**
+ * Pure: where writes go after a probe round. Normally the database that serves reads. When no writable database
+ * answered in time, reads move to the replica, but writes stay on the last database that was the primary: a write
+ * can only succeed there. On 2026-11-12 the overloaded primary missed the 2 s probe in waves for hours (about 400
+ * switches to the replica between 17:30 and 23:15 UTC), and every write an instance made during a wave went to the
+ * replica and failed with 25006 (ten members' account pages). The previous writer is dropped only when it answers
+ * and is no longer the primary (a replica, or fenced: owner ≠ its own host).
+ */
+export function nextWriter(probes: DbProbe[], choice: { index: number; writable: boolean } | null, writer: number | null): number | null {
+  if (choice?.writable) return choice.index;
+  if (writer == null) return null;
+  const p = probes[writer];
+  if (p?.ok && (p.recovery !== false || Boolean(p.owner && p.host && p.owner !== p.host))) return null;
+  return writer;
+}
+
+/**
+ * Pure: whether a statement needs the writable database. Only a plain read counts as a read; anything else
+ * (insert/update/delete, DDL, SET, a writing CTE, a locking or sequence-advancing select, an unknown shape) is a
+ * write. A read misjudged as a write merely runs on the primary; a write misjudged as a read fails on the replica
+ * with 25006 and is retried on the writer (FailoverPool.query).
+ */
+export function isWriteSql(text: string): boolean {
+  const s = text.replace(/^(?:\s|--[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/|\()*/, "").toLowerCase();
+  if (/^(?:select|values|table|show|explain)\b/.test(s)) {
+    return /\bfor\s+(?:no\s+key\s+update|update|key\s+share|share)\b|\b(?:nextval|setval|pg_advisory_(?:xact_)?lock|pg_notify)\s*\(/.test(s);
+  }
+  if (/^with\b/.test(s)) return /\b(?:insert\s+into|delete\s+from|merge\s+into)\b|\bupdate\s+[\w."]+(?:\s+(?:as\s+)?\w+)?\s+set\b/.test(s);
+  return true;
+}
+
+/** The statement text of a pg query call (a string, or drizzle's { text, ... } config). */
+function queryText(first: unknown): string {
+  if (typeof first === "string") return first;
+  const text = (first as { text?: unknown } | null)?.text;
+  return typeof text === "string" ? text : "";
+}
+
+/** A write that reached a database refusing writes (a replica, or a fenced old primary). */
+export function isReadOnlyError(e: unknown): boolean {
+  const err = e as { code?: string; message?: string };
+  return err?.code === "25006" || /read-only transaction/i.test(err?.message ?? "");
+}
+
 /** Errors after which the choice is re-made and the query tried once more. */
 export function isFailoverError(e: unknown): boolean {
   const err = e as { code?: string; message?: string };
@@ -137,14 +181,20 @@ const PROBE_SQL = `select pg_is_in_recovery() as recovery, current_setting('pick
 /** How long a choice stands before it is checked again in the background. */
 const PROBE_TTL_MS = 15_000;
 const PROBE_TIMEOUT_MS = 2_000;
+/**
+ * A write while reads sit on the replica and no primary is known yet (a fresh instance that came up during a slow
+ * spell) waits this long for one to answer, instead of being sent to the replica to fail.
+ */
+const WRITER_PROBE_TIMEOUT_MS = 10_000;
 
-async function probe(name: DbTargetName, pool: Pool): Promise<DbProbe> {
+async function probe(name: DbTargetName, pool: Pool, timeoutMs = PROBE_TIMEOUT_MS): Promise<DbProbe> {
   const t0 = Date.now();
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const r = await Promise.race([
       pool.query(PROBE_SQL),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`no answer in ${PROBE_TIMEOUT_MS} ms`)), PROBE_TIMEOUT_MS)),
-    ]);
+      new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(`no answer in ${timeoutMs} ms`)), timeoutMs); }),
+    ]).finally(() => clearTimeout(timer));
     const row = r.rows[0] as { recovery: boolean; host: string | null; cluster: { primary?: string; epoch?: number } | null };
     return { name, ok: true, ms: Date.now() - t0, recovery: row.recovery, host: row.host || null, owner: row.cluster?.primary ?? null, epoch: Number(row.cluster?.epoch ?? 0) };
   } catch (e) {
@@ -156,45 +206,87 @@ async function probe(name: DbTargetName, pool: Pool): Promise<DbProbe> {
  * Looks like a pg Pool to drizzle (its transactions check the constructor name and call connect()), and sends
  * each query to the database chooseTarget picked. A choice stands for PROBE_TTL_MS, then is re-checked in the
  * background; a connection-level error re-checks at once and retries the query once.
+ *
+ * Reads and writes part ways only while no writable database answers the probe: reads go to the replica (pages
+ * keep rendering and the struggling primary sheds load), writes stay on the last primary (nextWriter), or wait up
+ * to WRITER_PROBE_TIMEOUT_MS for one when none is known yet. Transactions (connect) count as writes.
  */
 export class FailoverPool {
   private probes: DbProbe[] = [];
   private choice: { index: number; writable: boolean } | null = null;
+  private writer: number | null = null;
   private checkedAt = 0;
   private pending: Promise<void> | null = null;
-  constructor(readonly targets: { name: DbTargetName; pool: Pool }[]) {}
+  private writerPending: Promise<void> | null = null;
+  constructor(
+    readonly targets: { name: DbTargetName; pool: Pool }[],
+    private readonly timing: { probeMs?: number; writerProbeMs?: number } = {},
+  ) {}
 
   private refresh(): Promise<void> {
-    this.pending ??= Promise.all(this.targets.map((t) => probe(t.name, t.pool))).then((probes) => {
+    this.pending ??= Promise.all(this.targets.map((t) => probe(t.name, t.pool, this.timing.probeMs))).then((probes) => {
       const before = this.choice?.index;
       this.probes = probes;
       this.choice = chooseTarget(probes);
+      this.writer = nextWriter(probes, this.choice, this.writer);
       this.checkedAt = Date.now();
-      if (before != null && this.choice && before !== this.choice.index) console.warn(`[db] now using the ${this.targets[this.choice.index].name} database (${this.choice.writable ? "writable" : "read-only"})`);
+      if (before != null && this.choice && before !== this.choice.index) {
+        const writes = !this.choice.writable && this.writer != null ? `; writes stay on the ${this.targets[this.writer].name}` : "";
+        console.warn(`[db] now using the ${this.targets[this.choice.index].name} database (${this.choice.writable ? "writable" : "read-only"})${writes}`);
+      }
     }).finally(() => { this.pending = null; });
     return this.pending;
   }
 
-  private async pool(): Promise<Pool> {
+  /** No primary known while reads sit on a replica: probe again with the long timeout (only writes wait for this). */
+  private findWriter(): Promise<void> {
+    this.writerPending ??= Promise.all(this.targets.map((t) => probe(t.name, t.pool, this.timing.writerProbeMs ?? WRITER_PROBE_TIMEOUT_MS))).then((probes) => {
+      const found = chooseTarget(probes);
+      if (found?.writable) this.writer = found.index;
+    }).finally(() => { this.writerPending = null; });
+    return this.writerPending;
+  }
+
+  private async ensureChoice(): Promise<void> {
     if (!this.choice) await this.refresh();
     else if (Date.now() - this.checkedAt > PROBE_TTL_MS) void this.refresh();
-    if (!this.choice) throw new Error(`no database answers: ${this.probes.map((p) => `${p.name} ${p.error ?? "?"}`).join("; ")}`);
+  }
+
+  private noneAnswers(): Error {
+    return new Error(`no database answers: ${this.probes.map((p) => `${p.name} ${p.error ?? "?"}`).join("; ")}`);
+  }
+
+  private async pool(): Promise<Pool> {
+    await this.ensureChoice();
+    if (!this.choice) throw this.noneAnswers();
+    return this.targets[this.choice.index].pool;
+  }
+
+  private async writerPool(): Promise<Pool> {
+    await this.ensureChoice();
+    if (this.choice?.writable) return this.targets[this.choice.index].pool;
+    if (this.writer == null) await this.findWriter();
+    if (this.writer != null) return this.targets[this.writer].pool;
+    // Nothing writable answered even with the long wait: as before, the replica answers (and refuses a write).
+    if (!this.choice) throw this.noneAnswers();
     return this.targets[this.choice.index].pool;
   }
 
   async query(...args: unknown[]): Promise<unknown> {
-    const run = () => waitOutBusy(async () => (await this.pool()).query(...(args as Parameters<Pool["query"]>)));
+    const write = isWriteSql(queryText(args[0]));
+    const run = (toWriter: boolean) => waitOutBusy(async () => (await (toWriter ? this.writerPool() : this.pool())).query(...(args as Parameters<Pool["query"]>)));
     try {
-      return await run();
+      return await run(write);
     } catch (e) {
       if (!isFailoverError(e)) throw e;
       await this.refresh();
-      return run();
+      // A statement taken for a read that writes (a writing function in a select) fails on the replica: writer now.
+      return run(write || isReadOnlyError(e));
     }
   }
 
   async connect(): Promise<PoolClient> {
-    return waitOutBusy(async () => (await this.pool()).connect());
+    return waitOutBusy(async () => (await this.writerPool()).connect());
   }
 
   recheck(): Promise<void> {
