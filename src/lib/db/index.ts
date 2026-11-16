@@ -55,6 +55,12 @@ export function poolConfig(url: string, env: Record<string, string | undefined> 
     keepAlive: true,
     // Nothing should wait forever: a page query that hangs holds a function open, a poller one stalls the sweep.
     statement_timeout: local ? 30_000 : 15_000,
+    // statement_timeout is enforced by the server, so it cannot help when the server never sees the query: a Vercel
+    // instance thawed after a freeze, or a NAT that dropped the flow, leaves a socket that looks open, and a query
+    // written to it waits for TCP retransmission (many minutes). On 11-16 that held ~50 page requests per 6 h open
+    // until Vercel killed them at 300 s ("Task timed out", same instants as "write ETIMEDOUT"). query_timeout is the
+    // client-side bound: past it pg fails the query and the pool destroys that client instead of reusing it.
+    query_timeout: local ? 35_000 : 20_000,
     ssl: local ? false : { ca, rejectUnauthorized: true },
   };
 }

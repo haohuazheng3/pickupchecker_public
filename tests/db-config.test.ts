@@ -8,6 +8,7 @@ describe("database pool config", () => {
       expect(c.ssl).toBe(false);
       expect(c.max).toBe(8);
       expect(c.statement_timeout).toBe(30_000);
+      expect(c.query_timeout).toBeGreaterThan(c.statement_timeout as number);
     }
   });
 
@@ -16,6 +17,8 @@ describe("database pool config", () => {
     expect(c.ssl).toEqual({ ca: "-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----", rejectUnauthorized: true });
     expect(c.max).toBe(2);
     expect(c.statement_timeout).toBe(15_000);
+    // client-side bound for dead sockets, longer than the server's so a slow but live query still gets its server error
+    expect(c.query_timeout).toBe(20_000);
   });
 
   it("fails closed without a CA: still verified, never plain", () => {
