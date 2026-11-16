@@ -96,3 +96,17 @@ describe("store patterns", () => {
     expect(patternSentence(undefined)).toBe("No confirmed restock in the last 30 days.");
   });
 });
+
+describe("site facts at full size (11-16: the hourly recompute ran 11–25 s and ran ShelfSpring out of memory)", () => {
+  it("handles a month of restocks across many stores quickly, with the same counts", () => {
+    const zones = ["America/New_York", "America/Los_Angeles", "Europe/London", "Asia/Tokyo"];
+    const rows = Array.from({ length: 80_000 }, (_, i) => ({ storeNumber: `R${i % 400}`, at: new Date(Date.UTC(2026, 9, 17) + i * 30_000).toISOString() }));
+    const t0 = Date.now();
+    const out = patternsFrom(rows, {}, (s) => zones[Number(s.slice(1)) % zones.length]);
+    expect(Date.now() - t0).toBeLessThan(5_000);
+    expect(Object.keys(out)).toHaveLength(400);
+    expect(Object.values(out).reduce((a, p) => a + p.restocks, 0)).toBe(80_000);
+    // the cached per-zone formatter gives the same answer on repeat calls
+    expect(localHourDay("2026-11-02T13:00:00.000Z", "America/New_York")).toEqual(localHourDay("2026-11-02T13:00:00.000Z", "America/New_York"));
+  });
+});

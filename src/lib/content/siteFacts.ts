@@ -66,9 +66,21 @@ export function duoSelloutFrom(secs: number[]): SiteFacts["duoSellout"] {
   return { n: v.length, medianSec: Math.round(median), within30: v.filter((d) => d <= 30).length / v.length, caught: { m1: caught(60), m5: caught(300), m15: caught(900) } };
 }
 
+/**
+ * One formatter per zone. siteFacts runs localHourDay for every restock in 30 days (~83k on 11-16); building a new
+ * Intl.DateTimeFormat each time made the hourly recompute take 11–25 s and, on ShelfSpring, exhaust the function's
+ * memory (/llms.txt 500 "ran out of available memory"). Same output, a handful of formatters.
+ */
+const HOUR_DAY_FORMATS = new Map<string, Intl.DateTimeFormat>();
+function hourDayFormat(tz: string): Intl.DateTimeFormat {
+  let f = HOUR_DAY_FORMATS.get(tz);
+  if (!f) { f = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", hourCycle: "h23", weekday: "short", year: "numeric", month: "2-digit", day: "2-digit" }); HOUR_DAY_FORMATS.set(tz, f); }
+  return f;
+}
+
 /** Pure: local hour, weekday and date (YYYY-MM-DD) of an instant in a zone. */
 export function localHourDay(iso: string, tz: string): { hour: number; weekday: number; date: string } {
-  const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", hourCycle: "h23", weekday: "short", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(iso));
+  const parts = hourDayFormat(tz).formatToParts(new Date(iso));
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
   const hour = Number(get("hour") || 0) % 24;
   const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(get("weekday") || "Sun");
@@ -78,7 +90,8 @@ export function localHourDay(iso: string, tz: string): { hour: number; weekday: 
 /** Pure: per-store patterns from restock instants (ISO) and median stays. */
 export function patternsFrom(restocks: { storeNumber: string; at: string }[], stays: Record<string, number>, tzOf: (store: string) => string): Record<string, StorePattern> {
   const by = new Map<string, string[]>();
-  for (const r of restocks) by.set(r.storeNumber, [...(by.get(r.storeNumber) ?? []), r.at]);
+  // push, not [...old, x]: copying the whole array per row is quadratic (~15M copies for the busiest stores).
+  for (const r of restocks) { const a = by.get(r.storeNumber); if (a) a.push(r.at); else by.set(r.storeNumber, [r.at]); }
   const out: Record<string, StorePattern> = {};
   for (const [store, ats] of by) {
     const hours = Array(24).fill(0), weekdays = Array(7).fill(0), dates = new Set<string>();
@@ -122,7 +135,7 @@ const cached = unstable_cache(
         from availability_events where not first_seen and at > now() - make_interval(days => ${PATTERN_DAYS})
       ) e where kind = 'restock' and next_kind = 'soldout'`)).rows as { store_number: string; part_number: string; at: string | Date; secs: number }[];
     const staysBy = new Map<string, number[]>();
-    for (const p of pairs) staysBy.set(p.store_number, [...(staysBy.get(p.store_number) ?? []), Number(p.secs)]);
+    for (const p of pairs) { const a = staysBy.get(p.store_number); if (a) a.push(Number(p.secs)); else staysBy.set(p.store_number, [Number(p.secs)]); }
     const stays: Record<string, number> = {};
     for (const [s, v] of staysBy) { v.sort((a, b) => a - b); stays[s] = Math.max(1, Math.round(v[Math.floor(v.length / 2)] / 60)); }
     const weekAgo = Date.now() - 7 * 86400_000;
