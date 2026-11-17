@@ -93,6 +93,10 @@ export async function POST(req: Request) {
         break;
     }
   } catch (e) {
+    // The event id was recorded before the handler ran. Forget it on failure, or Stripe's retry of
+    // this 500 would be dropped as a "duplicate" and the work never done (2026-11-17: invoice.paid
+    // deadlocked with customer.subscription.created in the same second). Every branch is idempotent.
+    await d.delete(schema.stripeEvents).where(eq(schema.stripeEvents.id, event.id)).catch(() => undefined);
     await recordError("web", `stripe webhook ${event.type}: ${errorMessage(e)}`, { eventId: event.id });
     return NextResponse.json({ error: "handler failed" }, { status: 500 });
   }
