@@ -13,7 +13,11 @@ export async function recordError(
 ): Promise<void> {
   try {
     console.error(`[${source}] ${message}`, sample ? JSON.stringify(sample).slice(0, 2000) : "");
-    if (!hasDatabase()) return;
+    // `next build` prerenders with the production environment from a CI runner. What fails there (a page's query
+    // waiting past the pool's connect timeout) is the build's, not the live site's: it stays in the build log. In the
+    // inbox it turned ShelfSpring's health red at every deploy (11-16, 11-17) and failed the deploy's own health check.
+    // Same rule as instrumentation's onRequestError.
+    if (!hasDatabase() || process.env.NEXT_PHASE === "phase-production-build") return;
     const normalized = errorFingerprintText(message);
     const fingerprint = createHash("sha1").update(`${source}:${normalized}`).digest("hex").slice(0, 24);
     await db()

@@ -163,20 +163,33 @@ write_files:
         chown -R poller:poller "$APP"
         systemctl restart pickupchecker-poller
       }
-      HOST=$(sed -n 's/^HOST_LABEL=//p' /opt/pickupchecker/poller.env | head -1)
+      # The label the poller writes into sweeps/poller_state. systemd strips the quotes around EnvironmentFile
+      # values (poller.env has HOST_LABEL="linode-3"); sed does not, so strip them here like every other host
+      # script's val(). Until 11-17 they were kept, the gate asked for host '"linode-3"', counted 0 on every
+      # host and every release (11-16, 11-17), and each host restarted three times: new, previous, new again.
+      # The poller falls back to the hostname when HOST_LABEL is unset; so does the gate.
+      HOST=$(sed -n 's/^HOST_LABEL=//p' /opt/pickupchecker/poller.env | head -1 | sed 's/^"\(.*\)"$/\1/')
+      HOST=${HOST:-$(hostname)}
       # Healthy = this host finished two rounds of its duty (a full US sweep covering ≥ 250 stores, or an
       # other-country round covering ≥ 150), or it reported itself alive with no duty at all (a standby, or a
       # primary whose US runs on the worker).
       # Counted through the poller's own database connection (scripts/poller-gate.ts), so a host without a database
-      # of its own (the US worker) is gated the same way.
+      # of its own (the US worker, the intl worker) is gated the same way. GATE_LAST keeps the last answer (a count,
+      # or the first line of the error) for the owner mail: a gate that cannot run must not look like a bad release.
+      GATE_LAST="no answer"
       healthy() {
-        local since=$(date +%s) n
+        local since=$(date +%s) n err
+        err=$(mktemp)
         while [ $(( $(date +%s) - since )) -lt "$GATE_SEC" ]; do
           sleep 10
           n=$(systemd-run --quiet --wait --pipe --collect -p User=poller -p EnvironmentFile=/opt/pickupchecker/poller.env -p WorkingDirectory="$APP" \
-                /usr/local/bin/node --import tsx scripts/poller-gate.ts "$HOST" "$since" 2>/dev/null || echo 0)
-          [ "${n:-0}" -ge 2 ] && return 0
+                /usr/local/bin/node --import tsx scripts/poller-gate.ts "$HOST" "$since" 2>"$err") || n=""
+          case "$n" in
+            ''|*[!0-9]*) GATE_LAST="error: $({ grep -m1 -E 'Error|error:' "$err" || head -1 "$err"; } | cut -c1-200)" ;;
+            *) GATE_LAST="$n rounds"; [ "$n" -ge 2 ] && { rm -f "$err"; return 0; } ;;
+          esac
         done
+        rm -f "$err"
         return 1
       }
       mail() {
@@ -188,12 +201,13 @@ write_files:
       new=$(git rev-parse HEAD)
       { [ -n "$prev" ] && [ "$prev" != "$new" ] && [ "$GATE_SEC" -gt 0 ] && [ ! -f /opt/pickupchecker/hold ]; } || exit 0
       healthy && exit 0
+      new_gate=$GATE_LAST
       install "$prev"
       if healthy; then
-        mail "[PickupChecker] Poller release ${new:0:7} rolled back" "The poller on ${new:0:7} did not finish two full sweeps (≥ 250 stores each) within ${GATE_SEC} s. ${prev:0:7} is running again and polling normally. The site may expect the newer poller code: fix the release and deploy again."
+        mail "[PickupChecker] Poller release ${new:0:7} rolled back on ${HOST}" "The poller on ${new:0:7} did not finish two full sweeps (≥ 250 stores each) within ${GATE_SEC} s (gate for ${HOST}: ${new_gate}). ${prev:0:7} is running again and polling normally (${GATE_LAST}). The site may expect the newer poller code: fix the release and deploy again."
       else
         install "$new"
-        mail "[PickupChecker] Poller unhealthy on both ${new:0:7} and ${prev:0:7}" "Neither release finished two full sweeps within ${GATE_SEC} s, so the release is not the cause (Apple answers, the IPv6 route, the database). ${new:0:7} is running again. See /admin/poller."
+        mail "[PickupChecker] Poller unhealthy on both ${new:0:7} and ${prev:0:7} on ${HOST}" "Neither release finished two full sweeps within ${GATE_SEC} s (gate for ${HOST}: ${new:0:7} ${new_gate}; ${prev:0:7} ${GATE_LAST}), so the release is not the cause (Apple answers, the IPv6 route, the database), or the gate itself failed: an error above, or 0 rounds while /admin/poller shows this host sweeping, means the gate, not the poller. ${new:0:7} is running again. See /admin/poller."
       fi
   - path: /opt/pickupchecker/autoupdate.sh
     permissions: "0755"
