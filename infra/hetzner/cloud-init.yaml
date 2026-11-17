@@ -66,7 +66,8 @@ write_files:
       MAIL_WORKER_URL=__MAIL_WORKER_URL__
       MAIL_WORKER_TOKEN=__MAIL_WORKER_TOKEN__
       OWNER_EMAIL=haohuazheng001@gmail.com
-      IPV6_PREFIX=auto
+      # Hetzner routes the server's whole /64 to it: bind from the /64 of its global address ("auto" reads only anyip.sh's file).
+      IPV6_PREFIX=interface
       CADENCE_SEC=20
       CONCURRENCY=8
       HOST_LABEL=hetzner-1

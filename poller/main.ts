@@ -38,8 +38,9 @@
  *       DATABASE_URL_STANDBY (the other host's database: TLS from the primary, loopback on the standby),
  *       POLLER_ROLE (primary | standby | worker: no database of its own, polls the US once handed over |
  *       intl: polls the other countries, never takes over the database),
- *       RESEND_API_KEY, IPV6_PREFIX (e.g. 2600:3c0a:e000:1b::/56, or "auto" = read
- *       IPV6_PREFIX_FILE written by anyip.sh, else derive the /64 of the first global address), SITE_URL,
+ *       RESEND_API_KEY, IPV6_PREFIX (e.g. 2600:3c0a:e000:1b::/56; "auto" = the IPV6_PREFIX_FILE anyip.sh writes,
+ *       none without it; "interface" = the /64 of the first global address, for a provider that routes that
+ *       whole /64 to the host, i.e. Hetzner — never on Linode, where it is not routed), SITE_URL,
  *       POLLER_TOKEN (for the vercel egress fallback), CADENCE_SEC, CONCURRENCY, SWEEP_TIMEOUT_MS (6000),
  *       HOST_LABEL,
  *       FAST_CADENCE_SEC (5; 0 disables the fast lane), FAST_CONCURRENCY (8), FAST_TIMEOUT_MS (4500),
@@ -60,7 +61,7 @@ import { loadFastTargets, runFastRound, targetsForDuties } from "../src/lib/stoc
 import { expireStale } from "../src/lib/stock/ingest";
 import { drainNotifications } from "../src/lib/stock/notify";
 import { recordError, errorMessage } from "../src/lib/errors";
-import { prefixFromInterfaces, randomAddressIn } from "./ipv6";
+import { randomAddressIn, resolvePrefixFrom } from "./ipv6";
 import { pickupCountryOf, type FetchLike } from "../src/lib/apple/client";
 import { notifyOwner } from "../src/lib/mail/owner";
 import { logOps } from "../src/lib/ops";
@@ -86,22 +87,16 @@ const POLLER_TOKEN = process.env.POLLER_TOKEN ?? "";
 /** Longer than the worst honest sweep (84 requests all timing out, then retried: 2 × 6 waves × 6 s), short enough to matter. */
 const STUCK_MS = 180_000;
 
-/**
- * IPV6_PREFIX=auto → the prefix anyip.sh routed to lo (IPV6_PREFIX_FILE, default
- * /opt/pickupchecker/ipv6-prefix; on Linode that is the routed /56 or /64, which is NOT on any
- * interface), else derive the /64 from the first global IPv6 address on any interface (Hetzner).
- */
+/** IPV6_PREFIX → the prefix to bind from (poller/ipv6.ts, resolvePrefixFrom: "auto" is the routed-prefix file only). */
 function resolvePrefix(v: string): string {
-  if (v !== "auto") return v;
-  const file = process.env.IPV6_PREFIX_FILE ?? "/opt/pickupchecker/ipv6-prefix";
-  try {
-    const s = readFileSync(file, "utf8").trim();
-    if (/^[0-9a-f:]+\/\d{1,3}$/i.test(s)) return s;
-  } catch {
-    /* no file: fall through to interface discovery */
+  let file: string | null = null;
+  if (v === "auto") {
+    try { file = readFileSync(process.env.IPV6_PREFIX_FILE ?? "/opt/pickupchecker/ipv6-prefix", "utf8"); } catch { /* no routed range */ }
   }
-  const p = prefixFromInterfaces(os.networkInterfaces());
-  if (!p) console.warn("[poller] IPV6_PREFIX=auto but no routed prefix file and no global IPv6 address found");
+  const p = resolvePrefixFrom(v, file, v === "interface" ? os.networkInterfaces() : {});
+  if (!p && (v === "auto" || v === "interface")) {
+    console.warn(`[poller] IPV6_PREFIX=${v} but no ${v === "auto" ? "routed prefix file" : "global IPv6 address"}: no IPv6 egress, the spare egress only`);
+  }
   return p;
 }
 
@@ -489,14 +484,18 @@ async function fence(cluster: ClusterRecord) {
 async function clusterLoop(intlConfigured: boolean) {
   const promote: PromoteState = { misses: 0 };
   let fenced = false, last = "";
+  /** Since when the database has accepted writes as this host sees it (null while it does not): duties() gives hosts
+   * whose alive record went stale while it was down a moment to report back (cluster.ts, REPORT_BACK_GRACE_MS). */
+  let writableSince: number | null = null;
   for (;;) {
     try {
       const st = await dbStatus();
       const writable = st ? st.writable : true;
+      writableSince = writable ? (writableSince ?? Date.now()) : null;
       const [cluster, alive] = await Promise.all([readCluster().catch(() => null), readAlive().catch(() => null)]);
       // Without the other hosts' records a decision could start a second writer of the US stores: keep the last one
       // (a database that refuses writes means no duties either way). The standby's takeover check below still runs.
-      if (alive || !writable) duty = duties({ me: HOST, role: ROLE, cluster, alive: alive ?? [], now: new Date(), intlConfigured, writable });
+      if (alive || !writable) duty = duties({ me: HOST, role: ROLE, cluster, alive: alive ?? [], now: new Date(), intlConfigured, writable, writableForMs: writableSince === null ? 0 : Date.now() - writableSince });
       if (duty.fenced && cluster && !fenced) {
         fenced = true;
         await fence(cluster);

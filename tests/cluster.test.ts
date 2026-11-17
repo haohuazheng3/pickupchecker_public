@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@vercel/functions", () => ({ attachDatabasePool: () => undefined }));
 const { chooseTarget, isFailoverError } = await import("@/lib/db");
-const { PROMOTE_AFTER, duties, dutyLabel, promoteStep } = await import("@/lib/stock/cluster");
+const { PROMOTE_AFTER, RECENT_MS, REPORT_BACK_GRACE_MS, duties, dutyLabel, promoteStep } = await import("@/lib/stock/cluster");
 type Probe = Parameters<typeof chooseTarget>[0][number];
 
 const probe = (o: Partial<Probe>): Probe => ({ name: "primary", ok: true, ms: 20, recovery: false, host: "linode-1", owner: "linode-1", epoch: 1, ...o });
@@ -104,6 +104,25 @@ describe("duties — the US worker takes the US without two hosts ever writing o
   });
   it("the worker never polls without a writable database", () => {
     expect(dutyLabel(duties({ ...wk, alive: [], writable: false }))).toBe("none");
+  });
+  it("2026-11-17: a primary just back from a database outage waits for the lanes' hosts to report before taking their lanes", () => {
+    // The database was away ~2 min, so linode-3's and linode-2's last records are that old: they say nothing.
+    const alive = [{ ...worker, duties: "us", at: ago(150) }, { host: "linode-2", role: "intl" as const, duties: "intl", at: ago(150) }];
+    const back = { ...primary, alive };
+    expect(duties({ ...back, writableForMs: 5_000 })).toMatchObject({ us: false, intl: false, why: "cluster primary, waiting for linode-3 to report back, other countries waiting for linode-2 to report back" });
+    // They report: the usual hand-off, nothing was ever taken.
+    expect(dutyLabel(duties({ ...back, writableForMs: 20_000, alive: [{ ...worker, at: ago(3) }, { ...alive[1], at: ago(3) }] }))).toBe("none");
+    // They do not: after the grace the primary takes both lanes back, as before.
+    expect(dutyLabel(duties({ ...back, writableForMs: REPORT_BACK_GRACE_MS }))).toBe("us+intl");
+    // No wait for a host gone longer than RECENT_MS, nor with no record at all, nor once the database has been up a while.
+    expect(dutyLabel(duties({ ...back, writableForMs: 5_000, alive: alive.map((a) => ({ ...a, at: ago(RECENT_MS / 1000 + 60) })) }))).toBe("us+intl");
+    expect(dutyLabel(duties({ ...primary, alive: [], writableForMs: 5_000 }))).toBe("us+intl");
+    expect(dutyLabel(duties({ ...back }))).toBe("us+intl");
+  });
+  it("the wait is the primary's only: a worker, an intl host and a standby behave as before when just back", () => {
+    expect(duties({ ...wk, alive: [{ host: "linode-1", role: "primary" as const, duties: "us", at: ago(150) }], writableForMs: 5_000 })).toMatchObject({ us: true });
+    expect(dutyLabel(duties({ ...primary, me: "linode-2", role: "intl" as const, alive: [], writableForMs: 5_000 }))).toBe("intl");
+    expect(dutyLabel(duties({ ...primary, me: "linode-2", role: "standby" as const, alive: [{ ...worker, at: ago(150) }], writableForMs: 5_000 }))).toBe("intl");
   });
   it("workerVerdict: ok while it reports, down when stale, none without one", async () => {
     const { workerVerdict } = await import("@/lib/stock/cluster");

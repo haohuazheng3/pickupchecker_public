@@ -13,6 +13,11 @@
  *    takeover; since 2026-11-10 linode-2, while linode-4 is the standby with no egress of its own); the primary
  *    runs them only while no other host reports doing so, so they come back to it by themselves if that host stops.
  *  • nothing runs without a writable database (a replica-only view cannot ingest).
+ *  • after the database comes back (or this poller starts), the primary gives a worker or other-country host whose
+ *    record went stale in the last RECENT_MS up to REPORT_BACK_GRACE_MS to report in again before taking its lane:
+ *    while the database was down nobody could write an alive record, so a stale one says nothing about that host.
+ *    2026-11-17: linode-1's resize took the database away for ~2 min; on the way back linode-1 took the US and the
+ *    other countries from linode-3/2, polled them through an egress it no longer has, and held the US for 4 minutes.
  *  • takeover: the standby promotes its replica when, for PROMOTE_AFTER checks in a row, it cannot reach the
  *    primary database AND the site (Vercel, a third vantage point) reports the same. Its own view alone never
  *    suffices: that could be its own network. The promoted database gets epoch + 1, and becomes the primary.
@@ -33,6 +38,13 @@ export const ALIVE_EVERY_MS = 10_000;
 export const ALIVE_FRESH_MS = 45_000;
 /** Checks (one per ALIVE_EVERY_MS) the primary database must be unreachable, from here and from the site. */
 export const PROMOTE_AFTER = 6;
+/**
+ * How long the primary waits, after its database turned writable, for a host whose record went stale to report back
+ * (it needs one ALIVE_EVERY_MS plus a reconnect: linode-3 was back 10 s after the database on 2026-11-17).
+ */
+export const REPORT_BACK_GRACE_MS = 60_000;
+/** A stale record younger than this is a host worth that wait; an older one is a host that is gone. */
+export const RECENT_MS = 10 * 60_000;
 
 export interface DutyInput {
   me: string;
@@ -44,6 +56,11 @@ export interface DutyInput {
   intlConfigured: boolean;
   /** The database queries go to accepts writes. */
   writable: boolean;
+  /**
+   * For how long it has, as this host saw it (since it turned writable, or since this poller started). Absent =
+   * long enough: no report-back wait.
+   */
+  writableForMs?: number;
 }
 export interface Duties { us: boolean; intl: boolean; fenced: boolean; why: string }
 
@@ -66,14 +83,22 @@ export function duties(i: DutyInput): Duties {
       : { us: false, intl: false, fenced: false, why: "intl worker, no egress for other countries" };
   }
   const isPrimary = owner === i.me;
+  // Just back (see REPORT_BACK_GRACE_MS): a lane's host whose record went stale only recently may be about to report.
+  const justBack = (i.writableForMs ?? Infinity) < REPORT_BACK_GRACE_MS;
+  const awaited = (a: AliveRecord) => justBack && a.host !== i.me && !fresh(a) && i.now.getTime() - new Date(a.at).getTime() < RECENT_MS;
   const worker = i.alive.find((a) => fresh(a) && a.role === "worker");
-  const us = isPrimary && !worker;
-  const usWhy = isPrimary ? (worker ? `cluster primary, US on ${worker.host}` : "cluster primary") : "standby";
+  const awaitedWorker = worker ? undefined : i.alive.find((a) => awaited(a) && a.role === "worker");
+  const us = isPrimary && !worker && !awaitedWorker;
+  const usWhy = isPrimary
+    ? (worker ? `cluster primary, US on ${worker.host}` : awaitedWorker ? `cluster primary, waiting for ${awaitedWorker.host} to report back` : "cluster primary")
+    : "standby";
   if (!i.intlConfigured) return { us, intl: false, fenced: false, why: isPrimary ? usWhy : "standby, no egress for other countries" };
   const othersRunIntl = i.alive.some((a) => fresh(a) && a.duties.includes("intl"));
+  const awaitedIntl = othersRunIntl ? undefined : i.alive.find((a) => awaited(a) && a.duties.includes("intl"));
   // The cluster primary hands the other countries to whoever else runs them; anyone else simply runs them.
-  const intl = isPrimary ? !othersRunIntl : true;
-  return { us, intl, fenced: false, why: isPrimary ? `${usWhy}, other countries ${intl ? "too" : "elsewhere"}` : "standby: other countries" };
+  const intl = isPrimary ? !othersRunIntl && !awaitedIntl : true;
+  const intlWhy = intl ? "too" : awaitedIntl ? `waiting for ${awaitedIntl.host} to report back` : "elsewhere";
+  return { us, intl, fenced: false, why: isPrimary ? `${usWhy}, other countries ${intlWhy}` : "standby: other countries" };
 }
 
 export function dutyLabel(d: Duties): string {

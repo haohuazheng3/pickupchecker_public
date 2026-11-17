@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expandV6, prefixFromInterfaces, randomAddressIn } from "../poller/ipv6";
+import { expandV6, prefixFromInterfaces, randomAddressIn, resolvePrefixFrom } from "../poller/ipv6";
 
 const bits = (addr: string) =>
   expandV6(addr).replace(/:/g, "").split("").map((h) => parseInt(h, 16).toString(2).padStart(4, "0")).join("");
@@ -26,6 +26,24 @@ describe("randomAddressIn", () => {
   });
   it("defaults to /64 when no length is given", () => {
     expect(bits(randomAddressIn("2001:db8:1:2::")).slice(0, 64)).toBe(bits("2001:db8:1:2::").slice(0, 64));
+  });
+});
+
+describe("resolvePrefixFrom — IPV6_PREFIX", () => {
+  const ifaces = { eth0: [{ family: "IPv6", internal: false, address: "2600:3c06::2000:e4ff:feaf:ca7d" }] };
+  it("auto: the routed range anyip.sh wrote", () => {
+    expect(resolvePrefixFrom("auto", "2600:3c06:e003:c900::/56\n", ifaces)).toBe("2600:3c06:e003:c900::/56");
+  });
+  it("auto without a routed range: no IPv6 egress, never the SLAAC address's /64 (not routed on Linode; 2026-11-17)", () => {
+    expect(resolvePrefixFrom("auto", null, ifaces)).toBe("");
+    expect(resolvePrefixFrom("auto", "garbage", ifaces)).toBe("");
+  });
+  it("interface: the /64 of the first global address (Hetzner)", () => {
+    expect(resolvePrefixFrom("interface", null, { eth0: [{ family: "IPv6", internal: false, address: "2a01:4f8:1c1b:abcd::1" }] })).toBe("2a01:04f8:1c1b:abcd::/64");
+  });
+  it("anything else as written", () => {
+    expect(resolvePrefixFrom("2600:3c0a:e000:1b::/56", null, ifaces)).toBe("2600:3c0a:e000:1b::/56");
+    expect(resolvePrefixFrom("", "2600:3c06:e003:c900::/56", ifaces)).toBe("");
   });
 });
 
