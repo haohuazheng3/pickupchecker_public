@@ -103,6 +103,19 @@ export async function drainNotifications(timeoutMs = 15_000, settleMs = 1_000): 
   }
 }
 
+/**
+ * Only rules that point at one of these stores (`store_numbers ?| array[…]`). A rule is one store × one configuration
+ * (`ruleMatches` requires the store to be equal), so this drops nothing that could match.
+ *
+ * Why (2026-11-17): the alert path used to load every active rule of the model — 28,093 Duo rows plus every rule of
+ * their owners — once per response with a restock. During Apple's mass listing flips (16:4x, 17:41, 19:37 UTC) with a
+ * slow primary, hundreds of these calls were in flight at once and the intl poller on linode-2 hit V8's ~256 MB heap
+ * limit five times (abort, in-flight alerts lost: 46 + 107 paid alerts MISSED). Filtered, a call loads ~100 rows.
+ */
+export function storeFilter(storeNumbers: string[]) {
+  return sql`${schema.watches.storeNumbers} ?| array[${sql.join(storeNumbers.map((s) => sql`${s}`), sql`, `)}]::text[]`;
+}
+
 export function notifyRestocks(transitions: Transition[], eventIds: number[], now = new Date()): Promise<NotifyStats> {
   return trackInFlight(sendRestockAlerts(transitions, eventIds, now));
 }
@@ -122,7 +135,7 @@ async function sendRestockAlerts(transitions: Transition[], eventIds: number[], 
     .select({ watch: schema.watches, email: schema.users.email, locale: schema.users.locale })
     .from(schema.watches)
     .innerJoin(schema.users, eq(schema.users.id, schema.watches.userId))
-    .where(and(eq(schema.watches.active, true), eq(schema.watches.paused, false), inArray(schema.watches.model, models)));
+    .where(and(eq(schema.watches.active, true), eq(schema.watches.paused, false), inArray(schema.watches.model, models), storeFilter([...new Set(restocks.map((x) => x.t.storeNumber))])));
 
   // Plan coverage: the oldest `limit` active rules of each user send (no plan = 0, plus = 10, pro = 20).
   const userIds = [...new Set(candidates.map((c) => c.watch.userId))];
