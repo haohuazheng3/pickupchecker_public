@@ -7,6 +7,27 @@ import { notifyText } from "./i18n/notify";
 import type { Lang } from "./i18n/locales";
 import { SPEED, PLANS, comparePlans, planFromPrice, planInForce, priceIdFor, effectivePlan, type PaidPlanKey } from "./plans";
 
+/**
+ * Pure: the subscription is set to end (and will not renew). Two ways Stripe records that: `cancel_at_period_end`
+ * (our "Cancel subscription", the dashboard's "at period end") and `cancel_at`, a time — what Stripe's customer
+ * portal ("Billing and invoices") sets, with `cancel_at_period_end` left false. 2026-11-15: a Max member cancelled
+ * in the portal; reading only cancel_at_period_end kept him as renewing in our database (and on his account page).
+ */
+export function endsScheduled(sub: Pick<Stripe.Subscription, "cancel_at_period_end" | "cancel_at">): boolean {
+  return Boolean(sub.cancel_at_period_end) || sub.cancel_at != null;
+}
+
+/**
+ * Pure: the update that takes a scheduled end back, whichever way it was set (null when nothing is scheduled).
+ * Clearing cancel_at_period_end clears the cancel_at Stripe filled in with it; a portal cancellation has only
+ * cancel_at, which takes "" to unset — setting cancel_at_period_end false alone would leave it ending.
+ */
+export function keepGoingParams(sub: Pick<Stripe.Subscription, "cancel_at_period_end" | "cancel_at">): Stripe.SubscriptionUpdateParams | null {
+  if (sub.cancel_at_period_end) return { cancel_at_period_end: false };
+  if (sub.cancel_at != null) return { cancel_at: "" };
+  return null;
+}
+
 /** Upsert a subscription row from a Stripe subscription object (idempotent). */
 export async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
   const userId = sub.metadata?.userId;
@@ -29,7 +50,7 @@ export async function syncSubscription(sub: Stripe.Subscription): Promise<void> 
       status: sub.status,
       priceId: price?.id ?? null,
       currentPeriodEnd: periodEnd,
-      cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
+      cancelAtPeriodEnd: endsScheduled(sub),
       nextPlan,
       updatedAt: new Date(),
     })
@@ -41,7 +62,7 @@ export async function syncSubscription(sub: Stripe.Subscription): Promise<void> 
         status: sub.status,
         priceId: price?.id ?? null,
         currentPeriodEnd: periodEnd,
-        cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
+        cancelAtPeriodEnd: endsScheduled(sub),
         nextPlan,
         updatedAt: new Date(),
       },
@@ -228,7 +249,8 @@ export async function changePlan(subscriptionId: string, plan: PaidPlanKey, pror
     const pricePlan = planFromPrice({ id: item.price.id, metadata: item.price.metadata, unit_amount: item.price.unit_amount });
     const { plan: paid, nextPlan } = planInForce(pricePlan, sub.metadata, item.current_period_end);
     // A plan change keeps the subscription going (pending updates take no other parameters, so separately).
-    if (sub.cancel_at_period_end) await s.subscriptions.update(subscriptionId, { cancel_at_period_end: false });
+    const keepGoing = keepGoingParams(sub);
+    if (keepGoing) await s.subscriptions.update(subscriptionId, keepGoing);
     if (comparePlans(plan, paid) <= 0) {
       // Already so: the plan it renews on (the paid one, or the downgrade already waiting).
       if (plan === pricePlan) return { startsAt: nextPlan ? new Date(item.current_period_end * 1000).toISOString() : null };
@@ -272,7 +294,11 @@ export async function changePlan(subscriptionId: string, plan: PaidPlanKey, pror
  */
 export async function setCancelAtPeriodEnd(subscriptionId: string, cancel: boolean): Promise<{ endsAt: string | null }> {
   try {
-    const updated = await stripe().subscriptions.update(subscriptionId, { cancel_at_period_end: cancel });
+    // Resuming undoes the end however it was set (a portal cancellation has cancel_at only: keepGoingParams).
+    const s = stripe();
+    let params: Stripe.SubscriptionUpdateParams | null = { cancel_at_period_end: true };
+    if (!cancel) params = keepGoingParams(await s.subscriptions.retrieve(subscriptionId));
+    const updated = params ? await s.subscriptions.update(subscriptionId, params) : await s.subscriptions.retrieve(subscriptionId);
     await syncSubscription(updated);
     const end = updated.items.data[0]?.current_period_end;
     return { endsAt: end ? new Date(end * 1000).toISOString() : null };
