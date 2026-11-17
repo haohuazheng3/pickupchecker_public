@@ -14,6 +14,16 @@ export const account: Dict["account"] = {
   title: "Mis alertas",
   units: { s: "s", min: "min", taps: "toques" },
 
+  source: {
+    title: "¿Cómo conociste PickupChecker?",
+    lead: "Un toque y listo.",
+    friend: "Amigos o familia",
+    other: "Otro",
+    otherAsk: "¿Dónde? Ej.: un foro o una web de noticias",
+    send: "Enviar",
+    close: "Cerrar",
+  },
+
   plan: {
     title: "Plan",
     none: "Aún sin plan: las alertas están desactivadas",

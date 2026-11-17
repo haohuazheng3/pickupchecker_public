@@ -31,6 +31,8 @@ export const env = {
   flowglanceKey: () => process.env.NEXT_PUBLIC_FLOWGLANCE_KEY ?? "",
   indexable: () => process.env.NEXT_PUBLIC_INDEXABLE === "1",
   isProd: () => process.env.VERCEL_ENV === "production",
+  /** Neon database of the "where did you hear about us" answers (scripts/survey-db.mjs); unset = the survey never shows. */
+  surveyDatabaseUrl: () => process.env.SURVEY_DATABASE_URL ?? "",
 };
 
 /** Constant-time string compare for bearer tokens. */

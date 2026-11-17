@@ -13,6 +13,16 @@ export const account: Dict["account"] = {
   title: "我的提醒",
   units: { s: "秒", min: "分鐘", taps: "下" },
 
+  source: {
+    title: "你從哪裡知道 PickupChecker？",
+    lead: "按一下就完成。",
+    friend: "親友介紹",
+    other: "其他",
+    otherAsk: "請輸入來源，例如討論區、新聞網站",
+    send: "提交",
+    close: "關閉",
+  },
+
   plan: {
     title: "方案",
     none: "未有方案：提醒尚未啟用",

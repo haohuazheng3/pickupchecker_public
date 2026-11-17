@@ -12,6 +12,16 @@ export const account: Dict["account"] = {
   title: "I miei avvisi",
   units: { s: "s", min: "min", taps: "tocchi" },
 
+  source: {
+    title: "Come hai conosciuto PickupChecker?",
+    lead: "Basta un tocco.",
+    friend: "Amici o famiglia",
+    other: "Altro",
+    otherAsk: "Dove? Es. un forum o un sito di notizie",
+    send: "Invia",
+    close: "Chiudi",
+  },
+
   plan: {
     title: "Piano",
     none: "Nessun piano: gli avvisi sono disattivati",

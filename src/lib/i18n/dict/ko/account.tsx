@@ -15,6 +15,16 @@ export const account: Dict["account"] = {
   title: "내 알림",
   units: { s: "초", min: "분", taps: "번" },
 
+  source: {
+    title: "PickupChecker를 어디서 알게 되셨나요?",
+    lead: "한 번만 누르면 끝나요.",
+    friend: "친구·가족",
+    other: "기타",
+    otherAsk: "어디서 보셨나요? (예: 커뮤니티, 뉴스 사이트)",
+    send: "보내기",
+    close: "닫기",
+  },
+
   plan: {
     title: "요금제",
     none: "아직 요금제 없음: 알림이 꺼져 있어요",

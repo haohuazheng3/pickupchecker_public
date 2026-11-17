@@ -21,6 +21,8 @@ import { AlertEditor } from "@/components/alerts/AlertEditor";
 import { Section } from "@/components/alerts/Section";
 import { CancelPlanLink, PlanPanel } from "@/components/alerts/PlanPanel";
 import { HydrationProbe } from "@/components/account/HydrationProbe";
+import { SourceSurvey } from "@/components/account/SourceSurvey";
+import { ASKED_META } from "@/lib/survey/sources";
 import { buildPhoneCatalog, pickerStoresFor } from "@/components/alerts/catalog";
 import type { CountryCode } from "@/lib/apple/countries";
 import { pageLocale, requestLocale, setPageLocale, t } from "@/lib/i18n/server";
@@ -35,7 +37,8 @@ export async function generateMetadata() {
 
 /**
  * The dashboard, one page of sections: alerts (phones × stores, ticked in place), plan, notifications,
- * restock patterns, alerts sent. Nothing opens a dialog or another page except Stripe's own checkout.
+ * restock patterns, alerts sent. Nothing opens a dialog or another page except Stripe's own checkout, and once
+ * per account the one-tap "where did you hear about us" (SourceSurvey; answers go to Neon).
  * Written in the person's language whatever countries their stores are in; times in each store's own zone.
  */
 export default async function Account() {
@@ -68,6 +71,7 @@ export default async function Account() {
       <HydrationProbe />
       <Identify userRef={u.id} email={u.email} />
       <RefreshOnAlertsChange />
+      {env.surveyDatabaseUrl() && !u.meta[ASKED_META] && <SourceSurvey s={d.source} lang={lang} />}
       <div className="flex flex-wrap items-end justify-between gap-4 pb-2">
         <div>
           <div className="eyebrow">{d.signedInAs(u.email)}</div>

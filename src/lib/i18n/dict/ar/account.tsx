@@ -19,6 +19,16 @@ export const account: Dict["account"] = {
   title: "تنبيهاتي",
   units: { s: "ث", min: "د", taps: "نقرات" },
 
+  source: {
+    title: "كيف عرفت PickupChecker؟",
+    lead: "نقرة واحدة وتنتهي.",
+    friend: "صديق أو أحد أفراد العائلة",
+    other: "غير ذلك",
+    otherAsk: "أين؟ مثلاً منتدى أو موقع أخبار",
+    send: "إرسال",
+    close: "إغلاق",
+  },
+
   plan: {
     title: "الباقة",
     none: "لا باقة بعد: التنبيهات متوقفة",

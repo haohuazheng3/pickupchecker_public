@@ -4,6 +4,7 @@
  * with **bold** / [label](href) render through <Md>.
  */
 import { SPEED, SPEED_PERKS } from "@/lib/plans";
+import type { SourceStrings } from "@/lib/survey/sources";
 
 const s = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 /** A plan's alert limit and monthly price in USD (pricing table). */
@@ -16,6 +17,17 @@ export const account = {
   title: "My alerts",
   /** Short units under the big numbers. */
   units: { s: "s", min: "min", taps: "taps" },
+
+  /** "Where did you hear about us" lightbox, shown once (SourceSurvey); brand names stay as written. */
+  source: {
+    title: "How did you hear about PickupChecker?",
+    lead: "One tap and you're done.",
+    friend: "Friend or family",
+    other: "Other",
+    otherAsk: "Type where, e.g. a forum or a news site",
+    send: "Send",
+    close: "Close",
+  } as SourceStrings,
 
   plan: {
     title: "Plan",

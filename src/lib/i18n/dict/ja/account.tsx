@@ -15,6 +15,16 @@ export const account: Dict["account"] = {
   title: "マイ通知",
   units: { s: "秒", min: "分", taps: "タップ" },
 
+  source: {
+    title: "PickupChecker をどこで知りましたか？",
+    lead: "タップひとつで完了です。",
+    friend: "友人・家族",
+    other: "その他",
+    otherAsk: "どこで知りましたか（例：掲示板、ニュースサイト）",
+    send: "送信",
+    close: "閉じる",
+  },
+
   plan: {
     title: "プラン",
     none: "プラン未加入：通知はオフです",

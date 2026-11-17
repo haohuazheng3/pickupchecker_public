@@ -13,6 +13,16 @@ export const account: Dict["account"] = {
   title: "Mina bevakningar",
   units: { s: "s", min: "min", taps: "tryck" },
 
+  source: {
+    title: "Hur hittade du PickupChecker?",
+    lead: "Ett tryck, sedan är du klar.",
+    friend: "Vänner eller familj",
+    other: "Annat",
+    otherAsk: "Var? T.ex. ett forum eller en nyhetssajt",
+    send: "Skicka",
+    close: "Stäng",
+  },
+
   plan: {
     title: "Plan",
     none: "Ingen plan än: bevakningarna är av",

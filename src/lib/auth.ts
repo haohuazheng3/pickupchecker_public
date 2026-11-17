@@ -10,6 +10,8 @@ import { LANG_COOKIE, nativeLocale } from "./i18n/locales";
 export interface SessionUser {
   id: string;
   email: string;
+  /** Clerk public metadata (server-set only), e.g. whether the source survey was asked. */
+  meta: Record<string, unknown>;
 }
 
 /** Signed-in user (Clerk) or null. Does not touch the database. */
@@ -18,7 +20,7 @@ export async function sessionUser(): Promise<SessionUser | null> {
   if (!userId) return null;
   const u = await currentUser();
   const email = u?.primaryEmailAddress?.emailAddress ?? u?.emailAddresses?.[0]?.emailAddress ?? "";
-  return { id: userId, email: email.toLowerCase() };
+  return { id: userId, email: email.toLowerCase(), meta: (u?.publicMetadata ?? {}) as Record<string, unknown> };
 }
 
 /**

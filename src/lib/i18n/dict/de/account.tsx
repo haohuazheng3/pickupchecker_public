@@ -14,6 +14,16 @@ export const account: Dict["account"] = {
   title: "Meine Alarme",
   units: { s: "Sek.", min: "Min.", taps: "Taps" },
 
+  source: {
+    title: "Wie haben Sie von PickupChecker erfahren?",
+    lead: "Ein Tipp genügt.",
+    friend: "Freunde oder Familie",
+    other: "Sonstiges",
+    otherAsk: "Wo? z. B. ein Forum oder eine Nachrichtenseite",
+    send: "Senden",
+    close: "Schließen",
+  },
+
   plan: {
     title: "Tarif",
     none: "Noch kein Tarif: Alarme sind aus",
