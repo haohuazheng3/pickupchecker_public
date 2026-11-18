@@ -29,7 +29,7 @@ import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
 import { duoRestockTimesAt, restockTimesPath } from "@/lib/content/restockTimes";
 import { alertsSentAt, duoNowFrom } from "@/lib/content/duoNow";
-import { DuoNow } from "@/components/restocks/DuoNow";
+import { DuoNow, DuoVerdict } from "@/components/restocks/DuoNow";
 import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { sellouts } from "@/lib/stock/sellouts";
 import { DailyBars } from "@/components/restocks/DailyBars";
@@ -219,6 +219,8 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="display text-3xl sm:text-5xl">{title}</h1>
+          {/* The answer straight under the title, before hours and address (owner 2026-11-18); the block below opens with its evidence. */}
+          <DuoVerdict d={d.now} label={G.atPlace(place)} name={place} one stores={[s]} country={cc} />
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-3"><span>{today.label}</span>{taxLine && <span>{taxLine}</span>}</div>
           <div className="mt-3"><StoreInfo store={s} showMapLink={false} /></div>
           {d.lookupOff && <p className="mt-2 text-sm font-medium text-warn">{S.lookupOff}</p>}
@@ -232,7 +234,7 @@ export async function StorePage({ country: c, params: p }: { country: Country; p
       <AlertPanelFor href={alert} summary={lang === "en" ? S.panel(s.name) : S.panel(N.store(s))} country={cc} />
 
       {/* The conclusion first (lib/content/duoNow.ts): in stock or not as of now, the last time it was, the pattern, the last three. */}
-      <div className="mt-5"><DuoNow d={d.now} label={G.atPlace(place)} name={place} one stores={[s]} country={cc} restockTimesHref={rtLink?.href ?? null} alertHref={alert} /></div>
+      <div className="mt-5"><DuoNow d={d.now} label={G.atPlace(place)} name={place} one stores={[s]} country={cc} restockTimesHref={rtLink?.href ?? null} alertHref={alert} verdictAbove /></div>
       <div className="mt-6"><Last24Hours data={d.recent} label={G.atPlace(place)} stores={[s]} country={cc} stock={d.stock} lastBefore={d.lastDuoRestock} alert={alert} compact /></div>
 
       <div className="mt-6"><ModelPlaceCards place={storePlace(s)} stockNow={d.stockNow} of={Object.fromEntries(MODELS.map((m) => [m.key, catalogFor(m.key, cc).length])) as Record<ModelKey, number>} unit={S.configsInStock} /></div>

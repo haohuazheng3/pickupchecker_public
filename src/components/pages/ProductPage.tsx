@@ -12,7 +12,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { STORE_INDEX, appleBuyUrl, cityPath, statePath, storePath, appleName, itemFor, placeTarget, mapPath, restocksPath, storesIndexPath } from "@/lib/apple/catalog";
 import { prefixOf, theName, type Country } from "@/lib/apple/countries";
-import { isIndexedProductPage, productPath, storePlace, type Place, type Product } from "@/lib/seo/products";
+import { isAiOpenProductPage, isIndexedProductPage, productPath, storePlace, type Place, type Product } from "@/lib/seo/products";
 import { treeOf } from "@/lib/seo/tree";
 import { childPlaces, configGrid, facetsFor, indexStock, lastChecked, nearestWithStock, siblingPlaces, storeLines } from "@/lib/seo/productData";
 import { productJsonLdFor } from "@/lib/seo/productCopy";
@@ -26,7 +26,7 @@ import { Faq } from "@/components/seo/Faq";
 import { PlaceCountList, ProductGrid, ProductNav, ProductStoreList, StatusCard } from "@/components/seo/ProductParts";
 import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
-import { DuoNow } from "@/components/restocks/DuoNow";
+import { DuoNow, DuoVerdict } from "@/components/restocks/DuoNow";
 import { alertsSentAt, duoNowFrom } from "@/lib/content/duoNow";
 import { duoRestockTimes, duoRestockTimesAt, restockTimesPath } from "@/lib/content/restockTimes";
 import { SellOutTimes } from "@/components/restocks/SellOutTimes";
@@ -91,7 +91,9 @@ const load = cache(async (cc: Country["cc"], slug: string, path: string) => {
   // place-level product page and every exact configuration is noindex, follow: the /stores page of that place
   // is the one indexed page for "iPhone Duo in <place>", which keeps near-duplicates out of the index.
   const indexable = isIndexedProductPage(product, place);
-  return { kind: "page" as const, product, place, ix, lines, inStock, stats, clock, feed, reports, indexable, sell, now };
+  // …except the iPhone Duo page of a region or city, which answer engines may index and Google may not (products.ts).
+  const aiOpen = !indexable && isAiOpenProductPage(product, place, productPath(product, t.canonicalPlace(place)) === productPath(product, place));
+  return { kind: "page" as const, product, place, ix, lines, inStock, stats, clock, feed, reports, indexable, aiOpen, sell, now };
 });
 
 /** Another country's model page binds its own titles (seo.md §12). */
@@ -127,7 +129,7 @@ export async function productMetadata(c: Country, p: ProductParams, loc: Locale 
   const languages = d.place.level === "country" && d.product.kind === "model" ? hreflangFor({ model: d.product.slug }, loc) : undefined;
   return {
     title, description, alternates: { canonical, ...(languages ? { languages } : {}) },
-    ...(INDEXABLE && !d.indexable ? { robots: { index: false, follow: true } } : {}),
+    ...(INDEXABLE && !d.indexable ? { robots: d.aiOpen ? { index: true, follow: true, googleBot: { index: false, follow: true } } : { index: false, follow: true } } : {}),
     openGraph: { type: "website", siteName: "PickupChecker", title, description, url },
   };
 }
@@ -203,6 +205,8 @@ export async function ProductPage({ country: c, params: p }: { country: Country;
     { label: V.lastRestock, value: lr ? <LiveAgo iso={lr.at} /> : V.noneYet, hint: lr && lrItem ? `${one ? "" : configLabel(lrItem, lang)}${lrStore && !atStore ? `${one ? "" : " · "}${storeLabel(lrStore, lang)}` : ""}` || V.thisConfig : V.inDays(stats.days) },
   ];
   const intlTop = !us && top;
+  // Below the country level the Duo page opens with the live verdict; the country pages keep their bound intros.
+  const verdictTop = Boolean(now) && !top;
   const h1 = bound ? bound.main.h1 ?? bound.main.title : ib ? ib.title : top ? (us ? `${product.name} pickup stock` : V.h1Country(product.name, c)) : V.h1Place(product.name, where);
   const short = lang === "en" ? c.short : countryLabel(c.cc, lang);
   const photo = ib ? (INTL_PLACE_PHOTOS[c.cc] ?? "phone-map") : undefined;
@@ -217,9 +221,11 @@ export async function ProductPage({ country: c, params: p }: { country: Country;
         : intlTop && <Breadcrumbs items={[{ href: prefixOf(c.cc), label: short }, { label: product.name }]} />}
 
       <h1 className="display mt-2 text-3xl sm:text-5xl">{h1}</h1>
+      {/* A place's iPhone Duo page: the answer straight under the title (owner 2026-11-18), in place of the stores-in-stock line. */}
+      {verdictTop && now && <DuoVerdict d={now} label={label} name={placeName(place, lang)} one={atStore} stores={place.stores} country={c.cc} />}
       {copy && facts && <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2"><Inline text={copy.intro} facts={facts} /></p>}
       {ib && <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-2"><Inline text={D.place.modelIntro(c.cc, product.model, inStock)} facts={emptyFacts(c.cc)} /></p>}
-      <p className={`mt-2 items-center gap-2 text-lg text-ink-2 ${copy || ib ? "hidden" : "flex"}`}>
+      <p className={`mt-2 items-center gap-2 text-lg text-ink-2 ${copy || ib || verdictTop ? "hidden" : "flex"}`}>
         <Dot state={inStock ? "ok" : "idle"} live={inStock > 0} />
         {atStore
           ? (one ? <b className={inStock ? "text-accent" : "text-ink"}>{inStock ? V.inStockNow : V.notInStockNow}</b> : V.configsInStock(line?.available.length ?? 0, product.parts.length))
@@ -233,7 +239,7 @@ export async function ProductPage({ country: c, params: p }: { country: Country;
       </div>
       <AlertPanelFor href={placeAlert(product, place)} summary={V.panel(product.name, top ? (us ? null : inCountry) : where)} country={c.cc} />
       {now && (
-        <div className="mt-5"><DuoNow d={now} label={label} name={placeName(place, lang)} one={atStore} stores={place.stores} country={c.cc}
+        <div className="mt-5"><DuoNow d={now} label={label} name={placeName(place, lang)} one={atStore} stores={place.stores} country={c.cc} verdictAbove={verdictTop}
           restockTimesHref={us ? (top ? "/iphone-duo-restock-times" : place.level === "store" ? null : restockTimesPath(place.state!, place.level === "city" ? place.city! : undefined)) : `${prefixOf(c.cc)}/iphone-duo-restock-times`}
           alertHref={placeAlert(product, place)} /></div>
       )}

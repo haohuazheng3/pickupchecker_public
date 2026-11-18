@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { INTL_CODES } from "@/lib/apple/countries";
 import { NATIVE_LOCALES } from "@/lib/i18n/locales";
+import { AI_OPEN_ALLOW, AI_OPEN_STORE_LEVEL } from "@/lib/seo/aiOpen";
 
 /** Search and AI answer engines are welcome everywhere public; private areas stay out for everyone. */
 const PRIVATE = ["/admin", "/account", "/api/", "/checkout/"];
@@ -27,8 +28,10 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       { userAgent: "*", allow: "/", disallow: [...PRIVATE, ...FACETS] },
-      // Named groups replace "*" for that agent, so each repeats the same rules.
-      ...AI_AGENTS.map((ua) => ({ userAgent: ua, allow: "/", disallow: [...PRIVATE, ...FACETS] })),
+      // Named groups replace "*" for that agent, so each repeats the same rules — plus the iPhone Duo region and city
+      // pages, open to answer engines and Bing but not Google (lib/seo/aiOpen.ts, owner 2026-11-18). Allow lines come
+      // first, so a first-match parser reads them the same way as a longest-match one.
+      ...AI_AGENTS.map((ua) => ({ userAgent: ua, allow: ["/", ...AI_OPEN_ALLOW], disallow: [...PRIVATE, ...FACETS, ...AI_OPEN_STORE_LEVEL] })),
     ],
     sitemap: `${base}/sitemap.xml`,
     host: base,

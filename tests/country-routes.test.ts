@@ -125,7 +125,9 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
     expect(placePages).toBe(58);
     // …plus the three decision pages of seo.md §16 (the fourth, which-iphone-duo-restocks-most, is one of the eight).
     // …plus the two proof pages of 2026-11-09 (the live service report and the dated tracker comparison).
-    expect(us).toHaveLength(356 + 8 + 3 + 3 + placePages + 1 - 3 + 2); // + the dated research report; − the US pages retired 2026-11-08 (how-to-get, shortage, channels; five-second-checks was the other dated report)
+    // …plus the restock alert app page of 2026-11-18.
+    expect(us).toHaveLength(356 + 8 + 3 + 3 + placePages + 1 - 3 + 2 + 1); // + the dated research report; − the US pages retired 2026-11-08 (how-to-get, shortage, channels; five-second-checks was the other dated report)
+    expect(us).toContain(`${base}/iphone-duo-restock-alert-app`);
     expect(us).toContain(`${base}/research/iphone-duo-week-2026-11-07`);
     expect(us).toContain(`${base}/service-report`);
     expect(us).toContain(`${base}/iphone-stock-tracker-comparison`);

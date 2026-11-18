@@ -28,6 +28,15 @@ describe("iPhone Duo restock times", () => {
     return { storeNumber: store.storeNumber, partNumber: part, slot: at, n, last: at };
   };
 
+  it("counts each store's days with a restock: the steadiest store and the median store (stores with none count 0)", () => {
+    const t = restockTimesFrom("us", [row(ny, d1, 9, 3), row(ny, d2, 10, 1), row(ca, d2, 9, 5)], [], [], now);
+    expect(t.storeDays?.best).toEqual({ storeNumber: ny.storeNumber, days: 2 });
+    // 269 US stores, two with restocks: the median store has none.
+    expect(t.storeDays?.median).toBe(0);
+    const scoped = restockTimesFrom("us", [row(ny, d1, 9, 3), row(ny, d2, 10, 1), row(ca, d2, 9, 5)], [], [], now, { stores: [ny, ca] });
+    expect(scoped.storeDays).toEqual({ median: 1, best: { storeNumber: ny.storeNumber, days: 2 } });
+  });
+
   it("lists every calendar day in a range", () => {
     expect(dayRange("2026-10-29", "2026-11-02")).toEqual(["2026-10-29", "2026-10-30", "2026-10-31", "2026-11-01", "2026-11-02"]);
     expect(dayRange("2026-11-02", "2026-11-01")).toEqual([]);

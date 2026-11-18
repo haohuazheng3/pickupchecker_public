@@ -43,6 +43,8 @@ export interface DuoNowProps {
   alertHref?: string;
   /** Wrap the block in its own pane (default) or render it bare inside the caller's layout. */
   bare?: boolean;
+  /** The page already shows the verdict under its H1 (DuoVerdict): the block opens with the evidence line. */
+  verdictAbove?: boolean;
 }
 
 /** A median listing time is stated from this many timed listings (restockTimes.selloutFrom's own floor). */
@@ -182,13 +184,8 @@ export async function DuoNow(props: DuoNowProps) {
   return <DuoNowView {...props} stats={stats} />;
 }
 
-export function DuoNowView({ d, label, name, one = false, stores, country = "us", restockTimesHref, alertHref, bare = false, stats }: DuoNowProps & { stats: ServiceStats | null }) {
-  const loc = pageLocale();
-  const lang = loc.lang;
-  const D = t();
-  const w = D.modules.duoNow;
-  // Localised formats shared with the restock-times pages ("9–11 AM" / "9–11時").
-  const F = D.views.restockTimes.fmt;
+/** The verdict sentence's pieces (shared by the block and by DuoVerdict, which pages put straight under their H1). */
+function verdictOf({ d, label, name, one = false, stores, country = "us" }: Pick<DuoNowProps, "d" | "label" | "name" | "one" | "stores" | "country">, lang: Lang, w: Words) {
   const c = COUNTRIES[country];
   const byNumber = new Map(stores.map((s) => [s.storeNumber, s]));
   const storeOf = (n: string) => byNumber.get(n) ?? storeByNumber(n);
@@ -199,7 +196,6 @@ export function DuoNowView({ d, label, name, one = false, stores, country = "us"
   // The latest store check, never the page's own time: a page generated a second ago can rest on an older answer.
   const nowStamp = stampIn(d.checkedAt ?? d.at, tz, lang);
 
-  /* Verdict */
   let verdict: ReactNode;
   if (d.inStock.length === 0) verdict = one ? w.notNowOne({ stamp: nowStamp, name }) : w.notNow({ stamp: nowStamp, n: d.storesTotal, label });
   else if (one) {
@@ -218,6 +214,29 @@ export function DuoNowView({ d, label, name, one = false, stores, country = "us"
     ? w.lastIn({ config: cfg(last.partNumber), store: one ? null : storeLink(last.storeNumber), when: stampIn(last.at, lastStore ? storeTimeZone(lastStore) : tz, lang), lasted: lifetime(last, w) })
     : null;
   const others = w.others({ pro: d.others.pro, max: d.others.max, one, configs: 16 });
+  const sentence = <>{verdict}{lastLine ? <> {lastLine}</> : null} {others}</>;
+  return { c, storeOf, storeLink, cfg, tz, nowStamp, verdict, sentence };
+}
+
+/**
+ * The verdict alone, for the line straight under a page's H1 (owner 2026-11-18: the first words after the title are
+ * the answer, "Not in stock as of …: none of the 4 Apple Stores in Las Vegas lists an iPhone Duo for pickup"). The page
+ * then renders DuoNow with `verdictAbove`, so the sentence is on the page once.
+ */
+export function DuoVerdict(props: Pick<DuoNowProps, "d" | "label" | "name" | "one" | "stores" | "country"> & { className?: string }) {
+  const lang = pageLocale().lang;
+  const w = t().modules.duoNow;
+  return <p className={props.className ?? "mt-3 max-w-3xl text-lg leading-relaxed text-ink-2"} data-verdict>{verdictOf(props, lang, w).sentence}</p>;
+}
+
+export function DuoNowView({ d, label, name, one = false, stores, country = "us", restockTimesHref, alertHref, bare = false, verdictAbove = false, stats }: DuoNowProps & { stats: ServiceStats | null }) {
+  const loc = pageLocale();
+  const lang = loc.lang;
+  const D = t();
+  const w = D.modules.duoNow;
+  // Localised formats shared with the restock-times pages ("9–11 AM" / "9–11時").
+  const F = D.views.restockTimes.fmt;
+  const { c, storeOf, storeLink, cfg, tz, nowStamp, verdict, sentence } = verdictOf({ d, label, name, one, stores, country }, lang, w);
   const evidence = evidenceLine(d, { one, name, w, stampNode: d.checkedAt ? <time dateTime={d.checkedAt}>{nowStamp}</time> : null });
 
   /* Key facts, method */
@@ -243,7 +262,7 @@ export function DuoNowView({ d, label, name, one = false, stores, country = "us"
   const body = (
     <>
       <p className="eyebrow">{w.eyebrow(label)}</p>
-      <p className="mt-2 max-w-3xl text-lg leading-relaxed text-ink-2">{verdict}{lastLine ? <> {lastLine}</> : null} {others}</p>
+      {!verdictAbove && <p className="mt-2 max-w-3xl text-lg leading-relaxed text-ink-2">{sentence}</p>}
       <p className="mt-2 max-w-3xl text-sm text-ink-3">{evidence}</p>
       {facts.length > 0 && (
         <div className="pane-2 mt-4 max-w-3xl p-4">

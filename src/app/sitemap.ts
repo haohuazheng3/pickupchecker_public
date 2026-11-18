@@ -50,7 +50,7 @@ export function countryEntries(cc: Exclude<CountryCode, "us">, base: string, now
  * The iPhone Duo question pages (seo.md §13): one answer page per question people put to search and answer
  * engines. Their numbers are live, so they change with the restock log.
  */
-export const QUESTION_PAGES = ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock", "/iphone-duo-back-in-stock", "/iphone-duo-stock-checker", "/where-to-buy-iphone-duo", "/iphone-duo-stock-api"] as const;
+export const QUESTION_PAGES = ["/iphone-duo-restock-times", "/iphone-duo-sell-out-times", "/iphone-duo-stock-alerts", "/iphone-duo-near-me", "/which-iphone-duo-restocks-most", "/apple-store-pickup-availability-explained", "/how-to-grab-an-iphone-duo-restock", "/iphone-duo-back-in-stock", "/iphone-duo-stock-checker", "/where-to-buy-iphone-duo", "/iphone-duo-stock-api", "/iphone-duo-restock-alert-app"] as const;
 
 /**
  * The proof pages (2026-11-09): the live service report (its figures change every hour) and the dated comparison of

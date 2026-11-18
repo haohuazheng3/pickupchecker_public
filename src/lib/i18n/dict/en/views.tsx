@@ -82,6 +82,11 @@ export interface RestockTimesView extends RestockTimesMeta {
   alert: string;
   logHref: string;
   storesHref: string;
+  /**
+   * "Does Apple restock the iPhone Duo every day?" (owner 2026-11-18): full days (today counts only once it has a
+   * restock) with at least one restock, and the steadiest store by name in the page's language. Null before two days.
+   */
+  everyDay?: { withRestock: number; full: number; best: { name: string; days: number } | null; medianDays: number } | null;
 }
 
 const rtN = (x: number) => x.toLocaleString("en-US");
@@ -97,6 +102,24 @@ const rtRegions = (x: { us: boolean; c: Country }) => (x.us ? "states" : (x.c.re
 const rtYet = (x: RestockTimesMeta) => (x.t.n > 0 ? "" : " yet");
 /** "in the UK", or the place of a place page: "in Greater London". */
 const rtIn = (x: { c: Country; place?: RestockTimesPlace }) => x.place?.inName ?? x.c.inName;
+/**
+ * The direct answer to "Does Apple restock the iPhone Duo every day?": somewhere in the scope (first sentence) and at
+ * a single store (second; left out for a one-store scope). Empty strings before there are two tracked days.
+ */
+function everyDayText(x: RestockTimesView): { scope: string; store: string } {
+  const e = x.everyDay;
+  if (!e || x.t.n === 0) return { scope: "", store: "" };
+  const where = rtIn(x);
+  const since = longDate(x.t.since);
+  const scope = e.withRestock === e.full
+    ? `Every day so far, somewhere ${where}: all ${e.full} full days since ${since} had at least one confirmed restock`
+    : `${e.withRestock / e.full >= 0.6 ? "Most days, not every day" : "Not every day"}: ${e.withRestock} of the ${e.full} full days since ${since} had at least one confirmed restock`;
+  const store = x.one || !e.best ? ""
+    : e.best.days >= x.tracked ? `One store, ${e.best.name}, has had a restock on all ${x.tracked} days; the median store ${where} on ${e.medianDays}.`
+    : `No single store does: the steadiest, ${e.best.name}, had a restock on ${e.best.days} of the ${x.tracked} days, and the median store ${where} on ${e.medianDays}.`;
+  return { scope, store };
+}
+
 /** What the "where" section breaks a page down by: the country's regions, a region's cities, a city's stores. */
 const rtUnit = (x: { us: boolean; c: Country; place?: RestockTimesPlace }) => (x.place ? (x.place.kind === "region" ? "city" : "store") : rtRegion(x));
 const rtUnits = (x: { us: boolean; c: Country; place?: RestockTimesPlace }) => (x.place ? (x.place.kind === "region" ? "cities" : "stores") : rtRegions(x));
@@ -462,6 +485,7 @@ export const views = {
         { q: `When does Apple restock the iPhone Duo ${where}?`, a: t.n > 0 && pattern
           ? `Mostly in the morning: ${rtPct(w.share)} of the ${rtN(t.n)} confirmed restocks since ${longDate(t.since)} landed between ${window} in the store's local time, and ${rtPct(hourShare(t.byHour, 8, 12))} between 8 AM and noon. Apple publishes no schedule; this is PickupChecker's observed pattern, updated about every five minutes.`
           : `Apple publishes no schedule, and PickupChecker has logged ${plural(t.n, "confirmed restock")} ${where} since ${longDate(t.since)}${t.days ? ` on ${plural(t.days, "day")}` : ""}. A usual hour is stated once there are ${PATTERN_MIN} restocks over ${PATTERN_MIN_DAYS} different days, and this page fills in by itself.` },
+        ...(x.everyDay && t.n > 0 ? [{ q: `Does Apple restock the iPhone Duo every day${us && !x.place ? "" : ` ${where}`}?`, a: `${everyDayText(x).scope}.${everyDayText(x).store ? ` ${everyDayText(x).store}` : ""} Apple publishes no restock schedule; these are PickupChecker's confirmed restocks, updated about every five minutes, so the [day-by-day table](#day-by-day) shows which days${x.one ? "" : " and the [store table](#where) which stores"}.` }] : []),
         { q: `Does Apple restock the iPhone Duo on weekends${us ? "" : ` ${where}`}?`, a: t.n > 0
           ? `${weekend > 0 ? "Yes so far" : "Not yet in our data"}: ${plural(weekend, "restock")} fell on a Saturday or Sunday out of ${rtN(t.n)} (${rtPct(weekend / t.n)}). ${t.peakWeekday != null ? `${WEEKDAYS[t.peakWeekday]} has been the busiest weekday.` : `Which weekday is busiest we do not state until the data spans ${WEEKDAY_MIN_SPAN} days; ours covers ${tracked}.`}`
           : `No weekend data ${where} yet; the day-by-day table on this page fills in as restocks are confirmed.` },
@@ -518,6 +542,9 @@ export const views = {
       const { t, tracked, one } = x;
       return t.n > 0 && tracked === 1 ? (
         <b>One day of tracking so far, {dateLabel(t.daily[t.daily.length - 1]?.date ?? t.since)}, with {rtN(t.n)} confirmed restocks{one ? "" : ` at ${plural(t.stores, "store")}`}.</b>
+      ) : t.n > 0 && x.everyDay ? (
+        // The direct answer to "Does Apple restock the iPhone Duo every day?" (owner 2026-11-18): the scope, then one store.
+        <><b>{everyDayText(x).scope}{t.peakWeekday != null ? `, and ${WEEKDAYS[t.peakWeekday]} has been the busiest weekday` : ""}.</b>{everyDayText(x).store ? ` ${everyDayText(x).store}` : ""}</>
       ) : t.n > 0 ? (
         <b>{t.days === tracked ? `Every day we have tracked, ${t.days} of ${t.days},` : `${t.days} of the ${tracked} days since ${longDate(t.since)}`} had at least one confirmed restock{t.peakWeekday != null ? `, and ${WEEKDAYS[t.peakWeekday]} has been the busiest weekday` : ""}.</b>
       ) : (

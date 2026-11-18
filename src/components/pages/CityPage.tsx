@@ -30,7 +30,7 @@ import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
 import { duoRestockTimesAt, restockTimesPath } from "@/lib/content/restockTimes";
 import { alertsSentAt, duoNowFrom } from "@/lib/content/duoNow";
-import { DuoNow } from "@/components/restocks/DuoNow";
+import { DuoNow, DuoVerdict } from "@/components/restocks/DuoNow";
 import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { sellouts } from "@/lib/stock/sellouts";
 import { DailyBars } from "@/components/restocks/DailyBars";
@@ -160,6 +160,8 @@ export async function CityPage({ country, params: p }: { country: Country; param
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="display text-3xl sm:text-5xl">{title}</h1>
+          {/* The answer straight under the title (owner 2026-11-18); the block below opens with its evidence. */}
+          <DuoVerdict d={d.now} label={G.inPlace(cname)} name={cname} stores={stores} country={cc} />
           <p className="mt-2 text-sm text-ink-3">{CT.counts(stores.length)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -168,7 +170,7 @@ export async function CityPage({ country, params: p }: { country: Country; param
         </div>
       </div>
       {/* The conclusion first (lib/content/duoNow.ts). */}
-      <div className="mt-5"><DuoNow d={d.now} label={G.inPlace(cname)} name={cname} stores={stores} country={cc} restockTimesHref={!d.thin ? restockTimesPath(c.state, c.name, cc) : null} alertHref={alert} /></div>
+      <div className="mt-5"><DuoNow d={d.now} label={G.inPlace(cname)} name={cname} stores={stores} country={cc} restockTimesHref={!d.thin ? restockTimesPath(c.state, c.name, cc) : null} alertHref={alert} verdictAbove /></div>
       <AlertPanelFor href={alert} summary={G.panelPick(cname)} country={cc} />
 
       <div className="mt-6"><Last24Hours data={d.recent} label={G.inPlace(cname)} stores={stores} country={cc} stock={d.stock} lastBefore={d.copy.duo.lastRestock} alert={alert} compact /></div>

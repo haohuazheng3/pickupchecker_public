@@ -31,6 +31,8 @@ export const TOP_LEVEL: ReadonlySet<string> = new Set([
   "iphone-duo-restock-times", "iphone-duo-sell-out-times", "iphone-duo-stock-alerts", "iphone-duo-near-me", "which-iphone-duo-restocks-most", "apple-store-pickup-availability-explained", "how-to-grab-an-iphone-duo-restock",
   // The phrasing pages (docs/research.md §8.3 C): the words people type when they do not know a tracker exists.
   "iphone-duo-back-in-stock", "iphone-duo-stock-checker", "where-to-buy-iphone-duo",
+  // "Is there an app that alerts me when the iPhone Duo is back in stock?" (owner 2026-11-18, docs/research.md §9).
+  "iphone-duo-restock-alert-app",
   "research", "blog", "opengraph-image", "_not-found", "icons", "img", "vendor", "zip",
   "iphone-duo-stock-api",
   // The proof pages (2026-11-09): the live service report and the dated tracker comparison.

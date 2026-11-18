@@ -29,7 +29,7 @@ import { RestockFeed } from "@/components/restocks/RestockFeed";
 import { RestockClock } from "@/components/restocks/RestockClock";
 import { duoRestockTimesAt, restockTimesPath } from "@/lib/content/restockTimes";
 import { alertsSentAt, duoNowFrom } from "@/lib/content/duoNow";
-import { DuoNow } from "@/components/restocks/DuoNow";
+import { DuoNow, DuoVerdict } from "@/components/restocks/DuoNow";
 import { SellOutTimes } from "@/components/restocks/SellOutTimes";
 import { sellouts } from "@/lib/stock/sellouts";
 import { DailyBars } from "@/components/restocks/DailyBars";
@@ -153,6 +153,8 @@ export async function RegionPage({ country: c, params: p }: { country: Country; 
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="display text-3xl sm:text-5xl">{title}</h1>
+          {/* The answer straight under the title (owner 2026-11-18); the block below opens with its evidence. */}
+          <DuoVerdict d={d.now} label={G.inPlace(name)} name={name} stores={stores} country={cc} />
           <p className="mt-2 text-sm text-ink-3">{R.counts(stores.length, cities.length)}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">{cities.map((x) => <Link key={x.slug} href={cityPath(x.state, x.name, cc)} className="chip px-3 py-1.5 text-xs">{N.city(x.name)}<span className="text-ink-3"> · {x.stores.length}</span></Link>)}</div>
         </div>
@@ -163,7 +165,7 @@ export async function RegionPage({ country: c, params: p }: { country: Country; 
       </div>
       {/* The conclusion first (lib/content/duoNow.ts): in stock or not as of now, the last time it was, the pattern since
           tracking began, the last three restocks — what an answer engine lifts whole. */}
-      <div className="mt-5"><DuoNow d={d.now} label={G.inPlace(name)} name={name} stores={stores} country={cc} restockTimesHref={restockTimesPath(s.name, undefined, cc)} alertHref={alert} /></div>
+      <div className="mt-5"><DuoNow d={d.now} label={G.inPlace(name)} name={name} stores={stores} country={cc} restockTimesHref={restockTimesPath(s.name, undefined, cc)} alertHref={alert} verdictAbove /></div>
       <AlertPanelFor href={alert} summary={G.panelPick(name)} country={cc} />
 
       {/* The answer to "has the Duo restocked anywhere in {state} in the last 24 hours, and which configuration?" comes before the matrix. */}

@@ -76,6 +76,11 @@ export interface RestockTimes {
   sellout: SelloutFacts | null;
   /** Other trackers' reports for the days before `since` (launch week), most recent last. */
   reports: DayRow[];
+  /**
+   * "Does Apple restock it every day?" at store level: the scope's median store's days with a restock (stores with
+   * none count as 0) and the store with the most such days (ties: more restocks). Absent on an empty read.
+   */
+  storeDays?: { median: number; best: { storeNumber: string; days: number } | null };
   /** The read failed: placeholders, not "nothing happened". */
   unknown?: boolean;
 }
@@ -213,6 +218,13 @@ export function restockTimesFrom(cc: CountryCode, rows: SlotRow[], pairSecs: num
     .map(([storeNumber, a]) => ({ storeNumber, restocks: a.restocks, days: a.dates.size, peakHour: a.restocks >= PATTERN_MIN && a.dates.size >= PATTERN_MIN_DAYS ? argmax(a.hours) : null, lastAt: a.lastAt }))
     .sort((a, b) => b.restocks - a.restocks || a.lastAt.localeCompare(b.lastAt))
     .slice(0, scope ? stores.length : 12);
+
+  const perStore = stores.map((s) => store.get(s.storeNumber)?.dates.size ?? 0).sort((a, b) => a - b);
+  const steadiest = [...store.entries()].sort(([, a], [, b]) => b.dates.size - a.dates.size || b.restocks - a.restocks)[0];
+  out.storeDays = {
+    median: perStore.length ? perStore[Math.floor((perStore.length - 1) / 2)] : 0,
+    best: steadiest ? { storeNumber: steadiest[0], days: steadiest[1].dates.size } : null,
+  };
 
   out.drops = [...slot.entries()].map(([at, a]) => ({ at, stores: a.stores.size, restocks: a.restocks })).sort((a, b) => b.stores - a.stores || b.restocks - a.restocks || a.at.localeCompare(b.at)).slice(0, 6);
 

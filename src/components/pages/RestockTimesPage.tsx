@@ -31,7 +31,7 @@ import { REPORT_SOURCES } from "@/lib/restockReports";
 import { englishLocale, pathInLocale, type Lang, type Locale } from "@/lib/i18n/locales";
 import { dict } from "@/lib/i18n/dict";
 import { pageLocale, t as dictT } from "@/lib/i18n/server";
-import { cityLabel, colorLabel, configLabel, countryLabel, regionLabel } from "@/lib/i18n/places";
+import { appleStoreLabel, cityLabel, colorLabel, configLabel, countryLabel, regionLabel } from "@/lib/i18n/places";
 import type { RestockTimesPlace, RestockTimesView } from "@/lib/i18n/dict/en/views";
 import { alternatesIn, hreflangFor } from "./shared";
 import { restockPlaces } from "./PlaceRestockTimesPage";
@@ -193,11 +193,17 @@ export async function RestockTimesPage({ country: c, scope }: { country: Country
   const weekend = t.byWeekday[0] + t.byWeekday[6];
   const sell = t.sellout;
   const latest = t.latest && latestStore ? { config: cfg(t.latest.partNumber), store: latestStore, at: t.latest.at } : null;
+  // "Does Apple restock it every day?": full days only (today counts once it has a restock), and the steadiest store.
+  const fullDays = t.daily.filter((d) => d.restocks > 0 || !today || d.date !== today.date);
+  const steadiest = t.storeDays?.best ? storeByNumber(t.storeDays.best.storeNumber) : undefined;
+  const everyDay = t.n > 0 && fullDays.length >= 2 && t.storeDays
+    ? { withRestock: fullDays.filter((d) => d.restocks > 0).length, full: fullDays.length, best: steadiest && t.storeDays.best ? { name: appleStoreLabel(steadiest, lang), days: t.storeDays.best.days } : null, medianDays: t.storeDays.median }
+    : null;
 
   // Every sentence below reads its numbers from here (the dictionary's RestockTimesView).
   const x: RestockTimesView = {
     c, t, w, pattern, us, one, tracked, stores: stores.length, duoNow, weekend, sell,
-    recent: { restocks: recent.restocks, stores: recent.stores }, configs: items.length, pairs, storageRatio, reportNames, alert, logHref, storesHref,
+    recent: { restocks: recent.restocks, stores: recent.stores }, configs: items.length, pairs, storageRatio, reportNames, alert, logHref, storesHref, everyDay,
     ...(place ? { place } : {}),
   };
 

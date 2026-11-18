@@ -83,6 +83,18 @@ export function isIndexedProductPage(product: Pick<Product, "slug" | "kind">, pl
   return product.kind !== "config" && !NOT_INDEXED_PRODUCTS.has(product.slug);
 }
 
+/**
+ * Open to answer engines, closed to Google (owner 2026-11-18, docs/research.md §9): the iPhone Duo model page of a
+ * region (US state) or a two-plus-store city, in every country and language, when the page is its own canonical (a
+ * region that is one city or one store, or the whole country, is not). These are the pages answer engines want for
+ * "Is the iPhone Duo in stock in Las Vegas?" and competitors win with; Google keeps the 2026-10-30 rule (the /stores
+ * page of a place is the one Google-indexed page for it). They carry `robots: index` + `googlebot: noindex`, robots.txt
+ * opens them to the named AI and Bing groups only (AI_OPEN_PREFIXES), and /sitemap-places.xml lists them for Bing.
+ */
+export function isAiOpenProductPage(product: Pick<Product, "model" | "kind">, place: Pick<Place, "level">, canonicalSelf: boolean): boolean {
+  return product.model === "duo" && product.kind === "model" && (place.level === "state" || place.level === "city") && canonicalSelf;
+}
+
 export function productBySlug(slug: string): Product | undefined {
   return BY_SLUG.get(slug);
 }
