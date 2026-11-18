@@ -85,8 +85,15 @@ function Explain({ p, d }: { p: PushState; d: T }) {
     // "Off" must read as off: "you're in the app, restocks land here in seconds" over an Off pill left a paying
     // user believing they were set while every alert went to their email (FlowGlance, 2026-11-02).
     case "ready": return <B text={p.platform === "ios" ? e.readyIos : p.standalone ? e.readyDevice : e.readyBrowser} />;
-    case "on": return <>{e.on}</>;
+    // "On" also says where the alerts stop going: a desktop member read the email going quiet as a broken account
+    // (2026-11-18), and a computer only shows a push while it is awake.
+    case "on": return <>{[e.on, p.platform === "desktop" ? e.onComputer : "", e.onEmail].filter(Boolean).reduce(joinSentences)}</>;
   }
+}
+
+/** Sentences in a row: CJK ones end in a full-width stop and take no space after it. */
+function joinSentences(a: string, b: string): string {
+  return /[。！？]$/.test(a) ? a + b : `${a} ${b}`;
 }
 
 function Elsewhere({ p, label, d }: { p: PushState; label: string; d: T }) {

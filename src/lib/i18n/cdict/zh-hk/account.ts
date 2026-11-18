@@ -36,6 +36,8 @@ export const account: CDict["account"] = {
       readyDevice: "這部裝置的通知已關閉，所以提醒暫時會寄到你的電郵。按**開啟通知**，提醒便會在幾秒內送到這裏。",
       readyBrowser: "這個瀏覽器的通知已關閉，所以提醒暫時會寄到你的電郵。按**開啟通知**，提醒便會在幾秒內送到這裏。",
       on: "補貨會在幾秒內送到這裏，即使 App 已關閉。",
+      onComputer: "電腦只會在開機、未進入睡眠時顯示提醒，建議手機也一併開啟。",
+      onEmail: "只要有裝置開啟了通知，提醒便不會另外寄到你的電郵。",
     },
     elsewhere: {
       needsInstall: "提醒會發送到你的{label}。iPhone 上的 Safari 無法顯示通知，主畫面 App 可以。",

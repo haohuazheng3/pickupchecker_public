@@ -39,6 +39,8 @@ export const account: CDict["account"] = {
       readyDevice: "這台裝置還沒開啟，所以目前通知會寄到你的 Email。點 **開啟通知**，通知就會在幾秒內送到這裡。",
       readyBrowser: "這個瀏覽器還沒開啟，所以目前通知會寄到你的 Email。點 **開啟通知**，通知就會在幾秒內送到這裡。",
       on: "就算 App 沒開，補貨通知也會在幾秒內送到這裡。",
+      onComputer: "電腦只有在開機、沒有休眠時才會顯示通知，建議手機也一起開啟。",
+      onEmail: "只要有裝置開著通知，提醒就不會另外寄到 Email。",
     },
     elsewhere: {
       needsInstall: "通知會送到：{label}。iPhone 上的 Safari 無法顯示通知，主畫面 App 才可以。",
