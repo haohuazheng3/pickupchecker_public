@@ -3,7 +3,7 @@
  * tree, each native version): /sitemap-store-products/{tree}.xml. About 40,000 pages in all, split so no file nears the
  * 50,000-URL / 50 MB sitemap limit or a function's response limit (the US file is about 17,500 URLs).
  */
-import { TREE_IDS } from "@/lib/seo/aiOpen";
+import { TREE_IDS } from "@/lib/seo/productPages";
 import { sitemapIndex } from "@/lib/seo/sitemapXml";
 
 export const revalidate = 86400;

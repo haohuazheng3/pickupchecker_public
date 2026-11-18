@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
-import { TREE_IDS, aiOpenEntries, aiOpenPlaces, placeProductEntries, treeProductEntries } from "@/lib/seo/aiOpen";
-import { isAiOpenProductPage, productBySlug, resolvePlace, statePlace, cityPlace } from "@/lib/seo/products";
+import { NAMED_AGENTS } from "@/app/robots";
+import { TREE_IDS, duoPlaceEntries, placeProductEntries, treeProductEntries } from "@/lib/seo/productPages";
+import { resolvePlace } from "@/lib/seo/products";
 import { SITEMAPS } from "@/lib/gsc";
 
 /** Google's robots.txt matching (as in robots.test.ts): longest matching rule wins, allow wins a tie. */
@@ -12,17 +13,17 @@ function allowed(rules: { allow: string[]; disallow: string[] }, url: string): b
   return best(rules.allow) >= best(rules.disallow);
 }
 
-describe("product pages: every one indexable for search engines, the answer engines on the Duo places (owner 2026-11-18)", () => {
+describe("product pages: every one listed in a sitemap and open to every crawler (owner 2026-11-18)", () => {
   const before = process.env.NEXT_PUBLIC_INDEXABLE;
   beforeAll(() => { process.env.NEXT_PUBLIC_INDEXABLE = "1"; });
   afterAll(() => { process.env.NEXT_PUBLIC_INDEXABLE = before; });
   const group = (ua: string) => {
     const r = robots().rules;
-    const g = (Array.isArray(r) ? r : [r]).find((x) => x.userAgent === ua)!;
+    const g = (Array.isArray(r) ? r : [r]).find((x) => (Array.isArray(x.userAgent) ? x.userAgent.includes(ua) : x.userAgent === ua))!;
     const list = (v: string | string[] | undefined) => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
     return { allow: list(g.allow), disallow: list(g.disallow) };
   };
-  const duo = aiOpenEntries().map((e) => e.path);
+  const duo = duoPlaceEntries().map((e) => e.path);
   const places = placeProductEntries().map((e) => e.path);
   const us = TREE_IDS.find((t) => t.id === "us")!;
   const stores = treeProductEntries(us, "store").map((e) => e.path);
@@ -37,15 +38,10 @@ describe("product pages: every one indexable for search engines, the answer engi
   });
 
   it("lists only pages that are their own canonical", () => {
-    const d = productBySlug("iphone-duo")!;
-    for (const p of aiOpenPlaces("us")) {
-      const r = resolvePlace(p.segments);
-      expect(r && !("redirect" in r), p.segments.join("/")).toBe(true);
+    for (const path of duo.filter((p) => p.startsWith("/stock/"))) {
+      const r = resolvePlace(path.split("/").slice(3));
+      expect(r && !("redirect" in r), path).toBe(true);
     }
-    const nv = statePlace("Nevada")!;
-    expect(duo.includes("/stock/iphone-duo/nevada")).toBe(new Set(nv.stores.map((s) => s.city)).size > 1);
-    expect(isAiOpenProductPage(d, cityPlace("Nevada", "Las Vegas")!, true)).toBe(true);
-    expect(isAiOpenProductPage(productBySlug("iphone-duo-256gb")!, cityPlace("Nevada", "Las Vegas")!, true)).toBe(false);
   });
 
   it("/sitemap-places.xml: every product × region/city, Duo first, no duplicates; store level in its own files", () => {
@@ -58,17 +54,13 @@ describe("product pages: every one indexable for search engines, the answer engi
     expect(new Set(stores).size).toBe(stores.length);
   });
 
-  it("robots.txt: Google and Bing crawl every listed product page; the answer engines only the Duo places", () => {
-    for (const ua of ["*", "Bingbot"]) {
+  it("robots.txt: Google, Bing and every named AI crawler may fetch every listed product page", () => {
+    // Every named crawler gets exactly the rules of "*", so checking two groups page by page covers them all.
+    for (const ua of NAMED_AGENTS) expect(group(ua), ua).toEqual(group("*"));
+    for (const ua of ["*", "OAI-SearchBot"]) {
       const g = group(ua);
       expect([...places, ...stores.slice(0, 2000)].filter((u) => !allowed(g, u)), ua).toEqual([]);
-    }
-    for (const ua of ["OAI-SearchBot", "ChatGPT-User", "GPTBot", "PerplexityBot", "ClaudeBot"]) {
-      const g = group(ua);
-      expect(duo.filter((u) => !allowed(g, u)), ua).toEqual([]);
-      for (const u of ["/stock/iphone-duo/new-york/new-york/fifthavenue", "/stock/iphone-duo-1tb/new-york/new-york", "/stock/iphone-18-pro/california", "/map?model=duo", "/admin"]) {
-        expect(allowed(g, u), `${ua} ${u}`).toBe(false);
-      }
+      for (const u of ["/map?model=duo", "/restocks?model=all", "/admin", "/api/search-index"]) expect(allowed(g, u), `${ua} ${u}`).toBe(false);
     }
     const r = robots();
     expect(r.sitemap).toEqual(["https://pickupchecker.com/sitemap.xml", "https://pickupchecker.com/sitemap-places.xml", "https://pickupchecker.com/sitemap-store-products.xml"]);

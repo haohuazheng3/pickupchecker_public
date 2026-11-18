@@ -1,9 +1,9 @@
 /**
  * /sitemap-places.xml: every product × region (US state) and two-plus-store city page, in every country and language,
- * the iPhone Duo pages first (lib/seo/aiOpen.ts). Listed in robots.txt and submitted to Google and Bing since every
+ * the iPhone Duo pages first (lib/seo/productPages.ts). Listed in robots.txt and submitted to Google and Bing since every
  * product page became indexable (owner 2026-11-18). lastmod = the latest real availability event at the place's stores.
  */
-import { placeProductEntries } from "@/lib/seo/aiOpen";
+import { placeProductEntries } from "@/lib/seo/productPages";
 import { latestByStore, urlset } from "@/lib/seo/sitemapXml";
 
 export const revalidate = 3600;

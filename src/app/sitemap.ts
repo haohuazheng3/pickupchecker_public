@@ -88,7 +88,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Product pages: the national page of every storage size, colour and exact configuration (the models are above).
   // Every product page is indexable since 2026-11-18 (owner: "所有页面都对谷歌 index"); the place-level ones are in
-  // /sitemap-places.xml and /sitemap-store-products.xml (lib/seo/aiOpen.ts), which robots.txt lists next to this one.
+  // /sitemap-places.xml and /sitemap-store-products.xml (lib/seo/productPages.ts), which robots.txt lists next to this one.
   const products: MetadataRoute.Sitemap = PRODUCTS.filter((p) => p.kind !== "model").map((p) => ({ url: `${base}${productPath(p, US)}`, lastModified: now, changeFrequency: "hourly" as const, priority: 0.5 }));
   const countries = INTL_CODES.flatMap((cc) => countryEntries(cc, base, now, latestOf));
   // Each country's pages in its own languages (docs/i18n.md §6): the same set under /{lang}-{cc}.

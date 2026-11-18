@@ -33,7 +33,7 @@ export const TOP_LEVEL: ReadonlySet<string> = new Set([
   "iphone-duo-back-in-stock", "iphone-duo-stock-checker", "where-to-buy-iphone-duo",
   // "Is there an app that alerts me when the iPhone Duo is back in stock?" (owner 2026-11-18, docs/research.md §9).
   "iphone-duo-restock-alert-app",
-  // The product × store sitemaps, one file per tree (/sitemap-store-products/{tree}.xml, lib/seo/aiOpen.ts).
+  // The product × store sitemaps, one file per tree (/sitemap-store-products/{tree}.xml, lib/seo/productPages.ts).
   "sitemap-store-products",
   "research", "blog", "opengraph-image", "_not-found", "icons", "img", "vendor", "zip",
   "iphone-duo-stock-api",

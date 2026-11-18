@@ -61,16 +61,6 @@ export const PRODUCTS: Product[] = MODELS.flatMap((m) => [
 ]);
 const BY_SLUG = new Map(PRODUCTS.map((p) => [p.slug, p]));
 
-/**
- * The pages the named answer-engine crawlers may fetch (robots.txt, lib/seo/aiOpen.ts): the iPhone Duo model page of
- * a region (US state) or a two-plus-store city, in every country and language, when it is its own canonical. Since
- * 2026-11-18 every product page is indexable for Google and Bing (owner: "所有页面都对谷歌 index"); the answer-engine
- * groups stay on this set until the database load of the wider crawl has been watched.
- */
-export function isAiOpenProductPage(product: Pick<Product, "model" | "kind">, place: Pick<Place, "level">, canonicalSelf: boolean): boolean {
-  return product.model === "duo" && product.kind === "model" && (place.level === "state" || place.level === "city") && canonicalSelf;
-}
-
 export function productBySlug(slug: string): Product | undefined {
   return BY_SLUG.get(slug);
 }

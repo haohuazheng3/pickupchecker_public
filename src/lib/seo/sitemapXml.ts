@@ -1,7 +1,7 @@
-/** Hand-written sitemap files (the product pages beyond /sitemap.xml, lib/seo/aiOpen.ts): XML and lastmod. */
+/** Hand-written sitemap files (the product pages beyond /sitemap.xml, lib/seo/productPages.ts): XML and lastmod. */
 import { INTL_CODES } from "@/lib/apple/countries";
 import { latestEventPerStore } from "@/lib/stock/queries";
-import type { PageEntry } from "./aiOpen";
+import type { PageEntry } from "./productPages";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const HEADERS = { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400" };

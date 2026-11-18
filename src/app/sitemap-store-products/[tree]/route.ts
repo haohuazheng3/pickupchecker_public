@@ -1,5 +1,5 @@
 /** /sitemap-store-products/{tree}.xml: every product × store page of one tree (see /sitemap-store-products.xml). */
-import { TREE_IDS, treeProductEntries } from "@/lib/seo/aiOpen";
+import { TREE_IDS, treeProductEntries } from "@/lib/seo/productPages";
 import { latestByStore, urlset } from "@/lib/seo/sitemapXml";
 
 export const revalidate = 3600;

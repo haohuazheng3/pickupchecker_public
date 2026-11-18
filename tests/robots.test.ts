@@ -19,7 +19,7 @@ describe("robots.txt once the site is indexable", () => {
 
   const group = (ua: string) => {
     const r = robots().rules;
-    const g = (Array.isArray(r) ? r : [r]).find((x) => x.userAgent === ua)!;
+    const g = (Array.isArray(r) ? r : [r]).find((x) => (Array.isArray(x.userAgent) ? x.userAgent.includes(ua) : x.userAgent === ua))!;
     const list = (v: string | string[] | undefined) => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
     return { allow: list(g.allow), disallow: list(g.disallow) };
   };
@@ -48,8 +48,8 @@ describe("robots.txt once the site is indexable", () => {
     }
   });
 
-  it("keeps crawlers out of filtered views and private areas; every product page is open to search engines (2026-11-18)", () => {
-    for (const ua of ["*", "Bingbot", "GPTBot"]) {
+  it("keeps crawlers out of filtered views and private areas; every product page is open to every crawler (2026-11-18)", () => {
+    for (const ua of ["*", "Bingbot", "GPTBot", "OAI-SearchBot"]) {
       const g = group(ua);
       for (const u of ["/map?state=CA&model=duo", "/restocks?model=all&state=california", "/admin", "/account", "/api/search-index", "/checkout/success", "/jp/map?model=duo", "/de/restocks?model=all"]) {
         expect(allowed(g, u), `${ua} ${u}`).toBe(false);
@@ -57,9 +57,6 @@ describe("robots.txt once the site is indexable", () => {
     }
     const stock = ["/stock/iphone-duo/california", "/stock/iphone-duo/new-york/new-york/fifthavenue", "/stock/iphone-18-pro-256gb-black/new-york/new-york/fifthavenue",
       "/uk/stock/iphone-duo/greater-london", "/ca/stock/iphone-duo-256gb/ontario/toronto/eatoncentre", "/at/stock/iphone-duo/vienna/vienna/kaerntnerstrasse", "/ja-jp/stock/iphone-duo-1tb/tokyo/tokyo"];
-    for (const ua of ["*", "Bingbot"]) expect(stock.filter((u) => !allowed(group(ua), u)), ua).toEqual([]);
-    // The answer-engine groups: only the iPhone Duo region and city pages below the national level.
-    const ai = group("OAI-SearchBot");
-    expect(stock.filter((u) => allowed(ai, u))).toEqual(["/stock/iphone-duo/california", "/uk/stock/iphone-duo/greater-london"]);
+    for (const ua of ["*", "Bingbot", "OAI-SearchBot", "ChatGPT-User", "GPTBot", "ClaudeBot", "PerplexityBot"]) expect(stock.filter((u) => !allowed(group(ua), u)), ua).toEqual([]);
   });
 });

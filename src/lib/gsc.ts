@@ -26,7 +26,7 @@ async function accessToken(scope = SCOPE): Promise<string> {
 
 /**
  * The sitemaps Search Console is told about (owner 2026-11-18: every product page indexable for Google): the main one
- * and the product sitemaps beyond it (lib/seo/aiOpen.ts). Re-submitted by the daily cron, so a sitemap added here
+ * and the product sitemaps beyond it (lib/seo/productPages.ts). Re-submitted by the daily cron, so a sitemap added here
  * reaches Search Console within a day without anyone handling the service account's key.
  */
 export const SITEMAPS = ["https://pickupchecker.com/sitemap.xml", "https://pickupchecker.com/sitemap-places.xml", "https://pickupchecker.com/sitemap-store-products.xml"];
