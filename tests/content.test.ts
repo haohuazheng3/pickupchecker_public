@@ -14,7 +14,7 @@ import { placePhotos } from "@/content/place-photos";
 import { SALES_TAX } from "@/content/sales-tax";
 import { publicRouteCheck } from "@/lib/seo/routes";
 import { hubFaq } from "@/lib/seo/placeCopy";
-import { NOT_INDEXED_PRODUCTS, PRODUCTS, US, isIndexedProductPage, productBySlug } from "@/lib/seo/products";
+import { PRODUCTS, productBySlug } from "@/lib/seo/products";
 
 /**
  * A site path that renders a page directly: the proxy neither redirects nor 404s it, and every segment
@@ -172,12 +172,10 @@ describe("location pages", () => {
 });
 
 describe("product index scope", () => {
-  it("indexes national product pages except the storage sizes with no opening", () => {
-    for (const slug of NOT_INDEXED_PRODUCTS) expect(productBySlug(slug)?.kind, slug).toBe("storage");
-    expect(isIndexedProductPage(productBySlug("iphone-duo")!, US)).toBe(true);
-    expect(isIndexedProductPage(productBySlug("iphone-18-pro-max-burgundy")!, US)).toBe(true);
-    expect(isIndexedProductPage(productBySlug("iphone-duo-512gb")!, US)).toBe(false);
-    expect(PRODUCTS.filter((p) => (p.kind === "storage" || p.kind === "color") && isIndexedProductPage(p, US))).toHaveLength(14);
+  it("has every model, storage, colour and configuration as a product (all indexable since 2026-11-18)", () => {
+    expect(productBySlug("iphone-duo-512gb")?.kind).toBe("storage");
+    expect(productBySlug("iphone-18-pro-max-burgundy")?.kind).toBe("color");
+    expect(PRODUCTS.filter((p) => p.kind === "model")).toHaveLength(3);
   });
 });
 

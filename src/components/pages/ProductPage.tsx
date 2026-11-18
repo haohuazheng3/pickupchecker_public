@@ -2,8 +2,8 @@
  * One page per product × place, in any country: /stock/{product}/{place…} in the US, /{cc}/stock/… elsewhere.
  * Reads: three cached status reads (one per model and country, shared by every page), the cached place
  * statistics, the restock-hour histogram and the latest changes. The place's country (seo/tree.ts) decides
- * the catalogue, stores and links. Indexed: the US national model/storage/colour pages (seo.md §10) and, in
- * every other country, its three model pages (§12); everything else is noindex, follow.
+ * the catalogue, stores and links. Indexed: every page, at every level (owner 2026-11-18; before, only the national
+ * model/storage/colour pages of seo.md §10, §12).
  */
 import type { Metadata } from "next";
 import { LiveChecked } from "@/components/site/LiveChecked";
@@ -12,7 +12,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { PendingLink as Link } from "@/components/ui/PendingLink";
 import { STORE_INDEX, appleBuyUrl, cityPath, statePath, storePath, appleName, itemFor, placeTarget, mapPath, restocksPath, storesIndexPath } from "@/lib/apple/catalog";
 import { prefixOf, theName, type Country } from "@/lib/apple/countries";
-import { isAiOpenProductPage, isIndexedProductPage, productPath, storePlace, type Place, type Product } from "@/lib/seo/products";
+import { productPath, storePlace, type Place, type Product } from "@/lib/seo/products";
 import { treeOf } from "@/lib/seo/tree";
 import { childPlaces, configGrid, facetsFor, indexStock, lastChecked, nearestWithStock, siblingPlaces, storeLines } from "@/lib/seo/productData";
 import { productJsonLdFor } from "@/lib/seo/productCopy";
@@ -53,7 +53,6 @@ import { pageLocale, t as dictT } from "@/lib/i18n/server";
 import { distance, bidi } from "@/lib/i18n/format";
 import { appleStoreLabel, cityLabel, configLabel, countryLabel, regionLabel, storeLabel } from "@/lib/i18n/places";
 
-const INDEXABLE = process.env.NEXT_PUBLIC_INDEXABLE === "1";
 const BASE = "https://pickupchecker.com";
 
 export type ProductParams = { product: string; place?: string[] };
@@ -87,13 +86,10 @@ const load = cache(async (cc: Country["cc"], slug: string, path: string) => {
   const now = duoPage && times ? duoNowFrom({ stores: place.stores, stock, times, sell, alerts, configsTotal: product.parts.length }) : null;
   const lines = storeLines(ix, product, place.stores);
   const inStock = lines.filter((l) => l.available.length > 0).length;
-  // Index scope (seo.md §10, §12): the national page of a model (US: also a storage size or a color). Every
-  // place-level product page and every exact configuration is noindex, follow: the /stores page of that place
-  // is the one indexed page for "iPhone Duo in <place>", which keeps near-duplicates out of the index.
-  const indexable = isIndexedProductPage(product, place);
-  // …except the iPhone Duo page of a region or city, which answer engines may index and Google may not (products.ts).
-  const aiOpen = !indexable && isAiOpenProductPage(product, place, productPath(product, t.canonicalPlace(place)) === productPath(product, place));
-  return { kind: "page" as const, product, place, ix, lines, inStock, stats, clock, feed, reports, indexable, aiOpen, sell, now };
+  // Index scope: every product page, at every level, in every country (owner 2026-11-18: "所有页面都对谷歌 index";
+  // until then only national model/storage/colour pages were, seo.md §10, §12). The canonical still points a page that
+  // collapses into another (a one-city state, a one-store city) at that page.
+  return { kind: "page" as const, product, place, ix, lines, inStock, stats, clock, feed, reports, sell, now };
 });
 
 /** Another country's model page binds its own titles (seo.md §12). */
@@ -129,7 +125,6 @@ export async function productMetadata(c: Country, p: ProductParams, loc: Locale 
   const languages = d.place.level === "country" && d.product.kind === "model" ? hreflangFor({ model: d.product.slug }, loc) : undefined;
   return {
     title, description, alternates: { canonical, ...(languages ? { languages } : {}) },
-    ...(INDEXABLE && !d.indexable ? { robots: d.aiOpen ? { index: true, follow: true, googleBot: { index: false, follow: true } } : { index: false, follow: true } } : {}),
     openGraph: { type: "website", siteName: "PickupChecker", title, description, url },
   };
 }

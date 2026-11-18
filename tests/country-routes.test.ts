@@ -100,7 +100,8 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
     // 2026-11-08: two of the four decision pages were retired (shortage, channels), so every country has two URLs fewer.
     // 2026-11-08: + the restock-times pages of each region and two-plus-store city with a /stores page of its own
     // (ca 8, uk 9, au 4, de 7, fr 5, it 5, es 3, jp 2, kr 1, ae 3, ch 1, nl 1; none where the country is one place).
-    expect(counts).toEqual({ ca: 54, uk: 67, au: 39, de: 40, fr: 40, it: 37, es: 28, jp: 25, kr: 19, hk: 16, sg: 13, ae: 21, ch: 16, nl: 15, se: 13, tw: 12, at: 10, be: 10 });
+    // 2026-11-18: + every storage, colour and configuration page of the country (65 products − 3 models = 62 each).
+    expect(counts).toEqual({ ca: 116, uk: 129, au: 101, de: 102, fr: 102, it: 99, es: 90, jp: 87, kr: 81, hk: 78, sg: 75, ae: 83, ch: 78, nl: 77, se: 75, tw: 74, at: 72, be: 72 });
     for (const cc of INTL_CODES) for (const slug of ["iphone-duo-restock-times", "which-iphone-duo-restocks-most", "iphone-duo-stock-api"]) expect(per[cc]).toContain(`${base}/${cc}/${slug}`);
   });
   it("lists no URL the proxy would redirect or reject, and every store", () => {
@@ -108,8 +109,8 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
       for (const url of per[cc]) {
         const u = new URL(url);
         expect(publicRouteCheck(u.pathname, u.search), url).toBeNull();
-        // Product pages: the three model pages only (everything else is noindex).
-        if (u.pathname.includes("/stock/") && !u.pathname.includes("stock-api")) expect(u.pathname).toMatch(new RegExp(`^/${cc}/stock/iphone-(duo|18-pro|18-pro-max)$`));
+        // Product pages: national ones only (the place-level ones are in /sitemap-places.xml and /sitemap-store-products.xml).
+        if (u.pathname.includes("/stock/") && !u.pathname.includes("stock-api")) expect(u.pathname).toMatch(new RegExp(`^/${cc}/stock/iphone-[a-z0-9-]+$`));
       }
       for (const s of storesOf(cc)) expect(per[cc]).toContain(`${base}${storePath(s)}`);
     }
@@ -125,8 +126,9 @@ describe("sitemap: every indexable country page, once, and nothing else", () => 
     expect(placePages).toBe(58);
     // …plus the three decision pages of seo.md §16 (the fourth, which-iphone-duo-restocks-most, is one of the eight).
     // …plus the two proof pages of 2026-11-09 (the live service report and the dated tracker comparison).
-    // …plus the restock alert app page of 2026-11-18.
-    expect(us).toHaveLength(356 + 8 + 3 + 3 + placePages + 1 - 3 + 2 + 1); // + the dated research report; − the US pages retired 2026-11-08 (how-to-get, shortage, channels; five-second-checks was the other dated report)
+    // …plus the restock alert app page of 2026-11-18, and the national storage/colour/configuration pages that were
+    // noindex until that day (62 products − the 14 storage/colour pages already listed = 48).
+    expect(us).toHaveLength(356 + 8 + 3 + 3 + placePages + 1 - 3 + 2 + 1 + 48); // + the dated research report; − the US pages retired 2026-11-08 (how-to-get, shortage, channels; five-second-checks was the other dated report)
     expect(us).toContain(`${base}/iphone-duo-restock-alert-app`);
     expect(us).toContain(`${base}/research/iphone-duo-week-2026-11-07`);
     expect(us).toContain(`${base}/service-report`);

@@ -62,34 +62,10 @@ export const PRODUCTS: Product[] = MODELS.flatMap((m) => [
 const BY_SLUG = new Map(PRODUCTS.map((p) => [p.slug, p]));
 
 /**
- * National storage-size pages whose own keyword has no opening (seo.md §10, per-page SERP check of
- * 2026-10-30): the mobile top 10 is Apple, carriers and big retailers, with at most one weak result in
- * the top 5 (SERP-KD 57-88). They stay up for visitors and in the internal links, as noindex, follow,
- * and out of the sitemap. Every other national model, storage and color page is indexed.
- */
-export const NOT_INDEXED_PRODUCTS: ReadonlySet<string> = new Set([
-  "iphone-duo-512gb",
-  "iphone-18-pro-256gb", "iphone-18-pro-512gb", "iphone-18-pro-1tb", "iphone-18-pro-2tb",
-  "iphone-18-pro-max-512gb", "iphone-18-pro-max-1tb", "iphone-18-pro-max-2tb",
-]);
-
-/**
- * The product pages that are indexed: national (US) pages of a model, a storage size or a color, minus the list
- * above. Other countries index their three model pages only (seo.md §12).
- */
-export function isIndexedProductPage(product: Pick<Product, "slug" | "kind">, place: Pick<Place, "level" | "country">): boolean {
-  if (place.level !== "country") return false;
-  if (place.country && place.country !== "us") return product.kind === "model";
-  return product.kind !== "config" && !NOT_INDEXED_PRODUCTS.has(product.slug);
-}
-
-/**
- * Open to answer engines, closed to Google (owner 2026-11-18, docs/research.md §9): the iPhone Duo model page of a
- * region (US state) or a two-plus-store city, in every country and language, when the page is its own canonical (a
- * region that is one city or one store, or the whole country, is not). These are the pages answer engines want for
- * "Is the iPhone Duo in stock in Las Vegas?" and competitors win with; Google keeps the 2026-10-30 rule (the /stores
- * page of a place is the one Google-indexed page for it). They carry `robots: index` + `googlebot: noindex`, robots.txt
- * opens them to the named AI and Bing groups only (AI_OPEN_PREFIXES), and /sitemap-places.xml lists them for Bing.
+ * The pages the named answer-engine crawlers may fetch (robots.txt, lib/seo/aiOpen.ts): the iPhone Duo model page of
+ * a region (US state) or a two-plus-store city, in every country and language, when it is its own canonical. Since
+ * 2026-11-18 every product page is indexable for Google and Bing (owner: "所有页面都对谷歌 index"); the answer-engine
+ * groups stay on this set until the database load of the wider crawl has been watched.
  */
 export function isAiOpenProductPage(product: Pick<Product, "model" | "kind">, place: Pick<Place, "level">, canonicalSelf: boolean): boolean {
   return product.model === "duo" && product.kind === "model" && (place.level === "state" || place.level === "city") && canonicalSelf;
