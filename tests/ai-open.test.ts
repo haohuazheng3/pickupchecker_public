@@ -3,6 +3,7 @@ import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
 import { TREE_IDS, aiOpenEntries, aiOpenPlaces, placeProductEntries, treeProductEntries } from "@/lib/seo/aiOpen";
 import { isAiOpenProductPage, productBySlug, resolvePlace, statePlace, cityPlace } from "@/lib/seo/products";
+import { SITEMAPS } from "@/lib/gsc";
 
 /** Google's robots.txt matching (as in robots.test.ts): longest matching rule wins, allow wins a tie. */
 function allowed(rules: { allow: string[]; disallow: string[] }, url: string): boolean {
@@ -71,6 +72,8 @@ describe("product pages: every one indexable for search engines, the answer engi
     }
     const r = robots();
     expect(r.sitemap).toEqual(["https://pickupchecker.com/sitemap.xml", "https://pickupchecker.com/sitemap-places.xml", "https://pickupchecker.com/sitemap-store-products.xml"]);
+    // The daily cron submits the same list to Search Console.
+    expect(SITEMAPS).toEqual(r.sitemap);
   });
 
   it("/sitemap.xml holds every national product page and none of the place-level ones", async () => {

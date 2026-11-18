@@ -10,18 +10,36 @@ import { db, schema } from "./db";
 export const GSC_SITE = "sc-domain:pickupchecker.com";
 const SCOPE = "https://www.googleapis.com/auth/webmasters.readonly";
 
-async function accessToken(): Promise<string> {
+async function accessToken(scope = SCOPE): Promise<string> {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_B64;
   if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_B64 is not set");
   const sa = JSON.parse(Buffer.from(raw, "base64").toString("utf8")) as { client_email: string; private_key: string };
   const now = Math.floor(Date.now() / 1000);
   const b64u = (x: string) => Buffer.from(x).toString("base64url");
-  const unsigned = `${b64u(JSON.stringify({ alg: "RS256", typ: "JWT" }))}.${b64u(JSON.stringify({ iss: sa.client_email, scope: SCOPE, aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600 }))}`;
+  const unsigned = `${b64u(JSON.stringify({ alg: "RS256", typ: "JWT" }))}.${b64u(JSON.stringify({ iss: sa.client_email, scope, aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600 }))}`;
   const sig = crypto.sign("RSA-SHA256", Buffer.from(unsigned), sa.private_key).toString("base64url");
   const r = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: `${unsigned}.${sig}` }) });
   const j = (await r.json()) as { access_token?: string; error?: string };
   if (!j.access_token) throw new Error(`gsc token: ${j.error ?? r.status}`);
   return j.access_token;
+}
+
+/**
+ * The sitemaps Search Console is told about (owner 2026-11-18: every product page indexable for Google): the main one
+ * and the product sitemaps beyond it (lib/seo/aiOpen.ts). Re-submitted by the daily cron, so a sitemap added here
+ * reaches Search Console within a day without anyone handling the service account's key.
+ */
+export const SITEMAPS = ["https://pickupchecker.com/sitemap.xml", "https://pickupchecker.com/sitemap-places.xml", "https://pickupchecker.com/sitemap-store-products.xml"];
+
+/** PUT every sitemap (idempotent; needs the full webmasters scope). Returns each one's HTTP status. */
+export async function submitSitemaps(): Promise<Record<string, number>> {
+  const tok = await accessToken("https://www.googleapis.com/auth/webmasters");
+  const out: Record<string, number> = {};
+  for (const sm of SITEMAPS) {
+    const r = await fetch(`https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(GSC_SITE)}/sitemaps/${encodeURIComponent(sm)}`, { method: "PUT", headers: { Authorization: `Bearer ${tok}` } });
+    out[sm.replace("https://pickupchecker.com", "")] = r.status;
+  }
+  return out;
 }
 
 interface Row { keys: [string, string, string, string, string]; clicks: number; impressions: number; ctr: number; position: number }
