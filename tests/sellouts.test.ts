@@ -78,3 +78,16 @@ describe("SellOutTimes renders data that went through the data cache", () => {
     expect(html).toContain("fastest · 3 sold-out restocks, 30 d");
   });
 });
+
+describe("cached 30-day lives stay storable (2026-11-19: 4.1 MB was never cached)", async () => {
+  const { unpackLives, DATA_CACHE_ITEM_LIMIT } = await import("@/lib/stock/sellouts");
+  it("unpacks one row per sold-out restock", () => {
+    expect(unpackLives([{ p: "A", s: [30, 61] }, { p: "B", s: [5] }])).toEqual([
+      { part_number: "A", secs: 30 }, { part_number: "A", secs: 61 }, { part_number: "B", secs: 5 },
+    ]);
+  });
+  it("packs a busy US month (40 configurations, 200,000 restocks) well under the data-cache limit", () => {
+    const packed = Array.from({ length: 40 }, (_, i) => ({ p: `MJQ${String(i).padStart(2, "0")}4LL/A`, s: Array.from({ length: 5000 }, (_, j) => (j * 7919) % 86400) }));
+    expect(JSON.stringify(packed).length).toBeLessThan(DATA_CACHE_ITEM_LIMIT * 0.75);
+  });
+});

@@ -94,25 +94,47 @@ function scopeSql(stores: string[] | null, parts: string[] | null) {
   return sql`${storeCond} ${partCond}`;
 }
 
+/** One phone configuration's 30-day "gone by" times, whole seconds rounded up (the cached, compact form). */
+export interface PackedLives { p: string; s: number[] }
+
+/** Next.js refuses to store a data-cache item over 2 MB; the packed lives must stay well under it. */
+export const DATA_CACHE_ITEM_LIMIT = 2 * 1024 * 1024;
+
+/** Pure: the packed per-configuration arrays back to one row per sold-out restock. */
+export function unpackLives(packed: PackedLives[]): { part_number: string; secs: number }[] {
+  const out: { part_number: string; secs: number }[] = [];
+  for (const x of packed) for (const v of x.s) out.push({ part_number: x.p, secs: Number(v) });
+  return out;
+}
+
 /**
  * The 30-day "gone by" times. This is the heavy query: a lead() window over every event in scope (a whole country
  * is tens of thousands of rows). It used to be recomputed on a 60-second cache together with the recent list, and on
  * 2026-11-12 the US whole-country copy alone ran ~3 times a minute at 3–5 s each on linode-1 (one core shared by
  * three sites), about a third of that core: the fast lane slowed and other queries timed out. A 30-day median
  * barely moves in 15 minutes, so it is cached that long; the recent list below stays at 60 s.
+ *
+ * 2026-11-19: the 15-minute cache never held the US whole-country copy. It returned one JSON object per sold-out
+ * restock (83,000 in 30 days, 4.1 MB), Next.js does not store data-cache items over 2 MB ("items over 2MB can not
+ * be cached" on every home-page view), so every view re-ran the 3–7 s window query: ~1,000 times between 00:00 and
+ * 05:00 UTC, and at 01:20–01:40 linode-1 hit 80–90 % CPU and the site's other queries timed out at 2 s. Now
+ * Postgres groups the times into one integer array per configuration (~0.4 MB for the US). Seconds are rounded
+ * up, so "gone within 30 s" (secs <= 30) counts exactly the same restocks; a median or fastest time moves by under
+ * a second at most.
  */
 const cachedLives = unstable_cache(
-  async (stores: string[] | null, parts: string[] | null, days: number): Promise<{ part_number: string; secs: number }[]> => {
+  async (stores: string[] | null, parts: string[] | null, days: number): Promise<PackedLives[]> => {
     const r = await db().execute(sql`
-      select part_number, extract(epoch from next_at - at)::float8 as secs from (
+      select part_number as p, array_agg(ceil(extract(epoch from next_at - at))::int) as s from (
         select part_number, at, kind, lead(kind) over w as next_kind, lead(at) over w as next_at
         from availability_events
         where not first_seen and at > now() - make_interval(days => ${days}) ${scopeSql(stores, parts)}
         window w as (partition by store_number, part_number order by at)
-      ) e where kind = 'restock' and next_kind = 'soldout'`);
-    return (r.rows as { part_number: string; secs: number | string }[]).map((x) => ({ part_number: x.part_number, secs: Number(x.secs) }));
+      ) e where kind = 'restock' and next_kind = 'soldout'
+      group by part_number`);
+    return (r.rows as { p: string; s: (number | string)[] }[]).map((x) => ({ p: x.p, s: x.s.map(Number) }));
   },
-  ["sellouts-lives-v1"],
+  ["sellouts-lives-v2"],
   { revalidate: 900 },
 );
 
@@ -145,7 +167,8 @@ const cachedRecent = unstable_cache(
 );
 
 async function load(stores: string[] | null, parts: string[] | null, days: number, limit: number): Promise<Sellouts> {
-  const [lives, recentRows] = await Promise.all([cachedLives(stores, parts, days), cachedRecent(stores, parts, days, limit)]);
+  const [packed, recentRows] = await Promise.all([cachedLives(stores, parts, days), cachedRecent(stores, parts, days, limit)]);
+  const lives = unpackLives(packed);
   const byModel: Partial<Record<ModelKey, SelloutSummary>> = {};
   for (const m of MODELS) {
     const secs = lives.filter((r) => { const i = PART_INDEX.get(r.part_number); return i && modelKeyFor(i.model) === m.key; }).map((r) => Number(r.secs));
