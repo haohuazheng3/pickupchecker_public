@@ -31,6 +31,15 @@ export function isInAppBrowser(ua: string): boolean {
   return /FBAN|FBAV|Instagram|TikTok|musical_ly|MicroMessenger|Line\/|Snapchat|Twitter|GSA\//i.test(ua ?? "");
 }
 
+/**
+ * A phone or tablet (iOS, Android) shows a push even while locked; a computer only while it is awake, so a member
+ * whose only devices are computers also gets every alert by email (owner, 2026-11-18, after a Mac member read the
+ * quiet inbox as a broken account). `unknown` counts as a computer: an extra email beats a missed restock.
+ */
+export function hasMobileDevice(devices: { platform: string }[]): boolean {
+  return devices.some((d) => d.platform === "ios" || d.platform === "android");
+}
+
 export function platformLabel(p: Platform): string {
   return p === "ios" ? "iPhone / iPad" : p === "android" ? "Android" : p === "desktop" ? "Computer" : "Device";
 }

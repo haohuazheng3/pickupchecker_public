@@ -1,7 +1,7 @@
 /**
  * Turn restock transitions into alerts: a push notification to every device the user turned on,
- * or an email when no device has (email is the fallback, not the default). A member we switched to
- * `users.email_with_push` gets the email as well as the push (see emailPlan).
+ * or an email when no device has (email is the fallback, not the default). A member whose devices are all
+ * computers, or whom we switched to `users.email_with_push`, gets the email as well as the push (see emailPlan).
  *
  *  match: active, unpaused rules of the same store × exact configuration (model, storage, colour)
  *  dedupe: one notification per (watch, event) — unique index, and checked before sending
@@ -23,6 +23,7 @@ import { recordError, errorMessage } from "../errors";
 import { enabledSubscriptionsFor, notifyPushStopped, pushConfigured, sendPushNudge, sendPushToRows } from "../push/server";
 import { logOps } from "../ops";
 import { restockPayload } from "../push/payload";
+import { hasMobileDevice } from "../push/platform";
 import { coveredWatchIds, effectivePlan } from "../plans";
 import type { Transition } from "./ingest";
 import { langOfUser } from "../i18n/notify";
@@ -115,13 +116,13 @@ export async function drainNotifications(timeoutMs = 15_000, settleMs = 1_000): 
  */
 /**
  * Which of a member's alerts go out by email, and which of those are recorded as email notifications. Email is the
- * fallback (no device, or every push to that store failed). A member we set to `email_with_push` (by hand, on request:
- * a Mac member who also wanted the email, 2026-11-18) gets every alert by email as well, but only the fallback ones
- * are recorded: a pushed alert already holds that rule × event's notification row (unique on watch, event), and a
- * second row would count twice toward the hourly flood guard.
+ * fallback (no device, or every push to that store failed). `emailToo` members get every alert by email as well:
+ * those whose devices are all computers (see hasMobileDevice) and those we set to `email_with_push` by hand. Only the
+ * fallback ones are recorded: a pushed alert already holds that rule × event's notification row (unique on watch,
+ * event), and a second row would count twice toward the hourly flood guard.
  */
-export function emailPlan<T>(all: T[], fallback: T[], hasDevices: boolean, emailWithPush: boolean): { send: T[]; record: T[] } {
-  return { send: hasDevices && emailWithPush ? all : fallback, record: fallback };
+export function emailPlan<T>(all: T[], fallback: T[], hasDevices: boolean, emailToo: boolean): { send: T[]; record: T[] } {
+  return { send: hasDevices && emailToo ? all : fallback, record: fallback };
 }
 
 export function storeFilter(storeNumbers: string[]) {
@@ -295,7 +296,7 @@ async function sendRestockAlerts(transitions: Transition[], eventIds: number[], 
         }
       }));
     }
-    const mail = emailPlan(g.hits, byEmail, devices.length > 0, g.c.emailWithPush);
+    const mail = emailPlan(g.hits, byEmail, devices.length > 0, g.c.emailWithPush || !hasMobileDevice(devices));
     if (mail.send.length === 0) return;
     try {
       const providerId = await sendAlertEmail(g.c.email, mail.send.map(lineOf), mail.send[0].watch.id, lang);
@@ -304,7 +305,7 @@ async function sendRestockAlerts(transitions: Transition[], eventIds: number[], 
         stats.sent += mail.record.length;
       }
       if (mail.send.length > mail.record.length) {
-        await logOps("poller", "info", `alert email copy sent with push (${mail.send.length - mail.record.length} alert(s))`, { userId, providerId }).catch(() => undefined);
+        await logOps("poller", "debug", `alert email copy sent with push (${mail.send.length - mail.record.length} alert(s))`, { userId, providerId }).catch(() => undefined);
       }
       // No device at all: once in a while, the e-mail that says the phone banner exists (never blocks the alert).
       if (devices.length === 0) sendPushNudge(userId, g.c.email, now, lang).catch(() => undefined);

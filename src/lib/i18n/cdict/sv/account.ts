@@ -41,7 +41,8 @@ export const account: CDict["account"] = {
       readyBrowser: "Av i den här webbläsaren, så dina bevakningar går till din e-post tills vidare. Tryck på **Slå på notiser** för att få dem här inom några sekunder.",
       on: "Påfyllningar landar här på några sekunder, även när appen är stängd.",
       onComputer: "En dator visar dem bara när den är vaken, så slå på dem i mobilen också.",
-      onEmail: "Så länge en enhet får dem skickas bevakningarna inte också via e-post.",
+      onEmail: "Så länge en mobil eller surfplatta får dem skickas bevakningarna inte också via e-post.",
+      onEmailToo: "Tills en mobil eller surfplatta får dem skickas varje bevakning också via e-post.",
     },
     elsewhere: {
       needsInstall: "Notiserna går till {label}. Safari kan inte visa dem på iPhone; appen på hemskärmen kan.",
