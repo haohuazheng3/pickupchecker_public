@@ -82,7 +82,7 @@ export default async function Account() {
 
       {/* First thing on the dashboard (owner 2026-11-05): are phone notifications on? If not, the one button that turns them on. */}
       <div>
-        <PushSetup vapidPublicKey={env.vapidPublicKey()} account={deviceInfo} />
+        <PushSetup vapidPublicKey={env.vapidPublicKey()} account={deviceInfo} emailToo={row[0]?.emailWithPush ?? false} />
         {devices.length > 0 && (
           <DeviceList devices={devices.map((x) => ({ id: x.id, platform: x.platform, standalone: x.standalone, added: ago(lang, x.createdAt), lastAlert: x.lastSentAt ? ago(lang, x.lastSentAt) : null, disabledAt: x.disabledAt?.toISOString() ?? null, lastError: x.lastError }))} />
         )}

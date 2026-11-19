@@ -1,6 +1,7 @@
 /**
  * Turn restock transitions into alerts: a push notification to every device the user turned on,
- * or an email when no device has (email is the fallback, not the default).
+ * or an email when no device has (email is the fallback, not the default). A member we switched to
+ * `users.email_with_push` gets the email as well as the push (see emailPlan).
  *
  *  match: active, unpaused rules of the same store × exact configuration (model, storage, colour)
  *  dedupe: one notification per (watch, event) — unique index, and checked before sending
@@ -112,6 +113,17 @@ export async function drainNotifications(timeoutMs = 15_000, settleMs = 1_000): 
  * slow primary, hundreds of these calls were in flight at once and the intl poller on linode-2 hit V8's ~256 MB heap
  * limit five times (abort, in-flight alerts lost: 46 + 107 paid alerts MISSED). Filtered, a call loads ~100 rows.
  */
+/**
+ * Which of a member's alerts go out by email, and which of those are recorded as email notifications. Email is the
+ * fallback (no device, or every push to that store failed). A member we set to `email_with_push` (by hand, on request:
+ * a Mac member who also wanted the email, 2026-11-18) gets every alert by email as well, but only the fallback ones
+ * are recorded: a pushed alert already holds that rule × event's notification row (unique on watch, event), and a
+ * second row would count twice toward the hourly flood guard.
+ */
+export function emailPlan<T>(all: T[], fallback: T[], hasDevices: boolean, emailWithPush: boolean): { send: T[]; record: T[] } {
+  return { send: hasDevices && emailWithPush ? all : fallback, record: fallback };
+}
+
 export function storeFilter(storeNumbers: string[]) {
   return sql`${schema.watches.storeNumbers} ?| array[${sql.join(storeNumbers.map((s) => sql`${s}`), sql`, `)}]::text[]`;
 }
@@ -132,7 +144,7 @@ async function sendRestockAlerts(transitions: Transition[], eventIds: number[], 
 
   const models = [...new Set(restocks.map((x) => modelKeyFor(PART_INDEX.get(x.t.partNumber)?.model ?? "")))];
   const candidates = await d
-    .select({ watch: schema.watches, email: schema.users.email, locale: schema.users.locale })
+    .select({ watch: schema.watches, email: schema.users.email, locale: schema.users.locale, emailWithPush: schema.users.emailWithPush })
     .from(schema.watches)
     .innerJoin(schema.users, eq(schema.users.id, schema.watches.userId))
     .where(and(eq(schema.watches.active, true), eq(schema.watches.paused, false), inArray(schema.watches.model, models), storeFilter([...new Set(restocks.map((x) => x.t.storeNumber))])));
@@ -283,17 +295,23 @@ async function sendRestockAlerts(transitions: Transition[], eventIds: number[], 
         }
       }));
     }
-    if (byEmail.length === 0) return;
+    const mail = emailPlan(g.hits, byEmail, devices.length > 0, g.c.emailWithPush);
+    if (mail.send.length === 0) return;
     try {
-      const providerId = await sendAlertEmail(g.c.email, byEmail.map(lineOf), byEmail[0].watch.id, lang);
-      await record(byEmail, "email", "sent", { providerId, latencyMs: Date.now() - started });
-      stats.sent += byEmail.length;
+      const providerId = await sendAlertEmail(g.c.email, mail.send.map(lineOf), mail.send[0].watch.id, lang);
+      if (mail.record.length) {
+        await record(mail.record, "email", "sent", { providerId, latencyMs: Date.now() - started });
+        stats.sent += mail.record.length;
+      }
+      if (mail.send.length > mail.record.length) {
+        await logOps("poller", "info", `alert email copy sent with push (${mail.send.length - mail.record.length} alert(s))`, { userId, providerId }).catch(() => undefined);
+      }
       // No device at all: once in a while, the e-mail that says the phone banner exists (never blocks the alert).
       if (devices.length === 0) sendPushNudge(userId, g.c.email, now, lang).catch(() => undefined);
     } catch (e) {
-      stats.failed += byEmail.length;
-      await recordError("poller", `alert email failed: ${errorMessage(e)}`, { watchId: byEmail[0].watch.id });
-      await record(byEmail, "email", "failed", { error: errorMessage(e).slice(0, 500) });
+      stats.failed += mail.record.length;
+      await recordError("poller", `alert email failed: ${errorMessage(e)}`, { watchId: mail.send[0].watch.id });
+      if (mail.record.length) await record(mail.record, "email", "failed", { error: errorMessage(e).slice(0, 500) });
     }
   }));
   if (eventIds.length) {

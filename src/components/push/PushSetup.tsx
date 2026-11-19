@@ -31,7 +31,7 @@ export function B({ text, vars = {} }: { text: string; vars?: Record<string, Rea
   return <>{out}</>;
 }
 
-export function PushSetup({ vapidPublicKey, title, compact = false, account }: { vapidPublicKey: string; title?: string; compact?: boolean; account?: DeviceSummary | null }) {
+export function PushSetup({ vapidPublicKey, title, compact = false, account, emailToo = false }: { vapidPublicKey: string; title?: string; compact?: boolean; account?: DeviceSummary | null; emailToo?: boolean }) {
   const p = usePush(vapidPublicKey);
   const d = useT().account.push;
   // No "Preview here" any more (owner 2026-11-08): its in-page sample banner sat on top of the header card, and
@@ -47,7 +47,7 @@ export function PushSetup({ vapidPublicKey, title, compact = false, account }: {
             <h2 className={compact ? "text-lg font-semibold" : "text-xl font-semibold"}>{title ?? d.title}</h2>
             <StatusPill status={onElsewhere ? "on" : p.status} d={d} />
           </div>
-          <p className="mt-1 max-w-xl text-sm text-ink-2">{onElsewhere ? <Elsewhere p={p} label={elsewhere!} d={d} /> : <Explain p={p} d={d} />}</p>
+          <p className="mt-1 max-w-xl text-sm text-ink-2">{onElsewhere ? <Elsewhere p={p} label={elsewhere!} d={d} /> : <Explain p={p} d={d} emailToo={emailToo} />}</p>
         </div>
         {onElsewhere ? <ElsewhereActions p={p} d={d} /> : <Actions p={p} d={d} />}
       </div>
@@ -73,7 +73,7 @@ function StatusPill({ status, d }: { status: PushState["status"]; d: T }) {
   return <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>;
 }
 
-function Explain({ p, d }: { p: PushState; d: T }) {
+function Explain({ p, d, emailToo }: { p: PushState; d: T; emailToo: boolean }) {
   const e = d.explain;
   switch (p.status) {
     case "checking": return <>{e.checking}</>;
@@ -86,8 +86,8 @@ function Explain({ p, d }: { p: PushState; d: T }) {
     // user believing they were set while every alert went to their email (FlowGlance, 2026-11-02).
     case "ready": return <B text={p.platform === "ios" ? e.readyIos : p.standalone ? e.readyDevice : e.readyBrowser} />;
     // "On" also says where the alerts stop going: a desktop member read the email going quiet as a broken account
-    // (2026-11-18), and a computer only shows a push while it is awake.
-    case "on": return <>{[e.on, p.platform === "desktop" ? e.onComputer : "", e.onEmail].filter(Boolean).reduce(joinSentences)}</>;
+    // (2026-11-18), and a computer only shows a push while it is awake. A member set to get the email too (users.email_with_push) is not told it pauses.
+    case "on": return <>{[e.on, p.platform === "desktop" ? e.onComputer : "", emailToo ? "" : e.onEmail].filter(Boolean).reduce(joinSentences)}</>;
   }
 }
 

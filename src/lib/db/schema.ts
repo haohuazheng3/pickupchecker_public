@@ -37,6 +37,8 @@ export const users = pgTable("users", {
   pushNudgeSentAt: ts("push_nudge_sent_at"),
   /** The person's language version ("ja-jp", "de-ch"…; null = English): pushes, emails, Stripe and the dashboard follow it (docs/i18n.md §6). */
   locale: text("locale"),
+  /** Email every alert even when a device gets the push (set by hand when a member asks for both; default off). */
+  emailWithPush: boolean("email_with_push").notNull().default(false),
 });
 
 export const subscriptions = pgTable(
